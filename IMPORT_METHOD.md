@@ -1,0 +1,1 @@
+Temporary note: canonical v0.5.1r1 source is being imported directly as Git tree entries from the verified local package. This avoids the corrupted bootstrap bundle path. The note will be removed after import verification.
