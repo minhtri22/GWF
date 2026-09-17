@@ -1,0 +1,42 @@
+name: Import complete v0.5.1r1 source
+
+on:
+  push:
+    paths:
+      - "SOURCE_IMPORT_TRIGGER"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct runtime source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat ci-bundle/x20_01 ci-bundle/x20_02 ci-bundle/x20_03 ci-bundle/x20_04 ci-bundle/x20_05 ci-bundle/x20_06 ci-bundle/x20_07 ci-bundle/x20_08 ci-bundle/x20_09 \
+            | base64 -d > /tmp/ci-source.tar.xz
+          echo "c37ec1c9d65efb9ce6d6c71b02ce09729792e3dbaefbc7aebee4ac8c0c136b2a  /tmp/ci-source.tar.xz" | sha256sum -c -
+          tar -xJf /tmp/ci-source.tar.xz
+
+      - name: Commit expanded runtime source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add benchmarks datasets domains migrations pyproject.toml src tests tools
+          if git diff --cached --quiet; then
+            echo "Runtime source already expanded; nothing to commit."
+          else
+            git commit -m "chore: import complete v0.5.1r1 runtime source"
+            git push origin HEAD:main
+          fi
