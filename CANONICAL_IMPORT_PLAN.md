@@ -1,0 +1,1 @@
+Canonical source import target: 116 UTF-8 files / 682,582 bytes from v0.5.1r1 package. Direct Git-object import will replace the failed base64 bootstrap path. Completion requires source-tree verification and PostgreSQL gate rerun.
