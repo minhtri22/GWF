@@ -144,8 +144,35 @@ class HandoffBody(BaseModel):
     handoff: dict
 
 
+class PluginConnectionBody(BaseModel):
+    plugin_type: str
+    external_connection_ref: str
+    capabilities: list[str]
+    metadata: dict = {}
+
+
+class GitHubRepositoryBindingBody(BaseModel):
+    connection_id: str
+    repository_full_name: str
+    default_branch: str = "main"
+    write_policy: str = "FEATURE_BRANCH_ONLY"
+    allowed_branches: list[str] = ["feature/*", "fix/*", "docs/*"]
+
+
+class GitHubChangeSetBody(BaseModel):
+    binding_id: str
+    branch: str
+    expected_head_sha: str
+    changes: list[dict]
+    commit_message: str
+
+
+class GitHubExecuteBody(BaseModel):
+    changes: list[dict]
+
+
 def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
-    app = FastAPI(title="Governed Workflow Runtime", version="0.8.3")
+    app = FastAPI(title="Governed Workflow Runtime", version="0.8.4")
 
     @app.exception_handler(GWRException)
     async def gwr_error(_, exc: GWRException):
@@ -300,7 +327,7 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
 
     @app.get('/health')
     def health():
-        return {"ok": True, "domain": runtime.domain.domain_id, "version": "0.8.3"}
+        return {"ok": True, "domain": runtime.domain.domain_id, "version": "0.8.4"}
 
     @app.get('/projects/{project_id}/audit')
     def audit(project_id: str, authorization: str | None = Header(default=None)):
@@ -342,10 +369,10 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
     def product_meta():
         return {
             "product": "GWR Research Product Alpha",
-            "version": "0.8.3",
+            "version": "0.8.4",
             "domain_id": runtime.domain.domain_id,
             "backend": getattr(runtime.db, "backend_name", "unknown"),
-            "capabilities": ["domain_sdk", "domain_registry", "project_lifecycle", "project_archive", "skill_registry", "observable_agent_protocol", "protocol_driven_orchestration", "handoff_chain", "live_operational_events", "recovery_configuration_hierarchy", "auto_recovery", "human_recovery_approval", "process_inspector", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"],
+            "capabilities": ["domain_sdk", "domain_registry", "project_lifecycle", "project_archive", "skill_registry", "observable_agent_protocol", "protocol_driven_orchestration", "handoff_chain", "live_operational_events", "recovery_configuration_hierarchy", "auto_recovery", "human_recovery_approval", "plugin_registry", "github_sha_safe_commit", "standard_sha_qa", "process_inspector", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"],
         }
 
     @app.get('/product/domains/current')
@@ -529,6 +556,82 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
             recovery_mode=body.recovery_mode,
             retry_budget=body.retry_budget,
         )
+
+    @app.post('/product/projects/{project_id}/plugins')
+    def create_plugin_connection(project_id: str, body: PluginConnectionBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        project_principal(project_id, authorization, "MANAGE_MEMBERS")
+        connection_id = runtime.plugins.create_connection(
+            project_id,
+            body.plugin_type,
+            body.external_connection_ref,
+            body.capabilities,
+            principal.actor_id,
+            metadata=body.metadata,
+        )
+        return runtime.plugins.get(connection_id)
+
+    @app.get('/product/projects/{project_id}/plugins')
+    def list_plugin_connections(project_id: str, authorization: str = Header(...)):
+        project_principal(project_id, authorization, "VIEW")
+        return {"plugins": runtime.plugins.list_for_project(project_id)}
+
+    @app.post('/product/plugins/{connection_id}/disable')
+    def disable_plugin_connection(connection_id: str, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        connection = runtime.plugins.get(connection_id)
+        project_principal(connection["project_id"], authorization, "MANAGE_MEMBERS")
+        return runtime.plugins.disable(connection_id, principal.actor_id)
+
+    @app.post('/product/projects/{project_id}/github/repositories')
+    def bind_github_repository(project_id: str, body: GitHubRepositoryBindingBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        project_principal(project_id, authorization, "MANAGE_MEMBERS")
+        binding_id = runtime.github.bind_repository(
+            project_id,
+            body.connection_id,
+            body.repository_full_name,
+            body.default_branch,
+            principal.actor_id,
+            write_policy=body.write_policy,
+            allowed_branches=body.allowed_branches,
+        )
+        return runtime.github.binding(binding_id)
+
+    @app.post('/product/projects/{project_id}/github/change-sets')
+    def prepare_github_change_set(project_id: str, body: GitHubChangeSetBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        project_principal(project_id, authorization, "USE")
+        change_set_id = runtime.github.prepare_change_set(
+            project_id,
+            body.binding_id,
+            body.branch,
+            body.expected_head_sha,
+            body.changes,
+            body.commit_message,
+            principal.actor_id,
+        )
+        return runtime.github.inspect(change_set_id)
+
+    @app.post('/product/github/change-sets/{change_set_id}/preflight')
+    def preflight_github_change_set(change_set_id: str, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        item = runtime.github.inspect(change_set_id)
+        project_principal(item["project_id"], authorization, "USE")
+        return runtime.github.preflight(change_set_id, principal.actor_id)
+
+    @app.post('/product/github/change-sets/{change_set_id}/execute')
+    def execute_github_change_set(change_set_id: str, body: GitHubExecuteBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        item = runtime.github.inspect(change_set_id)
+        project_principal(item["project_id"], authorization, "USE")
+        return runtime.github.execute(change_set_id, body.changes, principal.actor_id)
+
+    @app.get('/product/github/change-sets/{change_set_id}')
+    def inspect_github_change_set(change_set_id: str, authorization: str = Header(...)):
+        item = runtime.github.inspect(change_set_id)
+        project_principal(item["project_id"], authorization, "VIEW")
+        return item
 
     @app.post('/product/skills')
     def create_skill(body: SkillPackageBody, authorization: str = Header(...)):
