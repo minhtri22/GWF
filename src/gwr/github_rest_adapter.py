@@ -28,10 +28,14 @@ class GitHubRestAdapter:
         token_provider: Callable[[], str],
         *,
         api_base: str = "https://api.github.com",
+        api_version: str = "2026-03-10",
         timeout_seconds: float = 30.0,
     ):
         self._token_provider = token_provider
         self.api_base = api_base.rstrip("/")
+        self.api_version = str(api_version).strip()
+        if not self.api_version:
+            raise ValidationError("GitHub api_version is required")
         self.timeout_seconds = float(timeout_seconds)
 
     @staticmethod
@@ -56,7 +60,7 @@ class GitHubRestAdapter:
             headers={
                 "Accept": "application/vnd.github+json",
                 "Authorization": f"Bearer {token}",
-                "X-GitHub-Api-Version": "2022-11-28",
+                "X-GitHub-Api-Version": self.api_version,
                 "User-Agent": "gwr-github-plugin",
                 "Content-Type": "application/json",
             },
