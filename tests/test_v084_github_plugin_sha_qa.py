@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from gwr.api import create_app
 from gwr.auth import HumanAuthService
-from gwr.errors import AuthorityDenied, StaleVersion, ValidationError
+from gwr.errors import AuthorityDenied, InvalidTransition, StaleVersion, ValidationError
 from gwr.research_demo import DeterministicResearchExecutor
 from gwr.runtime import GovernedWorkflowRuntime
 
@@ -33,6 +33,7 @@ class FakeGitHubAdapter:
         self.commits = {}
         self.commit_calls = 0
         self.race_on_commit = False
+        self.tamper_after_commit = False
 
     def get_branch_head(self, repository_full_name: str, branch: str) -> str:
         return self.branch_heads[branch]
@@ -65,6 +66,10 @@ class FakeGitHubAdapter:
         material = expected_head_sha + message + repr(sorted(files.items()))
         commit_sha = hashlib.sha1(material.encode("utf-8")).hexdigest()
         self.snapshots[commit_sha] = files
+        if self.tamper_after_commit and files:
+            first_path = sorted(files)[0]
+            self.snapshots[commit_sha][first_path] = "tampered-after-provider-write\n"
+            self.tamper_after_commit = False
         self.commits[commit_sha] = {"parents": [expected_head_sha]}
         self.branch_heads[branch] = commit_sha
         self.commit_calls += 1
@@ -157,6 +162,26 @@ def test_plugin_registry_refuses_persisted_secrets(configured):
             ["REPO_READ"],
             human,
             metadata={"access_token": "should-never-be-here"},
+        )
+
+
+def test_plugin_management_requires_human_and_known_capabilities(configured):
+    rt, project, human, agent, *_ = configured
+    with pytest.raises(AuthorityDenied):
+        rt.plugins.create_connection(
+            project,
+            "github",
+            "agent-created-ref",
+            ["REPO_READ"],
+            agent,
+        )
+    with pytest.raises(ValidationError):
+        rt.plugins.create_connection(
+            project,
+            "github",
+            "human-unknown-cap-ref",
+            ["REPO_READ", "ADMIN_REPOSITORY"],
+            human,
         )
 
 
@@ -314,6 +339,55 @@ def test_frozen_manifest_prevents_content_substitution(configured):
         rt.github.execute(change_set, changed, agent)
     assert adapter.commit_calls == 0
     assert rt.github.inspect(change_set)["status"] == "PREPARED"
+
+
+def test_post_commit_content_mismatch_is_not_qa_complete(configured):
+    rt, project, human, agent, _, binding, adapter = configured
+    base = adapter.get_branch_head("example/research", "feature/safe")
+    before = adapter.get_file("example/research", "README.md", base)
+    changes = [{
+        "path": "README.md",
+        "operation": "UPDATE",
+        "expected_blob_sha": before["sha"],
+        "content": "expected-after\n",
+    }]
+    change_set = rt.github.prepare_change_set(
+        project,
+        binding,
+        "feature/safe",
+        base,
+        changes,
+        "docs: verify provider content",
+        agent,
+    )
+    adapter.tamper_after_commit = True
+    with pytest.raises(ValidationError):
+        rt.github.execute(change_set, changes, agent)
+    inspected = rt.github.inspect(change_set)
+    assert inspected["status"] == "VERIFICATION_FAILED"
+    assert inspected["qa_complete"] is False
+    assert adapter.commit_calls == 1
+    assert any(
+        x["stage"] == "FILE_CONTENT_POST" and x["status"] == "FAIL"
+        for x in inspected["checks"]
+    )
+
+
+def test_archived_project_blocks_new_github_changeset(configured):
+    rt, project, human, agent, _, binding, adapter = configured
+    base = adapter.get_branch_head("example/research", "feature/safe")
+    rt.project_governance.archive(project, human)
+    changes = [{"path": "docs/archive.md", "operation": "CREATE", "content": "blocked\n"}]
+    with pytest.raises(InvalidTransition):
+        rt.github.prepare_change_set(
+            project,
+            binding,
+            "feature/safe",
+            base,
+            changes,
+            "docs: should not write",
+            agent,
+        )
 
 
 def test_default_branch_direct_write_requires_human(configured):
