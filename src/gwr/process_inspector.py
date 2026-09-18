@@ -38,12 +38,19 @@ class ProcessInspectorService:
             item["current_phase"] = next((p for p in reversed(phases) if p["status"] in {"RUNNING","PAUSED"}), phases[-1] if phases else None)
             orchestrations.append(item)
         latest = orchestrations[0] if orchestrations else None
+        current = latest.get("current_phase") if latest else None
+        protocol = None
+        if current and self.db.one("SELECT 1 FROM phase_execution_protocols WHERE phase_execution_id=?", (current["phase_execution_id"],)):
+            protocol = self.runtime.agent_protocol.inspect(current["phase_execution_id"])
         return {
             "project_id": project_id,
             "status": latest["status"] if latest else "READY",
-            "current_phase": latest.get("current_phase") if latest else None,
+            "current_phase": current,
+            "current_agent_protocol": protocol,
+            "attention": protocol["attention"] if protocol else ("COMPLETE" if latest and latest["status"] == "COMPLETED" else "IDLE"),
             "orchestrations": orchestrations,
             "domain_binding": self.runtime.domains.project_binding(project_id),
+            "project_lifecycle": self.runtime.project_governance.status(project_id),
         }
 
     def phases(self, orchestration_id: str) -> list[dict[str, Any]]:
@@ -92,6 +99,9 @@ class ProcessInspectorService:
         failure = _parse(self.db.one("SELECT * FROM failures WHERE failure_id=?", (phase["failure_id"],)) if phase["failure_id"] else None, ("evidence_ids",))
         checkpoint = _parse(self.db.one("SELECT * FROM checkpoints WHERE checkpoint_id=?", (phase["checkpoint_id"],)) if phase["checkpoint_id"] else None,
                             ("active_workunit_ids","completed_workunit_ids","current_stage_labels","valid_revision_ids","dirty_revision_ids","stale_revision_ids","blocking_failure_ids","pending_decision_ids","pending_approval_ids","resume_candidates","runtime_metadata"))
+        agent_protocol = None
+        if self.db.one("SELECT 1 FROM phase_execution_protocols WHERE phase_execution_id=?", (phase_execution_id,)):
+            agent_protocol = self.runtime.agent_protocol.inspect(phase_execution_id)
         return {
             "phase": phase_d,
             "workunit": workunit,
@@ -103,6 +113,7 @@ class ProcessInspectorService:
             "failure": failure,
             "checkpoint": checkpoint,
             "events": self.phase_events(phase_execution_id),
+            "agent_protocol": agent_protocol,
         }
 
     def _input_revisions(self, run):
