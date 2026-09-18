@@ -1,0 +1,318 @@
+from __future__ import annotations
+
+import hashlib
+from copy import deepcopy
+from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
+
+from gwr.api import create_app
+from gwr.auth import HumanAuthService
+from gwr.errors import AuthorityDenied, StaleVersion, ValidationError
+from gwr.research_demo import DeterministicResearchExecutor
+from gwr.runtime import GovernedWorkflowRuntime
+
+
+ROOT = Path(__file__).parents[1]
+
+
+def blob_sha(content: str) -> str:
+    return hashlib.sha1(content.encode("utf-8")).hexdigest()
+
+
+class FakeGitHubAdapter:
+    def __init__(self):
+        self.branch_heads = {"feature/safe": "a" * 40, "main": "a" * 40}
+        self.snapshots = {
+            "a" * 40: {
+                "README.md": "old readme\n",
+                "src/app.py": "print('old')\n",
+            }
+        }
+        self.commits = {}
+        self.commit_calls = 0
+
+    def get_branch_head(self, repository_full_name: str, branch: str) -> str:
+        return self.branch_heads[branch]
+
+    def get_file(self, repository_full_name: str, path: str, ref: str):
+        files = self.snapshots.get(ref, {})
+        if path not in files:
+            return None
+        content = files[path]
+        return {"sha": blob_sha(content), "content": content}
+
+    def commit_files(self, repository_full_name, branch, expected_head_sha, message, changes):
+        current = self.branch_heads[branch]
+        if current != expected_head_sha:
+            raise StaleVersion(
+                "provider rejected stale head",
+                details={"expected": expected_head_sha, "observed": current},
+            )
+        files = deepcopy(self.snapshots[current])
+        for change in changes:
+            if change["operation"] == "DELETE":
+                files.pop(change["path"], None)
+            else:
+                files[change["path"]] = change["content"]
+        material = expected_head_sha + message + repr(sorted(files.items()))
+        commit_sha = hashlib.sha1(material.encode("utf-8")).hexdigest()
+        self.snapshots[commit_sha] = files
+        self.commits[commit_sha] = {"parents": [expected_head_sha]}
+        self.branch_heads[branch] = commit_sha
+        self.commit_calls += 1
+        return {"commit_sha": commit_sha, "parent_sha": expected_head_sha}
+
+    def get_commit(self, repository_full_name: str, commit_sha: str):
+        return self.commits[commit_sha]
+
+
+@pytest.fixture
+def configured(tmp_path):
+    rt = GovernedWorkflowRuntime(
+        str(ROOT / "domains" / "research.workflow.yaml"),
+        str(tmp_path / "v084.db"),
+        auth_secret="g" * 64,
+    )
+    human = rt.governance.create_actor("HUMAN", "owner-v084", ["human_approver"], [])
+    tenant = rt.tenancy.create_tenant("v084 tenant", human)
+    workspace = rt.tenancy.create_workspace(tenant, "v084 workspace", human)
+    project = rt.create_scoped_project("v084 project", tenant, workspace, human)
+    agent = rt.governance.create_actor("AGENT", "agent-v084", ["research_lead"], [])
+    rt.tenancy.add_project_member(project, agent, "RESEARCHER", human)
+    connection = rt.plugins.create_connection(
+        project,
+        "github",
+        "github-connection-opaque-1",
+        ["REPO_READ", "CONTENT_WRITE"],
+        human,
+        metadata={"provider": "github", "account_label": "qa"},
+    )
+    adapter = FakeGitHubAdapter()
+    rt.plugins.attach_runtime_adapter(connection, adapter)
+    binding = rt.github.bind_repository(
+        project,
+        connection,
+        "example/research",
+        "main",
+        human,
+        write_policy="FEATURE_BRANCH_ONLY",
+        allowed_branches=["feature/*", "docs/*"],
+    )
+    yield rt, project, human, agent, connection, binding, adapter
+    rt.close()
+
+
+def test_recovery_mode_is_optional_auto_or_human_approve(tmp_path):
+    rt = GovernedWorkflowRuntime(
+        str(ROOT / "domains" / "research.workflow.yaml"),
+        str(tmp_path / "recovery.db"),
+    )
+    project = rt.create_project("recovery")
+    default_cfg = rt.agent_protocol.resolve_recovery_config(project, "phase_09_main_experiment")
+    assert default_cfg["recovery_mode"] == "AUTO"
+
+    rt.agent_protocol.set_project_defaults(
+        project,
+        "SYSTEM",
+        recovery_mode="HUMAN_APPROVE",
+        retry_budget=2,
+    )
+    manual_cfg = rt.agent_protocol.resolve_recovery_config(project, "phase_09_main_experiment")
+    assert manual_cfg["recovery_mode"] == "HUMAN_APPROVE"
+
+    rt.agent_protocol.set_project_defaults(
+        project,
+        "SYSTEM",
+        recovery_mode="AUTO",
+        retry_budget=2,
+    )
+    auto_cfg = rt.agent_protocol.resolve_recovery_config(project, "phase_09_main_experiment")
+    assert auto_cfg["recovery_mode"] == "AUTO"
+    rt.close()
+
+
+def test_plugin_registry_refuses_persisted_secrets(configured):
+    rt, project, human, *_ = configured
+    with pytest.raises(ValidationError):
+        rt.plugins.create_connection(
+            project,
+            "github",
+            "github_pat_this_is_not_an_opaque_ref",
+            ["REPO_READ"],
+            human,
+        )
+    with pytest.raises(ValidationError):
+        rt.plugins.create_connection(
+            project,
+            "github",
+            "safe-ref-2",
+            ["REPO_READ"],
+            human,
+            metadata={"access_token": "should-never-be-here"},
+        )
+
+
+def test_sha_safe_commit_is_verified_end_to_end(configured):
+    rt, project, human, agent, _, binding, adapter = configured
+    base = adapter.get_branch_head("example/research", "feature/safe")
+    before = adapter.get_file("example/research", "README.md", base)
+    changes = [
+        {
+            "path": "README.md",
+            "operation": "UPDATE",
+            "expected_blob_sha": before["sha"],
+            "content": "new readme\n",
+        },
+        {
+            "path": "docs/qa.md",
+            "operation": "CREATE",
+            "content": "sha-safe\n",
+        },
+    ]
+    change_set = rt.github.prepare_change_set(
+        project,
+        binding,
+        "feature/safe",
+        base,
+        changes,
+        "docs: update QA evidence",
+        agent,
+    )
+    result = rt.github.execute(change_set, changes, agent)
+    assert result["status"] == "VERIFIED"
+    assert result["qa_complete"] is True
+    assert result["committed_sha"] == adapter.get_branch_head("example/research", "feature/safe")
+    assert adapter.commit_calls == 1
+
+    stages = [x["stage"] for x in result["checks"]]
+    assert "BRANCH_HEAD_PRE" in stages
+    assert "FILE_BLOB_PRE" in stages
+    assert "BRANCH_HEAD_IMMEDIATE_PRE" in stages
+    assert "COMMIT_PARENT_POST" in stages
+    assert "BRANCH_HEAD_POST" in stages
+    assert "FILE_CONTENT_POST" in stages
+    assert all(x["status"] == "PASS" for x in result["checks"])
+
+
+def test_branch_sha_change_blocks_commit_before_write(configured):
+    rt, project, human, agent, _, binding, adapter = configured
+    base = adapter.get_branch_head("example/research", "feature/safe")
+    before = adapter.get_file("example/research", "README.md", base)
+    changes = [{
+        "path": "README.md",
+        "operation": "UPDATE",
+        "expected_blob_sha": before["sha"],
+        "content": "new readme\n",
+    }]
+    change_set = rt.github.prepare_change_set(
+        project,
+        binding,
+        "feature/safe",
+        base,
+        changes,
+        "docs: stale head test",
+        agent,
+    )
+    adapter.branch_heads["feature/safe"] = "b" * 40
+    adapter.snapshots["b" * 40] = deepcopy(adapter.snapshots[base])
+
+    with pytest.raises(StaleVersion):
+        rt.github.execute(change_set, changes, agent)
+    assert rt.github.inspect(change_set)["status"] == "STALE"
+    assert adapter.commit_calls == 0
+
+
+def test_blob_sha_change_blocks_commit_even_when_branch_expectation_is_frozen(configured):
+    rt, project, human, agent, _, binding, adapter = configured
+    base = adapter.get_branch_head("example/research", "feature/safe")
+    changes = [{
+        "path": "README.md",
+        "operation": "UPDATE",
+        "expected_blob_sha": "0" * 40,
+        "content": "new readme\n",
+    }]
+    change_set = rt.github.prepare_change_set(
+        project,
+        binding,
+        "feature/safe",
+        base,
+        changes,
+        "docs: stale blob test",
+        agent,
+    )
+    with pytest.raises(StaleVersion):
+        rt.github.execute(change_set, changes, agent)
+    assert rt.github.inspect(change_set)["status"] == "STALE"
+    assert adapter.commit_calls == 0
+
+
+def test_frozen_manifest_prevents_content_substitution(configured):
+    rt, project, human, agent, _, binding, adapter = configured
+    base = adapter.get_branch_head("example/research", "feature/safe")
+    before = adapter.get_file("example/research", "README.md", base)
+    frozen = [{
+        "path": "README.md",
+        "operation": "UPDATE",
+        "expected_blob_sha": before["sha"],
+        "content": "approved content\n",
+    }]
+    change_set = rt.github.prepare_change_set(
+        project,
+        binding,
+        "feature/safe",
+        base,
+        frozen,
+        "docs: frozen manifest",
+        agent,
+    )
+    changed = [{
+        "path": "README.md",
+        "operation": "UPDATE",
+        "expected_blob_sha": before["sha"],
+        "content": "different content\n",
+    }]
+    with pytest.raises(ValidationError):
+        rt.github.execute(change_set, changed, agent)
+    assert adapter.commit_calls == 0
+    assert rt.github.inspect(change_set)["status"] == "PREPARED"
+
+
+def test_default_branch_direct_write_requires_human(configured):
+    rt, project, human, agent, connection, _, adapter = configured
+    binding = rt.github.bind_repository(
+        project,
+        connection,
+        "example/direct",
+        "main",
+        human,
+        write_policy="DIRECT",
+        allowed_branches=["main"],
+    )
+    adapter.branch_heads["main"] = "a" * 40
+    changes = [{"path": "docs/direct.md", "operation": "CREATE", "content": "x\n"}]
+    with pytest.raises(AuthorityDenied):
+        rt.github.prepare_change_set(
+            project,
+            binding,
+            "main",
+            "a" * 40,
+            changes,
+            "docs: direct",
+            agent,
+        )
+
+
+def test_api_advertises_v084_plugin_capabilities(configured, monkeypatch):
+    rt, project, human, *_ = configured
+    monkeypatch.setattr(HumanAuthService, "PASSWORD_ITERATIONS", 1000)
+    rt.auth.register_human(human, "owner-v084", "owner-v084-password")
+    client = TestClient(create_app(rt))
+    meta = client.get("/product/meta")
+    assert meta.status_code == 200
+    payload = meta.json()
+    assert payload["version"] == "0.8.4"
+    assert "plugin_registry" in payload["capabilities"]
+    assert "github_sha_safe_commit" in payload["capabilities"]
+    assert "standard_sha_qa" in payload["capabilities"]
