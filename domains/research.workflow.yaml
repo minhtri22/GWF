@@ -1,0 +1,1074 @@
+domain_id: research.full-cycle
+version: 0.4.0
+compatible_runtime_versions: ["0.4.x"]
+description: >-
+  Full-cycle research domain for hypothesis-driven work with explicit provenance,
+  preflight, pilot, falsification, PASS/FAIL/PIVOT decisions, checkpoint/resume,
+  replication/replay, final reporting, and handoff.
+
+# -----------------------------------------------------------------------------
+# 1) Knowledge model
+# -----------------------------------------------------------------------------
+artifact_types:
+  - id: research_goal
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: true
+    approval_policy: normative_research_change
+    hard_dependencies: []
+    required_fields: [problem, research_question, scope, success_criteria, stop_conditions]
+
+  - id: prior_art_landscape
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [research_goal]
+    required_fields: [sources, closest_prior_work, differentiators, unresolved_questions]
+
+  - id: novelty_assessment
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: true
+    approval_policy: normative_research_change
+    hard_dependencies: [research_goal, prior_art_landscape]
+    required_fields: [claim_of_novelty, overlaps, borrowed_ideas, residual_novelty, risks]
+
+  - id: hypothesis
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: true
+    approval_policy: normative_research_change
+    hard_dependencies: [research_goal, novelty_assessment]
+    required_fields: [statement, null_hypothesis, mechanism, predictions, falsification_criteria]
+
+  - id: formal_model
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: true
+    approval_policy: normative_research_change
+    hard_dependencies: [hypothesis]
+    required_fields: [definitions, assumptions, variables, equations, invariants, boundary_conditions]
+
+  - id: protocol
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: true
+    approval_policy: normative_research_change
+    hard_dependencies: [hypothesis, formal_model]
+    required_fields:
+      - experimental_design
+      - controls
+      - independent_variables
+      - dependent_variables
+      - metrics
+      - thresholds
+      - query_or_compute_budget
+      - leakage_controls
+      - confound_controls
+      - statistical_plan
+      - stopping_rules
+      - pass_fail_pivot_rules
+
+  - id: dataset_benchmark_spec
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: true
+    approval_policy: normative_research_change
+    hard_dependencies: [protocol]
+    required_fields:
+      - data_sources
+      - splits
+      - sampling
+      - inclusion_exclusion
+      - gold_or_oracle_definition
+      - contamination_checks
+      - benchmark_cases
+      - seeds
+
+  - id: experiment_plan
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: true
+    approval_policy: normative_research_change
+    hard_dependencies: [protocol, dataset_benchmark_spec]
+    required_fields:
+      - runs
+      - baselines
+      - ablations
+      - adversarial_cases
+      - seeds
+      - resources
+      - expected_artifacts
+      - exact_commands
+
+  - id: implementation_manifest
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [experiment_plan]
+    required_fields: [repository, commit, environment, dependencies, commands, config_hashes]
+
+  - id: preflight_result
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [implementation_manifest, protocol, dataset_benchmark_spec]
+    required_fields: [checks, failures, warnings, environment_fingerprint, verdict]
+
+  - id: pilot_result
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [preflight_result, experiment_plan]
+    required_fields: [runs, raw_metrics, anomalies, feasibility, power_or_signal_check, verdict]
+
+  - id: experiment_result
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [pilot_result, experiment_plan, implementation_manifest]
+    required_fields: [run_ids, raw_metrics, aggregate_metrics, logs, artifacts, provenance]
+
+  - id: analysis_result
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [experiment_result, protocol]
+    required_fields:
+      - statistical_results
+      - verification_manifest
+      - effect_sizes
+      - uncertainty
+      - robustness
+      - ablations
+      - baseline_comparison
+      - assumption_checks
+      - interpretation
+
+  - id: adversarial_review
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [analysis_result, hypothesis, protocol]
+    required_fields:
+      - falsification_attempts
+      - alternative_explanations
+      - leakage_checks
+      - confounds
+      - boundary_failures
+      - strongest_counterargument
+      - verdict
+
+  - id: decision_record
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: true
+    approval_policy: research_direction_decision
+    hard_dependencies: [analysis_result, adversarial_review]
+    required_fields:
+      - outcome
+      - evidence_summary
+      - threshold_evaluation
+      - violated_assumptions
+      - confidence_band
+      - next_action
+    allowed_outcomes: [PASS, FAIL, PIVOT]
+
+  - id: pivot_plan
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: true
+    approval_policy: high_impact_research_change
+    hard_dependencies: [decision_record]
+    required_fields:
+      - reason
+      - preserved_findings
+      - invalidated_assumptions
+      - new_or_revised_question
+      - new_or_revised_hypothesis
+      - earliest_resume_artifact
+      - rerun_scope
+
+  - id: replication_result
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [decision_record, experiment_result, analysis_result]
+    required_fields:
+      - mode
+      - independent_seed_or_environment
+      - reproduced_metrics
+      - divergence
+      - reproducibility_verdict
+
+  - id: final_report
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [decision_record, analysis_result, adversarial_review, replication_result]
+    required_fields:
+      - executive_summary
+      - research_question
+      - hypothesis_lineage
+      - prior_art
+      - formalization
+      - protocol
+      - implementation
+      - experiments
+      - results
+      - falsification
+      - decision_history
+      - replication
+      - limitations
+      - open_questions
+      - claims_evidence_matrix
+      - reproducibility_instructions
+
+  - id: handoff_package
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [final_report]
+    required_fields:
+      - current_status
+      - artifact_manifest
+      - checkpoint_ref
+      - unresolved_issues
+      - exact_resume_target
+      - next_actions
+      - commands
+      - hashes
+
+trace_types:
+  - id: derived_from
+    maps_to: PRIM-TRACE
+    strength: HARD
+    invalidates_on_upstream_supersede: true
+    propagation_rule: MARK_STALE
+
+  - id: evaluates
+    maps_to: PRIM-TRACE
+    strength: HARD
+    invalidates_on_upstream_supersede: true
+    propagation_rule: MARK_STALE
+
+  - id: falsifies_or_supports
+    maps_to: PRIM-TRACE
+    strength: HARD
+    invalidates_on_upstream_supersede: true
+    propagation_rule: MARK_STALE
+
+  - id: reproduces
+    maps_to: PRIM-TRACE
+    strength: HARD
+    invalidates_on_upstream_supersede: true
+    propagation_rule: MARK_STALE
+
+  - id: reports
+    maps_to: PRIM-TRACE
+    strength: HARD
+    invalidates_on_upstream_supersede: true
+    propagation_rule: MARK_STALE
+
+# -----------------------------------------------------------------------------
+# 2) Execution model: phases as WorkUnit templates
+# Every phase creates a checkpoint after success; expensive/critical phases also
+# checkpoint before execution. Runtime failures retry only with identical semantic
+# inputs. Semantic changes create a new run after recovery/revision.
+# -----------------------------------------------------------------------------
+workunit_templates:
+  - id: phase_00_lock_goal
+    maps_to: PRIM-WORKUNIT
+    inputs: []
+    outputs: [{artifact_type: research_goal}]
+    executor_role: research_lead
+    required_gate_types: [goal_ready]
+    evidence_required: [goal_review_evidence]
+    success_conditions: [research_goal_approved]
+    known_failure_modes: [goal_ambiguity, approval_missing]
+    retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REVISE_CURRENT}
+    checkpoint_policy: {before: false, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [research_goal]
+
+  - id: phase_01_prior_art_and_novelty
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: research_goal}]
+    outputs: [{artifact_type: prior_art_landscape}, {artifact_type: novelty_assessment}]
+    executor_role: literature_reviewer
+    required_gate_types: [prior_art_ready]
+    evidence_required: [source_citation_evidence, novelty_review_evidence]
+    success_conditions: [closest_prior_work_identified, novelty_claim_bounded]
+    known_failure_modes: [insufficient_prior_art, novelty_collision, source_unavailable]
+    retry_policy: {max_attempts: 2, retryable_failure_codes: [source_unavailable], same_signature_limit: 2}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REVISE_CURRENT_OR_UPSTREAM}
+    checkpoint_policy: {before: false, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [literature_scope]
+
+  - id: phase_02_define_hypothesis
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: research_goal}, {artifact_type: novelty_assessment}]
+    outputs: [{artifact_type: hypothesis}]
+    executor_role: research_lead
+    required_gate_types: [hypothesis_ready]
+    evidence_required: [hypothesis_review_evidence]
+    success_conditions: [hypothesis_falsifiable, null_defined, predictions_defined]
+    known_failure_modes: [hypothesis_not_falsifiable, hypothesis_scope_mismatch, approval_missing]
+    retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REVISE_CURRENT_OR_UPSTREAM}
+    checkpoint_policy: {before: false, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [hypothesis]
+
+  - id: phase_03_formalize
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: hypothesis}]
+    outputs: [{artifact_type: formal_model}]
+    executor_role: protocol_designer
+    required_gate_types: [formalization_ready]
+    evidence_required: [formalization_review_evidence]
+    success_conditions: [variables_operationalized, assumptions_explicit, boundary_conditions_defined]
+    known_failure_modes: [formalization_inconsistent, variable_not_operationalizable, approval_missing]
+    retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REVISE_CURRENT_OR_UPSTREAM}
+    checkpoint_policy: {before: false, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [formal_model]
+
+  - id: phase_04_design_protocol
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: hypothesis}, {artifact_type: formal_model}]
+    outputs: [{artifact_type: protocol}]
+    executor_role: protocol_designer
+    required_gate_types: [protocol_ready]
+    evidence_required: [protocol_review_evidence]
+    success_conditions: [controls_defined, metrics_defined, thresholds_precommitted, falsification_rules_defined]
+    known_failure_modes: [protocol_leakage, circular_metric, confound_uncontrolled, insufficient_statistical_plan, approval_missing]
+    retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REVISE_CURRENT_OR_UPSTREAM}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [protocol]
+
+  - id: phase_05_prepare_dataset_and_benchmark
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: protocol}]
+    outputs: [{artifact_type: dataset_benchmark_spec}]
+    executor_role: experimenter
+    required_gate_types: [data_ready]
+    evidence_required: [dataset_manifest_evidence, contamination_check_evidence]
+    success_conditions: [data_provenance_complete, split_policy_locked, contamination_checked]
+    known_failure_modes: [data_leakage, benchmark_contamination, oracle_undefined, insufficient_sample, approval_missing]
+    retry_policy: {max_attempts: 2, retryable_failure_codes: [source_unavailable], same_signature_limit: 2}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REVISE_CURRENT_OR_UPSTREAM}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [dataset]
+
+  - id: phase_06_plan_and_implement_experiment
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: protocol}, {artifact_type: dataset_benchmark_spec}]
+    outputs: [{artifact_type: experiment_plan}, {artifact_type: implementation_manifest}]
+    executor_role: experimenter
+    required_gate_types: [implementation_ready]
+    evidence_required: [code_revision_evidence, environment_manifest_evidence]
+    success_conditions: [commands_reproducible, configs_versioned, seeds_locked, baseline_available]
+    known_failure_modes: [implementation_contract_mismatch, dependency_failure, environment_failure, approval_missing]
+    retry_policy: {max_attempts: 3, retryable_failure_codes: [dependency_failure, environment_failure], same_signature_limit: 2}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REVISE_CURRENT_OR_RETRY}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [repository, environment]
+
+  - id: phase_07_preflight
+    maps_to: PRIM-WORKUNIT
+    inputs:
+      - {artifact_type: protocol}
+      - {artifact_type: dataset_benchmark_spec}
+      - {artifact_type: implementation_manifest}
+    outputs: [{artifact_type: preflight_result}]
+    executor_role: reproducibility_reviewer
+    required_gate_types: [preflight_pass]
+    evidence_required: [preflight_log_evidence, environment_manifest_evidence]
+    success_conditions: [syntax_ok, smoke_run_ok, evidence_path_ok, no_known_leakage]
+    known_failure_modes: [preflight_failure, missing_evidence_path, environment_failure, stale_input]
+    retry_policy: {max_attempts: 3, retryable_failure_codes: [environment_failure], same_signature_limit: 2}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: ROUTE_TO_EARLIEST_INVALID_ANCESTOR}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [environment]
+
+  - id: phase_08_pilot
+    maps_to: PRIM-WORKUNIT
+    inputs:
+      - {artifact_type: preflight_result}
+      - {artifact_type: experiment_plan}
+      - {artifact_type: implementation_manifest}
+    outputs: [{artifact_type: pilot_result}]
+    executor_role: experimenter
+    required_gate_types: [pilot_pass]
+    evidence_required: [run_manifest_evidence, raw_metrics_evidence]
+    success_conditions: [pipeline_non_degenerate, metrics_non_empty, feasibility_confirmed]
+    known_failure_modes: [pilot_degenerate, metric_empty, runtime_timeout, effect_unmeasurable, protocol_mismatch]
+    retry_policy: {max_attempts: 3, retryable_failure_codes: [runtime_timeout], same_signature_limit: 2}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: ROUTE_TO_EARLIEST_INVALID_ANCESTOR}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [experiment_resources]
+
+  - id: phase_09_main_experiment
+    maps_to: PRIM-WORKUNIT
+    inputs:
+      - {artifact_type: pilot_result}
+      - {artifact_type: experiment_plan}
+      - {artifact_type: implementation_manifest}
+    outputs: [{artifact_type: experiment_result}]
+    executor_role: experimenter
+    required_gate_types: [experiment_complete]
+    evidence_required: [run_manifest_evidence, raw_metrics_evidence, provenance_evidence]
+    success_conditions: [all_required_runs_complete, no_silent_missing_metrics, provenance_complete]
+    known_failure_modes: [runtime_timeout, process_crash, missing_metrics, partial_run, environment_failure, implementation_contract_mismatch]
+    retry_policy: {max_attempts: 3, retryable_failure_codes: [runtime_timeout, process_crash, environment_failure], same_signature_limit: 2}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: RETRY_OR_ROUTE_TO_EARLIEST_INVALID_ANCESTOR}
+    checkpoint_policy: {before: true, after_each_run: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [experiment_resources, dataset]
+
+  - id: phase_10_analyze_results
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: experiment_result}, {artifact_type: protocol}]
+    outputs: [{artifact_type: analysis_result}]
+    executor_role: analyst
+    required_gate_types: [analysis_ready]
+    evidence_required: [statistical_analysis_evidence, raw_metrics_evidence, independent_verifier_evidence]
+    success_conditions: [precommitted_metrics_evaluated, uncertainty_reported, baselines_compared, deviations_disclosed, independent_verifier_completed]
+    known_failure_modes: [analysis_protocol_deviation, insufficient_evidence, statistical_invalidity, hidden_multiple_testing]
+    retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REVISE_CURRENT_OR_UPSTREAM}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [analysis]
+
+  - id: phase_11_adversarial_falsification_review
+    maps_to: PRIM-WORKUNIT
+    inputs:
+      - {artifact_type: analysis_result}
+      - {artifact_type: hypothesis}
+      - {artifact_type: protocol}
+    outputs: [{artifact_type: adversarial_review}]
+    executor_role: adversarial_reviewer
+    required_gate_types: [adversarial_review_complete]
+    evidence_required: [adversarial_review_evidence]
+    success_conditions: [strongest_counterargument_tested, leakage_rechecked, confounds_rechecked, boundary_cases_tested]
+    known_failure_modes: [adversarial_review_incomplete, critical_confound_found, leakage_found, protocol_invalidated]
+    retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: ROUTE_TO_EARLIEST_INVALID_ANCESTOR}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [review]
+
+  - id: phase_12_decide_pass_fail_pivot
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: analysis_result}, {artifact_type: adversarial_review}]
+    outputs: [{artifact_type: decision_record}]
+    executor_role: research_lead
+    required_gate_types: [research_decision_ready]
+    evidence_required: [decision_evidence]
+    success_conditions: [outcome_is_structured, thresholds_traced_to_protocol, next_action_explicit]
+    known_failure_modes: [decision_ambiguous, threshold_not_precommitted, approval_missing]
+    retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: ESCALATE_IF_AMBIGUOUS}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [research_decision]
+
+  - id: phase_13_pivot_if_required
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: decision_record}]
+    outputs: [{artifact_type: pivot_plan}]
+    executor_role: research_lead
+    required_gate_types: [pivot_ready]
+    evidence_required: [pivot_rationale_evidence]
+    success_conditions: [preserved_findings_separated, invalidated_assumptions_explicit, resume_target_explicit]
+    known_failure_modes: [pivot_scope_undefined, pivot_without_evidence, approval_missing]
+    retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: HUMAN_APPROVED_REPLAN}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    execution_condition: decision_record.outcome == PIVOT
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [research_direction]
+
+  - id: phase_14_replication_or_replay
+    maps_to: PRIM-WORKUNIT
+    inputs:
+      - {artifact_type: decision_record}
+      - {artifact_type: experiment_result}
+      - {artifact_type: analysis_result}
+    outputs: [{artifact_type: replication_result}]
+    executor_role: reproducibility_reviewer
+    required_gate_types: [replication_complete]
+    evidence_required: [replication_evidence, provenance_evidence]
+    success_conditions: [independent_replay_completed, divergence_reported, reproducibility_verdict_explicit]
+    known_failure_modes: [replication_divergence, replay_artifact_missing, environment_failure, provenance_gap]
+    retry_policy: {max_attempts: 2, retryable_failure_codes: [environment_failure], same_signature_limit: 2}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: ROUTE_TO_ROOT_OR_REPORT_NONREPRODUCIBLE}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    execution_condition: decision_record.outcome in [PASS, FAIL]
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [replication_environment]
+
+  - id: phase_15_write_final_report
+    maps_to: PRIM-WORKUNIT
+    inputs:
+      - {artifact_type: research_goal}
+      - {artifact_type: prior_art_landscape}
+      - {artifact_type: hypothesis}
+      - {artifact_type: formal_model}
+      - {artifact_type: protocol}
+      - {artifact_type: experiment_plan}
+      - {artifact_type: experiment_result}
+      - {artifact_type: analysis_result}
+      - {artifact_type: adversarial_review}
+      - {artifact_type: decision_record}
+      - {artifact_type: replication_result}
+    outputs: [{artifact_type: final_report}]
+    executor_role: research_lead
+    required_gate_types: [report_complete]
+    evidence_required: [report_manifest_evidence]
+    success_conditions: [claims_trace_to_evidence, failures_disclosed, pivots_disclosed, reproduction_steps_included, open_questions_listed]
+    known_failure_modes: [report_traceability_gap, unsupported_claim, missing_negative_result, missing_open_issue]
+    retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REVISE_CURRENT_OR_UPSTREAM}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [report]
+
+  - id: phase_16_handoff_and_archive
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: final_report}]
+    outputs: [{artifact_type: handoff_package}]
+    executor_role: reproducibility_reviewer
+    required_gate_types: [handoff_complete]
+    evidence_required: [artifact_manifest_evidence, provenance_evidence]
+    success_conditions: [resume_target_recorded, unresolved_issues_recorded, hashes_recorded, commands_recorded]
+    known_failure_modes: [handoff_incomplete, provenance_gap, checkpoint_missing]
+    retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REVISE_CURRENT}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true, terminal: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [handoff]
+
+# -----------------------------------------------------------------------------
+# 3) Evidence model
+# -----------------------------------------------------------------------------
+evidence_types:
+  - {id: goal_review_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: source_citation_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: novelty_review_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: hypothesis_review_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: formalization_review_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: protocol_review_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: dataset_manifest_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: contamination_check_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: code_revision_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: environment_manifest_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: preflight_log_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: run_manifest_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: raw_metrics_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: provenance_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: statistical_analysis_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: independent_verifier_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: adversarial_review_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: decision_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: pivot_rationale_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: replication_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: report_manifest_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: artifact_manifest_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+
+# -----------------------------------------------------------------------------
+# 4) Gates. Gate evaluation is structured; free-form model text never directly
+# becomes PASS/FAIL/PIVOT.
+# -----------------------------------------------------------------------------
+gate_types:
+  - id: goal_ready
+    maps_to: PRIM-GATE
+    required_evidence_types: [goal_review_evidence]
+    allowed_trust_classes: [SUPPORTED, AUTHORITATIVE]
+    pass_if: [question_is_testable, scope_is_bounded, success_and_stop_conditions_exist]
+
+  - id: prior_art_ready
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [source_citation_evidence, novelty_review_evidence]
+    allowed_trust_classes: [SUPPORTED, AUTHORITATIVE]
+    pass_if: [closest_prior_work_identified, novelty_claim_is_bounded]
+
+  - id: hypothesis_ready
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [hypothesis_review_evidence]
+    allowed_trust_classes: [SUPPORTED]
+    pass_if: [falsifiable, null_hypothesis_present, measurable_predictions_present]
+
+  - id: formalization_ready
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [formalization_review_evidence]
+    allowed_trust_classes: [SUPPORTED]
+    pass_if: [definitions_consistent, assumptions_explicit, variables_operationalizable]
+
+  - id: protocol_ready
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [protocol_review_evidence]
+    allowed_trust_classes: [SUPPORTED]
+    pass_if: [controls_defined, leakage_controls_defined, metrics_non_circular, thresholds_precommitted, statistical_plan_defined]
+
+  - id: data_ready
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [dataset_manifest_evidence, contamination_check_evidence]
+    allowed_trust_classes: [AUTHORITATIVE, SUPPORTED]
+    pass_if: [data_provenance_complete, contamination_check_complete, oracle_or_gold_defined]
+
+  - id: implementation_ready
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [code_revision_evidence, environment_manifest_evidence]
+    allowed_trust_classes: [AUTHORITATIVE]
+    pass_if: [repository_revision_pinned, commands_reproducible, configs_hashed]
+
+  - id: preflight_pass
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [preflight_log_evidence, environment_manifest_evidence]
+    allowed_trust_classes: [AUTHORITATIVE]
+    pass_if: [syntax_ok, smoke_run_ok, no_missing_evidence_path, no_known_leakage]
+
+  - id: pilot_pass
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [run_manifest_evidence, raw_metrics_evidence]
+    allowed_trust_classes: [AUTHORITATIVE]
+    pass_if: [metrics_non_empty, pipeline_non_degenerate, experiment_feasible]
+
+  - id: experiment_complete
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [run_manifest_evidence, raw_metrics_evidence, provenance_evidence]
+    allowed_trust_classes: [AUTHORITATIVE]
+    pass_if: [all_required_runs_accounted_for, missing_metrics_zero, provenance_complete]
+
+  - id: analysis_ready
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [statistical_analysis_evidence, raw_metrics_evidence, independent_verifier_evidence]
+    allowed_trust_classes: [SUPPORTED, AUTHORITATIVE]
+    pass_if: [precommitted_metrics_evaluated, uncertainty_reported, deviations_disclosed, independent_verifier_completed]
+
+  - id: adversarial_review_complete
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [adversarial_review_evidence]
+    allowed_trust_classes: [SUPPORTED]
+    pass_if: [counterarguments_tested, leakage_rechecked, confounds_rechecked, boundary_cases_tested]
+
+  - id: research_decision_ready
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [decision_evidence]
+    allowed_trust_classes: [SUPPORTED, AUTHORITATIVE]
+    pass_if: [outcome_in_PASS_FAIL_PIVOT, decision_traces_to_protocol_thresholds, next_action_explicit]
+
+  - id: pivot_ready
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [pivot_rationale_evidence]
+    allowed_trust_classes: [SUPPORTED]
+    pass_if: [invalidated_assumptions_explicit, preserved_evidence_explicit, earliest_resume_artifact_explicit]
+
+  - id: replication_complete
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [replication_evidence, provenance_evidence]
+    allowed_trust_classes: [AUTHORITATIVE]
+    pass_if: [replay_or_replication_completed, divergence_reported, reproducibility_verdict_explicit]
+
+  - id: report_complete
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [report_manifest_evidence]
+    allowed_trust_classes: [SUPPORTED, AUTHORITATIVE]
+    pass_if: [claims_trace_to_evidence, negative_results_included, pivot_history_included, limitations_included, reproducibility_steps_included]
+
+  - id: handoff_complete
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [artifact_manifest_evidence, provenance_evidence]
+    allowed_trust_classes: [AUTHORITATIVE]
+    pass_if: [checkpoint_recorded, unresolved_issues_recorded, resume_target_recorded, hashes_and_commands_recorded]
+
+# -----------------------------------------------------------------------------
+# 5) Failure taxonomy. Operational failure is distinct from research outcome FAIL.
+# A hypothesis FAIL is a legitimate scientific result and still proceeds to
+# replication/replay (where meaningful), report, and handoff.
+# -----------------------------------------------------------------------------
+failure_types:
+  - {id: approval_missing, maps_to: PRIM-FAILURE, default_decision: WAIT, retryable: false, root_candidates: [research_goal, hypothesis, protocol, experiment_plan, decision_record, pivot_plan]}
+  - {id: goal_ambiguity, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [research_goal]}
+  - {id: insufficient_prior_art, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [prior_art_landscape]}
+  - {id: novelty_collision, maps_to: PRIM-FAILURE, default_decision: REPLAN, retryable: false, root_candidates: [novelty_assessment, research_goal]}
+  - {id: source_unavailable, maps_to: PRIM-FAILURE, default_decision: RETRY, retryable: true, retry_budget: 2, root_candidates: [prior_art_landscape]}
+  - {id: hypothesis_not_falsifiable, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [hypothesis]}
+  - {id: hypothesis_scope_mismatch, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [hypothesis, research_goal]}
+  - {id: formalization_inconsistent, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [formal_model]}
+  - {id: variable_not_operationalizable, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [formal_model, hypothesis]}
+  - {id: protocol_leakage, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [protocol]}
+  - {id: circular_metric, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [protocol, formal_model]}
+  - {id: confound_uncontrolled, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [protocol]}
+  - {id: insufficient_statistical_plan, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [protocol]}
+  - {id: data_leakage, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [dataset_benchmark_spec, protocol]}
+  - {id: benchmark_contamination, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [dataset_benchmark_spec]}
+  - {id: oracle_undefined, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [dataset_benchmark_spec, protocol]}
+  - {id: insufficient_sample, maps_to: PRIM-FAILURE, default_decision: REPLAN, retryable: false, root_candidates: [dataset_benchmark_spec, protocol]}
+  - {id: implementation_contract_mismatch, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [implementation_manifest, experiment_plan]}
+  - {id: dependency_failure, maps_to: PRIM-FAILURE, default_decision: RETRY, retryable: true, retry_budget: 3, root_candidates: [implementation_manifest]}
+  - {id: environment_failure, maps_to: PRIM-FAILURE, default_decision: RETRY, retryable: true, retry_budget: 3, root_candidates: [implementation_manifest]}
+  - {id: preflight_failure, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [implementation_manifest, protocol, dataset_benchmark_spec]}
+  - {id: missing_evidence_path, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [implementation_manifest, experiment_plan]}
+  - {id: stale_input, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [research_goal, hypothesis, protocol, dataset_benchmark_spec, experiment_plan]}
+  - {id: pilot_degenerate, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [experiment_plan, implementation_manifest, protocol]}
+  - {id: metric_empty, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [implementation_manifest, experiment_plan]}
+  - {id: runtime_timeout, maps_to: PRIM-FAILURE, default_decision: RETRY, retryable: true, retry_budget: 3, root_candidates: [implementation_manifest]}
+  - {id: effect_unmeasurable, maps_to: PRIM-FAILURE, default_decision: REPLAN, retryable: false, root_candidates: [protocol, hypothesis]}
+  - {id: protocol_mismatch, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [protocol, experiment_plan]}
+  - {id: process_crash, maps_to: PRIM-FAILURE, default_decision: RETRY, retryable: true, retry_budget: 3, root_candidates: [implementation_manifest]}
+  - {id: missing_metrics, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [implementation_manifest, experiment_plan]}
+  - {id: partial_run, maps_to: PRIM-FAILURE, default_decision: RETRY, retryable: true, retry_budget: 2, root_candidates: [implementation_manifest]}
+  - {id: analysis_protocol_deviation, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [analysis_result, protocol]}
+  - {id: insufficient_evidence, maps_to: PRIM-FAILURE, default_decision: WAIT, retryable: false, root_candidates: [experiment_result, analysis_result]}
+  - {id: statistical_invalidity, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [analysis_result, protocol]}
+  - {id: hidden_multiple_testing, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [analysis_result, protocol]}
+  - {id: adversarial_review_incomplete, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [adversarial_review]}
+  - {id: critical_confound_found, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [protocol, hypothesis]}
+  - {id: leakage_found, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [dataset_benchmark_spec, protocol]}
+  - {id: protocol_invalidated, maps_to: PRIM-FAILURE, default_decision: REPLAN, retryable: false, root_candidates: [protocol, hypothesis]}
+  - {id: decision_ambiguous, maps_to: PRIM-FAILURE, default_decision: ESCALATE, retryable: false, root_candidates: [decision_record]}
+  - {id: threshold_not_precommitted, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [protocol, decision_record]}
+  - {id: pivot_scope_undefined, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [pivot_plan]}
+  - {id: pivot_without_evidence, maps_to: PRIM-FAILURE, default_decision: ESCALATE, retryable: false, root_candidates: [pivot_plan, decision_record]}
+  - {id: replication_divergence, maps_to: PRIM-FAILURE, default_decision: REPLAN, retryable: false, root_candidates: [replication_result, experiment_result, implementation_manifest]}
+  - {id: replay_artifact_missing, maps_to: PRIM-FAILURE, default_decision: WAIT, retryable: false, root_candidates: [implementation_manifest, experiment_result]}
+  - {id: provenance_gap, maps_to: PRIM-FAILURE, default_decision: WAIT, retryable: false, root_candidates: [implementation_manifest, experiment_result, replication_result]}
+  - {id: report_traceability_gap, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [final_report]}
+  - {id: unsupported_claim, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [final_report, analysis_result, decision_record]}
+  - {id: missing_negative_result, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [final_report]}
+  - {id: missing_open_issue, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [final_report]}
+  - {id: handoff_incomplete, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [handoff_package]}
+  - {id: checkpoint_missing, maps_to: PRIM-FAILURE, default_decision: WAIT, retryable: false, root_candidates: [handoff_package]}
+
+# Recovery policy is explicit for high-risk or common classes. Other failures use
+# their default_decision plus WorkUnit recovery_policy and EIA routing.
+recovery_policies:
+  - failure_type: novelty_collision
+    maps_to: PRIM-RECOVERY
+    invalidation_mode: AFFECTED_SUBGRAPH
+    require_root_confirmation: true
+    high_impact: true
+    approval_policy: high_impact_research_change
+
+  - failure_type: protocol_leakage
+    maps_to: PRIM-RECOVERY
+    invalidation_mode: AFFECTED_SUBGRAPH
+    require_root_confirmation: true
+    high_impact: true
+    approval_policy: high_impact_research_change
+
+  - failure_type: data_leakage
+    maps_to: PRIM-RECOVERY
+    invalidation_mode: AFFECTED_SUBGRAPH
+    require_root_confirmation: true
+    high_impact: true
+    approval_policy: high_impact_research_change
+
+  - failure_type: pilot_degenerate
+    maps_to: PRIM-RECOVERY
+    invalidation_mode: AFFECTED_SUBGRAPH
+    require_root_confirmation: true
+
+  - failure_type: critical_confound_found
+    maps_to: PRIM-RECOVERY
+    invalidation_mode: AFFECTED_SUBGRAPH
+    require_root_confirmation: true
+    high_impact: true
+    approval_policy: high_impact_research_change
+
+  - failure_type: leakage_found
+    maps_to: PRIM-RECOVERY
+    invalidation_mode: AFFECTED_SUBGRAPH
+    require_root_confirmation: true
+    high_impact: true
+    approval_policy: high_impact_research_change
+
+  - failure_type: protocol_invalidated
+    maps_to: PRIM-RECOVERY
+    invalidation_mode: AFFECTED_SUBGRAPH
+    require_root_confirmation: true
+    high_impact: true
+    approval_policy: high_impact_research_change
+
+  - failure_type: replication_divergence
+    maps_to: PRIM-RECOVERY
+    invalidation_mode: AFFECTED_SUBGRAPH
+    require_root_confirmation: true
+    high_impact: true
+    approval_policy: research_direction_decision
+
+  - failure_type: unsupported_claim
+    maps_to: PRIM-RECOVERY
+    invalidation_mode: AFFECTED_SUBGRAPH
+    require_root_confirmation: true
+
+# -----------------------------------------------------------------------------
+# 6) Governance
+# -----------------------------------------------------------------------------
+roles:
+  - {id: research_lead, maps_to: PRIM-ACTOR}
+  - {id: literature_reviewer, maps_to: PRIM-ACTOR}
+  - {id: protocol_designer, maps_to: PRIM-ACTOR}
+  - {id: experimenter, maps_to: PRIM-ACTOR}
+  - {id: analyst, maps_to: PRIM-ACTOR}
+  - {id: adversarial_reviewer, maps_to: PRIM-ACTOR}
+  - {id: reproducibility_reviewer, maps_to: PRIM-ACTOR}
+  - {id: human_approver, maps_to: PRIM-ACTOR}
+
+authority_policies:
+  - id: research-lead-policy
+    role: research_lead
+    maps_to: PRIM-AUTHORITY
+    allow: [PROPOSE, CREATE_REVISION, EXECUTE, CANCEL, ESCALATE]
+
+  - id: literature-review-policy
+    role: literature_reviewer
+    maps_to: PRIM-AUTHORITY
+    allow: [PROPOSE, CREATE_REVISION, EXECUTE]
+
+  - id: protocol-design-policy
+    role: protocol_designer
+    maps_to: PRIM-AUTHORITY
+    allow: [PROPOSE, CREATE_REVISION, EXECUTE]
+
+  - id: experimenter-policy
+    role: experimenter
+    maps_to: PRIM-AUTHORITY
+    allow: [PROPOSE, CREATE_REVISION, EXECUTE, CANCEL]
+
+  - id: analyst-policy
+    role: analyst
+    maps_to: PRIM-AUTHORITY
+    allow: [PROPOSE, CREATE_REVISION, EXECUTE]
+
+  - id: adversarial-review-policy
+    role: adversarial_reviewer
+    maps_to: PRIM-AUTHORITY
+    allow: [PROPOSE, CREATE_REVISION, EXECUTE, ESCALATE]
+
+  - id: reproducibility-review-policy
+    role: reproducibility_reviewer
+    maps_to: PRIM-AUTHORITY
+    allow: [PROPOSE, CREATE_REVISION, EXECUTE, ESCALATE]
+
+  - id: human-approver-policy
+    role: human_approver
+    maps_to: PRIM-AUTHORITY
+    allow: [APPROVE, CONFIRM, ESCALATE, PROPOSE, CREATE_REVISION, CANCEL]
+
+approval_policies:
+  - id: normative_research_change
+    maps_to: PRIM-APPROVAL
+    requires_actor_type: HUMAN
+    requires_role: human_approver
+    prohibit_self_approval: true
+
+  - id: research_direction_decision
+    maps_to: PRIM-APPROVAL
+    requires_actor_type: HUMAN
+    requires_role: human_approver
+    prohibit_self_approval: true
+
+  - id: high_impact_research_change
+    maps_to: PRIM-APPROVAL
+    requires_actor_type: HUMAN
+    requires_role: human_approver
+    prohibit_self_approval: true
+
+# -----------------------------------------------------------------------------
+# 7) Validity, checkpoints, resume and research outcome semantics
+# These policies are enforced by the v0.2 ResearchOrchestrator where applicable;
+# they remain declarative so alternate research executors can share the same contract.
+# -----------------------------------------------------------------------------
+validity_rules:
+  - artifact_type: hypothesis
+    valid_if: [current_revision, goal_current, novelty_assessment_current, hypothesis_ready_pass]
+  - artifact_type: protocol
+    valid_if: [current_revision, hypothesis_current, formal_model_current, protocol_ready_pass]
+  - artifact_type: experiment_result
+    valid_if: [current_revision, experiment_plan_current, implementation_manifest_current, experiment_complete_pass]
+  - artifact_type: analysis_result
+    valid_if: [current_revision, experiment_result_current, protocol_current, analysis_ready_pass]
+  - artifact_type: final_report
+    valid_if: [current_revision, decision_record_current, report_complete_pass]
+
+checkpoint_policy:
+  maps_to: PRIM-CHECKPOINT
+  create:
+    - AFTER_EVERY_PHASE_PASS
+    - BEFORE_EXPENSIVE_PHASE
+    - ON_ANY_FAILURE
+    - BEFORE_NORMATIVE_REVISION
+    - AFTER_NORMATIVE_REVISION
+    - ON_PASS_FAIL_PIVOT_DECISION
+    - AT_SESSION_END
+  snapshot_must_include:
+    - current_phase
+    - active_workunits
+    - completed_workunits
+    - valid_revisions
+    - dirty_revisions
+    - stale_revisions
+    - blocking_failures
+    - pending_decisions
+    - pending_approvals
+    - last_completed_run
+    - resume_candidates
+    - artifact_hashes
+    - environment_fingerprint
+  resume:
+    reconcile_with_current_truth: true
+    current_truth_wins: true
+    never_replay_chat_as_authority: true
+    route_by: EARLIEST_INVALID_ANCESTOR
+    preserve_valid_ancestors: true
+    rerun_mode: MINIMAL_AFFECTED_SUBGRAPH
+    if_root_unknown: ESCALATE
+    if_same_failure_signature_exhausted: ESCALATE
+
+research_outcome_policy:
+  artifact: decision_record
+  authoritative_values: [PASS, FAIL, PIVOT]
+  PASS:
+    meaning: >-
+      Precommitted support criteria are met and adversarial review did not
+      invalidate the interpretation. PASS is not publication truth; it is the
+      protocol-scoped verdict for the current hypothesis revision.
+    next_phases: [phase_14_replication_or_replay, phase_15_write_final_report, phase_16_handoff_and_archive]
+  FAIL:
+    meaning: >-
+      The current hypothesis revision failed its precommitted falsification or
+      support criteria. This is a valid scientific result, not a runtime failure.
+    next_phases: [phase_14_replication_or_replay, phase_15_write_final_report, phase_16_handoff_and_archive]
+    prohibit_silent_hypothesis_rewrite: true
+  PIVOT:
+    meaning: >-
+      Evidence indicates that continuing the current protocol/hypothesis is no
+      longer the highest-information path. Preserve valid findings, create an
+      approved pivot plan, invalidate only the affected subgraph, and resume from
+      the earliest invalid ancestor.
+    next_phases: [phase_13_pivot_if_required]
+    requires_approval_policy: high_impact_research_change
+    creates_new_lineage_generation: true
+
+pivot_resume_policy:
+  after_phase_13:
+    determine_resume_from: pivot_plan.earliest_resume_artifact
+    allowed_resume_targets:
+      - research_goal
+      - novelty_assessment
+      - hypothesis
+      - formal_model
+      - protocol
+      - dataset_benchmark_spec
+      - experiment_plan
+      - implementation_manifest
+    preserve:
+      - raw_evidence
+      - prior_negative_results
+      - audit_history
+      - superseded_revisions
+      - unaffected_valid_artifacts
+    invalidate: AFFECTED_SUBGRAPH_ONLY
+    checkpoint_before_resume: true
+
+loop_policy:
+  maps_to: PRIM-LOOPGUARD
+  same_signature_limit: 2
+  revision_churn_limit: 3
+  retry_count_limit: 3
+  decision_cycle_limit: 2
+  on_exhaustion: ESCALATE
+
+# -----------------------------------------------------------------------------
+# 8) Reporting and handoff contract
+# -----------------------------------------------------------------------------
+reporting:
+  final_report_artifact: final_report
+  require_negative_results: true
+  require_failed_runs: true
+  require_pivot_history: true
+  require_protocol_deviations: true
+  require_open_questions: true
+  require_claims_evidence_matrix: true
+  require_reproduction_commands: true
+  require_environment_manifest: true
+  require_exact_revision_ids: true
+  sections:
+    - executive_summary
+    - question_and_scope
+    - prior_art_and_novelty
+    - hypothesis_and_null
+    - formal_model_and_assumptions
+    - protocol_and_precommitted_gates
+    - data_and_benchmark
+    - implementation_and_environment
+    - preflight_and_pilot
+    - main_experiments
+    - statistical_analysis
+    - adversarial_falsification
+    - pass_fail_pivot_decision
+    - replication_or_replay
+    - failure_and_recovery_history
+    - limitations
+    - open_questions
+    - claims_evidence_matrix
+    - reproducibility_instructions
+    - artifact_manifest
+
+handoff:
+  artifact: handoff_package
+  must_include:
+    - final_outcome
+    - active_lineage_generation
+    - latest_checkpoint_id
+    - exact_resume_target
+    - valid_artifact_revisions
+    - stale_artifact_revisions
+    - unresolved_failure_records
+    - pending_approvals
+    - open_questions
+    - next_recommended_workunits
+    - repository_commit
+    - environment_fingerprint
+    - reproduction_commands
+    - evidence_manifest
+    - file_hashes
+
+ui_labels:
+  artifact: Research Artifact
+  workunit: Research Phase
+  gate: Research Gate
+  failure: Execution/Method Failure
+  recovery_plan: Recovery Plan
+  checkpoint: Research Checkpoint
+  decision_record: PASS / FAIL / PIVOT Decision

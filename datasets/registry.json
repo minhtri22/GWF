@@ -1,0 +1,279 @@
+{
+  "version": "0.4.1",
+  "datasets": [
+    {
+      "dataset_id": "uci_breast_cancer",
+      "kind": "real",
+      "snapshot_method": "scikit-learn bundled dataset exported to CSV",
+      "file": "breast_cancer.csv",
+      "sha256": "31d9ef5e091619aa2e970163522bffa9fbd9c173cd3ba0da1dbd0f8ab7900616",
+      "rows": 569,
+      "columns": [
+        "mean radius",
+        "mean texture",
+        "mean perimeter",
+        "mean area",
+        "mean smoothness",
+        "mean compactness",
+        "mean concavity",
+        "mean concave points",
+        "mean symmetry",
+        "mean fractal dimension",
+        "radius error",
+        "texture error",
+        "perimeter error",
+        "area error",
+        "smoothness error",
+        "compactness error",
+        "concavity error",
+        "concave points error",
+        "symmetry error",
+        "fractal dimension error",
+        "worst radius",
+        "worst texture",
+        "worst perimeter",
+        "worst area",
+        "worst smoothness",
+        "worst compactness",
+        "worst concavity",
+        "worst concave points",
+        "worst symmetry",
+        "worst fractal dimension",
+        "target"
+      ],
+      "target_column": "target",
+      "target_names": [
+        "malignant",
+        "benign"
+      ],
+      "original_repository": "UCI Machine Learning Repository",
+      "uci_id": 17,
+      "doi": "10.24432/C5DW2B",
+      "source_url": "https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic",
+      "license": "CC BY 4.0",
+      "citation": "Wolberg, W., Mangasarian, O., Street, N., & Street, W. (1993). Breast Cancer Wisconsin (Diagnostic) [Dataset]. UCI Machine Learning Repository.",
+      "notes": "Pinned local development snapshot. Upstream dataset remains the provenance authority."
+    },
+    {
+      "dataset_id": "uci_iris",
+      "kind": "real",
+      "snapshot_method": "scikit-learn bundled dataset exported to CSV",
+      "file": "iris.csv",
+      "sha256": "2a142890aa4d797b0e8746373626a5d81d839bb5a4fd60ac1fbeee6faf0f62d5",
+      "rows": 150,
+      "columns": [
+        "sepal length (cm)",
+        "sepal width (cm)",
+        "petal length (cm)",
+        "petal width (cm)",
+        "target"
+      ],
+      "target_column": "target",
+      "target_names": [
+        "setosa",
+        "versicolor",
+        "virginica"
+      ],
+      "original_repository": "UCI Machine Learning Repository",
+      "uci_id": 53,
+      "doi": "10.24432/C56C76",
+      "source_url": "https://archive.ics.uci.edu/dataset/53/iris",
+      "license": "CC BY 4.0",
+      "citation": "Fisher, R. (1936). Iris [Dataset]. UCI Machine Learning Repository.",
+      "notes": "Pinned local development snapshot. Upstream dataset remains the provenance authority."
+    },
+    {
+      "dataset_id": "uci_wine",
+      "kind": "real",
+      "snapshot_method": "scikit-learn bundled dataset exported to CSV",
+      "file": "wine.csv",
+      "sha256": "2cce9d95d7d95165a591b84741d15d3300f6862a135a28e3601249d42f303056",
+      "rows": 178,
+      "columns": [
+        "alcohol",
+        "malic_acid",
+        "ash",
+        "alcalinity_of_ash",
+        "magnesium",
+        "total_phenols",
+        "flavanoids",
+        "nonflavanoid_phenols",
+        "proanthocyanins",
+        "color_intensity",
+        "hue",
+        "od280/od315_of_diluted_wines",
+        "proline",
+        "target"
+      ],
+      "target_column": "target",
+      "target_names": [
+        "class_0",
+        "class_1",
+        "class_2"
+      ],
+      "original_repository": "UCI Machine Learning Repository",
+      "uci_id": 109,
+      "doi": "10.24432/C5PC7J",
+      "source_url": "https://archive.ics.uci.edu/dataset/109/wine",
+      "license": "CC BY 4.0",
+      "citation": "Aeberhard, S. & Forina, M. (1992). Wine [Dataset]. UCI Machine Learning Repository.",
+      "notes": "Pinned local development snapshot. Upstream dataset remains the provenance authority."
+    },
+    {
+      "dataset_id": "synth_clear_effect",
+      "kind": "synthetic",
+      "generator_seed": 170917,
+      "file": "clear_effect.csv",
+      "sha256": "47d8032087d63d57bd7cae56e973747c8bf8a0e602d83c82bcd7cbf2b19f7e4b",
+      "rows": 160,
+      "columns": [
+        "group",
+        "value",
+        "row_id"
+      ],
+      "license": "CC0",
+      "known_issues": [],
+      "notes": "Expected PASS for B-A mean difference >=0.7."
+    },
+    {
+      "dataset_id": "synth_confounded",
+      "kind": "synthetic",
+      "generator_seed": 170917,
+      "file": "confounded.csv",
+      "sha256": "ea072d7e98e347340543433b9960bec16081239a9150a502c30bb9280bcb0ff7",
+      "rows": 240,
+      "columns": [
+        "group",
+        "confounder",
+        "value",
+        "row_id"
+      ],
+      "license": "CC0",
+      "known_issues": [
+        "CRITICAL_CONFOUND"
+      ],
+      "notes": "Unadjusted group effect is largely induced by confounder imbalance."
+    },
+    {
+      "dataset_id": "synth_leakage",
+      "kind": "synthetic",
+      "generator_seed": 170917,
+      "file": "leakage.csv",
+      "sha256": "66d80382053876d9b9f80c93da1642071b211dd3067e99e231b42dc2c44afc74",
+      "rows": 160,
+      "columns": [
+        "x",
+        "target",
+        "target_leak",
+        "row_id"
+      ],
+      "license": "CC0",
+      "known_issues": [
+        "TARGET_LEAKAGE"
+      ],
+      "notes": "target_leak is intentionally identical to target."
+    },
+    {
+      "dataset_id": "synth_missingness",
+      "kind": "synthetic",
+      "generator_seed": 170917,
+      "file": "missingness.csv",
+      "sha256": "72d679bef5d13b946fb22a18473451b80bbf60f7c1358c96d67f84fd6f284b79",
+      "rows": 160,
+      "columns": [
+        "group",
+        "value",
+        "row_id"
+      ],
+      "license": "CC0",
+      "known_issues": [
+        "HIGH_TARGET_MISSINGNESS"
+      ],
+      "notes": "Intentional differential missingness in group B."
+    },
+    {
+      "dataset_id": "synth_null_effect",
+      "kind": "synthetic",
+      "generator_seed": 170917,
+      "file": "null_effect.csv",
+      "sha256": "17a1929763833e5bc4c5533319b97ebcba9ff68c974fc2fd34382f7ef7100d68",
+      "rows": 160,
+      "columns": [
+        "group",
+        "value",
+        "row_id"
+      ],
+      "license": "CC0",
+      "known_issues": [],
+      "notes": "Expected scientific FAIL for positive-effect claim."
+    },
+    {
+      "dataset_id": "synth_schema_drift_v1",
+      "kind": "synthetic",
+      "generator_seed": 170917,
+      "file": "schema_drift_v1.csv",
+      "sha256": "f4e03ae9af33919a94ed8dc6e2e15ab78bad6bd62b6c6353d698a4fbf38464db",
+      "rows": 80,
+      "columns": [
+        "group",
+        "value",
+        "row_id"
+      ],
+      "license": "CC0",
+      "known_issues": [],
+      "notes": "Expected schema."
+    },
+    {
+      "dataset_id": "synth_schema_drift_v2",
+      "kind": "synthetic",
+      "generator_seed": 170917,
+      "file": "schema_drift_v2.csv",
+      "sha256": "cb0d5dada499f993fa4f300b6a35a9ba7915051e3fcbbc7603c56f9be8352e0e",
+      "rows": 80,
+      "columns": [
+        "arm",
+        "measurement",
+        "row_id"
+      ],
+      "license": "CC0",
+      "known_issues": [
+        "SCHEMA_DRIFT"
+      ],
+      "notes": "Renamed columns intentionally violate v1 contract."
+    },
+    {
+      "dataset_id": "synth_underpowered",
+      "kind": "synthetic",
+      "generator_seed": 170917,
+      "file": "underpowered.csv",
+      "sha256": "63295310f567eecf61eb6437e5440df161fdf0ed1122d8e504ea333fed09be2b",
+      "rows": 16,
+      "columns": [
+        "group",
+        "value",
+        "row_id"
+      ],
+      "license": "CC0",
+      "known_issues": [
+        "INSUFFICIENT_SAMPLE"
+      ],
+      "notes": "Expected PIVOT because n/group < 20."
+    },
+    {
+      "dataset_id": "synth_underpowered_augmented",
+      "kind": "synthetic",
+      "generator_seed": 170917,
+      "file": "underpowered_augmented.csv",
+      "sha256": "83fb11fa32437a98c16208faa361421c1459c92505152b48a2804c95228fee6b",
+      "rows": 120,
+      "columns": [
+        "group",
+        "value",
+        "row_id"
+      ],
+      "license": "CC0",
+      "known_issues": [],
+      "notes": "Post-pivot augmented sample; expected PASS."
+    }
+  ]
+}

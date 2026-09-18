@@ -1,0 +1,18 @@
+{
+  "dataset_id": "synth_schema_drift_v2",
+  "kind": "synthetic",
+  "generator_seed": 170917,
+  "file": "schema_drift_v2.csv",
+  "sha256": "cb0d5dada499f993fa4f300b6a35a9ba7915051e3fcbbc7603c56f9be8352e0e",
+  "rows": 80,
+  "columns": [
+    "arm",
+    "measurement",
+    "row_id"
+  ],
+  "license": "CC0",
+  "known_issues": [
+    "SCHEMA_DRIFT"
+  ],
+  "notes": "Renamed columns intentionally violate v1 contract."
+}

@@ -1,0 +1,95 @@
+domain_id: example.workflow
+version: 0.1.0
+compatible_runtime_versions: ["0.1.x"]
+artifact_types:
+  - id: intent
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: true
+    approval_policy: normative_change
+  - id: plan
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: true
+    approval_policy: normative_change
+  - id: result
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+trace_types:
+  - id: derived_from
+    maps_to: PRIM-TRACE
+    strength: HARD
+    invalidates_on_upstream_supersede: true
+    propagation_rule: MARK_STALE
+workunit_templates:
+  - id: execute_plan
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: plan}]
+    outputs: [{artifact_type: result}]
+    executor_role: operator
+    required_gate_types: [plan_ready]
+    evidence_required: [automated_result]
+    success_conditions: [result_verified]
+    known_failure_modes: [tool_timeout, contract_mismatch]
+    retry_policy: {max_attempts: 3, retryable_failure_codes: [tool_timeout], same_signature_limit: 2}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [executor]
+evidence_types:
+  - id: automated_result
+    maps_to: PRIM-EVIDENCE
+    trust_class: AUTHORITATIVE
+gate_types:
+  - id: plan_ready
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    allowed_trust_classes: [AUTHORITATIVE, SUPPORTED]
+  - id: result_verified
+    maps_to: PRIM-GATE
+    required_validity: {inputs: VALID}
+    required_evidence_types: [automated_result]
+    allowed_trust_classes: [AUTHORITATIVE]
+failure_types:
+  - id: tool_timeout
+    maps_to: PRIM-FAILURE
+    default_decision: RETRY
+    retryable: true
+    retry_budget: 2
+  - id: contract_mismatch
+    maps_to: PRIM-FAILURE
+    default_decision: REVISE_UPSTREAM
+    root_candidates: [plan, intent]
+recovery_policies:
+  - failure_type: contract_mismatch
+    maps_to: PRIM-RECOVERY
+    invalidation_mode: AFFECTED_SUBGRAPH
+    require_root_confirmation: true
+roles:
+  - {id: planner, maps_to: PRIM-ACTOR}
+  - {id: operator, maps_to: PRIM-ACTOR}
+  - {id: approver, maps_to: PRIM-ACTOR}
+authority_policies:
+  - id: planner-policy
+    role: planner
+    maps_to: PRIM-AUTHORITY
+    allow: [PROPOSE, CREATE_REVISION]
+  - id: operator-policy
+    role: operator
+    maps_to: PRIM-AUTHORITY
+    allow: [EXECUTE, CREATE_REVISION, PROPOSE, CANCEL]
+  - id: approver-policy
+    role: approver
+    maps_to: PRIM-AUTHORITY
+    allow: [APPROVE, CONFIRM, ESCALATE, CREATE_REVISION, PROPOSE]
+approval_policies:
+  - id: normative_change
+    maps_to: PRIM-APPROVAL
+    requires_actor_type: HUMAN
+    requires_role: approver
+    prohibit_self_approval: true
+validity_rules: []
+loop_policy:
+  maps_to: PRIM-LOOPGUARD
+  same_signature_limit: 2
+  revision_churn_limit: 3

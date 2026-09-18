@@ -1,0 +1,19 @@
+{
+  "dataset_id": "synth_confounded",
+  "kind": "synthetic",
+  "generator_seed": 170917,
+  "file": "confounded.csv",
+  "sha256": "ea072d7e98e347340543433b9960bec16081239a9150a502c30bb9280bcb0ff7",
+  "rows": 240,
+  "columns": [
+    "group",
+    "confounder",
+    "value",
+    "row_id"
+  ],
+  "license": "CC0",
+  "known_issues": [
+    "CRITICAL_CONFOUND"
+  ],
+  "notes": "Unadjusted group effect is largely induced by confounder imbalance."
+}

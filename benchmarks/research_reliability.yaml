@@ -1,0 +1,101 @@
+version: 0.4.1
+purpose: >-
+  Controlled research-runtime benchmark combining pinned public datasets with deterministic
+  synthetic fixtures. It is an acceptance benchmark for workflow correctness, not a claim
+  that the listed scientific questions are novel research.
+cases:
+  - id: real_iris_petal_length
+    dataset_id: uci_iris
+    expected_terminal_outcome: PASS
+    hypothesis: Virginica mean petal length exceeds Versicolor by at least 1.0 cm.
+    group_column: target
+    value_column: petal length (cm)
+    group_a: 1
+    group_b: 2
+    min_effect: 1.0
+    min_per_group: 20
+    alpha: 0.01
+    permutations: 1200
+  - id: real_wine_alcohol
+    dataset_id: uci_wine
+    expected_terminal_outcome: PASS
+    hypothesis: Wine class 0 mean alcohol exceeds class 2 by at least 0.5 percentage points in the pinned UCI snapshot.
+    group_column: target
+    value_column: alcohol
+    group_a: 2
+    group_b: 0
+    min_effect: 0.5
+    min_per_group: 20
+    alpha: 0.05
+    permutations: 1200
+  - id: real_breast_radius
+    dataset_id: uci_breast_cancer
+    expected_terminal_outcome: PASS
+    hypothesis: Malignant cases have mean radius at least 4.0 units higher than benign cases in the pinned diagnostic dataset.
+    group_column: target
+    value_column: mean radius
+    group_a: 1
+    group_b: 0
+    min_effect: 4.0
+    min_per_group: 20
+    alpha: 0.01
+    permutations: 1200
+  - id: synth_clear_effect
+    dataset_id: synth_clear_effect
+    expected_terminal_outcome: PASS
+    hypothesis: Group B mean exceeds Group A by at least 0.7.
+    group_column: group
+    value_column: value
+    group_a: A
+    group_b: B
+    min_effect: 0.7
+    min_per_group: 20
+    alpha: 0.01
+    permutations: 1200
+  - id: synth_null_effect
+    dataset_id: synth_null_effect
+    expected_terminal_outcome: FAIL
+    hypothesis: Group B mean exceeds Group A by at least 0.5.
+    group_column: group
+    value_column: value
+    group_a: A
+    group_b: B
+    min_effect: 0.5
+    min_per_group: 20
+    alpha: 0.05
+    permutations: 1200
+  - id: synth_underpowered_pivot
+    dataset_id: synth_underpowered
+    pivot_dataset_id: synth_underpowered_augmented
+    expected_terminal_outcome: PASS
+    expected_pivot_count: 1
+    hypothesis: Group B mean exceeds Group A by at least 0.5, but the initial sample is insufficient and must pivot to a larger predeclared fixture.
+    group_column: group
+    value_column: value
+    group_a: A
+    group_b: B
+    min_effect: 0.5
+    min_per_group: 20
+    alpha: 0.05
+    permutations: 1200
+quality_cases:
+  - id: leakage_detection
+    dataset_id: synth_leakage
+    target_column: target
+    expected_issue: TARGET_LEAKAGE
+  - id: missingness_detection
+    dataset_id: synth_missingness
+    target_column: value
+    max_target_missing: 0.10
+    expected_issue: HIGH_TARGET_MISSINGNESS
+  - id: confound_detection
+    dataset_id: synth_confounded
+    confounder:
+      group: group
+      value: value
+      column: confounder
+    expected_issue: CRITICAL_CONFOUND
+  - id: schema_drift_detection
+    dataset_id: synth_schema_drift_v2
+    expected_columns: [group, value, row_id]
+    expected_issue: SCHEMA_DRIFT

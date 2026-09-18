@@ -1,0 +1,28 @@
+{
+  "dataset_id": "uci_iris",
+  "kind": "real",
+  "snapshot_method": "scikit-learn bundled dataset exported to CSV",
+  "file": "iris.csv",
+  "sha256": "2a142890aa4d797b0e8746373626a5d81d839bb5a4fd60ac1fbeee6faf0f62d5",
+  "rows": 150,
+  "columns": [
+    "sepal length (cm)",
+    "sepal width (cm)",
+    "petal length (cm)",
+    "petal width (cm)",
+    "target"
+  ],
+  "target_column": "target",
+  "target_names": [
+    "setosa",
+    "versicolor",
+    "virginica"
+  ],
+  "original_repository": "UCI Machine Learning Repository",
+  "uci_id": 53,
+  "doi": "10.24432/C56C76",
+  "source_url": "https://archive.ics.uci.edu/dataset/53/iris",
+  "license": "CC BY 4.0",
+  "citation": "Fisher, R. (1936). Iris [Dataset]. UCI Machine Learning Repository.",
+  "notes": "Pinned local development snapshot. Upstream dataset remains the provenance authority."
+}

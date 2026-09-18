@@ -1,0 +1,16 @@
+{
+  "dataset_id": "synth_underpowered_augmented",
+  "kind": "synthetic",
+  "generator_seed": 170917,
+  "file": "underpowered_augmented.csv",
+  "sha256": "83fb11fa32437a98c16208faa361421c1459c92505152b48a2804c95228fee6b",
+  "rows": 120,
+  "columns": [
+    "group",
+    "value",
+    "row_id"
+  ],
+  "license": "CC0",
+  "known_issues": [],
+  "notes": "Post-pivot augmented sample; expected PASS."
+}

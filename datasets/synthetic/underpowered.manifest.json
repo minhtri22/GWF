@@ -1,0 +1,18 @@
+{
+  "dataset_id": "synth_underpowered",
+  "kind": "synthetic",
+  "generator_seed": 170917,
+  "file": "underpowered.csv",
+  "sha256": "63295310f567eecf61eb6437e5440df161fdf0ed1122d8e504ea333fed09be2b",
+  "rows": 16,
+  "columns": [
+    "group",
+    "value",
+    "row_id"
+  ],
+  "license": "CC0",
+  "known_issues": [
+    "INSUFFICIENT_SAMPLE"
+  ],
+  "notes": "Expected PIVOT because n/group < 20."
+}

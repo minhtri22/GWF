@@ -1,0 +1,37 @@
+{
+  "dataset_id": "uci_wine",
+  "kind": "real",
+  "snapshot_method": "scikit-learn bundled dataset exported to CSV",
+  "file": "wine.csv",
+  "sha256": "2cce9d95d7d95165a591b84741d15d3300f6862a135a28e3601249d42f303056",
+  "rows": 178,
+  "columns": [
+    "alcohol",
+    "malic_acid",
+    "ash",
+    "alcalinity_of_ash",
+    "magnesium",
+    "total_phenols",
+    "flavanoids",
+    "nonflavanoid_phenols",
+    "proanthocyanins",
+    "color_intensity",
+    "hue",
+    "od280/od315_of_diluted_wines",
+    "proline",
+    "target"
+  ],
+  "target_column": "target",
+  "target_names": [
+    "class_0",
+    "class_1",
+    "class_2"
+  ],
+  "original_repository": "UCI Machine Learning Repository",
+  "uci_id": 109,
+  "doi": "10.24432/C5PC7J",
+  "source_url": "https://archive.ics.uci.edu/dataset/109/wine",
+  "license": "CC BY 4.0",
+  "citation": "Aeberhard, S. & Forina, M. (1992). Wine [Dataset]. UCI Machine Learning Repository.",
+  "notes": "Pinned local development snapshot. Upstream dataset remains the provenance authority."
+}

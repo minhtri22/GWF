@@ -1,0 +1,19 @@
+{
+  "dataset_id": "synth_leakage",
+  "kind": "synthetic",
+  "generator_seed": 170917,
+  "file": "leakage.csv",
+  "sha256": "66d80382053876d9b9f80c93da1642071b211dd3067e99e231b42dc2c44afc74",
+  "rows": 160,
+  "columns": [
+    "x",
+    "target",
+    "target_leak",
+    "row_id"
+  ],
+  "license": "CC0",
+  "known_issues": [
+    "TARGET_LEAKAGE"
+  ],
+  "notes": "target_leak is intentionally identical to target."
+}

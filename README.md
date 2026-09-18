@@ -1,28 +1,37 @@
-# Governed Workflow Runtime (GWF)
+# Governed Workflow Runtime v0.5.1 — PostgreSQL Equivalence Gate
 
-GWF is a domain-neutral governed workflow runtime with artifact lineage/validity, execution/checkpoint/resume, failure recovery, gates, authority, approval and audit semantics.
+This package is the v0.5 Production Foundation plus a strict live-PostgreSQL gate that must pass before v0.6 Identity / Multi-tenancy begins.
 
-Current milestone: **v0.5.1r1 PostgreSQL Equivalence Gate**. v0.6 Identity/Multi-tenancy remains blocked until the live PostgreSQL gate passes.
+## Current status
 
-## Repository status
+**Gate implementation: complete. Live PostgreSQL gate: BLOCKED_ENVIRONMENT. v0.6: NOT STARTED.**
 
-The GitHub connector has write access to this private repository and the PostgreSQL gate workflow is being wired here. The authoritative v0.5.1r1 implementation package remains the previously QA'd release artifact; this repository must not claim source import or PostgreSQL equivalence PASS until the checked-in source and CI evidence are complete.
+Verified here:
 
-Local evidence from v0.5.1r1:
+- SQLite tests: **41/41 PASS**
+- Research reliability benchmark: **6/6 expected semantics PASS**
+- Implementation QA: **PASS**
 
-- SQLite regression suite: **41/41 PASS**
-- Research reliability benchmark: **6/6 expected semantics**
-- Kernel/implementation QA: **PASS**
-- Live PostgreSQL equivalence: **NOT YET PASSED**
+Not yet verified here:
 
-## PostgreSQL release gate
+- 41 tests on a real PostgreSQL instance
+- 6 research cases on PostgreSQL
+- mid-workflow PostgreSQL restart persistence
+- SQLite/PostgreSQL semantic equivalence
 
-The intended CI gate runs PostgreSQL 17 and must prove all of the following before v0.6 may start:
+The execution environment used to build this package has no PostgreSQL server, no psycopg driver, no external DSN, and cannot install the missing packages. The package does not claim a false PASS.
 
-- the same 41 regression tests pass on SQLite and PostgreSQL;
-- all 6 research reliability cases run on both backends;
-- close/reopen during workflow preserves state/evidence/checkpoint;
-- SQLite/PostgreSQL semantic snapshots are equivalent;
-- final gate emits `v06_unblocked=true`.
+## Close the gate
 
-No live PostgreSQL PASS is claimed until CI produces the required evidence.
+```bash
+pip install 'psycopg[binary]>=3'
+export GWR_TEST_DATABASE_URL='postgresql://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require'
+export PYTHONPATH=src
+python tools/run_v051_gate.py --out evidence/v0.5.1/live_postgres_gate
+```
+
+Read `docs/V0.5.1_POSTGRES_GATE.md` and `docs/HANDOFF_V0.5.1.md`.
+
+## v0.5.1r1 PostgreSQL gate hardening
+
+The local sandbox cannot reach a PostgreSQL service, so this package still does not claim the live gate is closed. It now includes a real PostgreSQL preflight and `.github/workflows/postgres-gate.yml`, which runs the full gate against a PostgreSQL 17 service container on GitHub Actions. See `docs/V0.5.1R1_GATE_HARDENING.md`.

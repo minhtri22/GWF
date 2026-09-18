@@ -1,0 +1,16 @@
+{
+  "dataset_id": "synth_schema_drift_v1",
+  "kind": "synthetic",
+  "generator_seed": 170917,
+  "file": "schema_drift_v1.csv",
+  "sha256": "f4e03ae9af33919a94ed8dc6e2e15ab78bad6bd62b6c6353d698a4fbf38464db",
+  "rows": 80,
+  "columns": [
+    "group",
+    "value",
+    "row_id"
+  ],
+  "license": "CC0",
+  "known_issues": [],
+  "notes": "Expected schema."
+}

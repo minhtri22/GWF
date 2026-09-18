@@ -1,0 +1,18 @@
+{
+  "dataset_id": "synth_missingness",
+  "kind": "synthetic",
+  "generator_seed": 170917,
+  "file": "missingness.csv",
+  "sha256": "72d679bef5d13b946fb22a18473451b80bbf60f7c1358c96d67f84fd6f284b79",
+  "rows": 160,
+  "columns": [
+    "group",
+    "value",
+    "row_id"
+  ],
+  "license": "CC0",
+  "known_issues": [
+    "HIGH_TARGET_MISSINGNESS"
+  ],
+  "notes": "Intentional differential missingness in group B."
+}

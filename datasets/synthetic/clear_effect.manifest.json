@@ -1,0 +1,16 @@
+{
+  "dataset_id": "synth_clear_effect",
+  "kind": "synthetic",
+  "generator_seed": 170917,
+  "file": "clear_effect.csv",
+  "sha256": "47d8032087d63d57bd7cae56e973747c8bf8a0e602d83c82bcd7cbf2b19f7e4b",
+  "rows": 160,
+  "columns": [
+    "group",
+    "value",
+    "row_id"
+  ],
+  "license": "CC0",
+  "known_issues": [],
+  "notes": "Expected PASS for B-A mean difference >=0.7."
+}

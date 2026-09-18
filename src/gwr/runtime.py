@@ -1,0 +1,50 @@
+from __future__ import annotations
+from pathlib import Path
+from .db import create_database
+from .domain import load_domain, DomainPackage
+from .governance import GovernanceKernel
+from .knowledge import KnowledgeKernel
+from .decision import DecisionKernel
+from .execution import ExecutionKernel
+from .utils import uid, utcnow
+from .auth import HumanAuthService
+from .object_store import LocalContentAddressedStore, ObjectRefService
+from .observability import NullObserver, JsonlObserver
+
+class GovernedWorkflowRuntime:
+    def __init__(self, domain: str|DomainPackage, db_path=":memory:", *, auth_secret=None, object_store_root=None, observer=None, observability_path=None):
+        self.domain=load_domain(domain) if not isinstance(domain,DomainPackage) else domain
+        self.db=create_database(db_path)
+        if observer is not None:
+            self.observer=observer
+        elif observability_path:
+            self.observer=JsonlObserver(observability_path)
+        else:
+            self.observer=NullObserver()
+        self.governance=GovernanceKernel(self.db,self.domain); self.governance.install_domain_policies()
+        self.auth=HumanAuthService(self.db, auth_secret)
+        self.governance.bind_auth(self.auth)
+        if not self.db.one("SELECT 1 FROM actors WHERE actor_id='SYSTEM'"):
+            self.db.conn.execute("INSERT INTO actors VALUES(?,?,?,?,?,?,?)",("SYSTEM","SYSTEM","runtime",'["system"]','["*"]',"ACTIVE",'{}')); self.db.conn.commit()
+        self.knowledge=KnowledgeKernel(self.db,self.domain,self.governance)
+        self.decision=DecisionKernel(self.db,self.domain,self.knowledge,self.governance)
+        self.execution=ExecutionKernel(self.db,self.domain,self.knowledge,self.decision,self.governance)
+        self.object_store=None; self.objects=None
+        if object_store_root:
+            self.object_store=LocalContentAddressedStore(object_store_root)
+            self.objects=ObjectRefService(self.db,self.object_store)
+        self.observe("runtime_initialized", backend=getattr(self.db,"backend_name","unknown"), domain_id=self.domain.domain_id)
+    def observe(self,event,**attrs):
+        return self.observer.emit(event,**attrs)
+    def create_project(self,name,project_id=None):
+        pid=project_id or uid("project"); self.db.conn.execute("INSERT INTO projects VALUES(?,?,?,?)",(pid,name,self.domain.domain_id,utcnow())); self.db.conn.commit(); self.observe("project_created",project_id=pid,domain_id=self.domain.domain_id); return pid
+    def attach_blob(self,project_id,owner_kind,owner_id,data,content_type="application/octet-stream"):
+        if not self.objects: raise RuntimeError("object store is not configured")
+        ref=self.objects.attach_bytes(project_id,owner_kind,owner_id,data,content_type=content_type); self.observe("object_attached",project_id=project_id,owner_kind=owner_kind,owner_id=owner_id,sha256=ref["sha256"],size_bytes=ref["size_bytes"]); return ref
+    def commit_approved_proposal(self, proposal_id, actor_id, expected_version=0):
+        p=self.governance.require_approved(proposal_id)
+        if p["action"]=="CREATE_REVISION": return self.knowledge.commit_revision_from_proposal(proposal_id,actor_id,expected_version)
+        raise ValueError(f"No runtime dispatcher for proposal action {p['action']}")
+    def close(self):
+        self.observe("runtime_closed")
+        self.db.close()
