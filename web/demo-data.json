@@ -1,0 +1,152 @@
+{
+  "product": {
+    "name": "GWR Research Product Alpha",
+    "version": "0.8.0",
+    "mode": "STATIC_UAT",
+    "domain": {
+      "domain_id": "research.full-cycle",
+      "version": "0.3.0",
+      "description": "Governed full-cycle research workflow from goal lock through evidence, decision, replication and handoff.",
+      "fingerprint": "demo:research.full-cycle:0.3.0",
+      "counts": {
+        "artifact_types": 19,
+        "workunit_templates": 17,
+        "gate_types": 17,
+        "failure_types": 52,
+        "approval_policies": 4,
+        "roles": 8
+      }
+    }
+  },
+  "projects": [
+    {
+      "id": "project_cqg_alpha",
+      "name": "CQG Calibration Pilot",
+      "tenant": "Research Lab",
+      "workspace": "Controlled Pilots",
+      "status": "PAUSED",
+      "outcome": "PROVISIONAL",
+      "audit_count": 184,
+      "metrics": {
+        "pending_approvals": 1,
+        "open_failures": 1,
+        "active_jobs": 1,
+        "phase_executions": 12
+      },
+      "phases": [
+        {"id":"phase_00_lock_goal","label":"Lock goal","status":"PASS","generation":0},
+        {"id":"phase_01_prior_art_and_novelty","label":"Prior art & novelty","status":"PASS","generation":0},
+        {"id":"phase_02_define_hypothesis","label":"Define hypothesis","status":"PASS","generation":0},
+        {"id":"phase_03_formalize","label":"Formalize","status":"PASS","generation":0},
+        {"id":"phase_04_design_protocol","label":"Design protocol","status":"PASS","generation":0},
+        {"id":"phase_05_prepare_dataset_and_benchmark","label":"Dataset & benchmark","status":"PASS","generation":0},
+        {"id":"phase_06_plan_and_implement_experiment","label":"Experiment plan","status":"PASS","generation":0},
+        {"id":"phase_07_preflight","label":"Preflight","status":"PASS","generation":0},
+        {"id":"phase_08_pilot","label":"Pilot","status":"FAIL","generation":0,"detail":"calibration opportunity-cost gate failed"},
+        {"id":"phase_06_plan_and_implement_experiment","label":"Experiment plan · recovery","status":"PASS","generation":1},
+        {"id":"phase_07_preflight","label":"Preflight · recovery","status":"PASS","generation":1},
+        {"id":"phase_08_pilot","label":"Pilot · waiting","status":"RUNNING","generation":1,"detail":"awaiting authenticated recovery approval"}
+      ],
+      "frontier": [
+        {"name":"research_goal","state":"VALID"},
+        {"name":"hypothesis","state":"VALID"},
+        {"name":"formal_model","state":"VALID"},
+        {"name":"protocol","state":"VALID"},
+        {"name":"dataset_benchmark_spec","state":"VALID"},
+        {"name":"experiment_plan","state":"DIRTY"},
+        {"name":"pilot_result","state":"STALE"}
+      ],
+      "approvals": [
+        {
+          "proposal_id":"prop_uat_recovery_001",
+          "action":"CONFIRM_ROOT",
+          "policy":"human_recovery_confirmation",
+          "status":"PENDING_APPROVAL",
+          "payload_hash":"2af4a980ff93e7c47be71f58da35387e95509d1cdb81f201ad646f4d25a94f8e",
+          "resource_refs":["failure:fail_calibration_001","artifact:experiment_plan"],
+          "payload":{
+            "failure_id":"fail_calibration_001",
+            "root_artifact":"experiment_plan",
+            "resume_phase":"phase_06_plan_and_implement_experiment",
+            "invalidate":["pilot_result"],
+            "keep_valid":["research_goal","hypothesis","formal_model","protocol","dataset_benchmark_spec"]
+          }
+        }
+      ],
+      "failures":[
+        {
+          "failure_id":"fail_calibration_001",
+          "failure_class":"calibration_gate_failed",
+          "detected_stage":"phase_08_pilot",
+          "severity":"MEDIUM",
+          "status":"RECOVERY_PLANNED",
+          "root_ref":"experiment_plan",
+          "root_status":"PROPOSED",
+          "resume_candidate":"phase_06_plan_and_implement_experiment",
+          "recovery":{
+            "recovery_id":"rec_calibration_001",
+            "status":"PLANNED",
+            "resume_target":"phase_06_plan_and_implement_experiment",
+            "mark_stale":["pilot_result"],
+            "keep_valid":["research_goal","hypothesis","formal_model","protocol","dataset_benchmark_spec"]
+          }
+        }
+      ],
+      "distributed":{
+        "workers":[
+          {"worker_id":"worker_cpu_a","status":"ACTIVE","cpu":"2/8","memory":"6.2/16 GB","labels":["python","statistics"],"last_heartbeat":"8s ago"},
+          {"worker_id":"worker_cpu_b","status":"ACTIVE","cpu":"0/4","memory":"1.1/8 GB","labels":["python","retrieval"],"last_heartbeat":"11s ago"}
+        ],
+        "jobs":[
+          {"job_id":"job_retrieval_042","workunit":"prior_art","status":"SUCCEEDED","worker":"worker_cpu_b","attempt":1,"lease":"released"},
+          {"job_id":"job_pilot_043","workunit":"pilot","status":"ABANDONED","worker":"worker_cpu_a","attempt":1,"lease":"expired"},
+          {"job_id":"job_pilot_043","workunit":"pilot","status":"READY","worker":"—","attempt":2,"lease":"waiting"}
+        ]
+      }
+    },
+    {
+      "id":"project_wilson_replay",
+      "name":"Wilson Coverage Replay",
+      "tenant":"Research Lab",
+      "workspace":"Verification",
+      "status":"COMPLETED",
+      "outcome":"PASS",
+      "audit_count":440,
+      "metrics":{"pending_approvals":0,"open_failures":0,"active_jobs":0,"phase_executions":31},
+      "phases":[
+        {"id":"phase_00","label":"Goal locked","status":"PASS","generation":0},
+        {"id":"phase_01","label":"Prior art","status":"PASS","generation":0},
+        {"id":"phase_08","label":"Pilot","status":"FAIL","generation":0,"detail":"pilot grid below precommitted minimum"},
+        {"id":"phase_06r","label":"Experiment plan · recovery","status":"PASS","generation":1},
+        {"id":"phase_08r","label":"Pilot · recovered","status":"PASS","generation":1},
+        {"id":"phase_09","label":"Main experiment","status":"PASS","generation":1},
+        {"id":"phase_10","label":"Independent verifier","status":"PASS","generation":1},
+        {"id":"phase_11","label":"Adversarial review","status":"PASS","generation":1},
+        {"id":"phase_12","label":"Decision","status":"PASS","generation":1},
+        {"id":"phase_14","label":"Replication","status":"PASS","generation":1},
+        {"id":"phase_16","label":"Handoff & archive","status":"PASS","generation":1}
+      ],
+      "frontier":[
+        {"name":"research_goal","state":"VALID"},{"name":"hypothesis","state":"VALID"},{"name":"protocol","state":"VALID"},
+        {"name":"experiment_result","state":"VALID"},{"name":"analysis_result","state":"VALID"},{"name":"final_report","state":"VALID"}
+      ],
+      "approvals":[],
+      "failures":[
+        {
+          "failure_id":"fail_pilot_001","failure_class":"pilot_degenerate","detected_stage":"phase_08_pilot","severity":"MEDIUM",
+          "status":"RESOLVED","root_ref":"experiment_plan","root_status":"CONFIRMED","resume_candidate":"phase_06_plan_and_implement_experiment",
+          "recovery":{"recovery_id":"rec_pilot_001","status":"APPLIED","resume_target":"phase_06_plan_and_implement_experiment","mark_stale":["pilot_result"],"keep_valid":["research_goal","hypothesis","protocol"]}
+        }
+      ],
+      "distributed":{
+        "workers":[
+          {"worker_id":"worker_replay","status":"ACTIVE","cpu":"0/4","memory":"0.8/8 GB","labels":["python","statistics"],"last_heartbeat":"14s ago"}
+        ],
+        "jobs":[
+          {"job_id":"job_main_001","workunit":"main_experiment","status":"SUCCEEDED","worker":"worker_replay","attempt":1,"lease":"released"},
+          {"job_id":"job_verify_002","workunit":"statistical_verifier","status":"SUCCEEDED","worker":"worker_replay","attempt":1,"lease":"released"}
+        ]
+      }
+    }
+  ]
+}

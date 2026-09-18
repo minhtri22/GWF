@@ -1,32 +1,31 @@
-# Governed Workflow Runtime v0.7 — Distributed Runtime
+# Governed Workflow Runtime v0.8 — Research Product Alpha
 
-GWR v0.7 adds durable multi-worker execution on top of the v0.6 identity/multi-tenancy and v0.5.1 PostgreSQL-verified research runtime.
+GWR v0.8 turns the verified v0.7 runtime into an operator-facing research product alpha without weakening the distributed execution, identity, provenance, approval or recovery invariants.
 
-## New in v0.7
+## Product surface
 
-- Database-backed durable job queue.
-- Worker registration, capability/resource inventory and heartbeat.
-- Lease token + expiry ownership model.
-- Worker crash recovery with ABANDONED run/attempt evidence and requeue.
-- At-least-once execution with exactly-once authoritative effect commits by effect_key.
-- CPU/memory/GPU resource matching and capability labels.
-- Global resource_conflict_keys reservation across workers.
-- Durable scheduler events and audit.
-- Migration 0003_v07_distributed_runtime for SQLite and PostgreSQL.
-- Chaos probes for lease loss, crash/retry and duplicate delivery.
+- Domain SDK: validate, inspect and scaffold declarative domain packages.
+- Product API: dashboard, runs, distributed queue, approvals, failures and recovery graph.
+- Authenticated exact-hash approve/reject actions.
+- Static GitHub Pages UAT console built from a deterministic research fixture.
+- Project/run dashboard with phase history and distributed job state.
+- Human approval review panel with payload/hash inspection.
+- Failure -> root cause -> recovery -> resume visualization.
 
-## Correctness boundary
+## Static UAT versus live product API
 
-v0.7 does not claim arbitrary external side effects are exactly-once. Worker execution may happen more than once after failure. The GWR authoritative effect ledger commits one matching effect_key once; external systems should receive the same idempotency key where supported.
+The GitHub Pages deployment is intentionally static. GitHub Pages cannot host the FastAPI runtime, so the UAT console uses a pinned demo snapshot and stores simulated approval/rejection actions only in browser local storage. The same UI information model is backed by real authenticated endpoints in src/gwr/api.py for deployment with a runtime server.
+
+## Domain SDK
+
+python tools/gwr_domain.py validate domains/research.workflow.yaml
+python tools/gwr_domain.py inspect domains/research.workflow.yaml
+python tools/gwr_domain.py scaffold my.domain --out /tmp/my.workflow.yaml
 
 ## Gate
 
-Run with PostgreSQL:
-
 export GWR_TEST_DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME
 export PYTHONPATH=src
-python tools/run_v07_gate.py --out evidence/v0.7/live_gate
+python tools/run_v08_gate.py --out evidence/v0.8/live_gate
 
-The milestone is complete only when V07_GATE.json is PASS and the complete v0.6 regression chain also remains PASS.
-
-See spec/11-distributed-runtime-v0.7.md and docs/HANDOFF_V0.7.md.
+v0.8 is accepted only after the full v0.7 regression chain, dedicated SQLite/PostgreSQL product tests, UI build validation and UAT snapshot checks all PASS.

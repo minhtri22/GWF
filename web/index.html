@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <title>GWR Research Product Alpha</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">G</div>
+        <div>
+          <strong>GWR</strong>
+          <span>Research Product Alpha</span>
+        </div>
+      </div>
+      <label class="field">
+        <span>Project</span>
+        <select id="projectSelect" aria-label="Select project"></select>
+      </label>
+      <nav id="nav" aria-label="Product sections">
+        <button class="nav-item active" data-view="dashboard">Dashboard</button>
+        <button class="nav-item" data-view="approvals">Approvals <span class="count" id="approvalCount">0</span></button>
+        <button class="nav-item" data-view="recovery">Failure & recovery</button>
+        <button class="nav-item" data-view="distributed">Distributed runtime</button>
+        <button class="nav-item" data-view="domain">Domain SDK</button>
+      </nav>
+      <div class="side-note">
+        <strong>UAT mode</strong>
+        <p>Static GitHub Pages fixture. Approval actions are simulated locally and never mutate authoritative runtime state.</p>
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Operator console</p>
+          <h1 id="projectTitle">Loading…</h1>
+          <div class="meta-line">
+            <span id="projectStatus" class="badge">—</span>
+            <span id="projectScope">—</span>
+          </div>
+        </div>
+        <div class="top-actions">
+          <span class="live-dot"><i></i> UAT snapshot</span>
+          <button id="resetUat" class="ghost">Reset local actions</button>
+        </div>
+      </header>
+
+      <section class="view active" id="view-dashboard">
+        <div class="metrics" id="metrics"></div>
+        <div class="grid two">
+          <article class="panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">Research execution</p><h2>Phase timeline</h2></div>
+              <span id="phaseSummary" class="subtle"></span>
+            </div>
+            <div id="phaseTimeline" class="timeline"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">Current attention</p><h2>Operator queue</h2></div>
+            </div>
+            <div id="attentionQueue"></div>
+          </article>
+        </div>
+        <article class="panel">
+          <div class="panel-head">
+            <div><p class="eyebrow">Research state</p><h2>Artifact validity frontier</h2></div>
+          </div>
+          <div id="frontier" class="frontier"></div>
+        </article>
+      </section>
+
+      <section class="view" id="view-approvals">
+        <article class="panel">
+          <div class="panel-head">
+            <div><p class="eyebrow">Human authority</p><h2>Pending approvals</h2></div>
+            <span class="subtle">Exact proposal hash must match before decision</span>
+          </div>
+          <div id="approvalList" class="cards"></div>
+        </article>
+      </section>
+
+      <section class="view" id="view-recovery">
+        <article class="panel">
+          <div class="panel-head">
+            <div><p class="eyebrow">Failure topology</p><h2>Detection → root → recovery → resume</h2></div>
+          </div>
+          <div id="recoveryGraph" class="recovery-graph"></div>
+        </article>
+        <article class="panel">
+          <div class="panel-head"><div><p class="eyebrow">Failure records</p><h2>Evidence & recovery plans</h2></div></div>
+          <div id="failureList" class="cards"></div>
+        </article>
+      </section>
+
+      <section class="view" id="view-distributed">
+        <div class="grid two">
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">Scheduler</p><h2>Distributed jobs</h2></div></div>
+            <div id="jobTable" class="table-wrap"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">Workers</p><h2>Lease & capacity</h2></div></div>
+            <div id="workerList" class="cards compact"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-domain">
+        <div class="grid two">
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">Domain package</p><h2 id="domainTitle">—</h2></div></div>
+            <div id="domainSummary"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">SDK</p><h2>Validate / inspect / scaffold</h2></div></div>
+            <pre class="code">python tools/gwr_domain.py validate domains/research.workflow.yaml
+python tools/gwr_domain.py inspect domains/research.workflow.yaml
+python tools/gwr_domain.py scaffold my.domain --out my.workflow.yaml</pre>
+            <div id="domainCounts" class="mini-metrics"></div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="approvalDialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" value="cancel" aria-label="Close">×</button>
+      <p class="eyebrow">Human approval review</p>
+      <h2 id="dialogTitle">Proposal</h2>
+      <div class="review-grid">
+        <div><span class="label">Action</span><strong id="dialogAction"></strong></div>
+        <div><span class="label">Policy</span><strong id="dialogPolicy"></strong></div>
+      </div>
+      <label class="label">Exact payload hash</label>
+      <code id="dialogHash" class="hash"></code>
+      <label class="label">Frozen payload</label>
+      <pre id="dialogPayload" class="payload"></pre>
+      <div class="decision-row">
+        <button type="button" class="danger" id="rejectBtn">Reject</button>
+        <button type="button" class="primary" id="approveBtn">Approve exact hash</button>
+      </div>
+      <p class="dialog-note">UAT only: this decision is stored in your browser localStorage, not the GWR backend.</p>
+    </form>
+  </dialog>
+
+  <script src="./app.js"></script>
+</body>
+</html>

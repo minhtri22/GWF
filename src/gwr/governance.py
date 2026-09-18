@@ -98,11 +98,35 @@ class GovernanceKernel:
         aid=uid("appr")
         self.db.conn.execute("INSERT INTO approvals VALUES(?,?,?,?,?,?,?,?,?,?)",(aid,p["project_id"],proposal_id,expected_hash,approver_actor_id,"APPROVED",canonical_json(parse_json(p["resource_refs"],[])),utcnow(),None,canonical_json({})))
         self.db.conn.execute("UPDATE proposals SET status='APPROVED' WHERE proposal_id=?",(proposal_id,)); self.append_audit(p["project_id"],approver_actor_id,"APPROVE_PROPOSAL","Proposal",proposal_id,proposal_id=proposal_id,approval_id=aid); self.db.conn.commit(); return aid
-    def reject_proposal(self, proposal_id, actor_id):
+    def reject_proposal_authenticated(self, proposal_id, bearer_token, expected_hash, reason="REJECTED"):
+        if not self.auth:
+            raise AuthorityDenied("Human authentication service is not configured")
+        principal=self.auth.verify(bearer_token)
+        aid=self.reject_proposal(proposal_id, principal.actor_id, expected_hash=expected_hash, reason=reason)
+        p=self.db.one("SELECT project_id FROM proposals WHERE proposal_id=?",(proposal_id,))
+        self.append_audit(p["project_id"],principal.actor_id,"AUTHENTICATED_REJECTION","Proposal",proposal_id,approval_id=aid,reason_code=principal.auth_method,metadata={"session_id":principal.session_id,"reason":reason})
+        self.db.conn.commit()
+        return aid
+
+    def reject_proposal(self, proposal_id, actor_id, expected_hash=None, reason="REJECTED"):
         p=self.db.one("SELECT * FROM proposals WHERE proposal_id=?",(proposal_id,))
         if not p: raise NotFound("Proposal not found")
-        self.authorize(actor_id,"APPROVE",{"project_id":p["project_id"]})
-        self.db.conn.execute("UPDATE proposals SET status='REJECTED' WHERE proposal_id=?",(proposal_id,)); self.append_audit(p["project_id"],actor_id,"REJECT_PROPOSAL","Proposal",proposal_id,proposal_id=proposal_id); self.db.conn.commit()
+        self.authorize(actor_id,"APPROVE",{"proposal_id":proposal_id,"project_id":p["project_id"]})
+        if expected_hash is not None and p["payload_hash"]!=expected_hash:
+            raise ApprovalMismatch("Proposal hash mismatch")
+        policy=self.domain.approval_policy(p["required_approval_policy"]) if p["required_approval_policy"] else None
+        if policy:
+            a=self._actor(actor_id)
+            if policy.get("requires_actor_type") and a["actor_type"]!=policy["requires_actor_type"]: raise AuthorityDenied("Approver actor type invalid")
+            if policy.get("prohibit_self_approval") and p["proposer_actor_id"]==actor_id: raise AuthorityDenied("Self approval prohibited")
+            if policy.get("requires_role") and policy["requires_role"] not in parse_json(a["role_bindings"],[]): raise AuthorityDenied("Approver role invalid")
+        aid=uid("appr")
+        decision_hash=expected_hash or p["payload_hash"]
+        self.db.conn.execute("INSERT INTO approvals VALUES(?,?,?,?,?,?,?,?,?,?)",(aid,p["project_id"],proposal_id,decision_hash,actor_id,"REJECTED",canonical_json(parse_json(p["resource_refs"],[])),utcnow(),None,canonical_json({"reason":reason})))
+        self.db.conn.execute("UPDATE proposals SET status='REJECTED' WHERE proposal_id=?",(proposal_id,))
+        self.append_audit(p["project_id"],actor_id,"REJECT_PROPOSAL","Proposal",proposal_id,proposal_id=proposal_id,approval_id=aid,reason_code=reason)
+        self.db.conn.commit()
+        return aid
     def resolve_escalation_target(self, project_id, required_action="ESCALATE"):
         for a in self.db.all("SELECT * FROM actors WHERE status='ACTIVE'"):
             if project_id not in parse_json(a["project_scope"],[]): continue

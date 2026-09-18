@@ -5,6 +5,9 @@ from pydantic import BaseModel
 
 from .runtime import GovernedWorkflowRuntime
 from .errors import GWRException, AuthorityDenied, NotFound, ValidationError
+from .domain_sdk import DomainSDK
+from .product import ProjectDashboardService
+import yaml
 
 
 class LoginBody(BaseModel):
@@ -18,6 +21,15 @@ class OIDCExchangeBody(BaseModel):
 
 class ApprovalBody(BaseModel):
     expected_hash: str
+
+
+class RejectBody(BaseModel):
+    expected_hash: str
+    reason: str = "REJECTED"
+
+
+class DomainValidationBody(BaseModel):
+    yaml_text: str
 
 
 class TenantCreateBody(BaseModel):
@@ -39,7 +51,7 @@ class MembershipBody(BaseModel):
 
 
 def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
-    app = FastAPI(title="Governed Workflow Runtime", version="0.6.0")
+    app = FastAPI(title="Governed Workflow Runtime", version="0.8.0")
 
     @app.exception_handler(GWRException)
     async def gwr_error(_, exc: GWRException):
@@ -162,6 +174,8 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
                 raise HTTPException(status_code=404, detail="proposal not found")
         return dict(row)
 
+    product = ProjectDashboardService(runtime)
+
     @app.post('/proposals/{proposal_id}/approve')
     def approve(proposal_id: str, body: ApprovalBody, authorization: str = Header(...)):
         token, principal = bearer(authorization)
@@ -176,9 +190,23 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
         approval_id = runtime.governance.approve_proposal_authenticated(proposal_id, token, body.expected_hash)
         return {"approval_id": approval_id, "proposal_id": proposal_id, "status": "APPROVED"}
 
+    @app.post('/proposals/{proposal_id}/reject')
+    def reject(proposal_id: str, body: RejectBody, authorization: str = Header(...)):
+        token, principal = bearer(authorization)
+        row = runtime.db.one("SELECT project_id FROM proposals WHERE proposal_id=?", (proposal_id,))
+        if not row:
+            raise HTTPException(status_code=404, detail="proposal not found")
+        if runtime.tenancy.scope_for_project(row["project_id"]):
+            try:
+                runtime.tenancy.require_project_access(principal.actor_id, row["project_id"], "APPROVE")
+            except AuthorityDenied:
+                raise HTTPException(status_code=404, detail="proposal not found")
+        approval_id = runtime.governance.reject_proposal_authenticated(proposal_id, token, body.expected_hash, body.reason)
+        return {"approval_id": approval_id, "proposal_id": proposal_id, "status": "REJECTED", "reason": body.reason}
+
     @app.get('/health')
     def health():
-        return {"ok": True, "domain": runtime.domain.domain_id, "version": "0.6.0"}
+        return {"ok": True, "domain": runtime.domain.domain_id, "version": "0.8.0"}
 
     @app.get('/projects/{project_id}/audit')
     def audit(project_id: str, authorization: str | None = Header(default=None)):
@@ -215,5 +243,54 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
         project_principal(row["project_id"], authorization, "VIEW")
         from .research_orchestrator import ResearchOrchestrator
         return {"markdown": ResearchOrchestrator(runtime, {}, human_approver_id=None).render_report(orchestration_id)}
+
+    @app.get('/product/meta')
+    def product_meta():
+        return {
+            "product": "GWR Research Product Alpha",
+            "version": "0.8.0",
+            "domain_id": runtime.domain.domain_id,
+            "backend": getattr(runtime.db, "backend_name", "unknown"),
+            "capabilities": ["domain_sdk", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"],
+        }
+
+    @app.get('/product/domains/current')
+    def current_domain(authorization: str = Header(...)):
+        bearer(authorization)
+        return DomainSDK.inspect(runtime.domain.data)
+
+    @app.post('/product/domains/validate')
+    def validate_domain_package(body: DomainValidationBody, authorization: str = Header(...)):
+        bearer(authorization)
+        try:
+            data = yaml.safe_load(body.yaml_text)
+        except Exception as exc:
+            return {"ok": False, "errors": [{"code": "PARSE_ERROR", "message": str(exc)}], "warnings": [], "counts": {}}
+        return DomainSDK.validate(data).to_dict()
+
+    @app.get('/product/projects/{project_id}/dashboard')
+    def product_dashboard(project_id: str, authorization: str = Header(...)):
+        project_principal(project_id, authorization, "VIEW")
+        return product.summary(project_id)
+
+    @app.get('/product/projects/{project_id}/approvals')
+    def product_approvals(project_id: str, authorization: str = Header(...)):
+        project_principal(project_id, authorization, "VIEW")
+        return {"approvals": product.pending_approvals(project_id)}
+
+    @app.get('/product/projects/{project_id}/failures')
+    def product_failures(project_id: str, authorization: str = Header(...)):
+        project_principal(project_id, authorization, "VIEW")
+        return {"failures": product.failures(project_id), "graph": product.failure_graph(project_id)}
+
+    @app.get('/product/projects/{project_id}/runs')
+    def product_runs(project_id: str, authorization: str = Header(...)):
+        project_principal(project_id, authorization, "VIEW")
+        return {"runs": product.runs(project_id)}
+
+    @app.get('/product/projects/{project_id}/distributed')
+    def product_distributed(project_id: str, authorization: str = Header(...)):
+        project_principal(project_id, authorization, "VIEW")
+        return product.distributed(project_id)
 
     return app
