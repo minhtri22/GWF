@@ -44,7 +44,8 @@ class GovernedWorkflowRuntime:
         self.knowledge.bind_project_governance(self.project_governance)
         self.execution.bind_project_governance(self.project_governance)
         self.distributed.bind_project_governance(self.project_governance)
-        self.agent_protocol=AgentExecutionProtocolService(self.db,self.governance,self.project_governance)
+        self.agent_protocol=AgentExecutionProtocolService(self.db,self.governance,self.project_governance,self.domain)
+        self.agent_protocol.bootstrap_domain_skills()
         self.process=ProcessInspectorService(self)
         self.object_store=None; self.objects=None
         if object_store_root:

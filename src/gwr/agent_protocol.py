@@ -17,10 +17,245 @@ class AgentExecutionProtocolService:
     hidden model chain-of-thought.
     """
 
-    def __init__(self, db, governance, project_governance):
+    def __init__(self, db, governance, project_governance, domain=None):
         self.db = db
         self.gov = governance
         self.projects = project_governance
+        self.domain = domain
+
+    def bootstrap_domain_skills(self) -> list[dict[str, Any]]:
+        """Materialize declarative domain skill contracts into immutable registry revisions.
+
+        The runtime never resolves a SKILL.md file path during execution. A workunit is
+        bound to an exact skill revision/hash once the domain package is loaded.
+        """
+        if self.domain is None:
+            return []
+        contracts = self.domain.data.get("skill_contracts", {}) or {}
+        bound = []
+        with self.db.tx():
+            for workunit in self.domain.workunits():
+                skill_ref = workunit.get("skill_ref")
+                if not skill_ref:
+                    continue
+                contract = contracts.get(skill_ref)
+                if not contract:
+                    raise ValidationError(f"Missing domain skill contract {skill_ref}")
+                public_skill_id = str(contract.get("skill_id") or skill_ref)
+                skill_id = f"{self.domain.domain_id}:{public_skill_id}"
+                package = self.db.one("SELECT * FROM skill_packages WHERE skill_id=?", (skill_id,))
+                if not package:
+                    package_id = uid("skillpkg")
+                    self.db.conn.execute(
+                        "INSERT INTO skill_packages VALUES(?,?,?,?,?,?)",
+                        (package_id, skill_id, public_skill_id.replace("-", " ").title(),
+                         f"Domain-pinned skill for {self.domain.domain_id}", "SYSTEM", utcnow()),
+                    )
+                    package = self.db.one("SELECT * FROM skill_packages WHERE skill_package_id=?", (package_id,))
+                payload = {
+                    "skill_id": skill_id,
+                    "version": str(contract["version"]),
+                    "markdown": str(contract["markdown"]),
+                    "tool_requirements": list(contract.get("tool_requirements", []) or []),
+                    "qa_contract": dict(contract.get("qa_contract", {}) or {}),
+                }
+                skill_hash = content_hash(payload)
+                revision = self.db.one(
+                    "SELECT * FROM skill_revisions WHERE skill_package_id=? AND content_hash=? ORDER BY revision_number DESC LIMIT 1",
+                    (package["skill_package_id"], skill_hash),
+                )
+                if not revision:
+                    revno = self.db.one(
+                        "SELECT COALESCE(MAX(revision_number),0)+1 n FROM skill_revisions WHERE skill_package_id=?",
+                        (package["skill_package_id"],),
+                    )["n"]
+                    revision_id = uid("skillrev")
+                    self.db.conn.execute(
+                        "INSERT INTO skill_revisions VALUES(?,?,?,?,?,?,?,?,?,?)",
+                        (revision_id, package["skill_package_id"], int(revno), payload["version"], payload["markdown"],
+                         skill_hash, canonical_json(payload["tool_requirements"]), canonical_json(payload["qa_contract"]),
+                         "SYSTEM", utcnow()),
+                    )
+                    revision = self.db.one("SELECT * FROM skill_revisions WHERE skill_revision_id=?", (revision_id,))
+                binding = self.db.one(
+                    "SELECT * FROM domain_skill_bindings WHERE domain_id=? AND workunit_type=?",
+                    (self.domain.domain_id, workunit["id"]),
+                )
+                required_tools = canonical_json(payload["tool_requirements"])
+                qa_contract = canonical_json(payload["qa_contract"])
+                if binding:
+                    self.db.conn.execute(
+                        "UPDATE domain_skill_bindings SET skill_revision_id=?,skill_hash=?,required_tools=?,qa_contract=?,created_at=? "
+                        "WHERE binding_id=?",
+                        (revision["skill_revision_id"], skill_hash, required_tools, qa_contract, utcnow(), binding["binding_id"]),
+                    )
+                    binding_id = binding["binding_id"]
+                else:
+                    binding_id = uid("skillbind")
+                    self.db.conn.execute(
+                        "INSERT INTO domain_skill_bindings VALUES(?,?,?,?,?,?,?,?)",
+                        (binding_id, self.domain.domain_id, workunit["id"], revision["skill_revision_id"], skill_hash,
+                         required_tools, qa_contract, utcnow()),
+                    )
+                bound.append({
+                    "binding_id": binding_id,
+                    "workunit_type": workunit["id"],
+                    "skill_ref": skill_ref,
+                    "skill_revision_id": revision["skill_revision_id"],
+                    "skill_hash": skill_hash,
+                    "required_tools": payload["tool_requirements"],
+                    "qa_contract": payload["qa_contract"],
+                })
+        return bound
+
+    def resolve_skill_revision(self, workunit_type: str) -> dict[str, Any]:
+        if self.domain is None:
+            raise ValidationError("Domain skill resolution is unavailable")
+        row = self.db.one(
+            "SELECT * FROM domain_skill_bindings WHERE domain_id=? AND workunit_type=?",
+            (self.domain.domain_id, workunit_type),
+        )
+        if not row:
+            raise NotFound(f"No pinned skill binding for {workunit_type}")
+        revision = self.db.one("SELECT * FROM skill_revisions WHERE skill_revision_id=?", (row["skill_revision_id"],))
+        if not revision:
+            raise NotFound("Pinned skill revision not found")
+        if revision["content_hash"] != row["skill_hash"]:
+            raise InvalidTransition("Pinned skill hash mismatch")
+        item = dict(row)
+        item["required_tools"] = parse_json(item["required_tools"], [])
+        item["qa_contract"] = parse_json(item["qa_contract"], {})
+        item["version"] = revision["version"]
+        item["markdown"] = revision["markdown"]
+        return item
+
+    def set_project_defaults(self, project_id: str, actor_id: str, *, recovery_mode: str | None = None, retry_budget: int | None = None) -> dict[str, Any]:
+        self.projects.require_mutable(project_id)
+        scope = self.projects.tenancy.scope_for_project(project_id)
+        if scope:
+            self.projects.tenancy.require_project_access(actor_id, project_id, "MANAGE_MEMBERS")
+        elif actor_id != "SYSTEM":
+            self.gov.authorize(actor_id, "PROPOSE", {"project_id": project_id, "action": "MANAGE_PROJECT"})
+        if recovery_mode is not None and recovery_mode not in {"AUTO", "HUMAN_APPROVE"}:
+            raise ValidationError("recovery_mode must be AUTO or HUMAN_APPROVE")
+        if retry_budget is not None and int(retry_budget) < 0:
+            raise ValidationError("retry_budget must be >= 0")
+        existing = self.db.one("SELECT * FROM project_agent_protocol_settings WHERE project_id=?", (project_id,))
+        now = utcnow()
+        with self.db.tx():
+            if existing:
+                self.db.conn.execute(
+                    "UPDATE project_agent_protocol_settings SET recovery_mode=?,retry_budget=?,updated_by_actor_id=?,updated_at=? WHERE project_id=?",
+                    (recovery_mode, retry_budget, actor_id, now, project_id),
+                )
+            else:
+                self.db.conn.execute(
+                    "INSERT INTO project_agent_protocol_settings VALUES(?,?,?,?,?)",
+                    (project_id, recovery_mode, retry_budget, actor_id, now),
+                )
+            self.gov.append_audit(
+                project_id, actor_id, "PROJECT_AGENT_PROTOCOL_DEFAULTS_UPDATED", "Project", project_id,
+                metadata={"recovery_mode": recovery_mode, "retry_budget": retry_budget},
+            )
+        return self.project_defaults(project_id)
+
+    def project_defaults(self, project_id: str) -> dict[str, Any]:
+        row = self.db.one("SELECT * FROM project_agent_protocol_settings WHERE project_id=?", (project_id,))
+        return dict(row) if row else {"project_id": project_id, "recovery_mode": None, "retry_budget": None}
+
+    def resolve_recovery_config(
+        self,
+        project_id: str,
+        workunit_type: str,
+        *,
+        requested_mode: str | None = None,
+        requested_retry_budget: int | None = None,
+    ) -> dict[str, Any]:
+        domain_cfg = (self.domain.data.get("agent_protocol", {}) if self.domain else {}) or {}
+        phase_cfg = (self.domain.workunit(workunit_type).get("agent_protocol", {}) if self.domain and self.domain.workunit(workunit_type) else {}) or {}
+        project_cfg = self.project_defaults(project_id)
+        mode = requested_mode or phase_cfg.get("recovery_mode") or project_cfg.get("recovery_mode") or domain_cfg.get("default_recovery_mode", "AUTO")
+        domain_minimum = domain_cfg.get("minimum_recovery_mode", "AUTO")
+        phase_minimum = phase_cfg.get("minimum_recovery_mode", "AUTO")
+        minimum = "HUMAN_APPROVE" if "HUMAN_APPROVE" in {domain_minimum, phase_minimum} else "AUTO"
+        if minimum == "HUMAN_APPROVE":
+            mode = "HUMAN_APPROVE"
+        if mode not in {"AUTO", "HUMAN_APPROVE"}:
+            raise ValidationError("Effective recovery_mode must be AUTO or HUMAN_APPROVE")
+        budget = requested_retry_budget
+        if budget is None:
+            budget = phase_cfg.get("retry_budget")
+        if budget is None:
+            budget = project_cfg.get("retry_budget")
+        if budget is None:
+            budget = domain_cfg.get("default_retry_budget", 2)
+        budget = int(budget)
+        if budget < 0:
+            raise ValidationError("Effective retry_budget must be >= 0")
+        return {
+            "recovery_mode": mode,
+            "retry_budget": budget,
+            "domain_minimum": minimum,
+            "source": {
+                "requested": requested_mode,
+                "phase": phase_cfg.get("recovery_mode"),
+                "project": project_cfg.get("recovery_mode"),
+                "domain_default": domain_cfg.get("default_recovery_mode", "AUTO"),
+                "domain_minimum": domain_minimum,
+                "phase_minimum": phase_minimum,
+            },
+        }
+
+    def bind_previous_handoff(self, phase_execution_id: str, previous_phase_execution_id: str | None, actor_id: str) -> dict[str, Any]:
+        phase = self._phase(phase_execution_id)
+        self.projects.require_mutable(phase["project_id"])
+        existing = self.db.one("SELECT * FROM phase_handoff_links WHERE phase_execution_id=?", (phase_execution_id,))
+        if existing:
+            return dict(existing)
+        previous_handoff_id = None
+        handoff_hash = None
+        event_type = "PREVIOUS_HANDOFF_NOT_REQUIRED"
+        metadata: dict[str, Any] = {}
+        if previous_phase_execution_id:
+            previous = self.db.one(
+                "SELECT h.*,p.status protocol_status FROM phase_handoffs h "
+                "JOIN phase_execution_protocols p ON p.phase_execution_id=h.phase_execution_id "
+                "WHERE h.phase_execution_id=? ORDER BY h.created_at DESC LIMIT 1",
+                (previous_phase_execution_id,),
+            )
+            if not previous or previous["protocol_status"] != "COMPLETED":
+                raise InvalidTransition("Required previous handoff is missing or protocol is incomplete")
+            payload = parse_json(previous["structured_payload"], {})
+            calculated = content_hash(payload)
+            if calculated != previous["payload_hash"]:
+                raise InvalidTransition("Previous handoff hash mismatch")
+            previous_handoff_id = previous["handoff_id"]
+            handoff_hash = previous["payload_hash"]
+            event_type = "PREVIOUS_HANDOFF_VERIFIED"
+            metadata = {
+                "previous_phase_execution_id": previous_phase_execution_id,
+                "previous_handoff_id": previous_handoff_id,
+                "handoff_hash": handoff_hash,
+            }
+        with self.db.tx():
+            self.db.conn.execute(
+                "INSERT INTO phase_handoff_links VALUES(?,?,?,?,?)",
+                (phase_execution_id, previous_phase_execution_id, previous_handoff_id, handoff_hash, utcnow()),
+            )
+            self._event(phase_execution_id, "LOAD", event_type, actor_id, "Previous handoff verified" if previous_phase_execution_id else "No previous handoff required", metadata)
+        return dict(self.db.one("SELECT * FROM phase_handoff_links WHERE phase_execution_id=?", (phase_execution_id,)))
+
+    def previous_handoff(self, phase_execution_id: str) -> dict[str, Any] | None:
+        link = self.db.one("SELECT * FROM phase_handoff_links WHERE phase_execution_id=?", (phase_execution_id,))
+        if not link:
+            return None
+        item = dict(link)
+        if item.get("previous_handoff_id"):
+            handoff = self.db.one("SELECT * FROM phase_handoffs WHERE handoff_id=?", (item["previous_handoff_id"],))
+            if handoff:
+                item["handoff"] = dict(handoff)
+                item["handoff"]["structured_payload"] = parse_json(item["handoff"]["structured_payload"], {})
+        return item
 
     def _phase(self, phase_execution_id: str):
         row = self.db.one(
@@ -82,17 +317,31 @@ class AgentExecutionProtocolService:
         self.db.conn.commit()
         return rid
 
-    def create_protocol(self, phase_execution_id: str, skill_revision_id: str, actor_id: str, *, recovery_mode: str = "AUTO", retry_budget: int = 2) -> str:
+    def create_protocol(
+        self,
+        phase_execution_id: str,
+        skill_revision_id: str,
+        actor_id: str,
+        *,
+        recovery_mode: str | None = None,
+        retry_budget: int | None = None,
+        enforce_domain_binding: bool = False,
+    ) -> str:
         phase = self._phase(phase_execution_id)
         self.projects.require_mutable(phase["project_id"])
         self.gov.authorize(actor_id, "EXECUTE", {"project_id": phase["project_id"]})
-        if recovery_mode not in {"AUTO", "HUMAN_APPROVE"}:
-            raise ValidationError("recovery_mode must be AUTO or HUMAN_APPROVE")
-        if retry_budget < 0:
-            raise ValidationError("retry_budget must be >= 0")
         skill = self.db.one("SELECT * FROM skill_revisions WHERE skill_revision_id=?", (skill_revision_id,))
         if not skill:
             raise NotFound("Skill revision not found")
+        binding = None
+        if enforce_domain_binding:
+            binding = self.resolve_skill_revision(phase["phase_id"])
+            if binding["skill_revision_id"] != skill_revision_id or binding["skill_hash"] != skill["content_hash"]:
+                raise InvalidTransition("Phase skill revision does not match the domain-pinned binding")
+        effective = self.resolve_recovery_config(
+            phase["project_id"], phase["phase_id"],
+            requested_mode=recovery_mode, requested_retry_budget=retry_budget,
+        )
         existing = self.db.one("SELECT * FROM phase_execution_protocols WHERE phase_execution_id=?", (phase_execution_id,))
         if existing:
             return existing["protocol_id"]
@@ -100,11 +349,20 @@ class AgentExecutionProtocolService:
         with self.db.tx():
             self.db.conn.execute(
                 "INSERT INTO phase_execution_protocols VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
-                (pid, phase_execution_id, phase["project_id"], skill_revision_id, skill["content_hash"], recovery_mode,
-                 "LOAD", "RUNNING", int(retry_budget), 0, utcnow(), utcnow()),
+                (pid, phase_execution_id, phase["project_id"], skill_revision_id, skill["content_hash"], effective["recovery_mode"],
+                 "LOAD", "RUNNING", int(effective["retry_budget"]), 0, utcnow(), utcnow()),
             )
-            self._event(phase_execution_id, "LOAD", "SKILL_LOADED", actor_id, "Skill revision loaded",
-                        {"skill_revision_id": skill_revision_id, "skill_hash": skill["content_hash"]})
+            self._event(
+                phase_execution_id, "LOAD", "SKILL_LOADED", actor_id, "Skill revision loaded",
+                {
+                    "skill_revision_id": skill_revision_id,
+                    "skill_hash": skill["content_hash"],
+                    "domain_binding_enforced": bool(enforce_domain_binding),
+                    "required_tools": binding["required_tools"] if binding else parse_json(skill["tool_requirements"], []),
+                    "qa_contract": binding["qa_contract"] if binding else parse_json(skill["qa_contract"], {}),
+                    "recovery": effective,
+                },
+            )
         return pid
 
     def record_preflight(self, phase_execution_id: str, checks: list[dict[str, Any]], actor_id: str) -> dict[str, Any]:
@@ -350,6 +608,30 @@ class AgentExecutionProtocolService:
                         {"proposal_id": proposal_id, "target_step": proposal["target_step"], "new_plan_id": new_plan_id})
         return {"proposal_id": proposal_id, "status": "APPLIED", "new_plan_id": new_plan_id}
 
+    def mark_waiting_for_human(self, phase_execution_id: str, actor_id: str, *, reason: str, metadata=None):
+        self._protocol(phase_execution_id)
+        if not self.db.one("SELECT 1 FROM phase_problem_records WHERE phase_execution_id=? LIMIT 1", (phase_execution_id,)):
+            raise InvalidTransition("Problem must be persisted before waiting for human recovery")
+        with self.db.tx():
+            self.db.conn.execute(
+                "UPDATE phase_execution_protocols SET status='WAITING_HUMAN',updated_at=? WHERE phase_execution_id=?",
+                (utcnow(), phase_execution_id),
+            )
+            self._event(phase_execution_id, "EXECUTE", "WAITING_FOR_HUMAN", actor_id, reason, metadata or {})
+
+    def mark_attempt_failed(self, phase_execution_id: str, actor_id: str, *, reason: str):
+        protocol = self._protocol(phase_execution_id)
+        if protocol["status"] == "COMPLETED":
+            raise InvalidTransition("Completed protocol cannot be failed")
+        if not self.db.one("SELECT 1 FROM phase_problem_records WHERE phase_execution_id=? LIMIT 1", (phase_execution_id,)):
+            raise InvalidTransition("Problem must be persisted before failed attempt closure")
+        with self.db.tx():
+            self.db.conn.execute(
+                "UPDATE phase_execution_protocols SET status='FAILED',updated_at=? WHERE phase_execution_id=?",
+                (utcnow(), phase_execution_id),
+            )
+            self._event(phase_execution_id, protocol["current_stage"], "ATTEMPT_FAILED", actor_id, reason)
+
     def verify(self, phase_execution_id: str, actor_id: str, *, qa_result: str, detail: str = ""):
         protocol = self._protocol(phase_execution_id)
         if protocol["current_stage"] != "EXECUTE":
@@ -462,7 +744,9 @@ class AgentExecutionProtocolService:
         issue = any(p["status"] == "OPEN" for p in problems)
         if protocol["status"] == "COMPLETED":
             attention = "COMPLETE"
-        elif waiting:
+        elif protocol["status"] == "FAILED":
+            attention = "FAIL"
+        elif waiting or protocol["status"] == "WAITING_HUMAN":
             attention = "WAITING_FOR_YOU"
         elif issue:
             attention = "NEEDS_ATTENTION"
@@ -470,6 +754,8 @@ class AgentExecutionProtocolService:
             attention = "AI_WORKING"
         return {
             "protocol": dict(protocol),
+            "previous_handoff": self.previous_handoff(phase_execution_id),
+            "project_defaults": self.project_defaults(protocol["project_id"]),
             "attention": attention,
             "stage_progress": {"completed": completed_stages, "total": len(STAGES)},
             "plan_progress": {"completed": done_steps, "total": total_steps},

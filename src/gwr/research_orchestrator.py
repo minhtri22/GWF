@@ -94,6 +94,7 @@ class ResearchOrchestrator:
     def start(self, project_id: str, executor: ResearchPhaseExecutor, *, max_steps: int = 250) -> dict[str, Any]:
         if not self.db.one("SELECT 1 FROM projects WHERE id=?", (project_id,)):
             raise NotFound("Project not found")
+        self.runtime.project_governance.require_mutable(project_id)
         oid = uid("orch")
         state = {
             "orchestration_id": oid,
@@ -107,6 +108,8 @@ class ResearchOrchestrator:
             "recovery_root_phase_index": None,
             "pending_approval": None,
             "pending_human_action": None,
+            "pending_protocol_recovery": None,
+            "phase_retry_counts": {},
             "resumed_from_checkpoint": None,
         }
         now = utcnow()
@@ -127,6 +130,26 @@ class ResearchOrchestrator:
             raise ValidationError("Checkpoint does not contain ResearchOrchestrator state")
         state = dict(state)
         state["resumed_from_checkpoint"] = checkpoint_id
+        pending_protocol=state.get("pending_protocol_recovery")
+        if pending_protocol:
+            recovery=self.db.one("SELECT status FROM phase_recovery_proposals WHERE proposal_id=?", (pending_protocol.get("proposal_id"),))
+            if not recovery or recovery["status"] == "WAITING_HUMAN":
+                return {"status":"PAUSED","reason":"WAITING_PROTOCOL_RECOVERY","orchestration_id":state["orchestration_id"],"project_id":state["project_id"],"checkpoint_id":checkpoint_id,"outcome":state.get("outcome"),"generation":state.get("generation"),"pivot_count":state.get("pivot_count")}
+            if recovery["status"] == "REJECTED":
+                return {"status":"PAUSED","reason":"PROTOCOL_RECOVERY_REJECTED","orchestration_id":state["orchestration_id"],"project_id":state["project_id"],"checkpoint_id":checkpoint_id,"outcome":state.get("outcome"),"generation":state.get("generation"),"pivot_count":state.get("pivot_count")}
+            if recovery["status"] in {"AUTO_APPROVED","HUMAN_APPROVED"}:
+                self.runtime.agent_protocol.apply_recovery(pending_protocol["proposal_id"], pending_protocol["actor_id"])
+            elif recovery["status"] != "APPLIED":
+                raise InvalidTransition(f"Unexpected protocol recovery status {recovery['status']}")
+            if pending_protocol.get("phase_execution_id"):
+                self.runtime.agent_protocol.mark_attempt_failed(
+                    pending_protocol["phase_execution_id"], pending_protocol["actor_id"], reason="Recovery approved; retry will use a new phase execution"
+                )
+            retry_key=pending_protocol.get("retry_key")
+            if retry_key:
+                counters=state.setdefault("phase_retry_counts", {})
+                counters[retry_key]=int(counters.get(retry_key, 0))+1
+            state["pending_protocol_recovery"]=None
         pending_approval=state.get("pending_approval")
         if pending_approval:
             proposal=self.db.one("SELECT status FROM proposals WHERE proposal_id=?", (pending_approval.get("proposal_id"),))
@@ -134,6 +157,12 @@ class ResearchOrchestrator:
                 return {"status":"PAUSED","reason":"WAITING_APPROVAL","orchestration_id":state["orchestration_id"],"project_id":state["project_id"],"checkpoint_id":checkpoint_id,"outcome":state.get("outcome"),"generation":state.get("generation"),"pivot_count":state.get("pivot_count")}
             if pending_approval.get("failure_id"):
                 self.runtime.decision.resolve_failure(pending_approval["failure_id"])
+            if pending_approval.get("phase_execution_id"):
+                self.runtime.agent_protocol.mark_attempt_failed(
+                    pending_approval["phase_execution_id"],
+                    pending_approval.get("actor_id") or "SYSTEM",
+                    reason="Required approval granted; phase will restart from checkpoint",
+                )
             state["pending_approval"]=None
         pending_action=state.get("pending_human_action")
         if pending_action:
@@ -359,82 +388,277 @@ class ResearchOrchestrator:
 
         max_attempts = int(phase.get("retry_policy", {}).get("max_attempts", 1))
         for attempt in range(1, max_attempts + 1):
-            # retrying same WorkUnit preserves attempt budget and failure scope
             if attempt > 1:
                 self.db.conn.execute("UPDATE workunits SET status='READY',version=version+1 WHERE workunit_id=?", (workunit_id,))
                 self.db.conn.commit()
+
+            # A phase execution record exists before any agent execution so LOAD/PREFLIGHT/PLAN
+            # are authoritative persisted stages, rather than an API-only side channel.
+            pexec_id = self._record_phase_execution(state, idx, phase_id, workunit_id, None, "RUNNING")
+            previous_phase_execution_id = self._previous_successful_phase_execution(state["orchestration_id"], idx)
+            try:
+                skill = self.runtime.agent_protocol.resolve_skill_revision(phase_id)
+                self.runtime.agent_protocol.create_protocol(
+                    pexec_id,
+                    skill["skill_revision_id"],
+                    actor_id,
+                    recovery_mode=None,
+                    retry_budget=None,
+                    enforce_domain_binding=True,
+                )
+                handoff_ok = True
+                handoff_detail = "first executable phase"
+                try:
+                    link = self.runtime.agent_protocol.bind_previous_handoff(pexec_id, previous_phase_execution_id, actor_id)
+                    if previous_phase_execution_id:
+                        handoff_detail = f"verified {link.get('previous_handoff_id')}"
+                except (InvalidTransition, NotFound, ValidationError) as exc:
+                    handoff_ok = False
+                    handoff_detail = str(exc)
+
+                preflight = self.runtime.agent_protocol.record_preflight(
+                    pexec_id,
+                    [
+                        {"name": "skill_revision_pinned", "pass": True, "detail": f"{skill['skill_revision_id']}:{skill['skill_hash']}"},
+                        {"name": "inputs_ready", "pass": readiness["status"] == "READY", "detail": ",".join(readiness.get("blockers", [])) or "READY"},
+                        {"name": "previous_handoff_verified", "pass": handoff_ok, "detail": handoff_detail},
+                        {"name": "tool_contract_declared", "pass": True, "detail": ",".join(skill.get("required_tools", [])) or "none"},
+                    ],
+                    actor_id,
+                )
+                if preflight["status"] != "PASS":
+                    cp = self._checkpoint(state, phase_id, "AGENT_PREFLIGHT_BLOCKED", next_phase_index=idx)
+                    self._finish_phase_execution(pexec_id, "FAILED", checkpoint_id=cp)
+                    return {"action": "PAUSE", "reason": "AGENT_PREFLIGHT_BLOCKED", "checkpoint_id": cp}
+
+                self.runtime.agent_protocol.create_plan(
+                    pexec_id,
+                    f"Execute {phase_id} under pinned skill revision {skill['version']}",
+                    [
+                        {"title": "Resolve validated inputs", "expected_output": "validated input set"},
+                        {"title": "Execute phase contract", "expected_output": "phase executor result"},
+                        {"title": "Persist artifacts and evidence", "expected_output": "authoritative revisions and evidence"},
+                        {"title": "Verify completion gates", "expected_output": "gate PASS"},
+                    ],
+                    actor_id,
+                )
+                self.runtime.agent_protocol.start_execution(pexec_id, actor_id)
+                self.runtime.agent_protocol.update_step(pexec_id, 1, "PASS", actor_id, note="runtime readiness and inputs locked")
+            except (InvalidTransition, NotFound, ValidationError) as exc:
+                cp = self._checkpoint(state, phase_id, "AGENT_PROTOCOL_SETUP_FAILURE", next_phase_index=idx, extra={"error": str(exc)})
+                self._finish_phase_execution(pexec_id, "FAILED", checkpoint_id=cp)
+                return {"action": "PAUSE", "reason": "AGENT_PROTOCOL_SETUP_FAILURE", "checkpoint_id": cp}
+
+            retry_key = f"{state['generation']}:{phase_id}"
+            retry_count = int(state.setdefault("phase_retry_counts", {}).get(retry_key, 0))
+            logical_attempt = retry_count + 1
+            if logical_attempt > max_attempts:
+                cp = self._checkpoint(state, phase_id, "RETRY_EXHAUSTED", next_phase_index=idx)
+                self._finish_phase_execution(pexec_id, "FAILED", checkpoint_id=cp)
+                return {"action": "PAUSE", "reason": "RETRY_EXHAUSTED", "checkpoint_id": cp}
             version = self.db.one("SELECT version FROM workunits WHERE workunit_id=?", (workunit_id,))["version"]
-            run = self.runtime.execution.start_run(workunit_id, actor_id, version, f"{state['orchestration_id']}:{state['generation']}:{phase_id}:{workunit_id}:{attempt}", state["orchestration_id"])
+            run = self.runtime.execution.start_run(
+                workunit_id,
+                actor_id,
+                version,
+                f"{state['orchestration_id']}:{state['generation']}:{phase_id}:{workunit_id}:{logical_attempt}",
+                state["orchestration_id"],
+            )
             run_id = run["run_id"]
-            pexec_id = self._record_phase_execution(state, idx, phase_id, workunit_id, run_id, "RUNNING")
+            self._attach_phase_run(pexec_id, run_id)
             context = ResearchExecutionContext(
                 orchestration_id=state["orchestration_id"], project_id=project_id, phase_id=phase_id,
-                phase_index=idx, generation=state["generation"], attempt=attempt, actor_id=actor_id,
+                phase_index=idx, generation=state["generation"], attempt=logical_attempt, actor_id=actor_id,
                 input_revisions=inputs, current_artifacts=self._current_artifact_payloads(project_id), current_revision_ids=self._current_revision_ids(project_id),
                 outcome=state.get("outcome"), history=list(state.get("history", [])), latest_checkpoint_id=self._latest_checkpoint_id(project_id), domain=self.domain,
             )
             try:
                 phase_result = executor.execute(context)
-            except Exception as exc:  # executor failure becomes an explicit runtime failure
-                phase_result = PhaseExecutionResult(runtime_status="FAILED", failure_class=self._fallback_failure_class(phase), failure_reason=f"executor_exception:{type(exc).__name__}:{exc}")
+            except Exception as exc:
+                phase_result = PhaseExecutionResult(
+                    runtime_status="FAILED",
+                    failure_class=self._fallback_failure_class(phase),
+                    failure_reason=f"executor_exception:{type(exc).__name__}:{exc}",
+                )
 
             if phase_result.runtime_status != "COMPLETED":
+                self.runtime.agent_protocol.update_step(pexec_id, 2, "FAIL", actor_id, note=phase_result.failure_reason or "runtime failure")
+                problem_id = self.runtime.agent_protocol.record_problem(
+                    pexec_id,
+                    actor_id,
+                    code=phase_result.failure_class or self._fallback_failure_class(phase),
+                    summary="Phase runtime execution failed",
+                    detail=phase_result.failure_reason or "PHASE_RUNTIME_FAILURE",
+                    affected_step=2,
+                    severity="MEDIUM",
+                )
                 fc = phase_result.failure_class or self._fallback_failure_class(phase)
                 self.runtime.execution.finish_run(run_id, "FAILED", {"failure_class": fc, "reason": phase_result.failure_reason or "PHASE_RUNTIME_FAILURE"})
                 failure = self.db.one("SELECT * FROM failures WHERE scope_id=? AND status!='RESOLVED' ORDER BY created_at DESC LIMIT 1", (workunit_id,))
                 fid = failure["failure_id"] if failure else None
-                cp = self._checkpoint(state, phase_id, "ON_FAILURE", next_phase_index=idx, extra={"failure_id": fid, "attempt": attempt})
+                cp = self._checkpoint(state, phase_id, "ON_FAILURE", next_phase_index=idx, extra={"failure_id": fid, "attempt": logical_attempt, "problem_id": problem_id})
                 self._finish_phase_execution(pexec_id, "FAILED", failure_id=fid, checkpoint_id=cp)
                 action = self._route_operational_failure(state, idx, phase, workunit_id, fid, phase_result)
-                if action["action"] == "RETRY" and attempt < max_attempts:
-                    continue
+                if action["action"] == "RETRY":
+                    if retry_count >= max_attempts - 1:
+                        self.runtime.agent_protocol.mark_attempt_failed(pexec_id, actor_id, reason="Runtime retry budget exhausted")
+                        exhausted_cp = self._checkpoint(state, phase_id, "RETRY_EXHAUSTED", next_phase_index=idx)
+                        return {"action": "PAUSE", "reason": "RETRY_EXHAUSTED", "checkpoint_id": exhausted_cp}
+                    recovery = self.runtime.agent_protocol.propose_recovery(
+                        problem_id,
+                        actor_id,
+                        action="RETRY_PHASE",
+                        target_step=2,
+                        rationale=phase_result.failure_reason or fc,
+                        risk_class="LOW",
+                        normative_change=False,
+                    )
+                    if recovery["status"] == "AUTO_APPROVED":
+                        self.runtime.agent_protocol.apply_recovery(recovery["proposal_id"], actor_id)
+                        self.runtime.agent_protocol.mark_attempt_failed(pexec_id, actor_id, reason="Recovered attempt superseded by retry")
+                        state.setdefault("phase_retry_counts", {})[retry_key] = retry_count + 1
+                        self._persist_state(state)
+                        continue
+                    self.runtime.agent_protocol.mark_waiting_for_human(
+                        pexec_id, actor_id, reason="Retry requires human approval",
+                        metadata={"proposal_id": recovery["proposal_id"], "problem_id": problem_id},
+                    )
+                    state["pending_protocol_recovery"] = {
+                        "proposal_id": recovery["proposal_id"],
+                        "actor_id": actor_id,
+                        "phase_index": idx,
+                        "phase_execution_id": pexec_id,
+                        "retry_key": retry_key,
+                    }
+                    waiting_cp = self._checkpoint(
+                        state,
+                        phase_id,
+                        "WAITING_PROTOCOL_RECOVERY",
+                        next_phase_index=idx,
+                        extra={"proposal_id": recovery["proposal_id"], "problem_id": problem_id},
+                    )
+                    return {"action": "PAUSE", "reason": "WAITING_PROTOCOL_RECOVERY", "checkpoint_id": waiting_cp}
+                self.runtime.agent_protocol.mark_attempt_failed(pexec_id, actor_id, reason=f"Failure routed as {action['action']}")
                 return action
 
-            # runtime completed: materialize artifacts/evidence, then evaluate completion gate(s)
+            self.runtime.agent_protocol.update_step(pexec_id, 2, "PASS", actor_id, note="executor completed")
             try:
                 output_revisions = self._commit_phase_outputs(state, phase, actor_id, run_id, phase_result.artifacts)
             except InvalidTransition as exc:
                 if "Approval required for proposal" not in str(exc):
                     raise
+                self.runtime.agent_protocol.update_step(pexec_id, 3, "FAIL", actor_id, note=str(exc))
+                problem_id = self.runtime.agent_protocol.record_problem(
+                    pexec_id, actor_id, code="APPROVAL_REQUIRED", summary="Normative output requires approval",
+                    detail=str(exc), affected_step=3, severity="MEDIUM",
+                )
                 self.runtime.execution.finish_run(run_id, "FAILED", {"failure_class": "approval_missing", "reason": str(exc)})
-                # The executor may have already recovered from retryable operational failures
-                # in an earlier attempt of this same WorkUnit. Waiting for human approval is a
-                # new blocker, not a reason to leave those recovered failures open forever.
                 for oldf in self.db.all("SELECT failure_id,failure_class FROM failures WHERE scope_id=? AND status!='RESOLVED'", (workunit_id,)):
                     if oldf["failure_class"] != "approval_missing":
                         self.runtime.decision.resolve_failure(oldf["failure_id"])
                 failure = self.db.one("SELECT * FROM failures WHERE scope_id=? AND status!='RESOLVED' ORDER BY created_at DESC LIMIT 1", (workunit_id,))
                 fid = failure["failure_id"] if failure else None
                 pending=self.db.one("SELECT proposal_id FROM proposals WHERE project_id=? AND status='PENDING_APPROVAL' ORDER BY created_at DESC LIMIT 1", (project_id,))
-                state["pending_approval"]={"proposal_id": pending["proposal_id"] if pending else None, "failure_id": fid, "phase_index": idx}
-                cp = self._checkpoint(state, phase_id, "WAITING_APPROVAL", next_phase_index=idx, extra={"failure_id": fid, "proposal_id": pending["proposal_id"] if pending else None})
+                self.runtime.agent_protocol.mark_waiting_for_human(
+                    pexec_id, actor_id, reason="Normative output is waiting for trusted human approval",
+                    metadata={"proposal_id": pending["proposal_id"] if pending else None, "problem_id": problem_id},
+                )
+                state["pending_approval"]={
+                    "proposal_id": pending["proposal_id"] if pending else None,
+                    "failure_id": fid,
+                    "phase_index": idx,
+                    "phase_execution_id": pexec_id,
+                    "actor_id": actor_id,
+                }
+                cp = self._checkpoint(state, phase_id, "WAITING_APPROVAL", next_phase_index=idx, extra={"failure_id": fid, "proposal_id": pending["proposal_id"] if pending else None, "problem_id": problem_id})
                 self._finish_phase_execution(pexec_id, "FAILED", failure_id=fid, checkpoint_id=cp)
                 return {"action": "PAUSE", "reason": "WAITING_APPROVAL", "checkpoint_id": cp}
+
             evidence_ids = self._record_phase_evidence(project_id, phase, actor_id, run_id, input_ids, output_revisions, phase_result.evidence)
+            self.runtime.agent_protocol.update_step(pexec_id, 3, "PASS", actor_id, note=f"{len(output_revisions)} revisions, {len(evidence_ids)} evidence records")
             self.runtime.execution.finish_run(run_id, "COMPLETED", {"exit_code": 0}, await_gate=True)
             if checkpoint_cfg.get("after_each_run"):
                 self._checkpoint(state, phase_id, "AFTER_EXECUTION_RUN", next_phase_index=idx)
             gate_result = self._evaluate_completion_gates(project_id, phase, workunit_id, input_ids, evidence_ids)
             if gate_result["result"] != "PASS":
+                self.runtime.agent_protocol.update_step(pexec_id, 4, "FAIL", actor_id, note=";".join(gate_result.get("violations", [])))
+                problem_id = self.runtime.agent_protocol.record_problem(
+                    pexec_id, actor_id, code="COMPLETION_GATE_FAILED", summary="Completion gate did not pass",
+                    detail=";".join(gate_result.get("violations", [])) or gate_result["result"], affected_step=4, severity="MEDIUM",
+                )
                 self.runtime.execution.finalize_workunit(workunit_id, gate_result["result"], gate_result.get("gate_id"))
                 fc = phase_result.failure_class or self._fallback_failure_class(phase)
                 fid = self.runtime.decision.record_failure(project_id, workunit_id, fc, "GATE", gate_result.get("gate_id") or workunit_id, failed_gate_id=gate_result.get("gate_id"), evidence_ids=evidence_ids, violations=gate_result.get("violations", []))
-                cp = self._checkpoint(state, phase_id, "GATE_FAILURE", next_phase_index=idx, extra={"failure_id": fid})
+                cp = self._checkpoint(state, phase_id, "GATE_FAILURE", next_phase_index=idx, extra={"failure_id": fid, "problem_id": problem_id})
                 self._finish_phase_execution(pexec_id, "FAILED", failure_id=fid, checkpoint_id=cp)
-                return self._route_operational_failure(state, idx, phase, workunit_id, fid, phase_result)
+                action = self._route_operational_failure(state, idx, phase, workunit_id, fid, phase_result)
+                if action["action"] == "RETRY":
+                    if retry_count >= max_attempts - 1:
+                        self.runtime.agent_protocol.mark_attempt_failed(pexec_id, actor_id, reason="Gate retry budget exhausted")
+                        exhausted_cp = self._checkpoint(state, phase_id, "RETRY_EXHAUSTED", next_phase_index=idx)
+                        return {"action": "PAUSE", "reason": "RETRY_EXHAUSTED", "checkpoint_id": exhausted_cp}
+                    recovery = self.runtime.agent_protocol.propose_recovery(
+                        problem_id, actor_id, action="RETRY_PHASE", target_step=4,
+                        rationale="Completion gate retry", risk_class="LOW", normative_change=False,
+                    )
+                    if recovery["status"] == "AUTO_APPROVED":
+                        self.runtime.agent_protocol.apply_recovery(recovery["proposal_id"], actor_id)
+                        self.runtime.agent_protocol.mark_attempt_failed(pexec_id, actor_id, reason="Recovered gate attempt superseded by retry")
+                        state.setdefault("phase_retry_counts", {})[retry_key] = retry_count + 1
+                        self._persist_state(state)
+                        continue
+                    self.runtime.agent_protocol.mark_waiting_for_human(
+                        pexec_id, actor_id, reason="Gate retry requires human approval",
+                        metadata={"proposal_id": recovery["proposal_id"], "problem_id": problem_id},
+                    )
+                    state["pending_protocol_recovery"] = {
+                        "proposal_id": recovery["proposal_id"],
+                        "actor_id": actor_id,
+                        "phase_index": idx,
+                        "phase_execution_id": pexec_id,
+                        "retry_key": retry_key,
+                    }
+                    waiting_cp = self._checkpoint(
+                        state, phase_id, "WAITING_PROTOCOL_RECOVERY", next_phase_index=idx,
+                        extra={"proposal_id": recovery["proposal_id"], "problem_id": problem_id},
+                    )
+                    return {"action": "PAUSE", "reason": "WAITING_PROTOCOL_RECOVERY", "checkpoint_id": waiting_cp}
+                self.runtime.agent_protocol.mark_attempt_failed(pexec_id, actor_id, reason=f"Gate failure routed as {action['action']}")
+                return action
 
+            self.runtime.agent_protocol.update_step(pexec_id, 4, "PASS", actor_id, note="all completion gates passed")
+            self.runtime.agent_protocol.verify(pexec_id, actor_id, qa_result="PASS", detail="Runtime outputs, evidence and completion gates verified")
             self.runtime.execution.finalize_workunit(workunit_id, "PASS", gate_result.get("gate_id"))
             for rid in output_revisions.values():
                 self.runtime.knowledge.set_validity_system(rid, "VALID")
-            # retry failures on this WorkUnit are closed only once an attempt truly passes its completion gate
-            for f in self.db.all("SELECT failure_id FROM failures WHERE scope_id=? AND status!='RESOLVED'", (workunit_id,)):
-                self.runtime.decision.resolve_failure(f["failure_id"])
+            for failure_row in self.db.all("SELECT failure_id FROM failures WHERE scope_id=? AND status!='RESOLVED'", (workunit_id,)):
+                self.runtime.decision.resolve_failure(failure_row["failure_id"])
+
             cp = None
             if checkpoint_cfg.get("after_success"):
                 cp = self._checkpoint(state, phase_id, "AFTER_PHASE_PASS", next_phase_index=idx + 1)
             decision_outcome = None
             if "decision_record" in output_revisions:
                 decision_outcome = self.runtime.knowledge.get_revision(output_revisions["decision_record"])["structured_payload"].get("outcome")
+            next_phase = self.phases[idx + 1]["id"] if idx + 1 < len(self.phases) else None
+            self.runtime.agent_protocol.write_handoff(
+                pexec_id,
+                actor_id,
+                {
+                    "what_was_done": f"{phase_id} completed under pinned skill {skill['skill_revision_id']}.",
+                    "what_was_not_done": "",
+                    "known_limitations": [],
+                    "open_questions": [],
+                    "risks": [],
+                    "next_phase": next_phase,
+                    "next_phase_prerequisites": [],
+                    "artifact_refs": list(output_revisions.values()),
+                    "evidence_refs": evidence_ids,
+                    "checkpoint_id": cp,
+                    "markdown": f"# {phase_id} handoff\n\nProtocol, runtime outputs, evidence and completion gates passed.",
+                },
+            )
+            self.runtime.agent_protocol.complete(pexec_id, actor_id)
             self._finish_phase_execution(pexec_id, "SUCCEEDED", checkpoint_id=cp, decision_outcome=decision_outcome)
             return {"action": "SUCCESS", "output_revisions": output_revisions, "evidence_ids": evidence_ids, "checkpoint_id": cp}
 
@@ -585,6 +809,19 @@ class ResearchOrchestrator:
     def _finish_phase_execution(self, peid, status, *, failure_id=None, checkpoint_id=None, decision_outcome=None):
         self.db.conn.execute("UPDATE phase_executions SET status=?,failure_id=COALESCE(?,failure_id),checkpoint_id=COALESCE(?,checkpoint_id),decision_outcome=COALESCE(?,decision_outcome),finished_at=? WHERE phase_execution_id=?", (status, failure_id, checkpoint_id, decision_outcome, utcnow(), peid))
         self.db.conn.commit()
+
+    def _attach_phase_run(self, phase_execution_id: str, run_id: str):
+        self.db.conn.execute("UPDATE phase_executions SET run_id=? WHERE phase_execution_id=?", (run_id, phase_execution_id))
+        self.db.conn.commit()
+
+    def _previous_successful_phase_execution(self, orchestration_id: str, phase_index: int) -> str | None:
+        row = self.db.one(
+            "SELECT phase_execution_id FROM phase_executions "
+            "WHERE orchestration_id=? AND phase_index<? AND status='SUCCEEDED' "
+            "ORDER BY generation DESC,phase_index DESC,finished_at DESC,phase_execution_id DESC LIMIT 1",
+            (orchestration_id, int(phase_index)),
+        )
+        return row["phase_execution_id"] if row else None
 
     def _record_phase_skip(self, state, idx, phase_id):
         peid = uid("pexec")

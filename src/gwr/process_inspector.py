@@ -148,6 +148,20 @@ class ProcessInspectorService:
                     events.append({"timestamp": run["finished_at"], "event": f"RUN_{run['runtime_status']}", "ref": run["run_id"], "source": "run"})
             for a in self.db.all("SELECT * FROM audit_events WHERE project_id=? AND run_id=? ORDER BY timestamp", (phase["project_id"], phase["run_id"])):
                 events.append({"timestamp": a["timestamp"], "event": a["action"], "ref": a["resource_id"], "source": "audit", "reason": a["reason_code"]})
+        for e in self.db.all(
+            "SELECT * FROM phase_stage_events WHERE phase_execution_id=? ORDER BY created_at,event_id",
+            (phase_execution_id,),
+        ):
+            events.append({
+                "timestamp": e["created_at"],
+                "event": e["event_type"],
+                "ref": e["event_id"],
+                "source": "agent_protocol",
+                "stage": e["stage"],
+                "actor_id": e["actor_id"],
+                "message": e["message"],
+                "metadata": parse_json(e["metadata"], {}),
+            })
         if phase["failure_id"]:
             f = self.db.one("SELECT * FROM failures WHERE failure_id=?", (phase["failure_id"],))
             if f:
