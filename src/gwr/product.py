@@ -127,8 +127,10 @@ class ProjectDashboardService:
         audit_count = self.db.one("SELECT COUNT(*) n FROM audit_events WHERE project_id=?", (project_id,))["n"]
         status = orchestrations[0]["status"] if orchestrations else ("ATTENTION" if failures or approvals else "READY")
         return {
-            "product_version": "0.8.1",
+            "product_version": "0.8.2",
             "project": project,
+            "project_lifecycle": self.runtime.project_governance.status(project_id),
+            "name_history": self.runtime.project_governance.name_history(project_id),
             "domain_binding": self.runtime.domains.project_binding(project_id),
             "process": self.runtime.process.process(project_id),
             "status": status,
