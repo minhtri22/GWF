@@ -12,6 +12,7 @@ from .domain_registry import DomainRegistryService
 from .process_inspector import ProcessInspectorService
 from .plugins import PluginConnectionService
 from .github_plugin import GitHubPluginService
+from .github_rest_adapter import GitHubRestAdapter
 from .retrieval import ProductionPaperRetriever, CrossrefConnector, WebDocumentConnector, DurableRetrievalCache, ResilientHttpClient, RetrievalPolicy
 from .stat_verifier import SubprocessStatisticalVerifier
 from .research_orchestrator import (
@@ -43,6 +44,7 @@ __all__ = [
     "ProcessInspectorService",
     "PluginConnectionService",
     "GitHubPluginService",
+    "GitHubRestAdapter",
     "ProductionPaperRetriever",
     "CrossrefConnector",
     "WebDocumentConnector",
