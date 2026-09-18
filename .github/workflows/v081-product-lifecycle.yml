@@ -6,7 +6,7 @@ on:
     branches: ["main", "v0.8.1-lifecycle-process-inspector"]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   v081-gate:
@@ -31,6 +31,8 @@ jobs:
       PYTHONPATH: src
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -65,3 +67,20 @@ jobs:
         with:
           name: gwr-v081-uat-site
           path: dist/uat
+      - name: Publish tested UAT to gh-pages
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages || true
+          rm -rf /tmp/gwr-pages
+          mkdir -p /tmp/gwr-pages
+          cp -a dist/uat/. /tmp/gwr-pages/
+          git checkout --orphan _uat_publish
+          git rm -rf . >/dev/null 2>&1 || true
+          cp -a /tmp/gwr-pages/. .
+          git add -A
+          git commit -m "deploy: v0.8.1 UAT $GITHUB_SHA"
+          git push --force origin HEAD:gh-pages
