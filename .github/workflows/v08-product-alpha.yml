@@ -1,4 +1,4 @@
-name: v0.8 Product Alpha + Pages
+name: v0.8 Product Alpha Regression
 
 on:
   workflow_dispatch:
@@ -7,12 +7,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "gwr-v08-pages"
-  cancel-in-progress: false
 
 jobs:
   gate-build:
@@ -42,11 +36,11 @@ jobs:
           python-version: "3.12"
       - name: Install runtime + PostgreSQL dependencies
         run: python -m pip install -U pip && pip install -e ".[dev,postgres]"
-      - name: Run v0.8 product gate
+      - name: Run v0.8 product regression gate
         run: python tools/run_v08_gate.py --out evidence/v0.8/live_gate
-      - name: Build UAT site
+      - name: Build UAT regression artifact
         run: python tools/build_uat_site.py --out dist/uat --commit "$GITHUB_SHA"
-      - name: Assert UAT ready
+      - name: Assert v0.8 regression
         run: |
           python - <<'PY'
           import json
@@ -58,7 +52,6 @@ jobs:
           assert d['human_approval_ux_contract_pass'] is True, d
           assert d['failure_recovery_visualization_data_pass'] is True, d
           assert d['uat_site_build_pass'] is True, d
-          assert d['ready_for_uat'] is True, d
           PY
       - name: Upload v0.8 evidence
         if: always()
@@ -66,25 +59,3 @@ jobs:
         with:
           name: gwr-v08-gate-evidence
           path: evidence/v0.8/live_gate
-      - name: Configure GitHub Pages
-        if: github.ref == 'refs/heads/main'
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - name: Upload Pages artifact
-        if: github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist/uat
-
-  deploy:
-    if: github.ref == 'refs/heads/main'
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: gate-build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
