@@ -8,10 +8,13 @@ class GovernanceKernel:
         self.db,self.domain=db,domain
         self.auth=None
         self.tenancy=None
+        self.project_governance=None
     def bind_auth(self, auth_service):
         self.auth=auth_service
     def bind_tenancy(self, tenancy_service):
         self.tenancy=tenancy_service
+    def bind_project_governance(self, service):
+        self.project_governance=service
     def create_actor(self, actor_type, principal_id, roles, project_scope, identity_metadata=None, actor_id=None):
         actor_id=actor_id or uid("actor")
         self.db.conn.execute("INSERT INTO actors VALUES(?,?,?,?,?,?,?)",(actor_id,actor_type,principal_id,canonical_json(roles),canonical_json(project_scope),"ACTIVE",canonical_json(identity_metadata or {}))); self.db.conn.commit(); return actor_id
@@ -56,6 +59,8 @@ class GovernanceKernel:
         event=uid("audit"); metadata_hash=content_hash(kw.get("metadata",{}))
         self.db.conn.execute("INSERT INTO audit_events VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",(event,project_id,actor_id,action,resource_type,resource_id,kw.get("before_version"),kw.get("after_version"),kw.get("proposal_id"),kw.get("approval_id"),kw.get("run_id"),kw.get("decision_id"),kw.get("correlation_id"),kw.get("reason_code","OK"),utcnow(),metadata_hash)); return event
     def prepare_proposal(self, project_id, proposer_actor_id, action, resource_refs, frozen_payload, required_approval_policy=None, idempotency_key=None):
+        if self.project_governance:
+            self.project_governance.require_mutable(project_id)
         self.authorize(proposer_actor_id,"PROPOSE",{"action":action,"project_id":project_id})
         ph=content_hash(frozen_payload)
         if idempotency_key:
@@ -67,6 +72,8 @@ class GovernanceKernel:
         self.db.conn.execute("INSERT INTO proposals VALUES(?,?,?,?,?,?,?,?,?,?,?)",(pid,project_id,proposer_actor_id,action,canonical_json(resource_refs),canonical_json(frozen_payload),ph,required_approval_policy,status,utcnow(),idempotency_key)); self.append_audit(project_id,proposer_actor_id,"PREPARE_PROPOSAL","Proposal",pid,proposal_id=pid); self.db.conn.commit(); return pid
 
     def prepare_system_proposal(self, project_id, action, resource_refs, frozen_payload, required_approval_policy):
+        if self.project_governance:
+            self.project_governance.require_mutable(project_id)
         ph=content_hash(frozen_payload)
         pid=uid("prop")
         self.db.conn.execute("INSERT INTO proposals VALUES(?,?,?,?,?,?,?,?,?,?,?)",(pid,project_id,"SYSTEM",action,canonical_json(resource_refs),canonical_json(frozen_payload),ph,required_approval_policy,"PENDING_APPROVAL",utcnow(),None))
