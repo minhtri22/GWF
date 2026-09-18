@@ -56,7 +56,7 @@ def main():
         "operator_dashboard_pass": all(next(c["pass"] for c in q["checks"] if c["name"] == "dashboard_read_model") for q in (qs, qp)),
         "human_approval_ux_contract_pass": all(next(c["pass"] for c in q["checks"] if c["name"] == "authenticated_exact_hash_rejection") for q in (qs, qp)),
         "failure_recovery_visualization_data_pass": all(next(c["pass"] for c in q["checks"] if c["name"] == "failure_recovery_graph") for q in (qs, qp)),
-        "uat_site_build_pass": meta.get("version") in {"0.8.0", "0.8.1"} and meta.get("mode") == "STATIC_UAT" and required_ui,
+        "uat_site_build_pass": meta.get("version") in {"0.8.0", "0.8.1", "0.8.2"} and meta.get("mode") == "STATIC_UAT" and required_ui,
         "ready_for_uat": False,
     }
     required = [v for k, v in result.items() if k.endswith("_pass")]
