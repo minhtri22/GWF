@@ -186,6 +186,54 @@ def test_plugin_management_requires_human_and_known_capabilities(configured):
         )
 
 
+def test_reference_rest_adapter_builds_git_data_commit_with_non_force_ref_update():
+    expected = "a" * 40
+    calls = []
+    adapter = GitHubRestAdapter(lambda: "runtime-only-token")
+
+    def fake_request(method, path, payload=None, query=None):
+        calls.append({"method": method, "path": path, "payload": payload, "query": query})
+        if method == "GET" and "/git/ref/heads/feature/safe" in path:
+            return {"object": {"sha": expected}}
+        if method == "GET" and f"/git/commits/{expected}" in path:
+            return {"sha": expected, "tree": {"sha": "b" * 40}, "parents": []}
+        if method == "GET" and "/git/trees/" in path:
+            return {
+                "sha": "b" * 40,
+                "truncated": False,
+                "tree": [{"path": "README.md", "mode": "100644", "type": "blob", "sha": "c" * 40}],
+            }
+        if method == "POST" and path.endswith("/git/blobs"):
+            return {"sha": "d" * 40}
+        if method == "POST" and path.endswith("/git/trees"):
+            return {"sha": "e" * 40}
+        if method == "POST" and path.endswith("/git/commits"):
+            return {"sha": "f" * 40}
+        if method == "PATCH" and "/git/refs/heads/feature/safe" in path:
+            return {"object": {"sha": "f" * 40}}
+        raise AssertionError((method, path, payload, query))
+
+    adapter._request = fake_request
+    result = adapter.commit_files(
+        "example/research",
+        "feature/safe",
+        expected,
+        "docs: adapter contract",
+        [{
+            "path": "README.md",
+            "operation": "UPDATE",
+            "expected_blob_sha": "c" * 40,
+            "content_sha256": "not-used-by-provider",
+            "content": "after\n",
+        }],
+    )
+    assert result == {"commit_sha": "f" * 40, "parent_sha": expected}
+    commit_call = next(x for x in calls if x["method"] == "POST" and x["path"].endswith("/git/commits"))
+    assert commit_call["payload"]["parents"] == [expected]
+    patch_call = next(x for x in calls if x["method"] == "PATCH")
+    assert patch_call["payload"] == {"sha": "f" * 40, "force": False}
+
+
 def test_reference_rest_adapter_resolves_credentials_only_at_request_time(configured):
     rt, project, human, agent, connection, binding, fake_adapter = configured
     calls = []
