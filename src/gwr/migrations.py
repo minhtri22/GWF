@@ -370,6 +370,38 @@ CREATE TABLE IF NOT EXISTS phase_handoffs(
 """.strip(),
     ),
 
+
+    Migration(
+        "0006_v083_orchestrator_integration",
+        """
+CREATE TABLE IF NOT EXISTS domain_skill_bindings(
+  binding_id TEXT PRIMARY KEY,
+  domain_id TEXT NOT NULL,
+  workunit_type TEXT NOT NULL,
+  skill_revision_id TEXT NOT NULL,
+  skill_hash TEXT NOT NULL,
+  required_tools TEXT NOT NULL,
+  qa_contract TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE(domain_id, workunit_type)
+);
+CREATE TABLE IF NOT EXISTS phase_handoff_links(
+  phase_execution_id TEXT PRIMARY KEY,
+  previous_phase_execution_id TEXT,
+  previous_handoff_id TEXT,
+  handoff_hash TEXT,
+  verified_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS project_agent_protocol_settings(
+  project_id TEXT PRIMARY KEY,
+  recovery_mode TEXT,
+  retry_budget INTEGER,
+  updated_by_actor_id TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+""".strip(),
+    ),
+
 ]
 
 
