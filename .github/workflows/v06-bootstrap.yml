@@ -3,7 +3,7 @@ on:
   push:
     branches: ["v0.6-identity-multitenancy"]
     paths:
-      - "bootstrap/v06-source.tar.xz"
+      - "bootstrap/**"
 permissions:
   contents: write
 jobs:
@@ -26,8 +26,10 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -- .github/workflows
+          find src tests tools -type d -name __pycache__ -prune -exec rm -rf {} +
+          find src tests tools -type f -name '*.pyc' -delete
           rm -rf bootstrap
-          rm -f .github/workflows/v06-bootstrap.yml
           git add -A
           git commit -m "feat: implement v0.6 identity and multi-tenancy"
           git push origin HEAD:v0.6-identity-multitenancy
