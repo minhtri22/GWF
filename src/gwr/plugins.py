@@ -18,7 +18,7 @@ SECRET_FIELD_NAMES = {
     "api_key",
 }
 SECRET_PREFIXES = ("ghp_", "github_pat_", "gho_", "ghu_", "ghs_", "ghr_", "sk-")
-GITHUB_CAPABILITIES = {"REPO_READ", "CONTENT_WRITE", "PULL_REQUEST_WRITE", "MERGE_PULL_REQUEST"}
+GITHUB_CAPABILITIES = {"REPO_READ", "CONTENT_WRITE", "WORKFLOW_WRITE", "PULL_REQUEST_WRITE", "MERGE_PULL_REQUEST"}
 
 
 class PluginConnectionService:
