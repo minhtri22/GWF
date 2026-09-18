@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException, Header, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from .runtime import GovernedWorkflowRuntime
 from .errors import GWRException, AuthorityDenied, NotFound, ValidationError
 from .domain_sdk import DomainSDK
 from .product import ProjectDashboardService
+import asyncio
+import json
 import yaml
 
 
@@ -85,8 +88,13 @@ class SkillRevisionBody(BaseModel):
 
 class ProtocolCreateBody(BaseModel):
     skill_revision_id: str
-    recovery_mode: str = "AUTO"
-    retry_budget: int = 2
+    recovery_mode: str | None = None
+    retry_budget: int | None = None
+
+
+class ProjectAgentProtocolSettingsBody(BaseModel):
+    recovery_mode: str | None = None
+    retry_budget: int | None = None
 
 
 class PreflightBody(BaseModel):
@@ -136,7 +144,7 @@ class HandoffBody(BaseModel):
 
 
 def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
-    app = FastAPI(title="Governed Workflow Runtime", version="0.8.2")
+    app = FastAPI(title="Governed Workflow Runtime", version="0.8.3")
 
     @app.exception_handler(GWRException)
     async def gwr_error(_, exc: GWRException):
@@ -291,7 +299,7 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
 
     @app.get('/health')
     def health():
-        return {"ok": True, "domain": runtime.domain.domain_id, "version": "0.8.2"}
+        return {"ok": True, "domain": runtime.domain.domain_id, "version": "0.8.3"}
 
     @app.get('/projects/{project_id}/audit')
     def audit(project_id: str, authorization: str | None = Header(default=None)):
@@ -333,10 +341,10 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
     def product_meta():
         return {
             "product": "GWR Research Product Alpha",
-            "version": "0.8.2",
+            "version": "0.8.3",
             "domain_id": runtime.domain.domain_id,
             "backend": getattr(runtime.db, "backend_name", "unknown"),
-            "capabilities": ["domain_sdk", "domain_registry", "project_lifecycle", "project_archive", "skill_registry", "observable_agent_protocol", "auto_recovery", "human_recovery_approval", "process_inspector", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"],
+            "capabilities": ["domain_sdk", "domain_registry", "project_lifecycle", "project_archive", "skill_registry", "observable_agent_protocol", "protocol_driven_orchestration", "handoff_chain", "live_operational_events", "recovery_configuration_hierarchy", "auto_recovery", "human_recovery_approval", "process_inspector", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"],
         }
 
     @app.get('/product/domains/current')
@@ -416,6 +424,69 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
         project_principal(row["project_id"], authorization, "VIEW")
         return {"events": runtime.process.phase_events(phase_execution_id)}
 
+    @app.get('/product/phases/{phase_execution_id}/events/stream')
+    async def product_phase_event_stream(
+        phase_execution_id: str,
+        authorization: str = Header(...),
+        last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
+        follow: bool = Query(default=True),
+        poll_interval_ms: int = Query(default=500, ge=100, le=5000),
+    ):
+        row = runtime.db.one("SELECT o.project_id FROM phase_executions p JOIN orchestrations o ON o.orchestration_id=p.orchestration_id WHERE p.phase_execution_id=?", (phase_execution_id,))
+        if not row:
+            raise HTTPException(status_code=404, detail="phase execution not found")
+        project_principal(row["project_id"], authorization, "VIEW")
+
+        async def stream():
+            seen: set[str] = set()
+            if last_event_id:
+                prior = runtime.db.all(
+                    "SELECT event_id FROM phase_stage_events WHERE phase_execution_id=? ORDER BY created_at,event_id",
+                    (phase_execution_id,),
+                )
+                found = False
+                for item in prior:
+                    seen.add(item["event_id"])
+                    if item["event_id"] == last_event_id:
+                        found = True
+                        break
+                if not found:
+                    seen.clear()
+            while True:
+                emitted = False
+                rows = runtime.db.all(
+                    "SELECT * FROM phase_stage_events WHERE phase_execution_id=? ORDER BY created_at,event_id",
+                    (phase_execution_id,),
+                )
+                for item in rows:
+                    if item["event_id"] in seen:
+                        continue
+                    payload = {
+                        "event_id": item["event_id"],
+                        "phase_execution_id": phase_execution_id,
+                        "stage": item["stage"],
+                        "event_type": item["event_type"],
+                        "actor_id": item["actor_id"],
+                        "message": item["message"],
+                        "metadata": __import__("gwr.utils", fromlist=["parse_json"]).parse_json(item["metadata"], {}),
+                        "created_at": item["created_at"],
+                    }
+                    yield f"id: {item['event_id']}\nevent: {item['event_type']}\ndata: {json.dumps(payload, separators=(',', ':'))}\n\n"
+                    seen.add(item["event_id"])
+                    emitted = True
+                if not follow:
+                    break
+                phase = runtime.db.one("SELECT status FROM phase_executions WHERE phase_execution_id=?", (phase_execution_id,))
+                if phase and phase["status"] in {"SUCCEEDED", "FAILED", "SKIPPED"} and not emitted:
+                    break
+                await asyncio.sleep(poll_interval_ms / 1000.0)
+
+        return StreamingResponse(
+            stream(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
     @app.patch('/product/projects/{project_id}')
     def rename_project(project_id: str, body: ProjectRenameBody, authorization: str = Header(...)):
         _, principal = bearer(authorization)
@@ -441,6 +512,22 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
             "lifecycle": runtime.project_governance.status(project_id),
             "name_history": runtime.project_governance.name_history(project_id),
         }
+
+    @app.get('/product/projects/{project_id}/agent-protocol-settings')
+    def project_agent_protocol_settings(project_id: str, authorization: str = Header(...)):
+        project_principal(project_id, authorization, "VIEW")
+        return runtime.agent_protocol.project_defaults(project_id)
+
+    @app.put('/product/projects/{project_id}/agent-protocol-settings')
+    def update_project_agent_protocol_settings(project_id: str, body: ProjectAgentProtocolSettingsBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        project_principal(project_id, authorization, "MANAGE_MEMBERS")
+        return runtime.agent_protocol.set_project_defaults(
+            project_id,
+            principal.actor_id,
+            recovery_mode=body.recovery_mode,
+            retry_budget=body.retry_budget,
+        )
 
     @app.post('/product/skills')
     def create_skill(body: SkillPackageBody, authorization: str = Header(...)):
