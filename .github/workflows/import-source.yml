@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "4192048cc477a0cb36172ab28afdcdc9e0e03f03fc6abb6a674d7e50a1335456  canonical/source-v0.5.1r1.tar.xz" | sha256sum -c -
+          echo "c838d1fe2fbd2a7c1c38c2b54a510ff713e3fbc87877cc499f3c9d23a80bb4a9  canonical/source-v0.5.1r1.tar.xz" | sha256sum -c -
           xz -t canonical/source-v0.5.1r1.tar.xz
 
       - name: Extract and verify canonical source tree
