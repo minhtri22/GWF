@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from typing import Any
 
 from .errors import AuthorityDenied, InvalidTransition, NotFound, StaleVersion, ValidationError
@@ -9,6 +10,16 @@ from .utils import canonical_json, content_hash, parse_json, uid, utcnow
 
 def _sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _git_sha(value: str, field: str) -> str:
+    text = str(value or "").strip().lower()
+    if not re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", text):
+        raise ValidationError(
+            f"{field} must be a full 40-hex SHA-1 or 64-hex SHA-256",
+            details={"field": field},
+        )
+    return text
 
 
 class GitHubPluginService:
@@ -146,6 +157,8 @@ class GitHubPluginService:
                 )
             if operation == "CREATE" and expected_blob_sha:
                 raise ValidationError("CREATE must not supply expected_blob_sha", details={"path": path})
+            if expected_blob_sha:
+                expected_blob_sha = _git_sha(expected_blob_sha, f"expected_blob_sha:{path}")
             item: dict[str, Any] = {
                 "path": path,
                 "operation": operation,
@@ -191,8 +204,7 @@ class GitHubPluginService:
             actor = self.gov._actor(actor_id)
             if actor["actor_type"] != "HUMAN":
                 raise AuthorityDenied("Direct writes to the default branch require a human actor")
-        if not expected_head_sha or len(expected_head_sha.strip()) < 7:
-            raise ValidationError("expected_head_sha is required")
+        expected_head_sha = _git_sha(expected_head_sha, "expected_head_sha")
         if not commit_message.strip():
             raise ValidationError("commit_message is required")
         manifest = self._normalize_changes(changes, include_content=False)
@@ -206,7 +218,7 @@ class GitHubPluginService:
                     project_id,
                     binding_id,
                     branch,
-                    expected_head_sha.strip(),
+                    expected_head_sha,
                     canonical_json(manifest),
                     content_hash(manifest),
                     commit_message.strip(),
@@ -226,7 +238,7 @@ class GitHubPluginService:
                 metadata={
                     "repository_full_name": binding["repository_full_name"],
                     "branch": branch,
-                    "expected_head_sha": expected_head_sha.strip(),
+                    "expected_head_sha": expected_head_sha,
                     "manifest_hash": content_hash(manifest),
                 },
             )
@@ -406,10 +418,8 @@ class GitHubPluginService:
                     (change_set_id,),
                 )
             raise
-        commit_sha = str(result.get("commit_sha") or "")
-        parent_sha = str(result.get("parent_sha") or "")
-        if not commit_sha:
-            raise ValidationError("GitHub adapter did not return commit_sha")
+        commit_sha = _git_sha(result.get("commit_sha"), "commit_sha")
+        parent_sha = _git_sha(result.get("parent_sha"), "parent_sha")
         if parent_sha != row["expected_head_sha"]:
             with self.db.tx():
                 self._record_check(
