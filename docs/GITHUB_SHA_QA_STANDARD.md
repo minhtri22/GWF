@@ -10,6 +10,7 @@ Minimum recommended GitHub permissions:
 
 - repository contents: read for inspection;
 - repository contents: write only when commit capability is required;
+- workflows: write only when a change set modifies `.github/workflows/*`;
 - pull requests: write only when PR creation/review workflows are enabled;
 - no administration or secrets permission for ordinary source/document writes.
 
@@ -73,8 +74,12 @@ Repository bindings default to `FEATURE_BRANCH_ONLY`. Direct writes to the defau
 - the default branch explicitly present in the allowlist;
 - a HUMAN actor for the change-set preparation.
 
-Agents can write to allowed feature/fix/docs branches when project authority and plugin capabilities permit it.
+Agents can write to allowed feature/fix/docs branches when project authority and plugin capabilities permit it. Changes to `.github/workflows/*` additionally require the declared `WORKFLOW_WRITE` capability.
 
 ## Relationship to agent recovery
 
 GitHub SHA conflicts are concurrency/safety failures, not ordinary low-risk transient retries. Even when the phase recovery mode is `AUTO`, GWF must not silently replace a frozen expected SHA with the latest remote SHA. A new reviewed/frozen change set is required.
+
+## GitHub REST API version
+
+The reference adapter sends the versioned REST header and defaults to `2026-03-10`. The version is configurable at adapter construction so a host can advance it deliberately after compatibility testing.
