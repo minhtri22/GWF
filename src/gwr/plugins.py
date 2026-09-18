@@ -18,6 +18,7 @@ SECRET_FIELD_NAMES = {
     "api_key",
 }
 SECRET_PREFIXES = ("ghp_", "github_pat_", "gho_", "ghu_", "ghs_", "ghr_", "sk-")
+GITHUB_CAPABILITIES = {"REPO_READ", "CONTENT_WRITE", "PULL_REQUEST_WRITE", "MERGE_PULL_REQUEST"}
 
 
 class PluginConnectionService:
@@ -37,15 +38,13 @@ class PluginConnectionService:
 
     def _require_manage(self, project_id: str, actor_id: str) -> None:
         self.projects.require_mutable(project_id)
+        actor = self.gov._actor(actor_id)
+        if actor["actor_type"] != "HUMAN":
+            raise AuthorityDenied("Plugin connections must be managed by a human actor")
         scope = self.tenancy.scope_for_project(project_id)
         if scope:
             self.tenancy.require_project_access(actor_id, project_id, "MANAGE_MEMBERS")
             return
-        if actor_id == "SYSTEM":
-            return
-        actor = self.gov._actor(actor_id)
-        if actor["actor_type"] != "HUMAN":
-            raise AuthorityDenied("Plugin connections must be managed by a human actor")
         self.gov.authorize(actor_id, "PROPOSE", {"project_id": project_id, "action": "MANAGE_PLUGIN"})
 
     @classmethod
@@ -91,6 +90,10 @@ class PluginConnectionService:
         caps = sorted({str(x).strip().upper() for x in capabilities if str(x).strip()})
         if not caps:
             raise ValidationError("At least one plugin capability is required")
+        if plugin_type == "github":
+            unknown = sorted(set(caps) - GITHUB_CAPABILITIES)
+            if unknown:
+                raise ValidationError("Unsupported GitHub plugin capability", details={"capabilities": unknown})
         metadata = metadata or {}
         self._assert_no_secret_material(metadata)
         existing = self.db.one(
