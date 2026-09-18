@@ -1,0 +1,58 @@
+name: v0.6 Identity Multi-tenancy Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "v0.6-identity-multitenancy"]
+
+jobs:
+  v06-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: gwr
+          POSTGRES_PASSWORD: gwr_test_password
+          POSTGRES_DB: gwr_gate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gwr -d gwr_gate"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      GWR_TEST_DATABASE_URL: postgresql://gwr:gwr_test_password@127.0.0.1:5432/gwr_gate
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install runtime + PostgreSQL test dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev,postgres]"
+      - name: Run v0.6 gate
+        run: python tools/run_v06_gate.py --out evidence/v0.6/live_gate
+      - name: Assert v0.6 PASS
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('evidence/v0.6/live_gate/V06_GATE.json'))
+          assert d['status']=='PASS', d
+          assert d['v051_regression_pass'] is True, d
+          assert d['postgres_live_tested'] is True, d
+          assert d['sqlite_identity_multitenancy_pass'] is True, d
+          assert d['postgres_identity_multitenancy_pass'] is True, d
+          assert d['tenant_isolation_pass'] is True, d
+          assert d['oidc_binding_pass'] is True, d
+          assert d['revocation_pass'] is True, d
+          assert d['ready_for_v07'] is True, d
+          PY
+      - name: Upload v0.6 gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gwr-v06-gate-evidence
+          path: evidence/v0.6/live_gate
