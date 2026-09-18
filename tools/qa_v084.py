@@ -138,6 +138,30 @@ def main():
             human,
             metadata={"account_label": "qa"},
         )
+
+        workflow_capability_blocked = False
+        try:
+            provisional_binding = rt.github.bind_repository(
+                project,
+                connection,
+                "example/workflow-policy",
+                "main",
+                human,
+                allowed_branches=["feature/*"],
+            )
+            rt.github.prepare_change_set(
+                project,
+                provisional_binding,
+                "feature/qa",
+                "a" * 40,
+                [{"path": ".github/workflows/ci.yml", "operation": "CREATE", "content": "name: ci\n"}],
+                "ci: capability check",
+                agent,
+            )
+        except Exception as exc:
+            workflow_capability_blocked = "WORKFLOW_WRITE" in str(exc)
+        add(checks, "workflow_write_capability_enforced", workflow_capability_blocked)
+
         adapter = GateGitHubAdapter()
         rt.plugins.attach_runtime_adapter(connection, adapter)
         binding = rt.github.bind_repository(
