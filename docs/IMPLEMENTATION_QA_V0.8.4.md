@@ -7,7 +7,7 @@ Dedicated v0.8.4 checks cover:
 - migration of plugin/SHA-QA tables on SQLite and PostgreSQL;
 - AUTO and HUMAN_APPROVE remain separately configurable recovery modes;
 - persisted plugin metadata rejects token/secret material;
-- GitHub plugin capability enforcement;
+- GitHub plugin capability enforcement, including explicit WORKFLOW_WRITE for `.github/workflows/*`;
 - repository binding branch allowlist;
 - feature-branch default write policy;
 - HUMAN-only direct writes to the default branch;
