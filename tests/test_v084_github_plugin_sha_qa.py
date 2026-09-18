@@ -293,6 +293,21 @@ def test_sha_safe_commit_is_verified_end_to_end(configured):
     assert all(x["status"] == "PASS" for x in result["checks"])
 
 
+def test_short_git_sha_is_rejected_before_changeset_freeze(configured):
+    rt, project, human, agent, _, binding, adapter = configured
+    changes = [{"path": "docs/new.md", "operation": "CREATE", "content": "x\n"}]
+    with pytest.raises(ValidationError):
+        rt.github.prepare_change_set(
+            project,
+            binding,
+            "feature/safe",
+            "abc1234",
+            changes,
+            "docs: reject short SHA",
+            agent,
+        )
+
+
 def test_branch_sha_change_blocks_commit_before_write(configured):
     rt, project, human, agent, _, binding, adapter = configured
     base = adapter.get_branch_head("example/research", "feature/safe")
