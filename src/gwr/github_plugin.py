@@ -202,7 +202,7 @@ class GitHubPluginService:
         now = utcnow()
         with self.db.tx():
             self.db.conn.execute(
-                "INSERT INTO github_change_sets VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO github_change_sets VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     change_set_id,
                     project_id,
@@ -215,7 +215,6 @@ class GitHubPluginService:
                     "PREPARED",
                     actor_id,
                     now,
-                    None,
                     None,
                     None,
                 ),
