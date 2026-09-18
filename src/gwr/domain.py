@@ -57,6 +57,28 @@ def validate_domain(d: dict) -> None:
     gates={x["id"] for x in d.get("gate_types",[])}
     failures={x["id"] for x in d.get("failure_types",[])}
     approvals={x["id"] for x in d.get("approval_policies",[])}
+    skill_contracts=d.get("skill_contracts",{}) or {}
+    if not isinstance(skill_contracts,dict):
+        raise ValidationError("skill_contracts must be an object keyed by skill_ref")
+    for skill_ref,contract in skill_contracts.items():
+        if not isinstance(contract,dict):
+            raise ValidationError(f"Skill contract {skill_ref} must be an object")
+        missing_skill=[k for k in ("version","markdown","tool_requirements","qa_contract") if k not in contract]
+        if missing_skill:
+            raise ValidationError(f"Skill contract {skill_ref} incomplete: {missing_skill}")
+        if not str(contract.get("markdown") or "").strip():
+            raise ValidationError(f"Skill contract {skill_ref} markdown is required")
+        if not isinstance(contract.get("tool_requirements"),list):
+            raise ValidationError(f"Skill contract {skill_ref} tool_requirements must be a list")
+        if not isinstance(contract.get("qa_contract"),dict):
+            raise ValidationError(f"Skill contract {skill_ref} qa_contract must be an object")
+    ap=d.get("agent_protocol",{}) or {}
+    if ap:
+        for key in ("default_recovery_mode","minimum_recovery_mode"):
+            if ap.get(key) is not None and ap.get(key) not in {"AUTO","HUMAN_APPROVE"}:
+                raise ValidationError(f"agent_protocol.{key} must be AUTO or HUMAN_APPROVE")
+        if ap.get("default_retry_budget") is not None and int(ap["default_retry_budget"]) < 0:
+            raise ValidationError("agent_protocol.default_retry_budget must be >= 0")
     for a in d.get("artifact_types",[]):
         if a.get("normative") and not a.get("approval_policy"):
             raise ValidationError(f"Normative artifact {a['id']} lacks approval_policy")
@@ -66,6 +88,16 @@ def validate_domain(d: dict) -> None:
         if t.get("strength")=="HARD" and "invalidates_on_upstream_supersede" not in t:
             raise ValidationError(f"Hard trace {t['id']} lacks invalidation behavior")
     for w in d.get("workunit_templates",[]):
+        skill_ref=w.get("skill_ref")
+        if skill_ref is not None and skill_ref not in skill_contracts:
+            raise ValidationError(f"Workunit {w['id']} references unknown skill_ref {skill_ref}")
+        phase_protocol=w.get("agent_protocol",{}) or {}
+        if phase_protocol.get("recovery_mode") is not None and phase_protocol.get("recovery_mode") not in {"AUTO","HUMAN_APPROVE"}:
+            raise ValidationError(f"Workunit {w['id']} has invalid agent_protocol.recovery_mode")
+        if phase_protocol.get("minimum_recovery_mode") is not None and phase_protocol.get("minimum_recovery_mode") not in {"AUTO","HUMAN_APPROVE"}:
+            raise ValidationError(f"Workunit {w['id']} has invalid agent_protocol.minimum_recovery_mode")
+        if phase_protocol.get("retry_budget") is not None and int(phase_protocol["retry_budget"]) < 0:
+            raise ValidationError(f"Workunit {w['id']} has invalid agent_protocol.retry_budget")
         for inp in w.get("inputs",[]):
             typ=inp["artifact_type"] if isinstance(inp,dict) else inp
             if typ not in arts: raise ValidationError(f"Workunit {w['id']} references unknown artifact {typ}")
