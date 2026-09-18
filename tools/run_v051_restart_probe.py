@@ -37,7 +37,7 @@ def main():
     args=ap.parse_args(); out=Path(args.out); out.mkdir(parents=True,exist_ok=True)
     if not os.environ.get('GWR_TEST_DATABASE_URL'): raise SystemExit('GWR_TEST_DATABASE_URL is required: this is a live PostgreSQL probe')
     logical=out/'postgres-restart-runtime.db'; secret=secrets.token_urlsafe(48); password=secrets.token_urlsafe(20)
-    reg=DatasetRegistry(ROOT/'datasets'); suite=ResearchBenchmarkSuite(ROOT/'benchmarks'/'research_reliability.yaml'); case=suite.case('synth_underpowered')
+    reg=DatasetRegistry(ROOT/'datasets'); suite=ResearchBenchmarkSuite(ROOT/'benchmarks'/'research_reliability.yaml'); case=suite.case('synth_underpowered_pivot')
     rt=GovernedWorkflowRuntime(str(ROOT/'domains'/'research.workflow.yaml'),str(logical),auth_secret=secret)
     if rt.db.backend_name!='postgresql': raise RuntimeError('restart probe did not bind to PostgreSQL')
     project=rt.create_project('v0.5.1-postgres-restart-probe')
