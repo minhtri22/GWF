@@ -1,0 +1,88 @@
+name: v0.8.2 Observable Agent Protocol Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "v0.8.2-observable-agent-protocol"]
+
+permissions:
+  contents: write
+
+jobs:
+  v082-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: gwr
+          POSTGRES_PASSWORD: gwr_test_password
+          POSTGRES_DB: gwr_gate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gwr -d gwr_gate"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      GWR_TEST_DATABASE_URL: postgresql://gwr:gwr_test_password@127.0.0.1:5432/gwr_gate
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install runtime + PostgreSQL dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev,postgres]"
+      - name: Run v0.8.2 gate
+        run: python tools/run_v082_gate.py --out evidence/v0.8.2/live_gate
+      - name: Validate UAT JavaScript
+        run: node --check web/app.js
+      - name: Build UAT candidate
+        run: python tools/build_uat_site.py --out dist/uat --commit "$GITHUB_SHA"
+      - name: Assert UAT ready
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('evidence/v0.8.2/live_gate/V082_GATE.json'))
+          assert d['status']=='PASS', d
+          assert d['v081_regression_pass'] is True, d
+          assert d['project_governance_pass'] is True, d
+          assert d['observable_agent_protocol_pass'] is True, d
+          assert d['human_recovery_mode_pass'] is True, d
+          assert d['uat_observability_ui_pass'] is True, d
+          assert d['ready_for_uat'] is True, d
+          PY
+      - name: Upload v0.8.2 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gwr-v082-gate-evidence
+          path: evidence/v0.8.2/live_gate
+      - name: Upload UAT candidate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gwr-v082-uat-site
+          path: dist/uat
+      - name: Publish tested UAT to gh-pages
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf /tmp/gwr-pages
+          mkdir -p /tmp/gwr-pages
+          cp -a dist/uat/. /tmp/gwr-pages/
+          git checkout --orphan _uat_publish
+          git rm -rf . >/dev/null 2>&1 || true
+          git clean -fdx
+          cp -a /tmp/gwr-pages/. .
+          git add -A
+          git commit -m "deploy: v0.8.2 UAT $GITHUB_SHA"
+          git push --force origin HEAD:gh-pages

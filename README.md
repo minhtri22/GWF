@@ -1,28 +1,27 @@
-# Governed Workflow Runtime v0.8.1 — Product Lifecycle & Process Inspector
+# Governed Workflow Runtime v0.8.2 — Observable Agent Execution
 
-v0.8.1 closes the pre-UAT lifecycle and observability gaps while preserving every v0.7/v0.8 invariant.
+GWR v0.8.2 adds project governance plus a persistent, observable execution protocol for AI-driven phases.
 
-## New in v0.8.1
+## New in v0.8.2
 
-- Tenant-scoped Domain Package Registry.
-- Immutable domain revisions: DRAFT -> VALIDATED -> PUBLISHED.
-- Project creation pinned to one published domain revision.
-- No silent domain upgrade for existing projects.
-- Process Inspector with current phase, complete generation/attempt history and current lineage.
-- Phase Inspector with run, inputs, outputs, evidence, gates, failure, checkpoint and chronological events.
-- Product APIs for domain lifecycle, process history and per-phase inspection.
-- GitHub Pages UAT simulation for Create Domain, Publish Domain, New Project and Phase Inspector.
+- Rename Project with immutable project identity and name history.
+- Archive / controlled drain / restore.
+- Archived projects remain readable but reject new governed mutations/execution.
+- Versioned Skill Registry with immutable SKILL.md revisions.
+- Per-phase LOAD → PREFLIGHT → PLAN → EXECUTE → VERIFY → HANDOFF → COMPLETE protocol.
+- Persistent preflight checks, plan revisions, checklist items and handoffs.
+- ProblemRecord must be written before any retry/replan.
+- AUTO and HUMAN_APPROVE recovery modes.
+- Human approval gate for recovery/backtracking when configured or when AUTO safety policy refuses automatic recovery.
+- Process Inspector exposes protocol stage, plan progress, problems, recovery decisions and operational event log.
+- GitHub Pages UAT includes breathing activity signal, recovery-mode switch, issue simulation and project rename/archive/restore.
 
-## Static UAT boundary
+The product surface exposes operational trace only. It does not expose hidden model reasoning.
 
-GitHub Pages is still non-authoritative. Lifecycle mutations are stored in browser localStorage and clearly marked UAT. Real domain/project lifecycle is separately implemented and tested in FastAPI/PostgreSQL.
-
-## Live gate
+## Gate
 
 export GWR_TEST_DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME
 export PYTHONPATH=src
-python tools/run_v081_gate.py --out evidence/v0.8.1/live_gate
+python tools/run_v082_gate.py --out evidence/v0.8.2/live_gate
 
-Acceptance requires the full v0.8 regression chain plus v0.8.1 lifecycle/process tests on SQLite and PostgreSQL 17, UAT build validation and compileall.
-
-See spec/13-product-lifecycle-process-inspector-v0.8.1.md and docs/HANDOFF_V0.8.1.md.
+Acceptance requires ready_for_uat=true and all nested v0.8.1 → v0.5.1 regression gates PASS.
