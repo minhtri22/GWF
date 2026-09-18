@@ -293,6 +293,53 @@ def test_sha_safe_commit_is_verified_end_to_end(configured):
     assert all(x["status"] == "PASS" for x in result["checks"])
 
 
+def test_workflow_file_requires_explicit_workflow_write_capability(configured):
+    rt, project, human, agent, connection, binding, adapter = configured
+    base = adapter.get_branch_head("example/research", "feature/safe")
+    changes = [{
+        "path": ".github/workflows/ci.yml",
+        "operation": "CREATE",
+        "content": "name: ci\n",
+    }]
+    with pytest.raises(AuthorityDenied):
+        rt.github.prepare_change_set(
+            project,
+            binding,
+            "feature/safe",
+            base,
+            changes,
+            "ci: add workflow",
+            agent,
+        )
+
+    connection2 = rt.plugins.create_connection(
+        project,
+        "github",
+        "github-connection-workflow-write",
+        ["REPO_READ", "CONTENT_WRITE", "WORKFLOW_WRITE"],
+        human,
+    )
+    rt.plugins.attach_runtime_adapter(connection2, adapter)
+    binding2 = rt.github.bind_repository(
+        project,
+        connection2,
+        "example/workflow-enabled",
+        "main",
+        human,
+        allowed_branches=["feature/*"],
+    )
+    change_set = rt.github.prepare_change_set(
+        project,
+        binding2,
+        "feature/safe",
+        base,
+        changes,
+        "ci: add workflow",
+        agent,
+    )
+    assert rt.github.inspect(change_set)["status"] == "PREPARED"
+
+
 def test_short_git_sha_is_rejected_before_changeset_freeze(configured):
     rt, project, human, agent, _, binding, adapter = configured
     changes = [{"path": "docs/new.md", "operation": "CREATE", "content": "x\n"}]
