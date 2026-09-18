@@ -10,6 +10,8 @@ from .project_governance import ProjectGovernanceService
 from .agent_protocol import AgentExecutionProtocolService
 from .domain_registry import DomainRegistryService
 from .process_inspector import ProcessInspectorService
+from .plugins import PluginConnectionService
+from .github_plugin import GitHubPluginService
 from .retrieval import ProductionPaperRetriever, CrossrefConnector, WebDocumentConnector, DurableRetrievalCache, ResilientHttpClient, RetrievalPolicy
 from .stat_verifier import SubprocessStatisticalVerifier
 from .research_orchestrator import (
@@ -39,6 +41,8 @@ __all__ = [
     "AgentExecutionProtocolService",
     "DomainRegistryService",
     "ProcessInspectorService",
+    "PluginConnectionService",
+    "GitHubPluginService",
     "ProductionPaperRetriever",
     "CrossrefConnector",
     "WebDocumentConnector",
