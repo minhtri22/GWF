@@ -415,6 +415,55 @@ def test_default_branch_direct_write_requires_human(configured):
         )
 
 
+def test_api_executes_sha_safe_github_changeset(configured, monkeypatch):
+    rt, project, human, agent, connection, binding, adapter = configured
+    monkeypatch.setattr(HumanAuthService, "PASSWORD_ITERATIONS", 1000)
+    rt.auth.register_human(human, "owner-v084-api", "owner-v084-api-password")
+    client = TestClient(create_app(rt))
+    login = client.post(
+        "/auth/login",
+        json={"username": "owner-v084-api", "password": "owner-v084-api-password"},
+    )
+    assert login.status_code == 200
+    auth = {"Authorization": "Bearer " + login.json()["access_token"]}
+
+    plugins = client.get(f"/product/projects/{project}/plugins", headers=auth)
+    assert plugins.status_code == 200
+    assert any(x["connection_id"] == connection for x in plugins.json()["plugins"])
+
+    base = adapter.get_branch_head("example/research", "feature/safe")
+    before = adapter.get_file("example/research", "README.md", base)
+    changes = [{
+        "path": "README.md",
+        "operation": "UPDATE",
+        "expected_blob_sha": before["sha"],
+        "content": "api verified\n",
+    }]
+    prepared = client.post(
+        f"/product/projects/{project}/github/change-sets",
+        headers=auth,
+        json={
+            "binding_id": binding,
+            "branch": "feature/safe",
+            "expected_head_sha": base,
+            "changes": changes,
+            "commit_message": "docs: API SHA-safe commit",
+        },
+    )
+    assert prepared.status_code == 200, prepared.text
+    change_set_id = prepared.json()["change_set_id"]
+
+    executed = client.post(
+        f"/product/github/change-sets/{change_set_id}/execute",
+        headers=auth,
+        json={"changes": changes},
+    )
+    assert executed.status_code == 200, executed.text
+    payload = executed.json()
+    assert payload["status"] == "VERIFIED"
+    assert payload["qa_complete"] is True
+
+
 def test_api_advertises_v084_plugin_capabilities(configured, monkeypatch):
     rt, project, human, *_ = configured
     monkeypatch.setattr(HumanAuthService, "PASSWORD_ITERATIONS", 1000)
