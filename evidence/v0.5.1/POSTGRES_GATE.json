@@ -1,0 +1,14 @@
+{
+  "version": "0.5.1",
+  "status": "PASS",
+  "postgres_live_tested": true,
+  "same_41_tests_sqlite_and_postgres": true,
+  "six_research_cases_sqlite_and_postgres": true,
+  "restart_persistence_equal": true,
+  "semantic_equivalence": true,
+  "v06_unblocked": true,
+  "github_actions_run_id": 35296321080,
+  "head_sha": "84e2590ecab08db9fe53d51f6c882c060bf2abac",
+  "artifact_id": 10528252186,
+  "artifact_sha256": "416711d0c1331ef04adc7e1dbe6bb7e4108a0e95063c3ee1f14e3c58ffbedc71"
+}

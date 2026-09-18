@@ -4,7 +4,7 @@ This package is the v0.5 Production Foundation plus a strict live-PostgreSQL gat
 
 ## Current status
 
-**Canonical v0.5.1r1 source import: COMPLETE (116/116 files). Live PostgreSQL gate: RUNNING/REQUIRES PASS. v0.6: NOT STARTED.**
+**Canonical v0.5.1r1 source import: COMPLETE (116/116 files). Live PostgreSQL gate: PASS. v0.6: UNBLOCKED (not yet started).**
 
 Verified here:
 
