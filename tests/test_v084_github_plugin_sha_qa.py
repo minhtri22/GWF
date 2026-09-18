@@ -423,7 +423,7 @@ def test_api_advertises_v084_plugin_capabilities(configured, monkeypatch):
     meta = client.get("/product/meta")
     assert meta.status_code == 200
     payload = meta.json()
-    assert payload["version"] == "0.8.4"
+    assert tuple(map(int, payload["version"].split("."))) >= (0, 8, 4)
     assert "plugin_registry" in payload["capabilities"]
     assert "github_sha_safe_commit" in payload["capabilities"]
     assert "standard_sha_qa" in payload["capabilities"]
