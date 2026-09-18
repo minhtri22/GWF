@@ -61,8 +61,82 @@ class MembershipBody(BaseModel):
     role: str
 
 
+class ProjectRenameBody(BaseModel):
+    name: str
+
+
+class ProjectArchiveBody(BaseModel):
+    drain: bool = False
+    reason: str = ""
+
+
+class SkillPackageBody(BaseModel):
+    skill_id: str
+    name: str
+    description: str = ""
+
+
+class SkillRevisionBody(BaseModel):
+    version: str
+    markdown: str
+    tool_requirements: list[str] = []
+    qa_contract: dict = {}
+
+
+class ProtocolCreateBody(BaseModel):
+    skill_revision_id: str
+    recovery_mode: str = "AUTO"
+    retry_budget: int = 2
+
+
+class PreflightBody(BaseModel):
+    checks: list[dict]
+
+
+class PlanBody(BaseModel):
+    objective: str
+    steps: list[dict]
+    reason: str = "INITIAL_PLAN"
+
+
+class StepUpdateBody(BaseModel):
+    status: str
+    note: str = ""
+
+
+class ProblemBody(BaseModel):
+    code: str
+    summary: str
+    detail: str
+    affected_step: int | None = None
+    severity: str = "MEDIUM"
+
+
+class RecoveryProposalBody(BaseModel):
+    action: str
+    target_step: int | None = None
+    rationale: str = ""
+    plan_patch: list[dict] = []
+    risk_class: str = "LOW"
+    normative_change: bool = False
+
+
+class RecoveryDecisionBody(BaseModel):
+    decision: str
+    reason: str = ""
+
+
+class VerifyBody(BaseModel):
+    qa_result: str
+    detail: str = ""
+
+
+class HandoffBody(BaseModel):
+    handoff: dict
+
+
 def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
-    app = FastAPI(title="Governed Workflow Runtime", version="0.8.1")
+    app = FastAPI(title="Governed Workflow Runtime", version="0.8.2")
 
     @app.exception_handler(GWRException)
     async def gwr_error(_, exc: GWRException):
@@ -217,7 +291,7 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
 
     @app.get('/health')
     def health():
-        return {"ok": True, "domain": runtime.domain.domain_id, "version": "0.8.1"}
+        return {"ok": True, "domain": runtime.domain.domain_id, "version": "0.8.2"}
 
     @app.get('/projects/{project_id}/audit')
     def audit(project_id: str, authorization: str | None = Header(default=None)):
@@ -259,10 +333,10 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
     def product_meta():
         return {
             "product": "GWR Research Product Alpha",
-            "version": "0.8.1",
+            "version": "0.8.2",
             "domain_id": runtime.domain.domain_id,
             "backend": getattr(runtime.db, "backend_name", "unknown"),
-            "capabilities": ["domain_sdk", "domain_registry", "project_lifecycle", "process_inspector", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"],
+            "capabilities": ["domain_sdk", "domain_registry", "project_lifecycle", "project_archive", "skill_registry", "observable_agent_protocol", "auto_recovery", "human_recovery_approval", "process_inspector", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"],
         }
 
     @app.get('/product/domains/current')
@@ -341,6 +415,137 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
             raise HTTPException(status_code=404, detail="phase execution not found")
         project_principal(row["project_id"], authorization, "VIEW")
         return {"events": runtime.process.phase_events(phase_execution_id)}
+
+    @app.patch('/product/projects/{project_id}')
+    def rename_project(project_id: str, body: ProjectRenameBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        project_principal(project_id, authorization, "MANAGE_MEMBERS")
+        return runtime.project_governance.rename(project_id, body.name, principal.actor_id)
+
+    @app.post('/product/projects/{project_id}/archive')
+    def archive_project(project_id: str, body: ProjectArchiveBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        project_principal(project_id, authorization, "MANAGE_MEMBERS")
+        return runtime.project_governance.archive(project_id, principal.actor_id, drain=body.drain, reason=body.reason)
+
+    @app.post('/product/projects/{project_id}/restore')
+    def restore_project(project_id: str, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        project_principal(project_id, authorization, "MANAGE_MEMBERS")
+        return runtime.project_governance.restore(project_id, principal.actor_id)
+
+    @app.get('/product/projects/{project_id}/lifecycle')
+    def project_lifecycle(project_id: str, authorization: str = Header(...)):
+        project_principal(project_id, authorization, "VIEW")
+        return {
+            "lifecycle": runtime.project_governance.status(project_id),
+            "name_history": runtime.project_governance.name_history(project_id),
+        }
+
+    @app.post('/product/skills')
+    def create_skill(body: SkillPackageBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        sid = runtime.agent_protocol.create_skill_package(body.skill_id, body.name, principal.actor_id, description=body.description)
+        return {"skill_package_id": sid, "skill_id": body.skill_id, "name": body.name}
+
+    @app.post('/product/skills/{skill_package_id}/revisions')
+    def create_skill_revision(skill_package_id: str, body: SkillRevisionBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        rid = runtime.agent_protocol.add_skill_revision(
+            skill_package_id, body.version, body.markdown, principal.actor_id,
+            tool_requirements=body.tool_requirements, qa_contract=body.qa_contract,
+        )
+        return {"skill_revision_id": rid, "skill_package_id": skill_package_id, "version": body.version}
+
+    @app.post('/product/phases/{phase_execution_id}/protocol')
+    def create_phase_protocol(phase_execution_id: str, body: ProtocolCreateBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        row = runtime.db.one("SELECT o.project_id FROM phase_executions p JOIN orchestrations o ON o.orchestration_id=p.orchestration_id WHERE p.phase_execution_id=?", (phase_execution_id,))
+        if not row:
+            raise HTTPException(status_code=404, detail="phase execution not found")
+        project_principal(row["project_id"], authorization, "USE")
+        pid = runtime.agent_protocol.create_protocol(
+            phase_execution_id, body.skill_revision_id, principal.actor_id,
+            recovery_mode=body.recovery_mode, retry_budget=body.retry_budget,
+        )
+        return runtime.agent_protocol.inspect(phase_execution_id)
+
+    @app.post('/product/phases/{phase_execution_id}/preflight')
+    def phase_preflight(phase_execution_id: str, body: PreflightBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        return runtime.agent_protocol.record_preflight(phase_execution_id, body.checks, principal.actor_id)
+
+    @app.post('/product/phases/{phase_execution_id}/plan')
+    def phase_plan(phase_execution_id: str, body: PlanBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        plan_id = runtime.agent_protocol.create_plan(phase_execution_id, body.objective, body.steps, principal.actor_id, reason=body.reason)
+        return {"plan_id": plan_id}
+
+    @app.post('/product/phases/{phase_execution_id}/execute')
+    def phase_execute(phase_execution_id: str, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        runtime.agent_protocol.start_execution(phase_execution_id, principal.actor_id)
+        return runtime.agent_protocol.inspect(phase_execution_id)
+
+    @app.post('/product/phases/{phase_execution_id}/steps/{step_index}')
+    def phase_step(phase_execution_id: str, step_index: int, body: StepUpdateBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        runtime.agent_protocol.update_step(phase_execution_id, step_index, body.status, principal.actor_id, note=body.note)
+        return runtime.agent_protocol.inspect(phase_execution_id)
+
+    @app.post('/product/phases/{phase_execution_id}/problems')
+    def phase_problem(phase_execution_id: str, body: ProblemBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        problem_id = runtime.agent_protocol.record_problem(
+            phase_execution_id, principal.actor_id, code=body.code, summary=body.summary, detail=body.detail,
+            affected_step=body.affected_step, severity=body.severity,
+        )
+        return {"problem_id": problem_id}
+
+    @app.post('/product/problems/{problem_id}/recovery')
+    def problem_recovery(problem_id: str, body: RecoveryProposalBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        return runtime.agent_protocol.propose_recovery(
+            problem_id, principal.actor_id, action=body.action, target_step=body.target_step,
+            rationale=body.rationale, plan_patch=body.plan_patch, risk_class=body.risk_class,
+            normative_change=body.normative_change,
+        )
+
+    @app.post('/product/recovery-proposals/{proposal_id}/decision')
+    def recovery_decision(proposal_id: str, body: RecoveryDecisionBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        decision_id = runtime.agent_protocol.decide_recovery(proposal_id, principal.actor_id, body.decision, reason=body.reason)
+        return {"decision_id": decision_id, "proposal_id": proposal_id, "decision": body.decision}
+
+    @app.post('/product/recovery-proposals/{proposal_id}/apply')
+    def recovery_apply(proposal_id: str, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        return runtime.agent_protocol.apply_recovery(proposal_id, principal.actor_id)
+
+    @app.post('/product/phases/{phase_execution_id}/verify')
+    def phase_verify(phase_execution_id: str, body: VerifyBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        return runtime.agent_protocol.verify(phase_execution_id, principal.actor_id, qa_result=body.qa_result, detail=body.detail)
+
+    @app.post('/product/phases/{phase_execution_id}/handoff')
+    def phase_handoff(phase_execution_id: str, body: HandoffBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        handoff_id = runtime.agent_protocol.write_handoff(phase_execution_id, principal.actor_id, body.handoff)
+        return {"handoff_id": handoff_id}
+
+    @app.post('/product/phases/{phase_execution_id}/complete')
+    def phase_complete(phase_execution_id: str, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        runtime.agent_protocol.complete(phase_execution_id, principal.actor_id)
+        return runtime.agent_protocol.inspect(phase_execution_id)
+
+    @app.get('/product/phases/{phase_execution_id}/agent-protocol')
+    def phase_agent_protocol(phase_execution_id: str, authorization: str = Header(...)):
+        row = runtime.db.one("SELECT o.project_id FROM phase_executions p JOIN orchestrations o ON o.orchestration_id=p.orchestration_id WHERE p.phase_execution_id=?", (phase_execution_id,))
+        if not row:
+            raise HTTPException(status_code=404, detail="phase execution not found")
+        project_principal(row["project_id"], authorization, "VIEW")
+        return runtime.agent_protocol.inspect(phase_execution_id)
 
     @app.get('/product/projects/{project_id}/dashboard')
     def product_dashboard(project_id: str, authorization: str = Header(...)):
