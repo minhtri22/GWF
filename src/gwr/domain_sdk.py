@@ -35,7 +35,7 @@ class DomainSDK:
     sections = (
         "artifact_types", "trace_types", "workunit_templates", "evidence_types",
         "gate_types", "failure_types", "recovery_policies", "roles",
-        "authority_policies", "approval_policies",
+        "authority_policies", "approval_policies", "skill_contracts",
     )
 
     @classmethod
@@ -93,6 +93,8 @@ class DomainSDK:
             workunits.append({
                 "id": wu["id"],
                 "executor_role": wu.get("executor_role"),
+                "skill_ref": wu.get("skill_ref"),
+                "agent_protocol": wu.get("agent_protocol", {}),
                 "inputs": [x.get("artifact_type") if isinstance(x, dict) else x for x in wu.get("inputs", [])],
                 "outputs": [x.get("artifact_type") if isinstance(x, dict) else x for x in wu.get("outputs", [])],
                 "gates": list(wu.get("required_gate_types", []) or []),
@@ -107,6 +109,8 @@ class DomainSDK:
             "dependencies": dependencies,
             "workunits": workunits,
             "roles": [x.get("id") for x in data.get("roles", []) or []],
+            "skill_contracts": list((data.get("skill_contracts", {}) or {}).keys()),
+            "agent_protocol": data.get("agent_protocol", {}) or {},
             "warnings": report.warnings,
         }
 
