@@ -7,8 +7,11 @@ class GovernanceKernel:
     def __init__(self, db, domain):
         self.db,self.domain=db,domain
         self.auth=None
+        self.tenancy=None
     def bind_auth(self, auth_service):
         self.auth=auth_service
+    def bind_tenancy(self, tenancy_service):
+        self.tenancy=tenancy_service
     def create_actor(self, actor_type, principal_id, roles, project_scope, identity_metadata=None, actor_id=None):
         actor_id=actor_id or uid("actor")
         self.db.conn.execute("INSERT INTO actors VALUES(?,?,?,?,?,?,?)",(actor_id,actor_type,principal_id,canonical_json(roles),canonical_json(project_scope),"ACTIVE",canonical_json(identity_metadata or {}))); self.db.conn.commit(); return actor_id
@@ -31,7 +34,13 @@ class GovernanceKernel:
     def authorize(self, actor_id, action, resource=None):
         a=self._actor(actor_id); roles=set(parse_json(a["role_bindings"],[])); matched_allow=False; resource=resource or {}
         scopes=set(parse_json(a["project_scope"],[]))
-        if resource.get("project_id") and resource["project_id"] not in scopes and "*" not in scopes: raise AuthorityDenied("Actor outside project scope")
+        if resource.get("project_id"):
+            scoped = self.tenancy.scope_for_project(resource["project_id"]) if self.tenancy else None
+            if scoped:
+                permission=self.tenancy.permission_for_governance_action(action)
+                self.tenancy.require_project_access(actor_id,resource["project_id"],permission)
+            elif resource["project_id"] not in scopes and "*" not in scopes:
+                raise AuthorityDenied("Actor outside project scope")
         policies=sorted(self.db.all("SELECT * FROM authority_policies"), key=lambda r:r["priority"], reverse=True)
         for p in policies:
             subj=parse_json(p["subject_selector"],{}); acts=set(parse_json(p["actions"],[])); selector=parse_json(p["resource_selector"],{})
@@ -47,7 +56,7 @@ class GovernanceKernel:
         event=uid("audit"); metadata_hash=content_hash(kw.get("metadata",{}))
         self.db.conn.execute("INSERT INTO audit_events VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",(event,project_id,actor_id,action,resource_type,resource_id,kw.get("before_version"),kw.get("after_version"),kw.get("proposal_id"),kw.get("approval_id"),kw.get("run_id"),kw.get("decision_id"),kw.get("correlation_id"),kw.get("reason_code","OK"),utcnow(),metadata_hash)); return event
     def prepare_proposal(self, project_id, proposer_actor_id, action, resource_refs, frozen_payload, required_approval_policy=None, idempotency_key=None):
-        self.authorize(proposer_actor_id,"PROPOSE",{"action":action})
+        self.authorize(proposer_actor_id,"PROPOSE",{"action":action,"project_id":project_id})
         ph=content_hash(frozen_payload)
         if idempotency_key:
             row=self.db.one("SELECT * FROM proposals WHERE idempotency_key=?",(idempotency_key,))
@@ -78,7 +87,7 @@ class GovernanceKernel:
     def approve_proposal(self, proposal_id, approver_actor_id, expected_hash):
         p=self.db.one("SELECT * FROM proposals WHERE proposal_id=?",(proposal_id,));
         if not p: raise NotFound("Proposal not found")
-        self.authorize(approver_actor_id,"APPROVE",{"proposal_id":proposal_id})
+        self.authorize(approver_actor_id,"APPROVE",{"proposal_id":proposal_id,"project_id":p["project_id"]})
         if p["payload_hash"]!=expected_hash: raise ApprovalMismatch("Proposal hash mismatch")
         policy=self.domain.approval_policy(p["required_approval_policy"]) if p["required_approval_policy"] else None
         if policy:
@@ -90,7 +99,10 @@ class GovernanceKernel:
         self.db.conn.execute("INSERT INTO approvals VALUES(?,?,?,?,?,?,?,?,?,?)",(aid,p["project_id"],proposal_id,expected_hash,approver_actor_id,"APPROVED",canonical_json(parse_json(p["resource_refs"],[])),utcnow(),None,canonical_json({})))
         self.db.conn.execute("UPDATE proposals SET status='APPROVED' WHERE proposal_id=?",(proposal_id,)); self.append_audit(p["project_id"],approver_actor_id,"APPROVE_PROPOSAL","Proposal",proposal_id,proposal_id=proposal_id,approval_id=aid); self.db.conn.commit(); return aid
     def reject_proposal(self, proposal_id, actor_id):
-        self.authorize(actor_id,"APPROVE",{}); p=self.db.one("SELECT * FROM proposals WHERE proposal_id=?",(proposal_id,)); self.db.conn.execute("UPDATE proposals SET status='REJECTED' WHERE proposal_id=?",(proposal_id,)); self.append_audit(p["project_id"],actor_id,"REJECT_PROPOSAL","Proposal",proposal_id,proposal_id=proposal_id); self.db.conn.commit()
+        p=self.db.one("SELECT * FROM proposals WHERE proposal_id=?",(proposal_id,))
+        if not p: raise NotFound("Proposal not found")
+        self.authorize(actor_id,"APPROVE",{"project_id":p["project_id"]})
+        self.db.conn.execute("UPDATE proposals SET status='REJECTED' WHERE proposal_id=?",(proposal_id,)); self.append_audit(p["project_id"],actor_id,"REJECT_PROPOSAL","Proposal",proposal_id,proposal_id=proposal_id); self.db.conn.commit()
     def resolve_escalation_target(self, project_id, required_action="ESCALATE"):
         for a in self.db.all("SELECT * FROM actors WHERE status='ACTIVE'"):
             if project_id not in parse_json(a["project_scope"],[]): continue

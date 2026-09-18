@@ -10,6 +10,7 @@ from .utils import uid, utcnow
 from .auth import HumanAuthService
 from .object_store import LocalContentAddressedStore, ObjectRefService
 from .observability import NullObserver, JsonlObserver
+from .tenancy import TenantService
 
 class GovernedWorkflowRuntime:
     def __init__(self, domain: str|DomainPackage, db_path=":memory:", *, auth_secret=None, object_store_root=None, observer=None, observability_path=None):
@@ -23,7 +24,9 @@ class GovernedWorkflowRuntime:
             self.observer=NullObserver()
         self.governance=GovernanceKernel(self.db,self.domain); self.governance.install_domain_policies()
         self.auth=HumanAuthService(self.db, auth_secret)
+        self.tenancy=TenantService(self.db)
         self.governance.bind_auth(self.auth)
+        self.governance.bind_tenancy(self.tenancy)
         if not self.db.one("SELECT 1 FROM actors WHERE actor_id='SYSTEM'"):
             self.db.conn.execute("INSERT INTO actors VALUES(?,?,?,?,?,?,?)",("SYSTEM","SYSTEM","runtime",'["system"]','["*"]',"ACTIVE",'{}')); self.db.conn.commit()
         self.knowledge=KnowledgeKernel(self.db,self.domain,self.governance)
@@ -38,6 +41,11 @@ class GovernedWorkflowRuntime:
         return self.observer.emit(event,**attrs)
     def create_project(self,name,project_id=None):
         pid=project_id or uid("project"); self.db.conn.execute("INSERT INTO projects VALUES(?,?,?,?)",(pid,name,self.domain.domain_id,utcnow())); self.db.conn.commit(); self.observe("project_created",project_id=pid,domain_id=self.domain.domain_id); return pid
+    def create_scoped_project(self,name,tenant_id,workspace_id,actor_id,project_id=None):
+        pid=self.create_project(name,project_id=project_id)
+        self.tenancy.bind_project(pid,tenant_id,workspace_id,actor_id)
+        self.observe("scoped_project_created",project_id=pid,tenant_id=tenant_id,workspace_id=workspace_id,actor_id=actor_id)
+        return pid
     def attach_blob(self,project_id,owner_kind,owner_id,data,content_type="application/octet-stream"):
         if not self.objects: raise RuntimeError("object store is not configured")
         ref=self.objects.attach_bytes(project_id,owner_kind,owner_id,data,content_type=content_type); self.observe("object_attached",project_id=project_id,owner_kind=owner_kind,owner_id=owner_id,sha256=ref["sha256"],size_bytes=ref["size_bytes"]); return ref

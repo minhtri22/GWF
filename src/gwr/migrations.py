@@ -45,7 +45,82 @@ CREATE TABLE IF NOT EXISTS provider_events(
   created_at TEXT NOT NULL
 );
 """.strip(),
+    ),    Migration(
+        "0002_v06_identity_multitenancy",
+        """
+CREATE TABLE IF NOT EXISTS tenants(
+  tenant_id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_by_actor_id TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS workspaces(
+  workspace_id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_by_actor_id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE(tenant_id, name)
+);
+CREATE TABLE IF NOT EXISTS project_scopes(
+  project_id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  workspace_id TEXT NOT NULL,
+  created_by_actor_id TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS tenant_memberships(
+  tenant_id TEXT NOT NULL,
+  actor_id TEXT NOT NULL,
+  role TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY(tenant_id, actor_id)
+);
+CREATE TABLE IF NOT EXISTS workspace_memberships(
+  workspace_id TEXT NOT NULL,
+  actor_id TEXT NOT NULL,
+  role TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY(workspace_id, actor_id)
+);
+CREATE TABLE IF NOT EXISTS project_memberships(
+  project_id TEXT NOT NULL,
+  actor_id TEXT NOT NULL,
+  role TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY(project_id, actor_id)
+);
+CREATE TABLE IF NOT EXISTS external_identities(
+  external_identity_id TEXT PRIMARY KEY,
+  actor_id TEXT NOT NULL,
+  provider_id TEXT NOT NULL,
+  issuer TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  email TEXT,
+  claims_metadata TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE(provider_id, issuer, subject)
+);
+CREATE TABLE IF NOT EXISTS security_events(
+  security_event_id TEXT PRIMARY KEY,
+  actor_id TEXT NOT NULL,
+  tenant_id TEXT,
+  action TEXT NOT NULL,
+  resource_type TEXT NOT NULL,
+  resource_id TEXT NOT NULL,
+  outcome TEXT NOT NULL,
+  metadata TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+""".strip(),
     ),
+
 ]
 
 
