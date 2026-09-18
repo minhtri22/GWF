@@ -402,6 +402,63 @@ CREATE TABLE IF NOT EXISTS project_agent_protocol_settings(
 """.strip(),
     ),
 
+
+    Migration(
+        "0007_v084_github_plugin_sha_qa",
+        """
+CREATE TABLE IF NOT EXISTS plugin_connections(
+  connection_id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  plugin_type TEXT NOT NULL,
+  external_connection_ref TEXT NOT NULL,
+  capabilities TEXT NOT NULL,
+  status TEXT NOT NULL,
+  metadata TEXT NOT NULL,
+  created_by_actor_id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE(project_id, plugin_type, external_connection_ref)
+);
+CREATE TABLE IF NOT EXISTS github_repository_bindings(
+  binding_id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  connection_id TEXT NOT NULL,
+  repository_full_name TEXT NOT NULL,
+  default_branch TEXT NOT NULL,
+  write_policy TEXT NOT NULL,
+  allowed_branches TEXT NOT NULL,
+  created_by_actor_id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE(project_id, repository_full_name)
+);
+CREATE TABLE IF NOT EXISTS github_change_sets(
+  change_set_id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  binding_id TEXT NOT NULL,
+  branch TEXT NOT NULL,
+  expected_head_sha TEXT NOT NULL,
+  manifest_json TEXT NOT NULL,
+  manifest_hash TEXT NOT NULL,
+  commit_message TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_by_actor_id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  committed_sha TEXT,
+  verified_at TEXT
+);
+CREATE TABLE IF NOT EXISTS github_sha_checks(
+  check_id TEXT PRIMARY KEY,
+  change_set_id TEXT NOT NULL,
+  stage TEXT NOT NULL,
+  expected_sha TEXT,
+  observed_sha TEXT,
+  status TEXT NOT NULL,
+  details_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+""".strip(),
+    ),
+
 ]
 
 
