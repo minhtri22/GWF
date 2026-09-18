@@ -68,13 +68,17 @@ def test_resource_scheduler_and_global_conflict_keys(tmp_path):
     w1 = rt.distributed.register_worker(a1, capabilities={"labels": ["python"]}, resources={"cpu": 1, "memory_mb": 512})
     w2 = rt.distributed.register_worker(a2, capabilities={"labels": ["python"]}, resources={"cpu": 4, "memory_mb": 4096})
     wu1 = ready_workunit(rt, p, conflict_keys=["gpu:0"])
-    wu2 = ready_workunit(rt, p, conflict_keys=["gpu:0"])
     j1 = rt.distributed.enqueue_workunit(wu1, idempotency_key="r1", required_resources={"cpu": 2, "memory_mb": 1024}, required_capabilities=["python"])
-    j2 = rt.distributed.enqueue_workunit(wu2, idempotency_key="r2", required_resources={"cpu": 1}, required_capabilities=["python"])
 
+    # With only the oversized job present, the small worker must reject it.
     assert rt.distributed.lease_next(w1) is None
     l1 = rt.distributed.lease_next(w2)
     assert l1["job_id"] == j1
+
+    # Once gpu:0 is leased by the large worker, a second fitting job using the
+    # same conflict key must not be leased by another worker.
+    wu2 = ready_workunit(rt, p, conflict_keys=["gpu:0"])
+    j2 = rt.distributed.enqueue_workunit(wu2, idempotency_key="r2", required_resources={"cpu": 1}, required_capabilities=["python"])
     assert rt.distributed.lease_next(w1) is None
     rt.distributed.start_job(j1, w2, l1["lease_token"])
     rt.distributed.fail_job(j1, w2, l1["lease_token"], error_code="TEST", retryable=False)
