@@ -3,6 +3,7 @@ from .errors import GWRException
 
 from .auth import HumanAuthService, AuthenticatedPrincipal, OIDCProvider
 from .tenancy import TenantService, ProjectScope
+from .distributed import DistributedRuntime
 from .retrieval import ProductionPaperRetriever, CrossrefConnector, WebDocumentConnector, DurableRetrievalCache, ResilientHttpClient, RetrievalPolicy
 from .stat_verifier import SubprocessStatisticalVerifier
 from .research_orchestrator import (
@@ -24,6 +25,7 @@ __all__ = [
     "OIDCProvider",
     "TenantService",
     "ProjectScope",
+    "DistributedRuntime",
     "ProductionPaperRetriever",
     "CrossrefConnector",
     "WebDocumentConnector",

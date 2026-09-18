@@ -1,0 +1,57 @@
+name: v0.7 Distributed Runtime Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "v0.7-distributed-runtime"]
+
+jobs:
+  v07-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: gwr
+          POSTGRES_PASSWORD: gwr_test_password
+          POSTGRES_DB: gwr_gate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gwr -d gwr_gate"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      GWR_TEST_DATABASE_URL: postgresql://gwr:gwr_test_password@127.0.0.1:5432/gwr_gate
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install runtime + PostgreSQL dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev,postgres]"
+      - name: Run v0.7 distributed gate
+        run: python tools/run_v07_gate.py --out evidence/v0.7/live_gate
+      - name: Assert v0.7 PASS
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('evidence/v0.7/live_gate/V07_GATE.json'))
+          assert d['status']=='PASS', d
+          assert d['v06_regression_pass'] is True, d
+          assert d['postgres_live_tested'] is True, d
+          assert d['worker_crash_recovery_pass'] is True, d
+          assert d['duplicate_delivery_idempotent_effect_pass'] is True, d
+          assert d['resource_scheduling_pass'] is True, d
+          assert d['stale_lease_denied'] is True, d
+          assert d['ready_for_v08'] is True, d
+          PY
+      - name: Upload v0.7 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gwr-v07-gate-evidence
+          path: evidence/v0.7/live_gate

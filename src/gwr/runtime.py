@@ -11,6 +11,7 @@ from .auth import HumanAuthService
 from .object_store import LocalContentAddressedStore, ObjectRefService
 from .observability import NullObserver, JsonlObserver
 from .tenancy import TenantService
+from .distributed import DistributedRuntime
 
 class GovernedWorkflowRuntime:
     def __init__(self, domain: str|DomainPackage, db_path=":memory:", *, auth_secret=None, object_store_root=None, observer=None, observability_path=None):
@@ -32,6 +33,7 @@ class GovernedWorkflowRuntime:
         self.knowledge=KnowledgeKernel(self.db,self.domain,self.governance)
         self.decision=DecisionKernel(self.db,self.domain,self.knowledge,self.governance)
         self.execution=ExecutionKernel(self.db,self.domain,self.knowledge,self.decision,self.governance)
+        self.distributed=DistributedRuntime(self.db,self.execution,self.governance,self.observer)
         self.object_store=None; self.objects=None
         if object_store_root:
             self.object_store=LocalContentAddressedStore(object_store_root)

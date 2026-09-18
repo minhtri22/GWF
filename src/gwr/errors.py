@@ -15,3 +15,5 @@ class IdempotencyConflict(GWRException): code = "IDEMPOTENCY_CONFLICT"
 class InvalidTransition(GWRException): code = "INVALID_TRANSITION"
 class GateBlocked(GWRException): code = "GATE_BLOCKED"
 class LoopGuardTriggered(GWRException): code = "LOOP_GUARD_TRIGGERED"
+
+class LeaseLost(GWRException): code = "LEASE_LOST"

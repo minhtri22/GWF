@@ -1,32 +1,32 @@
-# Governed Workflow Runtime v0.6 — Identity & Multi-tenancy
+# Governed Workflow Runtime v0.7 — Distributed Runtime
 
-GWR v0.6 adds a production-facing identity and tenant isolation layer on top of the v0.5.1 PostgreSQL-verified research runtime.
+GWR v0.7 adds durable multi-worker execution on top of the v0.6 identity/multi-tenancy and v0.5.1 PostgreSQL-verified research runtime.
 
-## New in v0.6
+## New in v0.7
 
-- `Tenant -> Workspace -> Project` hierarchy.
-- Authoritative tenant/workspace/project memberships and role matrices.
-- Scoped project authorization integrated with domain governance.
-- OIDC verifier injection + persisted `(provider, issuer, subject) -> actor` binding.
-- Signed/revocable runtime sessions with live membership checks.
-- Cross-tenant concealment in the FastAPI surface.
-- Migration `0002_v06_identity_multitenancy` for SQLite and PostgreSQL.
-- Dedicated v0.6 SQLite/PostgreSQL gate while preserving the full v0.5.1 research/restart equivalence gate.
+- Database-backed durable job queue.
+- Worker registration, capability/resource inventory and heartbeat.
+- Lease token + expiry ownership model.
+- Worker crash recovery with ABANDONED run/attempt evidence and requeue.
+- At-least-once execution with exactly-once authoritative effect commits by effect_key.
+- CPU/memory/GPU resource matching and capability labels.
+- Global resource_conflict_keys reservation across workers.
+- Durable scheduler events and audit.
+- Migration 0003_v07_distributed_runtime for SQLite and PostgreSQL.
+- Chaos probes for lease loss, crash/retry and duplicate delivery.
 
-## Compatibility
+## Correctness boundary
 
-Legacy v0.5 unscoped projects continue to use `actors.project_scope`. New tenant-scoped projects do **not** trust that legacy field as an isolation boundary.
+v0.7 does not claim arbitrary external side effects are exactly-once. Worker execution may happen more than once after failure. The GWR authoritative effect ledger commits one matching effect_key once; external systems should receive the same idempotency key where supported.
 
 ## Gate
 
-Run locally with a live PostgreSQL instance:
+Run with PostgreSQL:
 
-```bash
-export GWR_TEST_DATABASE_URL='postgresql://USER:PASSWORD@HOST:5432/DBNAME'
+export GWR_TEST_DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME
 export PYTHONPATH=src
-python tools/run_v06_gate.py --out evidence/v0.6/live_gate
-```
+python tools/run_v07_gate.py --out evidence/v0.7/live_gate
 
-The milestone is complete only when `V06_GATE.json` is `PASS` on both SQLite and PostgreSQL and the v0.5.1 regression gate remains PASS.
+The milestone is complete only when V07_GATE.json is PASS and the complete v0.6 regression chain also remains PASS.
 
-See `spec/10-identity-multitenancy-v0.6.md` and `docs/HANDOFF_V0.6.md`.
+See spec/11-distributed-runtime-v0.7.md and docs/HANDOFF_V0.7.md.
