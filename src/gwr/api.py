@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from .runtime import GovernedWorkflowRuntime
 from .errors import GWRException, AuthorityDenied, NotFound, ValidationError
 from .domain_sdk import DomainSDK
+from .utils import parse_json
 from .product import ProjectDashboardService
 import asyncio
 import json
@@ -468,7 +469,7 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
                         "event_type": item["event_type"],
                         "actor_id": item["actor_id"],
                         "message": item["message"],
-                        "metadata": __import__("gwr.utils", fromlist=["parse_json"]).parse_json(item["metadata"], {}),
+                        "metadata": parse_json(item["metadata"], {}),
                         "created_at": item["created_at"],
                     }
                     yield f"id: {item['event_id']}\nevent: {item['event_type']}\ndata: {json.dumps(payload, separators=(',', ':'))}\n\n"
