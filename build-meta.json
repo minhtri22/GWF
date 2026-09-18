@@ -1,0 +1,7 @@
+{
+  "product": "GWR Research Product Alpha",
+  "version": "0.8.2",
+  "commit": "f511a6483c86b5b4dff3e6d0860c6d6f022e7a50",
+  "mode": "STATIC_UAT",
+  "authoritative_backend": false
+}
