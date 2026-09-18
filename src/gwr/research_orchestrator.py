@@ -517,6 +517,7 @@ class ResearchOrchestrator:
                         self.runtime.agent_protocol.apply_recovery(recovery["proposal_id"], actor_id)
                         self.runtime.agent_protocol.mark_attempt_failed(pexec_id, actor_id, reason="Recovered attempt superseded by retry")
                         state.setdefault("phase_retry_counts", {})[retry_key] = retry_count + 1
+                        self._persist_state(state)
                         continue
                     self.runtime.agent_protocol.mark_waiting_for_human(
                         pexec_id, actor_id, reason="Retry requires human approval",
@@ -604,6 +605,7 @@ class ResearchOrchestrator:
                         self.runtime.agent_protocol.apply_recovery(recovery["proposal_id"], actor_id)
                         self.runtime.agent_protocol.mark_attempt_failed(pexec_id, actor_id, reason="Recovered gate attempt superseded by retry")
                         state.setdefault("phase_retry_counts", {})[retry_key] = retry_count + 1
+                        self._persist_state(state)
                         continue
                     self.runtime.agent_protocol.mark_waiting_for_human(
                         pexec_id, actor_id, reason="Gate retry requires human approval",
