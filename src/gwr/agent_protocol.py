@@ -608,6 +608,30 @@ class AgentExecutionProtocolService:
                         {"proposal_id": proposal_id, "target_step": proposal["target_step"], "new_plan_id": new_plan_id})
         return {"proposal_id": proposal_id, "status": "APPLIED", "new_plan_id": new_plan_id}
 
+    def mark_waiting_for_human(self, phase_execution_id: str, actor_id: str, *, reason: str, metadata=None):
+        self._protocol(phase_execution_id)
+        if not self.db.one("SELECT 1 FROM phase_problem_records WHERE phase_execution_id=? LIMIT 1", (phase_execution_id,)):
+            raise InvalidTransition("Problem must be persisted before waiting for human recovery")
+        with self.db.tx():
+            self.db.conn.execute(
+                "UPDATE phase_execution_protocols SET status='WAITING_HUMAN',updated_at=? WHERE phase_execution_id=?",
+                (utcnow(), phase_execution_id),
+            )
+            self._event(phase_execution_id, "EXECUTE", "WAITING_FOR_HUMAN", actor_id, reason, metadata or {})
+
+    def mark_attempt_failed(self, phase_execution_id: str, actor_id: str, *, reason: str):
+        protocol = self._protocol(phase_execution_id)
+        if protocol["status"] == "COMPLETED":
+            raise InvalidTransition("Completed protocol cannot be failed")
+        if not self.db.one("SELECT 1 FROM phase_problem_records WHERE phase_execution_id=? LIMIT 1", (phase_execution_id,)):
+            raise InvalidTransition("Problem must be persisted before failed attempt closure")
+        with self.db.tx():
+            self.db.conn.execute(
+                "UPDATE phase_execution_protocols SET status='FAILED',updated_at=? WHERE phase_execution_id=?",
+                (utcnow(), phase_execution_id),
+            )
+            self._event(phase_execution_id, protocol["current_stage"], "ATTEMPT_FAILED", actor_id, reason)
+
     def verify(self, phase_execution_id: str, actor_id: str, *, qa_result: str, detail: str = ""):
         protocol = self._protocol(phase_execution_id)
         if protocol["current_stage"] != "EXECUTE":
@@ -720,7 +744,9 @@ class AgentExecutionProtocolService:
         issue = any(p["status"] == "OPEN" for p in problems)
         if protocol["status"] == "COMPLETED":
             attention = "COMPLETE"
-        elif waiting:
+        elif protocol["status"] == "FAILED":
+            attention = "FAIL"
+        elif waiting or protocol["status"] == "WAITING_HUMAN":
             attention = "WAITING_FOR_YOU"
         elif issue:
             attention = "NEEDS_ATTENTION"
