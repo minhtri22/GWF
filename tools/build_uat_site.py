@@ -12,7 +12,7 @@ REQUIRED = ["index.html", "styles.css", "app.js", "demo-data.json"]
 
 
 def validate_demo(data):
-    assert data["product"]["version"] == "0.8.1"
+    assert data["product"]["version"] == "0.8.2"
     assert data["product"]["mode"] == "STATIC_UAT"
     assert data["projects"], "at least one UAT project is required"
     for p in data["projects"]:
@@ -24,9 +24,9 @@ def validate_demo(data):
     assert first["distributed"]["jobs"], "primary UAT project must exercise distributed dashboard"
     html = (WEB / "index.html").read_text(encoding="utf-8")
     js = (WEB / "app.js").read_text(encoding="utf-8")
-    for marker in ("New Project", "Domain Registry", "Process Inspector", "Phase Inspector"):
+    for marker in ("New Project", "Domain Registry", "Process Inspector", "Phase Inspector", "AI Working", "Recovery mode", "Rename project", "Archive project"):
         assert marker in html, f"missing UAT marker: {marker}"
-    for marker in ("gwr-uat-domains", "gwr-uat-projects", "openPhase"):
+    for marker in ("gwr-uat-domains", "gwr-uat-projects", "openPhase", "simulateProtocolIssue", "approveProtocolRecovery", "renameCurrentProject", "archiveCurrentProject"):
         assert marker in js, f"missing lifecycle simulation marker: {marker}"
 
 
@@ -49,7 +49,7 @@ def main():
     (out / ".nojekyll").write_text("", encoding="utf-8")
     meta = {
         "product": "GWR Research Product Alpha",
-        "version": "0.8.1",
+        "version": "0.8.2",
         "commit": args.commit,
         "mode": "STATIC_UAT",
         "authoritative_backend": False,
