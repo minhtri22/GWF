@@ -38,15 +38,13 @@ class GitHubPluginService:
 
     def _require_manage(self, project_id: str, actor_id: str) -> None:
         self.projects.require_mutable(project_id)
+        actor = self.gov._actor(actor_id)
+        if actor["actor_type"] != "HUMAN":
+            raise AuthorityDenied("Repository bindings must be managed by a human actor")
         scope = self.tenancy.scope_for_project(project_id)
         if scope:
             self.tenancy.require_project_access(actor_id, project_id, "MANAGE_MEMBERS")
             return
-        if actor_id == "SYSTEM":
-            return
-        actor = self.gov._actor(actor_id)
-        if actor["actor_type"] != "HUMAN":
-            raise AuthorityDenied("Repository bindings must be managed by a human actor")
         self.gov.authorize(actor_id, "PROPOSE", {"project_id": project_id, "action": "MANAGE_GITHUB_BINDING"})
 
     @staticmethod
@@ -191,7 +189,7 @@ class GitHubPluginService:
             if binding["write_policy"] != "DIRECT":
                 raise AuthorityDenied("Direct writes to the default branch are disabled")
             actor = self.gov._actor(actor_id)
-            if actor_id != "SYSTEM" and actor["actor_type"] != "HUMAN":
+            if actor["actor_type"] != "HUMAN":
                 raise AuthorityDenied("Direct writes to the default branch require a human actor")
         if not expected_head_sha or len(expected_head_sha.strip()) < 7:
             raise ValidationError("expected_head_sha is required")
