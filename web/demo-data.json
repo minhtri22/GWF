@@ -1,7 +1,7 @@
 {
   "product": {
     "name": "GWR Research Product Alpha",
-    "version": "0.8.0",
+    "version": "0.8.1",
     "mode": "STATIC_UAT",
     "domain": {
       "domain_id": "research.full-cycle",

@@ -1,0 +1,67 @@
+name: v0.8.1 Lifecycle + Process Inspector Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "v0.8.1-lifecycle-process-inspector"]
+
+permissions:
+  contents: read
+
+jobs:
+  v081-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: gwr
+          POSTGRES_PASSWORD: gwr_test_password
+          POSTGRES_DB: gwr_gate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gwr -d gwr_gate"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      GWR_TEST_DATABASE_URL: postgresql://gwr:gwr_test_password@127.0.0.1:5432/gwr_gate
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install runtime + PostgreSQL dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev,postgres]"
+      - name: Run v0.8.1 gate
+        run: python tools/run_v081_gate.py --out evidence/v0.8.1/live_gate
+      - name: Build UAT candidate
+        run: python tools/build_uat_site.py --out dist/uat --commit "$GITHUB_SHA"
+      - name: Assert UAT ready
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('evidence/v0.8.1/live_gate/V081_GATE.json'))
+          assert d['status']=='PASS', d
+          assert d['v08_regression_pass'] is True, d
+          assert d['domain_lifecycle_pass'] is True, d
+          assert d['project_domain_pin_pass'] is True, d
+          assert d['process_inspector_pass'] is True, d
+          assert d['uat_lifecycle_ui_pass'] is True, d
+          assert d['ready_for_uat'] is True, d
+          PY
+      - name: Upload v0.8.1 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gwr-v081-gate-evidence
+          path: evidence/v0.8.1/live_gate
+      - name: Upload UAT candidate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gwr-v081-uat-site
+          path: dist/uat

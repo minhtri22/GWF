@@ -12,6 +12,8 @@ from .object_store import LocalContentAddressedStore, ObjectRefService
 from .observability import NullObserver, JsonlObserver
 from .tenancy import TenantService
 from .distributed import DistributedRuntime
+from .domain_registry import DomainRegistryService
+from .process_inspector import ProcessInspectorService
 
 class GovernedWorkflowRuntime:
     def __init__(self, domain: str|DomainPackage, db_path=":memory:", *, auth_secret=None, object_store_root=None, observer=None, observability_path=None):
@@ -34,6 +36,8 @@ class GovernedWorkflowRuntime:
         self.decision=DecisionKernel(self.db,self.domain,self.knowledge,self.governance)
         self.execution=ExecutionKernel(self.db,self.domain,self.knowledge,self.decision,self.governance)
         self.distributed=DistributedRuntime(self.db,self.execution,self.governance,self.observer)
+        self.domains=DomainRegistryService(self.db,self.tenancy)
+        self.process=ProcessInspectorService(self)
         self.object_store=None; self.objects=None
         if object_store_root:
             self.object_store=LocalContentAddressedStore(object_store_root)
@@ -43,10 +47,12 @@ class GovernedWorkflowRuntime:
         return self.observer.emit(event,**attrs)
     def create_project(self,name,project_id=None):
         pid=project_id or uid("project"); self.db.conn.execute("INSERT INTO projects VALUES(?,?,?,?)",(pid,name,self.domain.domain_id,utcnow())); self.db.conn.commit(); self.observe("project_created",project_id=pid,domain_id=self.domain.domain_id); return pid
-    def create_scoped_project(self,name,tenant_id,workspace_id,actor_id,project_id=None):
+    def create_scoped_project(self,name,tenant_id,workspace_id,actor_id,project_id=None,domain_revision_id=None):
         pid=self.create_project(name,project_id=project_id)
         self.tenancy.bind_project(pid,tenant_id,workspace_id,actor_id)
-        self.observe("scoped_project_created",project_id=pid,tenant_id=tenant_id,workspace_id=workspace_id,actor_id=actor_id)
+        if domain_revision_id:
+            self.domains.pin_project(pid,domain_revision_id,actor_id)
+        self.observe("scoped_project_created",project_id=pid,tenant_id=tenant_id,workspace_id=workspace_id,actor_id=actor_id,domain_revision_id=domain_revision_id)
         return pid
     def attach_blob(self,project_id,owner_kind,owner_id,data,content_type="application/octet-stream"):
         if not self.objects: raise RuntimeError("object store is not configured")

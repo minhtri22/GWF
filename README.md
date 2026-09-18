@@ -1,31 +1,28 @@
-# Governed Workflow Runtime v0.8 — Research Product Alpha
+# Governed Workflow Runtime v0.8.1 — Product Lifecycle & Process Inspector
 
-GWR v0.8 turns the verified v0.7 runtime into an operator-facing research product alpha without weakening the distributed execution, identity, provenance, approval or recovery invariants.
+v0.8.1 closes the pre-UAT lifecycle and observability gaps while preserving every v0.7/v0.8 invariant.
 
-## Product surface
+## New in v0.8.1
 
-- Domain SDK: validate, inspect and scaffold declarative domain packages.
-- Product API: dashboard, runs, distributed queue, approvals, failures and recovery graph.
-- Authenticated exact-hash approve/reject actions.
-- Static GitHub Pages UAT console built from a deterministic research fixture.
-- Project/run dashboard with phase history and distributed job state.
-- Human approval review panel with payload/hash inspection.
-- Failure -> root cause -> recovery -> resume visualization.
+- Tenant-scoped Domain Package Registry.
+- Immutable domain revisions: DRAFT -> VALIDATED -> PUBLISHED.
+- Project creation pinned to one published domain revision.
+- No silent domain upgrade for existing projects.
+- Process Inspector with current phase, complete generation/attempt history and current lineage.
+- Phase Inspector with run, inputs, outputs, evidence, gates, failure, checkpoint and chronological events.
+- Product APIs for domain lifecycle, process history and per-phase inspection.
+- GitHub Pages UAT simulation for Create Domain, Publish Domain, New Project and Phase Inspector.
 
-## Static UAT versus live product API
+## Static UAT boundary
 
-The GitHub Pages deployment is intentionally static. GitHub Pages cannot host the FastAPI runtime, so the UAT console uses a pinned demo snapshot and stores simulated approval/rejection actions only in browser local storage. The same UI information model is backed by real authenticated endpoints in src/gwr/api.py for deployment with a runtime server.
+GitHub Pages is still non-authoritative. Lifecycle mutations are stored in browser localStorage and clearly marked UAT. Real domain/project lifecycle is separately implemented and tested in FastAPI/PostgreSQL.
 
-## Domain SDK
-
-python tools/gwr_domain.py validate domains/research.workflow.yaml
-python tools/gwr_domain.py inspect domains/research.workflow.yaml
-python tools/gwr_domain.py scaffold my.domain --out /tmp/my.workflow.yaml
-
-## Gate
+## Live gate
 
 export GWR_TEST_DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME
 export PYTHONPATH=src
-python tools/run_v08_gate.py --out evidence/v0.8/live_gate
+python tools/run_v081_gate.py --out evidence/v0.8.1/live_gate
 
-v0.8 is accepted only after the full v0.7 regression chain, dedicated SQLite/PostgreSQL product tests, UI build validation and UAT snapshot checks all PASS.
+Acceptance requires the full v0.8 regression chain plus v0.8.1 lifecycle/process tests on SQLite and PostgreSQL 17, UAT build validation and compileall.
+
+See spec/13-product-lifecycle-process-inspector-v0.8.1.md and docs/HANDOFF_V0.8.1.md.

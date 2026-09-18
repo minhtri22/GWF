@@ -32,6 +32,16 @@ class DomainValidationBody(BaseModel):
     yaml_text: str
 
 
+class DomainPackageCreateBody(BaseModel):
+    domain_id: str
+    name: str
+    description: str = ""
+
+
+class DomainRevisionBody(BaseModel):
+    yaml_text: str
+
+
 class TenantCreateBody(BaseModel):
     name: str
 
@@ -43,6 +53,7 @@ class WorkspaceCreateBody(BaseModel):
 class ProjectCreateBody(BaseModel):
     name: str
     project_id: str | None = None
+    domain_revision_id: str | None = None
 
 
 class MembershipBody(BaseModel):
@@ -51,7 +62,7 @@ class MembershipBody(BaseModel):
 
 
 def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
-    app = FastAPI(title="Governed Workflow Runtime", version="0.8.0")
+    app = FastAPI(title="Governed Workflow Runtime", version="0.8.1")
 
     @app.exception_handler(GWRException)
     async def gwr_error(_, exc: GWRException):
@@ -130,8 +141,8 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
             runtime.tenancy.require_workspace_access(principal.actor_id, workspace_id, "MANAGE_PROJECT")
         except AuthorityDenied:
             raise HTTPException(status_code=404, detail="workspace not found")
-        project_id = runtime.create_scoped_project(body.name, ws["tenant_id"], workspace_id, principal.actor_id, project_id=body.project_id)
-        return {"project_id": project_id, "workspace_id": workspace_id, "tenant_id": ws["tenant_id"], "name": body.name}
+        project_id = runtime.create_scoped_project(body.name, ws["tenant_id"], workspace_id, principal.actor_id, project_id=body.project_id, domain_revision_id=body.domain_revision_id)
+        return {"project_id": project_id, "workspace_id": workspace_id, "tenant_id": ws["tenant_id"], "name": body.name, "domain_binding": runtime.domains.project_binding(project_id)}
 
     @app.get('/projects')
     def list_projects(authorization: str = Header(...), tenant_id: str | None = Query(default=None)):
@@ -206,7 +217,7 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
 
     @app.get('/health')
     def health():
-        return {"ok": True, "domain": runtime.domain.domain_id, "version": "0.8.0"}
+        return {"ok": True, "domain": runtime.domain.domain_id, "version": "0.8.1"}
 
     @app.get('/projects/{project_id}/audit')
     def audit(project_id: str, authorization: str | None = Header(default=None)):
@@ -248,10 +259,10 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
     def product_meta():
         return {
             "product": "GWR Research Product Alpha",
-            "version": "0.8.0",
+            "version": "0.8.1",
             "domain_id": runtime.domain.domain_id,
             "backend": getattr(runtime.db, "backend_name", "unknown"),
-            "capabilities": ["domain_sdk", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"],
+            "capabilities": ["domain_sdk", "domain_registry", "project_lifecycle", "process_inspector", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"],
         }
 
     @app.get('/product/domains/current')
@@ -267,6 +278,69 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
         except Exception as exc:
             return {"ok": False, "errors": [{"code": "PARSE_ERROR", "message": str(exc)}], "warnings": [], "counts": {}}
         return DomainSDK.validate(data).to_dict()
+
+    @app.post('/product/tenants/{tenant_id}/domains')
+    def create_domain_package(tenant_id: str, body: DomainPackageCreateBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        package_id = runtime.domains.create_package(tenant_id, body.domain_id, body.name, principal.actor_id, body.description)
+        return {"package_id": package_id, "tenant_id": tenant_id, "domain_id": body.domain_id, "name": body.name}
+
+    @app.get('/product/tenants/{tenant_id}/domains')
+    def list_domain_packages(tenant_id: str, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        return {"domains": runtime.domains.list_packages(tenant_id, principal.actor_id)}
+
+    @app.post('/product/domains/{package_id}/revisions')
+    def add_domain_revision(package_id: str, body: DomainRevisionBody, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        revision_id = runtime.domains.add_revision(package_id, body.yaml_text, principal.actor_id)
+        return runtime.domains.get_revision(revision_id)
+
+    @app.post('/product/domain-revisions/{revision_id}/validate')
+    def validate_registered_domain_revision(revision_id: str, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        return runtime.domains.validate_revision(revision_id, principal.actor_id)
+
+    @app.post('/product/domain-revisions/{revision_id}/publish')
+    def publish_domain_revision(revision_id: str, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        return runtime.domains.publish_revision(revision_id, principal.actor_id)
+
+    @app.get('/product/domain-revisions/{revision_id}')
+    def get_domain_revision(revision_id: str, authorization: str = Header(...)):
+        _, principal = bearer(authorization)
+        revision = runtime.domains.get_revision(revision_id)
+        runtime.tenancy.require_tenant_access(principal.actor_id, revision["tenant_id"], "VIEW")
+        return revision
+
+    @app.get('/product/projects/{project_id}/process')
+    def product_process(project_id: str, authorization: str = Header(...)):
+        project_principal(project_id, authorization, "VIEW")
+        return runtime.process.process(project_id)
+
+    @app.get('/product/orchestrations/{orchestration_id}/phases')
+    def product_orchestration_phases(orchestration_id: str, authorization: str = Header(...)):
+        row = runtime.db.one("SELECT project_id FROM orchestrations WHERE orchestration_id=?", (orchestration_id,))
+        if not row:
+            raise HTTPException(status_code=404, detail="orchestration not found")
+        project_principal(row["project_id"], authorization, "VIEW")
+        return {"phases": runtime.process.phases(orchestration_id)}
+
+    @app.get('/product/phases/{phase_execution_id}')
+    def product_phase_detail(phase_execution_id: str, authorization: str = Header(...)):
+        row = runtime.db.one("SELECT o.project_id FROM phase_executions p JOIN orchestrations o ON o.orchestration_id=p.orchestration_id WHERE p.phase_execution_id=?", (phase_execution_id,))
+        if not row:
+            raise HTTPException(status_code=404, detail="phase execution not found")
+        project_principal(row["project_id"], authorization, "VIEW")
+        return runtime.process.phase_detail(phase_execution_id)
+
+    @app.get('/product/phases/{phase_execution_id}/events')
+    def product_phase_events(phase_execution_id: str, authorization: str = Header(...)):
+        row = runtime.db.one("SELECT o.project_id FROM phase_executions p JOIN orchestrations o ON o.orchestration_id=p.orchestration_id WHERE p.phase_execution_id=?", (phase_execution_id,))
+        if not row:
+            raise HTTPException(status_code=404, detail="phase execution not found")
+        project_principal(row["project_id"], authorization, "VIEW")
+        return {"events": runtime.process.phase_events(phase_execution_id)}
 
     @app.get('/product/projects/{project_id}/dashboard')
     def product_dashboard(project_id: str, authorization: str = Header(...)):

@@ -1,67 +1,67 @@
-const state={data:null,project:null,view:"dashboard",activeProposal:null,decisions:JSON.parse(localStorage.getItem("gwr-uat-decisions")||"{}")};
+const LS_DOMAINS="gwr-uat-domains",LS_PROJECTS="gwr-uat-projects",LS_DECISIONS="gwr-uat-decisions";
+const state={data:null,project:null,view:"dashboard",activeProposal:null,domains:JSON.parse(localStorage.getItem(LS_DOMAINS)||"[]"),projects:JSON.parse(localStorage.getItem(LS_PROJECTS)||"[]"),decisions:JSON.parse(localStorage.getItem(LS_DECISIONS)||"{}")};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
-const badge=s=>{const v=String(s||"").toUpperCase();const cls=["PASS","COMPLETED","SUCCEEDED","VALID","ACTIVE","APPROVED"].includes(v)?"good":["FAIL","FAILED","ABANDONED","REJECTED"].includes(v)?"bad":["PAUSED","READY","RUNNING","DIRTY","STALE","PENDING_APPROVAL","RECOVERY_PLANNED"].includes(v)?"warn":"";return `<span class="badge ${cls}">${esc(v)}</span>`};
-function decisionFor(id){return state.decisions[id]}
-function effectiveApproval(a){const d=decisionFor(a.proposal_id);return d?{...a,status:d.decision,local:true}:a}
+const uid=p=>p+"_"+Math.random().toString(36).slice(2,9);
+const badge=s=>{const v=String(s||"").toUpperCase(),good=["PASS","COMPLETED","SUCCEEDED","VALID","ACTIVE","APPROVED","PUBLISHED","VALIDATED"].includes(v),bad=["FAIL","FAILED","ABANDONED","REJECTED"].includes(v),warn=["PAUSED","READY","RUNNING","DIRTY","STALE","PENDING_APPROVAL","RECOVERY_PLANNED","DRAFT"].includes(v);return `<span class="badge ${good?"good":bad?"bad":warn?"warn":""}">${esc(v)}</span>`};
+function save(){localStorage.setItem(LS_DOMAINS,JSON.stringify(state.domains));localStorage.setItem(LS_PROJECTS,JSON.stringify(state.projects));localStorage.setItem(LS_DECISIONS,JSON.stringify(state.decisions))}
+function defaultDomain(){const d=state.data.product.domain;return {package_id:"domainpkg_demo_research",domain_id:d.domain_id,name:"Research Full Cycle",status:"ACTIVE",revisions:[{revision_id:"domainrev_demo_research_030",revision_number:1,semantic_version:d.version,status:"PUBLISHED",payload_hash:d.fingerprint,yaml_text:"domain_id: research.full-cycle\nversion: 0.3.0\n"}]}}
+function allDomains(){return [defaultDomain(),...state.domains]}
+function allProjects(){return [...state.data.projects,...state.projects]}
+function publishedRevisions(){return allDomains().flatMap(d=>(d.revisions||[]).filter(r=>r.status==="PUBLISHED").map(r=>({...r,domain_id:d.domain_id,domain_name:d.name})))}
+function effectiveApproval(a){const d=state.decisions[a.proposal_id];return d?{...a,status:d.decision,local:true}:a}
 async function init(){
-  const res=await fetch("./demo-data.json",{cache:"no-store"}); state.data=await res.json();
-  const select=$("#projectSelect"); select.innerHTML=state.data.projects.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
-  select.addEventListener("change",()=>choose(select.value));
-  document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>show(b.dataset.view)));
-  $("#resetUat").addEventListener("click",()=>{localStorage.removeItem("gwr-uat-decisions");state.decisions={};render()});
-  $("#approveBtn").addEventListener("click",()=>decide("APPROVED"));
-  $("#rejectBtn").addEventListener("click",()=>decide("REJECTED"));
-  choose(state.data.projects[0].id);
+ const res=await fetch("./demo-data.json",{cache:"no-store"});state.data=await res.json();
+ $("#projectSelect").addEventListener("change",e=>choose(e.target.value));
+ document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>show(b.dataset.view)));
+ $("#resetUat").onclick=()=>{if(confirm("Reset all local UAT domains, projects and decisions?")){localStorage.removeItem(LS_DOMAINS);localStorage.removeItem(LS_PROJECTS);localStorage.removeItem(LS_DECISIONS);state.domains=[];state.projects=[];state.decisions={};choose(state.data.projects[0].id)}};
+ $("#newDomainBtn").onclick=$("#newDomainBtn2").onclick=openDomainDialog;$("#newProjectBtn").onclick=openProjectDialog;
+ $("#saveDomainBtn").onclick=createDomain;$("#createProjectBtn").onclick=createProject;
+ $("#approveBtn").onclick=()=>decide("APPROVED");$("#rejectBtn").onclick=()=>decide("REJECTED");
+ choose(allProjects()[0].id);
 }
-function choose(id){state.project=state.data.projects.find(p=>p.id===id);render()}
-function show(view){state.view=view;document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));$("#view-"+view).classList.add("active");document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===view))}
+function syncProjects(){const sel=$("#projectSelect"),current=state.project?.id;sel.innerHTML=allProjects().map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.local?" · UAT":""}</option>`).join("");if(current)sel.value=current}
+function choose(id){state.project=allProjects().find(p=>p.id===id)||allProjects()[0];syncProjects();render()}
+function show(v){state.view=v;document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));$("#view-"+v)?.classList.add("active");document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.view===v))}
 function render(){
-  const p=state.project;if(!p)return;
-  $("#projectTitle").textContent=p.name; $("#projectStatus").outerHTML=badge(p.status).replace("<span",'<span id="projectStatus"');$("#projectScope").textContent=`${p.tenant} / ${p.workspace} · ${p.id}`;
-  const approvals=p.approvals.map(effectiveApproval); const pending=approvals.filter(a=>a.status==="PENDING_APPROVAL");
-  $("#approvalCount").textContent=pending.length;
-  $("#metrics").innerHTML=[
-    ["Phase executions",p.metrics.phase_executions],["Pending approvals",pending.length],["Open failures",p.metrics.open_failures],["Audit events",p.audit_count]
-  ].map(([k,v])=>`<div class="metric"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join("");
-  $("#phaseSummary").textContent=`${p.phases.filter(x=>x.status==="PASS").length} pass · ${p.phases.filter(x=>x.status==="FAIL").length} failed`;
-  $("#phaseTimeline").innerHTML=p.phases.map(ph=>`<div class="phase"><span class="phase-dot ${ph.status.toLowerCase()}"></span><div><div class="name">${esc(ph.label)}</div><div class="detail">generation ${ph.generation}${ph.detail?" · "+esc(ph.detail):""}</div></div>${badge(ph.status)}</div>`).join("");
-  const attention=[];
-  pending.forEach(a=>attention.push(`<div class="attention"><div class="icon">!</div><div><strong>Human approval required</strong><span>${esc(a.action)} · ${esc(a.proposal_id)}</span></div></div>`));
-  p.failures.filter(f=>f.status!=="RESOLVED").forEach(f=>attention.push(`<div class="attention"><div class="icon">↺</div><div><strong>${esc(f.failure_class)}</strong><span>resume at ${esc(f.resume_candidate)}</span></div></div>`));
-  if(!attention.length)attention.push('<div class="empty">No operator actions are blocking this project.</div>');
-  $("#attentionQueue").innerHTML=attention.join("");
-  $("#frontier").innerHTML=p.frontier.map(a=>`<span class="artifact-pill ${a.state.toLowerCase()}">${esc(a.name)} · ${esc(a.state)}</span>`).join("");
-  renderApprovals(approvals);renderRecovery();renderDistributed();renderDomain();show(state.view);
+ const p=state.project;if(!p)return;syncProjects();
+ $("#projectTitle").textContent=p.name;$("#projectStatus").outerHTML=badge(p.status).replace("<span",'<span id="projectStatus"');$("#projectScope").textContent=`${p.tenant||"UAT Tenant"} / ${p.workspace||"UAT Workspace"} · ${p.id}`;
+ const approvals=(p.approvals||[]).map(effectiveApproval),pending=approvals.filter(a=>a.status==="PENDING_APPROVAL");
+ $("#approvalCount").textContent=pending.length;
+ const m=p.metrics||{pending_approvals:0,open_failures:0,active_jobs:0,phase_executions:(p.phases||[]).length};
+ $("#metrics").innerHTML=[["Phase executions",m.phase_executions||0],["Pending approvals",pending.length],["Open failures",m.open_failures||0],["Audit events",p.audit_count||0]].map(([k,v])=>`<div class="metric"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join("");
+ const phases=p.phases||[];$("#phaseSummary").textContent=`${phases.filter(x=>x.status==="PASS").length} pass · ${phases.filter(x=>x.status==="FAIL").length} failed`;
+ $("#phaseTimeline").innerHTML=phases.length?phases.map((ph,i)=>`<div class="phase clickable" data-phase="${i}"><span class="phase-dot ${ph.status.toLowerCase()}"></span><div><div class="name">${esc(ph.label)}</div><div class="detail">generation ${ph.generation||0}${ph.detail?" · "+esc(ph.detail):""}</div></div>${badge(ph.status)}</div>`).join(""):'<div class="empty">Project created. No workflow started in static UAT.</div>';
+ document.querySelectorAll("[data-phase]").forEach(el=>el.onclick=()=>openPhase(Number(el.dataset.phase)));
+ const attention=[];pending.forEach(a=>attention.push(`<div class="attention"><div class="icon">!</div><div><strong>Human approval required</strong><span>${esc(a.action)} · ${esc(a.proposal_id)}</span></div></div>`));(p.failures||[]).filter(f=>f.status!=="RESOLVED").forEach(f=>attention.push(`<div class="attention"><div class="icon">↺</div><div><strong>${esc(f.failure_class)}</strong><span>resume at ${esc(f.resume_candidate)}</span></div></div>`));$("#attentionQueue").innerHTML=attention.join("")||'<div class="empty">No blocking operator action.</div>';
+ const pin=p.domain_binding||{domain_id:"research.full-cycle",semantic_version:"0.3.0",domain_revision_id:"domainrev_demo_research_030"};$("#domainPin").innerHTML=`<div class="card-row"><div><strong>${esc(pin.domain_name||pin.domain_id)}</strong><p>${esc(pin.domain_id)} @ ${esc(pin.semantic_version||"0.3.0")}</p></div>${badge("PINNED")}</div><code class="hash">${esc(pin.domain_revision_id)}</code>`;
+ $("#frontier").innerHTML=(p.frontier||[]).map(a=>`<span class="artifact-pill ${a.state.toLowerCase()}">${esc(a.name)} · ${esc(a.state)}</span>`).join("")||'<span class="subtle">No artifacts yet.</span>';
+ renderProcess();renderApprovals(approvals);renderRecovery();renderDistributed();renderDomains();show(state.view);
 }
-function renderApprovals(approvals){
-  const el=$("#approvalList");if(!approvals.length){el.innerHTML='<div class="empty">No approval records in this snapshot.</div>';return}
-  el.innerHTML=approvals.map(a=>`<div class="card"><div class="card-row"><div><h3>${esc(a.action)}</h3><p>${esc(a.policy)} · ${esc(a.proposal_id)}</p></div>${badge(a.status)}</div><p>Exact hash</p><code class="hash">${esc(a.payload_hash)}</code><div class="card-row" style="margin-top:10px"><p>${a.local?"Local UAT decision — reset to restore snapshot":"Frozen payload available for review"}</p><button class="ghost review-btn" data-id="${esc(a.proposal_id)}">Review</button></div></div>`).join("");
-  document.querySelectorAll(".review-btn").forEach(b=>b.addEventListener("click",()=>openApproval(b.dataset.id)));
+function renderProcess(){
+ const p=state.project,phases=p.phases||[],current=[...phases].reverse().find(x=>["RUNNING","PAUSED"].includes(x.status))||phases.at(-1);
+ $("#currentPhaseTitle").textContent=current?current.label:"Not started";$("#currentPhaseCard").innerHTML=current?`${badge(current.status)}<p>Phase: <strong>${esc(current.id)}</strong></p><p>Generation: ${current.generation||0}</p><button class="ghost" id="inspectCurrent">Open Phase Inspector</button>`:'<div class="empty">No phase execution yet.</div>';if(current)$("#inspectCurrent").onclick=()=>openPhase(phases.indexOf(current));
+ const maxGen=Math.max(0,...phases.map(x=>x.generation||0));$("#lineageCard").innerHTML=`<div class="mini-metrics"><div class="mini"><span>Generation</span><strong>${maxGen}</strong></div><div class="mini"><span>Attempts</span><strong>${phases.length}</strong></div><div class="mini"><span>Failures</span><strong>${phases.filter(x=>x.status==="FAIL").length}</strong></div></div>`;
+ $("#processHistory").innerHTML=phases.length?`<table><thead><tr><th>Gen</th><th>Phase</th><th>Status</th><th>Result</th><th>Action</th></tr></thead><tbody>${phases.map((x,i)=>`<tr><td>${x.generation||0}</td><td>${esc(x.label)}</td><td>${badge(x.status)}</td><td>${esc(x.detail||x.outcome||"—")}</td><td><button class="ghost phase-open" data-i="${i}">Inspect</button></td></tr>`).join("")}</tbody></table>`:'<div class="empty">No process history.</div>';document.querySelectorAll(".phase-open").forEach(b=>b.onclick=()=>openPhase(Number(b.dataset.i)));
+ const logs=phases.flatMap((x,i)=>phaseEvents(x,i)).sort((a,b)=>a.time.localeCompare(b.time)).slice(-15).reverse();$("#processLog").innerHTML=logs.length?`<table><thead><tr><th>Time</th><th>Event</th><th>Phase</th><th>Detail</th></tr></thead><tbody>${logs.map(e=>`<tr><td>${esc(e.time)}</td><td>${esc(e.event)}</td><td>${esc(e.phase)}</td><td>${esc(e.detail)}</td></tr>`).join("")}</tbody></table>`:'<div class="empty">No process events.</div>';
 }
-function openApproval(id){
-  const a=state.project.approvals.find(x=>x.proposal_id===id);if(!a)return;state.activeProposal=a;
-  $("#dialogTitle").textContent=a.proposal_id;$("#dialogAction").textContent=a.action;$("#dialogPolicy").textContent=a.policy;$("#dialogHash").textContent=a.payload_hash;$("#dialogPayload").textContent=JSON.stringify(a.payload,null,2);$("#approvalDialog").showModal();
+function phaseEvents(ph,i){if(ph.events)return ph.events;const base=`2026-09-18T03:${String(10+i).padStart(2,"0")}:00Z`;const out=[{time:base,event:"PHASE_STARTED",phase:ph.id,detail:`generation ${ph.generation||0}`}];if(ph.status==="FAIL")out.push({time:base,event:"GATE_BLOCKED",phase:ph.id,detail:ph.detail||"failure recorded"});else if(ph.status==="PASS")out.push({time:base,event:"PHASE_SUCCEEDED",phase:ph.id,detail:ph.detail||"outputs committed"});else out.push({time:base,event:"PHASE_RUNNING",phase:ph.id,detail:ph.detail||"in progress"});return out}
+function openPhase(i){
+ const ph=(state.project.phases||[])[i];if(!ph)return;const ev=phaseEvents(ph,i);$("#phaseDialogTitle").textContent=ph.label;
+ const details=ph.inspector||{inputs:["protocol","experiment_plan"],outputs:ph.status==="FAIL"?[]:["phase_output"],evidence:["execution_evidence"],gates:[{name:"phase_gate",result:ph.status==="FAIL"?"BLOCKED":"PASS"}],checkpoint:ph.status==="FAIL"?"cp_failure_"+i:"cp_"+i};
+ $("#phaseInspector").innerHTML=`<div class="review-grid"><div><span class="label">Status</span>${badge(ph.status)}</div><div><span class="label">Generation</span><strong>${ph.generation||0}</strong></div></div><div class="grid two"><div><span class="label">Inputs</span><div class="cards compact">${(details.inputs||[]).map(x=>`<div class="card"><strong>${esc(x)}</strong><p>VALID revision</p></div>`).join("")||"—"}</div></div><div><span class="label">Outputs</span><div class="cards compact">${(details.outputs||[]).map(x=>`<div class="card"><strong>${esc(x)}</strong><p>Produced by this attempt</p></div>`).join("")||"—"}</div></div></div><span class="label">Evidence / gates</span><pre class="payload">${esc(JSON.stringify({evidence:details.evidence||[],gates:details.gates||[],failure:ph.status==="FAIL"?(ph.detail||"failure"):null,checkpoint:details.checkpoint||null},null,2))}</pre><span class="label">Phase event log</span><div class="table-wrap"><table><thead><tr><th>Time</th><th>Event</th><th>Detail</th></tr></thead><tbody>${ev.map(e=>`<tr><td>${esc(e.time)}</td><td>${esc(e.event)}</td><td>${esc(e.detail)}</td></tr>`).join("")}</tbody></table></div>`;$("#phaseDialog").showModal();
 }
-function decide(decision){
-  const a=state.activeProposal;if(!a)return;
-  state.decisions[a.proposal_id]={decision,at:new Date().toISOString(),hash:a.payload_hash};localStorage.setItem("gwr-uat-decisions",JSON.stringify(state.decisions));$("#approvalDialog").close();render();
+function renderApprovals(a){$("#approvalList").innerHTML=a.length?a.map(x=>`<div class="card"><div class="card-row"><div><h3>${esc(x.action)}</h3><p>${esc(x.policy)} · ${esc(x.proposal_id)}</p></div>${badge(x.status)}</div><code class="hash">${esc(x.payload_hash)}</code><div class="card-row" style="margin-top:10px"><p>${x.local?"Local UAT decision":"Frozen payload"}</p><button class="ghost review-btn" data-id="${esc(x.proposal_id)}">Review</button></div></div>`).join(""):'<div class="empty">No approval records.</div>';document.querySelectorAll(".review-btn").forEach(b=>b.onclick=()=>openApproval(b.dataset.id))}
+function openApproval(id){const a=(state.project.approvals||[]).find(x=>x.proposal_id===id);if(!a)return;state.activeProposal=a;$("#dialogTitle").textContent=a.proposal_id;$("#dialogAction").textContent=a.action;$("#dialogPolicy").textContent=a.policy;$("#dialogHash").textContent=a.payload_hash;$("#dialogPayload").textContent=JSON.stringify(a.payload,null,2);$("#approvalDialog").showModal()}
+function decide(decision){const a=state.activeProposal;if(!a)return;state.decisions[a.proposal_id]={decision,at:new Date().toISOString(),hash:a.payload_hash};save();$("#approvalDialog").close();render()}
+function renderRecovery(){const f=(state.project.failures||[])[0];if(!f){$("#recoveryGraph").innerHTML='<div class="empty">No failures.</div>';$("#failureList").innerHTML="";return}const r=f.recovery||{};$("#recoveryGraph").innerHTML=[["Detection",f.detected_stage,f.status],["Root",f.root_ref,f.root_status],["Recovery",r.recovery_id,r.status],["Resume",r.resume_target,"TARGET"]].map((x,i)=>`${i?'<span class="graph-arrow">→</span>':""}<div class="graph-node"><span class="kind">${x[0]}</span><strong>${esc(x[1])}</strong><div style="margin-top:7px">${badge(x[2])}</div></div>`).join("");$("#failureList").innerHTML=(state.project.failures||[]).map(x=>`<div class="card"><h3>${esc(x.failure_class)}</h3><p>${esc(x.failure_id)} · root ${esc(x.root_ref)} · resume ${esc(x.resume_candidate)}</p>${badge(x.status)}</div>`).join("")}
+function renderDistributed(){const d=state.project.distributed||{jobs:[],workers:[]};$("#jobTable").innerHTML=d.jobs.length?`<table><thead><tr><th>Job</th><th>Work unit</th><th>Status</th><th>Worker</th><th>Attempt</th></tr></thead><tbody>${d.jobs.map(j=>`<tr><td>${esc(j.job_id)}</td><td>${esc(j.workunit)}</td><td>${badge(j.status)}</td><td>${esc(j.worker)}</td><td>${esc(j.attempt)}</td></tr>`).join("")}</tbody></table>`:'<div class="empty">No distributed jobs.</div>';$("#workerList").innerHTML=d.workers.map(w=>`<div class="card"><div class="card-row"><h3>${esc(w.worker_id)}</h3>${badge(w.status)}</div><p>CPU ${esc(w.cpu)} · Memory ${esc(w.memory)}</p><p>${esc((w.labels||[]).join(" · "))}</p></div>`).join("")||'<div class="empty">No workers assigned.</div>'}
+function renderDomains(){
+ $("#domainRegistry").innerHTML=allDomains().map(d=>`<div class="card"><div class="card-row"><div><h3>${esc(d.name)}</h3><p>${esc(d.domain_id)} · ${d.package_id.startsWith("domainpkg_demo")?"built-in":"local UAT"}</p></div>${badge(d.status)}</div>${(d.revisions||[]).map(r=>`<div class="card-row domain-rev"><span>rev ${r.revision_number} · ${esc(r.semantic_version||"")}</span><span>${badge(r.status)} ${r.status!=="PUBLISHED"&&!d.package_id.startsWith("domainpkg_demo")?`<button class="ghost publish-domain" data-pkg="${d.package_id}" data-rev="${r.revision_id}">Publish</button>`:""}</span></div>`).join("")}</div>`).join("");
+ document.querySelectorAll(".publish-domain").forEach(b=>b.onclick=()=>{const d=state.domains.find(x=>x.package_id===b.dataset.pkg),r=d?.revisions.find(x=>x.revision_id===b.dataset.rev);if(r){r.status="PUBLISHED";save();render()}});
 }
-function renderRecovery(){
-  const p=state.project, graph=$("#recoveryGraph");
-  if(!p.failures.length){graph.innerHTML='<div class="empty">No failures recorded.</div>';$("#failureList").innerHTML="";return}
-  const f=p.failures[0],r=f.recovery;graph.innerHTML=[
-    ["Detection",f.detected_stage,f.status],["Root cause",f.root_ref,f.root_status],["Recovery",r.recovery_id,r.status],["Resume",r.resume_target,"TARGET"]
-  ].map((x,i)=>`${i?'<span class="graph-arrow">→</span>':""}<div class="graph-node"><span class="kind">${esc(x[0])}</span><strong>${esc(x[1])}</strong><div style="margin-top:7px">${badge(x[2])}</div></div>`).join("");
-  $("#failureList").innerHTML=p.failures.map(f=>`<div class="card"><div class="card-row"><div><h3>${esc(f.failure_class)}</h3><p>${esc(f.failure_id)} · ${esc(f.severity)}</p></div>${badge(f.status)}</div><p>Detected at <strong>${esc(f.detected_stage)}</strong></p><p>Root <strong>${esc(f.root_ref)}</strong> · resume <strong>${esc(f.resume_candidate)}</strong></p><p>Mark stale: ${esc((f.recovery.mark_stale||[]).join(", ")||"none")}</p></div>`).join("");
-}
-function renderDistributed(){
-  const d=state.project.distributed;
-  $("#jobTable").innerHTML=`<table><thead><tr><th>Job</th><th>Work unit</th><th>Status</th><th>Worker</th><th>Attempt</th></tr></thead><tbody>${d.jobs.map(j=>`<tr><td>${esc(j.job_id)}</td><td>${esc(j.workunit)}</td><td>${badge(j.status)}</td><td>${esc(j.worker)}</td><td>${esc(j.attempt)}</td></tr>`).join("")}</tbody></table>`;
-  $("#workerList").innerHTML=d.workers.map(w=>`<div class="card"><div class="card-row"><h3>${esc(w.worker_id)}</h3>${badge(w.status)}</div><p>CPU ${esc(w.cpu)} · Memory ${esc(w.memory)}</p><p>${esc(w.labels.join(" · "))}</p><p>heartbeat ${esc(w.last_heartbeat)}</p></div>`).join("");
-}
-function renderDomain(){
-  const d=state.data.product.domain;$("#domainTitle").textContent=d.domain_id;$("#domainSummary").innerHTML=`<p>${esc(d.description)}</p><p class="subtle">version ${esc(d.version)}</p><code class="hash">${esc(d.fingerprint)}</code>`;
-  $("#domainCounts").innerHTML=Object.entries(d.counts).map(([k,v])=>`<div class="mini"><span>${esc(k.replaceAll("_"," "))}</span><strong>${esc(v)}</strong></div>`).join("");
-}
-init().catch(err=>{document.body.innerHTML=`<pre style="padding:30px;color:#ff7188">UAT console failed to load: ${esc(err.message)}</pre>`});
+function openDomainDialog(){const id="uat.domain";$("#domainIdInput").value=id;$("#domainNameInput").value="UAT Domain";$("#domainYamlInput").value=`domain_id: ${id}\nversion: 0.1.0\ndescription: UAT-created domain\nartifact_types: []\ntrace_types: []\nworkunit_templates: []\nevidence_types: []\ngate_types: []\nfailure_types: []\nrecovery_policies: []\nroles: []\nauthority_policies: []\napproval_policies: []\nvalidity_rules: []\nloop_policy: {}\n`;$("#domainDialog").showModal()}
+function createDomain(){const id=$("#domainIdInput").value.trim(),name=$("#domainNameInput").value.trim(),yaml=$("#domainYamlInput").value;if(!id||!name||!yaml.includes("domain_id:")||!yaml.includes("version:"))return alert("Domain ID, name and YAML with domain_id/version are required.");if(allDomains().some(d=>d.domain_id===id))return alert("Domain ID already exists.");const version=(yaml.match(/version:\s*([^\n]+)/)||[])[1]?.trim()||"0.1.0";state.domains.push({package_id:uid("domainpkg"),domain_id:id,name,status:"ACTIVE",revisions:[{revision_id:uid("domainrev"),revision_number:1,semantic_version:version,status:"VALIDATED",payload_hash:"uat:"+uid("hash"),yaml_text:yaml}]});save();$("#domainDialog").close();renderDomains();show("domains")}
+function openProjectDialog(){const revs=publishedRevisions();$("#projectDomainSelect").innerHTML=revs.map(r=>`<option value="${r.revision_id}">${esc(r.domain_name)} · ${esc(r.semantic_version)}</option>`).join("");$("#projectNameInput").value="New UAT Project";$("#projectDialog").showModal()}
+function createProject(){const name=$("#projectNameInput").value.trim(),rid=$("#projectDomainSelect").value,rev=publishedRevisions().find(r=>r.revision_id===rid);if(!name||!rev)return alert("Project name and published domain revision are required.");const p={id:uid("project_uat"),name,tenant:"UAT Tenant",workspace:$("#projectWorkspaceInput").value||"UAT Workspace",status:"READY",local:true,audit_count:1,metrics:{pending_approvals:0,open_failures:0,active_jobs:0,phase_executions:0},phases:[],frontier:[],approvals:[],failures:[],distributed:{workers:[],jobs:[]},domain_binding:{domain_revision_id:rev.revision_id,domain_id:rev.domain_id,domain_name:rev.domain_name,semantic_version:rev.semantic_version,revision_status:"PUBLISHED"}};state.projects.push(p);save();$("#projectDialog").close();choose(p.id);show("dashboard")}
+init().catch(err=>{document.body.innerHTML=`<pre style="padding:30px;color:#ff7188">UAT failed: ${esc(err.message)}</pre>`});
