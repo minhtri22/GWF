@@ -380,13 +380,34 @@ class GitHubPluginService:
             )
 
         payload_changes = self._normalize_changes(changes, include_content=True)
-        result = adapter.commit_files(
-            binding["repository_full_name"],
-            row["branch"],
-            row["expected_head_sha"],
-            row["commit_message"],
-            payload_changes,
-        )
+        try:
+            result = adapter.commit_files(
+                binding["repository_full_name"],
+                row["branch"],
+                row["expected_head_sha"],
+                row["commit_message"],
+                payload_changes,
+            )
+        except StaleVersion as exc:
+            observed = None
+            try:
+                observed = adapter.get_branch_head(binding["repository_full_name"], row["branch"])
+            except Exception:
+                observed = None
+            with self.db.tx():
+                self._record_check(
+                    change_set_id,
+                    "PROVIDER_EXPECTED_HEAD",
+                    "FAIL",
+                    expected_sha=row["expected_head_sha"],
+                    observed_sha=observed,
+                    details={"provider_error": str(exc)},
+                )
+                self.db.conn.execute(
+                    "UPDATE github_change_sets SET status='STALE' WHERE change_set_id=?",
+                    (change_set_id,),
+                )
+            raise
         commit_sha = str(result.get("commit_sha") or "")
         parent_sha = str(result.get("parent_sha") or "")
         if not commit_sha:
