@@ -27,6 +27,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -- .github/workflows
+          rm -f .github/workflows/v06-gate.yml
           find src tests tools -type d -name __pycache__ -prune -exec rm -rf {} +
           find src tests tools -type f -name '*.pyc' -delete
           rm -rf bootstrap
