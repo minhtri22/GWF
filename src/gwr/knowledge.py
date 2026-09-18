@@ -5,8 +5,13 @@ from .errors import NotFound, ValidationError, StaleVersion
 
 VALIDITY={"VALID","STALE","DIRTY","FAILED","UNVERIFIED","SUPERSEDED"}
 class KnowledgeKernel:
-    def __init__(self, db, domain, governance): self.db,self.domain,self.gov=db,domain,governance
+    def __init__(self, db, domain, governance):
+        self.db,self.domain,self.gov=db,domain,governance
+        self.project_governance=None
+    def bind_project_governance(self, service):
+        self.project_governance=service
     def create_artifact(self, project_id, artifact_type, logical_key, actor_id, lifecycle_status="ACTIVE"):
+        if self.project_governance: self.project_governance.require_mutable(project_id)
         if not self.domain.artifact(artifact_type): raise ValidationError(f"Unknown artifact type {artifact_type}")
         self.gov.authorize(actor_id,"CREATE_REVISION",{"artifact_type":artifact_type})
         aid=uid("art")
@@ -18,6 +23,7 @@ class KnowledgeKernel:
     def create_revision(self, artifact_id, payload, actor_id, expected_artifact_version:int, proposal_id=None, producer_run_id=None):
         a=self.db.one("SELECT * FROM artifacts WHERE artifact_id=?",(artifact_id,));
         if not a: raise NotFound("Artifact not found")
+        if self.project_governance: self.project_governance.require_mutable(a["project_id"])
         self.gov.authorize(actor_id,"CREATE_REVISION",{"artifact_type":a["artifact_type"]})
         art_cfg=self.domain.artifact(a["artifact_type"])
         if art_cfg.get("normative") and not proposal_id: raise ValidationError("Normative revision requires approved proposal")
