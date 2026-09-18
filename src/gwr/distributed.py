@@ -41,6 +41,10 @@ class DistributedRuntime:
         self.execution = execution
         self.gov = governance
         self.observer = observer
+        self.project_governance = None
+
+    def bind_project_governance(self, service):
+        self.project_governance = service
 
     def _emit(self, event: str, **attrs):
         if self.observer:
@@ -113,6 +117,8 @@ class DistributedRuntime:
         if not idempotency_key:
             raise ValidationError("idempotency_key is required")
         wu = self._workunit(workunit_id)
+        if self.project_governance:
+            self.project_governance.require_mutable(wu["project_id"])
         if wu["status"] != "READY":
             raise InvalidTransition(f"WorkUnit is {wu['status']}, not READY")
         execution_policy = parse_json(wu["execution_policy"], {}) or {}
