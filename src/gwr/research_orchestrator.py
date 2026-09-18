@@ -140,6 +140,10 @@ class ResearchOrchestrator:
                 self.runtime.agent_protocol.apply_recovery(pending_protocol["proposal_id"], pending_protocol["actor_id"])
             elif recovery["status"] != "APPLIED":
                 raise InvalidTransition(f"Unexpected protocol recovery status {recovery['status']}")
+            if pending_protocol.get("phase_execution_id"):
+                self.runtime.agent_protocol.mark_attempt_failed(
+                    pending_protocol["phase_execution_id"], pending_protocol["actor_id"], reason="Recovery approved; retry will use a new phase execution"
+                )
             state["pending_protocol_recovery"]=None
         pending_approval=state.get("pending_approval")
         if pending_approval:
@@ -148,6 +152,12 @@ class ResearchOrchestrator:
                 return {"status":"PAUSED","reason":"WAITING_APPROVAL","orchestration_id":state["orchestration_id"],"project_id":state["project_id"],"checkpoint_id":checkpoint_id,"outcome":state.get("outcome"),"generation":state.get("generation"),"pivot_count":state.get("pivot_count")}
             if pending_approval.get("failure_id"):
                 self.runtime.decision.resolve_failure(pending_approval["failure_id"])
+            if pending_approval.get("phase_execution_id"):
+                self.runtime.agent_protocol.mark_attempt_failed(
+                    pending_approval["phase_execution_id"],
+                    pending_approval.get("actor_id") or "SYSTEM",
+                    reason="Required approval granted; phase will restart from checkpoint",
+                )
             state["pending_approval"]=None
         pending_action=state.get("pending_human_action")
         if pending_action:
@@ -477,7 +487,11 @@ class ResearchOrchestrator:
                 cp = self._checkpoint(state, phase_id, "ON_FAILURE", next_phase_index=idx, extra={"failure_id": fid, "attempt": attempt, "problem_id": problem_id})
                 self._finish_phase_execution(pexec_id, "FAILED", failure_id=fid, checkpoint_id=cp)
                 action = self._route_operational_failure(state, idx, phase, workunit_id, fid, phase_result)
-                if action["action"] == "RETRY" and attempt < max_attempts:
+                if action["action"] == "RETRY":
+                    if attempt >= max_attempts:
+                        self.runtime.agent_protocol.mark_attempt_failed(pexec_id, actor_id, reason="Runtime retry budget exhausted")
+                        exhausted_cp = self._checkpoint(state, phase_id, "RETRY_EXHAUSTED", next_phase_index=idx)
+                        return {"action": "PAUSE", "reason": "RETRY_EXHAUSTED", "checkpoint_id": exhausted_cp}
                     recovery = self.runtime.agent_protocol.propose_recovery(
                         problem_id,
                         actor_id,
@@ -489,11 +503,17 @@ class ResearchOrchestrator:
                     )
                     if recovery["status"] == "AUTO_APPROVED":
                         self.runtime.agent_protocol.apply_recovery(recovery["proposal_id"], actor_id)
+                        self.runtime.agent_protocol.mark_attempt_failed(pexec_id, actor_id, reason="Recovered attempt superseded by retry")
                         continue
+                    self.runtime.agent_protocol.mark_waiting_for_human(
+                        pexec_id, actor_id, reason="Retry requires human approval",
+                        metadata={"proposal_id": recovery["proposal_id"], "problem_id": problem_id},
+                    )
                     state["pending_protocol_recovery"] = {
                         "proposal_id": recovery["proposal_id"],
                         "actor_id": actor_id,
                         "phase_index": idx,
+                        "phase_execution_id": pexec_id,
                     }
                     waiting_cp = self._checkpoint(
                         state,
@@ -503,6 +523,7 @@ class ResearchOrchestrator:
                         extra={"proposal_id": recovery["proposal_id"], "problem_id": problem_id},
                     )
                     return {"action": "PAUSE", "reason": "WAITING_PROTOCOL_RECOVERY", "checkpoint_id": waiting_cp}
+                self.runtime.agent_protocol.mark_attempt_failed(pexec_id, actor_id, reason=f"Failure routed as {action['action']}")
                 return action
 
             self.runtime.agent_protocol.update_step(pexec_id, 2, "PASS", actor_id, note="executor completed")
@@ -523,7 +544,17 @@ class ResearchOrchestrator:
                 failure = self.db.one("SELECT * FROM failures WHERE scope_id=? AND status!='RESOLVED' ORDER BY created_at DESC LIMIT 1", (workunit_id,))
                 fid = failure["failure_id"] if failure else None
                 pending=self.db.one("SELECT proposal_id FROM proposals WHERE project_id=? AND status='PENDING_APPROVAL' ORDER BY created_at DESC LIMIT 1", (project_id,))
-                state["pending_approval"]={"proposal_id": pending["proposal_id"] if pending else None, "failure_id": fid, "phase_index": idx}
+                self.runtime.agent_protocol.mark_waiting_for_human(
+                    pexec_id, actor_id, reason="Normative output is waiting for trusted human approval",
+                    metadata={"proposal_id": pending["proposal_id"] if pending else None, "problem_id": problem_id},
+                )
+                state["pending_approval"]={
+                    "proposal_id": pending["proposal_id"] if pending else None,
+                    "failure_id": fid,
+                    "phase_index": idx,
+                    "phase_execution_id": pexec_id,
+                    "actor_id": actor_id,
+                }
                 cp = self._checkpoint(state, phase_id, "WAITING_APPROVAL", next_phase_index=idx, extra={"failure_id": fid, "proposal_id": pending["proposal_id"] if pending else None, "problem_id": problem_id})
                 self._finish_phase_execution(pexec_id, "FAILED", failure_id=fid, checkpoint_id=cp)
                 return {"action": "PAUSE", "reason": "WAITING_APPROVAL", "checkpoint_id": cp}
@@ -546,27 +577,35 @@ class ResearchOrchestrator:
                 cp = self._checkpoint(state, phase_id, "GATE_FAILURE", next_phase_index=idx, extra={"failure_id": fid, "problem_id": problem_id})
                 self._finish_phase_execution(pexec_id, "FAILED", failure_id=fid, checkpoint_id=cp)
                 action = self._route_operational_failure(state, idx, phase, workunit_id, fid, phase_result)
-                if action["action"] == "RETRY" and attempt < max_attempts:
+                if action["action"] == "RETRY":
+                    if attempt >= max_attempts:
+                        self.runtime.agent_protocol.mark_attempt_failed(pexec_id, actor_id, reason="Gate retry budget exhausted")
+                        exhausted_cp = self._checkpoint(state, phase_id, "RETRY_EXHAUSTED", next_phase_index=idx)
+                        return {"action": "PAUSE", "reason": "RETRY_EXHAUSTED", "checkpoint_id": exhausted_cp}
                     recovery = self.runtime.agent_protocol.propose_recovery(
                         problem_id, actor_id, action="RETRY_PHASE", target_step=4,
                         rationale="Completion gate retry", risk_class="LOW", normative_change=False,
                     )
                     if recovery["status"] == "AUTO_APPROVED":
                         self.runtime.agent_protocol.apply_recovery(recovery["proposal_id"], actor_id)
+                        self.runtime.agent_protocol.mark_attempt_failed(pexec_id, actor_id, reason="Recovered gate attempt superseded by retry")
                         continue
+                    self.runtime.agent_protocol.mark_waiting_for_human(
+                        pexec_id, actor_id, reason="Gate retry requires human approval",
+                        metadata={"proposal_id": recovery["proposal_id"], "problem_id": problem_id},
+                    )
                     state["pending_protocol_recovery"] = {
                         "proposal_id": recovery["proposal_id"],
                         "actor_id": actor_id,
                         "phase_index": idx,
+                        "phase_execution_id": pexec_id,
                     }
                     waiting_cp = self._checkpoint(
                         state, phase_id, "WAITING_PROTOCOL_RECOVERY", next_phase_index=idx,
                         extra={"proposal_id": recovery["proposal_id"], "problem_id": problem_id},
                     )
                     return {"action": "PAUSE", "reason": "WAITING_PROTOCOL_RECOVERY", "checkpoint_id": waiting_cp}
-                if action["action"] == "RETRY":
-                    exhausted_cp = self._checkpoint(state, phase_id, "RETRY_EXHAUSTED", next_phase_index=idx)
-                    return {"action": "PAUSE", "reason": "RETRY_EXHAUSTED", "checkpoint_id": exhausted_cp}
+                self.runtime.agent_protocol.mark_attempt_failed(pexec_id, actor_id, reason=f"Gate failure routed as {action['action']}")
                 return action
 
             self.runtime.agent_protocol.update_step(pexec_id, 4, "PASS", actor_id, note="all completion gates passed")
