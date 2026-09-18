@@ -80,6 +80,7 @@ jobs:
           cp -a dist/uat/. /tmp/gwr-pages/
           git checkout --orphan _uat_publish
           git rm -rf . >/dev/null 2>&1 || true
+          git clean -fdx
           cp -a /tmp/gwr-pages/. .
           git add -A
           git commit -m "deploy: v0.8.1 UAT $GITHUB_SHA"
