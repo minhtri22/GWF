@@ -3,8 +3,13 @@ from .utils import uid, utcnow, canonical_json, content_hash, parse_json
 from .errors import NotFound, ValidationError, InvalidTransition, IdempotencyConflict, StaleVersion
 
 class ExecutionKernel:
-    def __init__(self, db, domain, knowledge, decision, governance): self.db,self.domain,self.knowledge,self.decision,self.gov=db,domain,knowledge,decision,governance
+    def __init__(self, db, domain, knowledge, decision, governance):
+        self.db,self.domain,self.knowledge,self.decision,self.gov=db,domain,knowledge,decision,governance
+        self.project_governance=None
+    def bind_project_governance(self, service):
+        self.project_governance=service
     def create_workunit(self, project_id, workunit_type, input_revision_ids, actor_id):
+        if self.project_governance: self.project_governance.require_mutable(project_id)
         t=self.domain.workunit(workunit_type)
         if not t: raise ValidationError(f"Unknown workunit type {workunit_type}")
         self.gov.authorize(actor_id,"EXECUTE",{"workunit_type":workunit_type})
@@ -45,6 +50,7 @@ class ExecutionKernel:
         if old:return old
         w=self.db.one("SELECT * FROM workunits WHERE workunit_id=?",(workunit_id,));
         if not w: raise NotFound("WorkUnit not found")
+        if self.project_governance: self.project_governance.require_mutable(w["project_id"])
         if w["version"]!=expected_workunit_version: raise StaleVersion("WorkUnit version mismatch")
         if w["status"]!="READY": raise InvalidTransition(f"WorkUnit is {w['status']}, not READY")
         self.gov.authorize(actor_id,"EXECUTE",{"workunit_type":w["workunit_type"]})
