@@ -175,7 +175,9 @@ class AgentExecutionProtocolService:
         phase_cfg = (self.domain.workunit(workunit_type).get("agent_protocol", {}) if self.domain and self.domain.workunit(workunit_type) else {}) or {}
         project_cfg = self.project_defaults(project_id)
         mode = requested_mode or phase_cfg.get("recovery_mode") or project_cfg.get("recovery_mode") or domain_cfg.get("default_recovery_mode", "AUTO")
-        minimum = phase_cfg.get("minimum_recovery_mode") or domain_cfg.get("minimum_recovery_mode", "AUTO")
+        domain_minimum = domain_cfg.get("minimum_recovery_mode", "AUTO")
+        phase_minimum = phase_cfg.get("minimum_recovery_mode", "AUTO")
+        minimum = "HUMAN_APPROVE" if "HUMAN_APPROVE" in {domain_minimum, phase_minimum} else "AUTO"
         if minimum == "HUMAN_APPROVE":
             mode = "HUMAN_APPROVE"
         if mode not in {"AUTO", "HUMAN_APPROVE"}:
@@ -199,6 +201,8 @@ class AgentExecutionProtocolService:
                 "phase": phase_cfg.get("recovery_mode"),
                 "project": project_cfg.get("recovery_mode"),
                 "domain_default": domain_cfg.get("default_recovery_mode", "AUTO"),
+                "domain_minimum": domain_minimum,
+                "phase_minimum": phase_minimum,
             },
         }
 
