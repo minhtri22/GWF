@@ -208,6 +208,13 @@ class GitHubPluginService:
         if not commit_message.strip():
             raise ValidationError("commit_message is required")
         manifest = self._normalize_changes(changes, include_content=False)
+        if any(item["path"].startswith(".github/workflows/") for item in manifest):
+            connection = self.plugins.get(binding["connection_id"])
+            if "WORKFLOW_WRITE" not in set(connection["capabilities"]):
+                raise AuthorityDenied(
+                    "GitHub workflow files require WORKFLOW_WRITE capability",
+                    details={"repository_full_name": binding["repository_full_name"]},
+                )
         change_set_id = uid("ghchg")
         now = utcnow()
         with self.db.tx():
