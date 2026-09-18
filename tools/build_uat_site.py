@@ -24,7 +24,7 @@ def validate_demo(data):
     assert first["distributed"]["jobs"], "primary UAT project must exercise distributed dashboard"
     html = (WEB / "index.html").read_text(encoding="utf-8")
     js = (WEB / "app.js").read_text(encoding="utf-8")
-    for marker in ("New Project", "Domain Registry", "Process Inspector", "Phase Inspector", "AI Working", "Recovery mode", "Rename project", "Archive project"):
+    for marker in ("v0.8.2 UAT", "New Project", "Domain Registry", "Process Inspector", "Phase Inspector", "AI Working", "Recovery mode", "Rename project", "Archive project"):
         assert marker in html, f"missing UAT marker: {marker}"
     for marker in ("gwr-uat-domains", "gwr-uat-projects", "openPhase", "simulateProtocolIssue", "approveProtocolRecovery", "renameCurrentProject", "archiveCurrentProject"):
         assert marker in js, f"missing lifecycle simulation marker: {marker}"
