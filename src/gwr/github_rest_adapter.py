@@ -78,7 +78,7 @@ class GitHubRestAdapter:
 
     def get_branch_head(self, repository_full_name: str, branch: str) -> str:
         repo = self._repo_path(repository_full_name)
-        ref = quote(f"heads/{branch}", safe="")
+        ref = quote(f"heads/{branch}", safe="/")
         try:
             payload = self._request("GET", f"/repos/{repo}/git/ref/{ref}")
         except _GitHubHttpError as exc:
@@ -230,7 +230,7 @@ class GitHubRestAdapter:
             commit_sha = str(commit.get("sha") or "")
             if not tree_sha or not commit_sha:
                 raise ValidationError("GitHub commit construction returned incomplete SHA data")
-            ref = quote(f"heads/{branch}", safe="")
+            ref = quote(f"heads/{branch}", safe="/")
             try:
                 self._request(
                     "PATCH",
