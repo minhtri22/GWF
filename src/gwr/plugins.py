@@ -179,6 +179,23 @@ class PluginConnectionService:
                 raise ValidationError("GitHub adapter is incomplete", details={"missing": missing})
         self._adapters[connection_id] = adapter
 
+    def attach_github_rest_adapter(self, connection_id: str, credential_resolver, **adapter_options):
+        connection = self.get(connection_id)
+        if connection["plugin_type"] != "github":
+            raise ValidationError("Connection is not a GitHub plugin")
+        if not callable(credential_resolver):
+            raise ValidationError("credential_resolver must be callable")
+        from .github_rest_adapter import GitHubRestAdapter
+
+        external_ref = connection["external_connection_ref"]
+
+        def token_provider():
+            return credential_resolver(external_ref)
+
+        adapter = GitHubRestAdapter(token_provider, **adapter_options)
+        self.attach_runtime_adapter(connection_id, adapter)
+        return adapter
+
     def adapter(self, connection_id: str, *, capability: str | None = None):
         connection = self.get(connection_id)
         if connection["status"] != "ACTIVE":
