@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from gwr.api import create_app
 from gwr.auth import HumanAuthService
 from gwr.errors import AuthorityDenied, InvalidTransition, StaleVersion, ValidationError
+from gwr.github_rest_adapter import GitHubRestAdapter
 from gwr.research_demo import DeterministicResearchExecutor
 from gwr.runtime import GovernedWorkflowRuntime
 
@@ -183,6 +184,23 @@ def test_plugin_management_requires_human_and_known_capabilities(configured):
             ["REPO_READ", "ADMIN_REPOSITORY"],
             human,
         )
+
+
+def test_reference_rest_adapter_resolves_credentials_only_at_request_time(configured):
+    rt, project, human, agent, connection, binding, fake_adapter = configured
+    calls = []
+
+    def resolver(external_ref):
+        calls.append(external_ref)
+        return "ghp_runtime_only_secret"
+
+    adapter = rt.plugins.attach_github_rest_adapter(connection, resolver)
+    assert isinstance(adapter, GitHubRestAdapter)
+    assert calls == []
+    stored = rt.plugins.get(connection)
+    assert stored["external_connection_ref"] == "github-connection-opaque-1"
+    assert "ghp_runtime_only_secret" not in repr(stored)
+    assert stored["adapter_attached"] is True
 
 
 def test_sha_safe_commit_is_verified_end_to_end(configured):
