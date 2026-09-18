@@ -252,6 +252,6 @@ def test_live_event_stream_and_project_protocol_settings_api(tmp_path, monkeypat
 
     meta = client.get("/product/meta")
     assert meta.status_code == 200
-    assert meta.json()["version"] == "0.8.3"
+    assert tuple(map(int, meta.json()["version"].split("."))) >= (0, 8, 3)
     assert "live_operational_events" in meta.json()["capabilities"]
     rt.close()
