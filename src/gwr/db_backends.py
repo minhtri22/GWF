@@ -23,7 +23,12 @@ def postgres_base_schema_from_sqlite(sqlite_schema: str) -> str:
         if stripped.startswith("CREATE TRIGGER IF NOT EXISTS revision_content_immutable"):
             continue
         lines.append(line)
-    return "\n".join(lines)
+    schema="\n".join(lines)
+    # PostgreSQL reserves WINDOW as a keyword. SQLite accepts it unquoted in
+    # the loopguards table, so quote only the schema identifier while keeping
+    # the persisted column name and SELECT * row contract unchanged.
+    schema=re.sub(r"\\bwindow\\s+TEXT\\s+NOT\\s+NULL", '"window" TEXT NOT NULL', schema, flags=re.IGNORECASE)
+    return schema
 
 
 POSTGRES_GUARD_DDL = r'''
