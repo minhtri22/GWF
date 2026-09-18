@@ -105,5 +105,15 @@ def test_postgres_backend_driver_contract():
         assert 'projects' in db.list_tables()
         db.close()
     else:
-        with pytest.raises(RuntimeError,match='psycopg'):
-            create_database('postgresql://user:pass@127.0.0.1/db')
+        # SQLite regression may run in an environment where the optional psycopg
+        # driver is installed (for example the live PostgreSQL CI job). The
+        # no-live-DSN branch must therefore test graceful connection failure,
+        # not assume that the driver itself is absent.
+        try:
+            import psycopg  # noqa: F401
+        except ImportError:
+            with pytest.raises(RuntimeError,match='psycopg'):
+                create_database('postgresql://user:pass@127.0.0.1/db')
+        else:
+            with pytest.raises(Exception):
+                create_database('postgresql://user:pass@127.0.0.1/db')
