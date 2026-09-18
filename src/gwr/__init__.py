@@ -6,6 +6,8 @@ from .tenancy import TenantService, ProjectScope
 from .distributed import DistributedRuntime
 from .domain_sdk import DomainSDK, DomainValidationReport
 from .product import ProjectDashboardService
+from .project_governance import ProjectGovernanceService
+from .agent_protocol import AgentExecutionProtocolService
 from .domain_registry import DomainRegistryService
 from .process_inspector import ProcessInspectorService
 from .retrieval import ProductionPaperRetriever, CrossrefConnector, WebDocumentConnector, DurableRetrievalCache, ResilientHttpClient, RetrievalPolicy
@@ -33,6 +35,8 @@ __all__ = [
     "DomainSDK",
     "DomainValidationReport",
     "ProjectDashboardService",
+    "ProjectGovernanceService",
+    "AgentExecutionProtocolService",
     "DomainRegistryService",
     "ProcessInspectorService",
     "ProductionPaperRetriever",
