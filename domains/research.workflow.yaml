@@ -276,12 +276,76 @@ trace_types:
 # checkpoint before execution. Runtime failures retry only with identical semantic
 # inputs. Semantic changes create a new run after recovery/revision.
 # -----------------------------------------------------------------------------
+agent_protocol:
+  default_recovery_mode: AUTO
+  minimum_recovery_mode: AUTO
+  default_retry_budget: 2
+
+skill_contracts:
+  research_lead_v1:
+    skill_id: research-lead
+    version: "1.0.0"
+    markdown: |
+      # Research Lead
+      Load authoritative inputs, preserve frozen decisions, execute the declared research phase, persist evidence, verify gates, and hand off explicit state.
+    tool_requirements: []
+    qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
+  literature_reviewer_v1:
+    skill_id: literature-review
+    version: "1.0.0"
+    markdown: |
+      # Literature Review
+      Resolve the locked research goal, retrieve attributable sources, bound novelty claims, persist evidence, verify gates, and hand off the reviewed landscape.
+    tool_requirements: [source_retrieval]
+    qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
+  protocol_designer_v1:
+    skill_id: protocol-design
+    version: "1.0.0"
+    markdown: |
+      # Protocol Design
+      Translate the hypothesis into a frozen executable protocol with explicit assumptions, controls, metrics, falsification conditions, and reproducibility requirements.
+    tool_requirements: []
+    qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
+  experimenter_v1:
+    skill_id: experiment-execution
+    version: "1.0.0"
+    markdown: |
+      # Experiment Execution
+      Verify inputs and environment, execute only the frozen plan, persist run manifests and raw evidence, surface failures before retry, and hand off reproducible outputs.
+    tool_requirements: [python]
+    qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
+  reproducibility_reviewer_v1:
+    skill_id: reproducibility-review
+    version: "1.0.0"
+    markdown: |
+      # Reproducibility Review
+      Independently verify manifests, replay requirements, environment assumptions, and evidence lineage before accepting reproducibility claims.
+    tool_requirements: [python]
+    qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
+  analyst_v1:
+    skill_id: research-analysis
+    version: "1.0.0"
+    markdown: |
+      # Research Analysis
+      Analyze only committed outputs and evidence, preserve precommitted metrics, report uncertainty and negative results, verify gates, and hand off traceable conclusions.
+    tool_requirements: [python]
+    qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
+  adversarial_reviewer_v1:
+    skill_id: adversarial-review
+    version: "1.0.0"
+    markdown: |
+      # Adversarial Review
+      Challenge the strongest claim against the frozen protocol and evidence, record concrete falsification attempts, and hand off unresolved risks without weakening the acceptance gate.
+    tool_requirements: []
+    qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
+
 workunit_templates:
   - id: phase_00_lock_goal
     maps_to: PRIM-WORKUNIT
     inputs: []
     outputs: [{artifact_type: research_goal}]
     executor_role: research_lead
+    skill_ref: research_lead_v1
     required_gate_types: [goal_ready]
     evidence_required: [goal_review_evidence]
     success_conditions: [research_goal_approved]
@@ -297,6 +361,7 @@ workunit_templates:
     inputs: [{artifact_type: research_goal}]
     outputs: [{artifact_type: prior_art_landscape}, {artifact_type: novelty_assessment}]
     executor_role: literature_reviewer
+    skill_ref: literature_reviewer_v1
     required_gate_types: [prior_art_ready]
     evidence_required: [source_citation_evidence, novelty_review_evidence]
     success_conditions: [closest_prior_work_identified, novelty_claim_bounded]
@@ -312,6 +377,7 @@ workunit_templates:
     inputs: [{artifact_type: research_goal}, {artifact_type: novelty_assessment}]
     outputs: [{artifact_type: hypothesis}]
     executor_role: research_lead
+    skill_ref: research_lead_v1
     required_gate_types: [hypothesis_ready]
     evidence_required: [hypothesis_review_evidence]
     success_conditions: [hypothesis_falsifiable, null_defined, predictions_defined]
@@ -327,6 +393,7 @@ workunit_templates:
     inputs: [{artifact_type: hypothesis}]
     outputs: [{artifact_type: formal_model}]
     executor_role: protocol_designer
+    skill_ref: protocol_designer_v1
     required_gate_types: [formalization_ready]
     evidence_required: [formalization_review_evidence]
     success_conditions: [variables_operationalized, assumptions_explicit, boundary_conditions_defined]
@@ -342,6 +409,7 @@ workunit_templates:
     inputs: [{artifact_type: hypothesis}, {artifact_type: formal_model}]
     outputs: [{artifact_type: protocol}]
     executor_role: protocol_designer
+    skill_ref: protocol_designer_v1
     required_gate_types: [protocol_ready]
     evidence_required: [protocol_review_evidence]
     success_conditions: [controls_defined, metrics_defined, thresholds_precommitted, falsification_rules_defined]
@@ -357,6 +425,7 @@ workunit_templates:
     inputs: [{artifact_type: protocol}]
     outputs: [{artifact_type: dataset_benchmark_spec}]
     executor_role: experimenter
+    skill_ref: experimenter_v1
     required_gate_types: [data_ready]
     evidence_required: [dataset_manifest_evidence, contamination_check_evidence]
     success_conditions: [data_provenance_complete, split_policy_locked, contamination_checked]
@@ -372,6 +441,7 @@ workunit_templates:
     inputs: [{artifact_type: protocol}, {artifact_type: dataset_benchmark_spec}]
     outputs: [{artifact_type: experiment_plan}, {artifact_type: implementation_manifest}]
     executor_role: experimenter
+    skill_ref: experimenter_v1
     required_gate_types: [implementation_ready]
     evidence_required: [code_revision_evidence, environment_manifest_evidence]
     success_conditions: [commands_reproducible, configs_versioned, seeds_locked, baseline_available]
@@ -390,6 +460,7 @@ workunit_templates:
       - {artifact_type: implementation_manifest}
     outputs: [{artifact_type: preflight_result}]
     executor_role: reproducibility_reviewer
+    skill_ref: reproducibility_reviewer_v1
     required_gate_types: [preflight_pass]
     evidence_required: [preflight_log_evidence, environment_manifest_evidence]
     success_conditions: [syntax_ok, smoke_run_ok, evidence_path_ok, no_known_leakage]
@@ -408,6 +479,7 @@ workunit_templates:
       - {artifact_type: implementation_manifest}
     outputs: [{artifact_type: pilot_result}]
     executor_role: experimenter
+    skill_ref: experimenter_v1
     required_gate_types: [pilot_pass]
     evidence_required: [run_manifest_evidence, raw_metrics_evidence]
     success_conditions: [pipeline_non_degenerate, metrics_non_empty, feasibility_confirmed]
@@ -426,6 +498,7 @@ workunit_templates:
       - {artifact_type: implementation_manifest}
     outputs: [{artifact_type: experiment_result}]
     executor_role: experimenter
+    skill_ref: experimenter_v1
     required_gate_types: [experiment_complete]
     evidence_required: [run_manifest_evidence, raw_metrics_evidence, provenance_evidence]
     success_conditions: [all_required_runs_complete, no_silent_missing_metrics, provenance_complete]
@@ -441,6 +514,7 @@ workunit_templates:
     inputs: [{artifact_type: experiment_result}, {artifact_type: protocol}]
     outputs: [{artifact_type: analysis_result}]
     executor_role: analyst
+    skill_ref: analyst_v1
     required_gate_types: [analysis_ready]
     evidence_required: [statistical_analysis_evidence, raw_metrics_evidence, independent_verifier_evidence]
     success_conditions: [precommitted_metrics_evaluated, uncertainty_reported, baselines_compared, deviations_disclosed, independent_verifier_completed]
@@ -459,6 +533,7 @@ workunit_templates:
       - {artifact_type: protocol}
     outputs: [{artifact_type: adversarial_review}]
     executor_role: adversarial_reviewer
+    skill_ref: adversarial_reviewer_v1
     required_gate_types: [adversarial_review_complete]
     evidence_required: [adversarial_review_evidence]
     success_conditions: [strongest_counterargument_tested, leakage_rechecked, confounds_rechecked, boundary_cases_tested]
@@ -474,6 +549,7 @@ workunit_templates:
     inputs: [{artifact_type: analysis_result}, {artifact_type: adversarial_review}]
     outputs: [{artifact_type: decision_record}]
     executor_role: research_lead
+    skill_ref: research_lead_v1
     required_gate_types: [research_decision_ready]
     evidence_required: [decision_evidence]
     success_conditions: [outcome_is_structured, thresholds_traced_to_protocol, next_action_explicit]
@@ -489,6 +565,7 @@ workunit_templates:
     inputs: [{artifact_type: decision_record}]
     outputs: [{artifact_type: pivot_plan}]
     executor_role: research_lead
+    skill_ref: research_lead_v1
     required_gate_types: [pivot_ready]
     evidence_required: [pivot_rationale_evidence]
     success_conditions: [preserved_findings_separated, invalidated_assumptions_explicit, resume_target_explicit]
@@ -508,6 +585,7 @@ workunit_templates:
       - {artifact_type: analysis_result}
     outputs: [{artifact_type: replication_result}]
     executor_role: reproducibility_reviewer
+    skill_ref: reproducibility_reviewer_v1
     required_gate_types: [replication_complete]
     evidence_required: [replication_evidence, provenance_evidence]
     success_conditions: [independent_replay_completed, divergence_reported, reproducibility_verdict_explicit]
@@ -535,6 +613,7 @@ workunit_templates:
       - {artifact_type: replication_result}
     outputs: [{artifact_type: final_report}]
     executor_role: research_lead
+    skill_ref: research_lead_v1
     required_gate_types: [report_complete]
     evidence_required: [report_manifest_evidence]
     success_conditions: [claims_trace_to_evidence, failures_disclosed, pivots_disclosed, reproduction_steps_included, open_questions_listed]
@@ -550,6 +629,7 @@ workunit_templates:
     inputs: [{artifact_type: final_report}]
     outputs: [{artifact_type: handoff_package}]
     executor_role: reproducibility_reviewer
+    skill_ref: reproducibility_reviewer_v1
     required_gate_types: [handoff_complete]
     evidence_required: [artifact_manifest_evidence, provenance_evidence]
     success_conditions: [resume_target_recorded, unresolved_issues_recorded, hashes_recorded, commands_recorded]
