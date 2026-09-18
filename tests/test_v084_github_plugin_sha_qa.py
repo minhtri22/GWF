@@ -190,6 +190,7 @@ def test_reference_rest_adapter_builds_git_data_commit_with_non_force_ref_update
     expected = "a" * 40
     calls = []
     adapter = GitHubRestAdapter(lambda: "runtime-only-token")
+    assert adapter.api_version == "2026-03-10"
 
     def fake_request(method, path, payload=None, query=None):
         calls.append({"method": method, "path": path, "payload": payload, "query": query})
