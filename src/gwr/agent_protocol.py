@@ -41,7 +41,7 @@ class AgentExecutionProtocolService:
     def _event(self, phase_execution_id: str, stage: str, event_type: str, actor_id: str, message: str = "", metadata=None):
         eid = uid("phaseevt")
         self.db.conn.execute(
-            "INSERT INTO phase_stage_events VALUES(?,?,?,?,?,?,?)",
+            "INSERT INTO phase_stage_events VALUES(?,?,?,?,?,?,?,?)",
             (eid, phase_execution_id, stage, event_type, actor_id, message, canonical_json(metadata or {}), utcnow()),
         )
         return eid
