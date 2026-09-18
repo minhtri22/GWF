@@ -32,6 +32,7 @@ class FakeGitHubAdapter:
         }
         self.commits = {}
         self.commit_calls = 0
+        self.race_on_commit = False
 
     def get_branch_head(self, repository_full_name: str, branch: str) -> str:
         return self.branch_heads[branch]
@@ -44,6 +45,11 @@ class FakeGitHubAdapter:
         return {"sha": blob_sha(content), "content": content}
 
     def commit_files(self, repository_full_name, branch, expected_head_sha, message, changes):
+        if self.race_on_commit:
+            raced = "c" * 40
+            self.snapshots[raced] = deepcopy(self.snapshots[self.branch_heads[branch]])
+            self.branch_heads[branch] = raced
+            self.race_on_commit = False
         current = self.branch_heads[branch]
         if current != expected_head_sha:
             raise StaleVersion(
@@ -221,6 +227,37 @@ def test_branch_sha_change_blocks_commit_before_write(configured):
     with pytest.raises(StaleVersion):
         rt.github.execute(change_set, changes, agent)
     assert rt.github.inspect(change_set)["status"] == "STALE"
+    assert adapter.commit_calls == 0
+
+
+def test_provider_side_expected_head_race_is_persisted_as_stale(configured):
+    rt, project, human, agent, _, binding, adapter = configured
+    base = adapter.get_branch_head("example/research", "feature/safe")
+    before = adapter.get_file("example/research", "README.md", base)
+    changes = [{
+        "path": "README.md",
+        "operation": "UPDATE",
+        "expected_blob_sha": before["sha"],
+        "content": "race safe\n",
+    }]
+    change_set = rt.github.prepare_change_set(
+        project,
+        binding,
+        "feature/safe",
+        base,
+        changes,
+        "docs: provider race test",
+        agent,
+    )
+    adapter.race_on_commit = True
+    with pytest.raises(StaleVersion):
+        rt.github.execute(change_set, changes, agent)
+    inspected = rt.github.inspect(change_set)
+    assert inspected["status"] == "STALE"
+    assert any(
+        x["stage"] == "PROVIDER_EXPECTED_HEAD" and x["status"] == "FAIL"
+        for x in inspected["checks"]
+    )
     assert adapter.commit_calls == 0
 
 
