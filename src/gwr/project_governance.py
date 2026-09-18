@@ -53,7 +53,7 @@ class ProjectGovernanceService:
         with self.db.tx():
             self.db.conn.execute("UPDATE projects SET name=? WHERE id=?", (name, project_id))
             self.db.conn.execute(
-                "INSERT INTO project_name_history VALUES(?,?,?,?,?)",
+                "INSERT INTO project_name_history VALUES(?,?,?,?,?,?)",
                 (hid, project_id, row["name"], name, actor_id, utcnow()),
             )
             self.gov.append_audit(project_id, actor_id, "PROJECT_RENAMED", "Project", project_id,
