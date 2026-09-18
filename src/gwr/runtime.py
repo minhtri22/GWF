@@ -14,6 +14,8 @@ from .tenancy import TenantService
 from .distributed import DistributedRuntime
 from .domain_registry import DomainRegistryService
 from .process_inspector import ProcessInspectorService
+from .project_governance import ProjectGovernanceService
+from .agent_protocol import AgentExecutionProtocolService
 
 class GovernedWorkflowRuntime:
     def __init__(self, domain: str|DomainPackage, db_path=":memory:", *, auth_secret=None, object_store_root=None, observer=None, observability_path=None):
@@ -37,6 +39,12 @@ class GovernedWorkflowRuntime:
         self.execution=ExecutionKernel(self.db,self.domain,self.knowledge,self.decision,self.governance)
         self.distributed=DistributedRuntime(self.db,self.execution,self.governance,self.observer)
         self.domains=DomainRegistryService(self.db,self.tenancy)
+        self.project_governance=ProjectGovernanceService(self.db,self.tenancy,self.governance)
+        self.governance.bind_project_governance(self.project_governance)
+        self.knowledge.bind_project_governance(self.project_governance)
+        self.execution.bind_project_governance(self.project_governance)
+        self.distributed.bind_project_governance(self.project_governance)
+        self.agent_protocol=AgentExecutionProtocolService(self.db,self.governance,self.project_governance)
         self.process=ProcessInspectorService(self)
         self.object_store=None; self.objects=None
         if object_store_root:
@@ -46,7 +54,12 @@ class GovernedWorkflowRuntime:
     def observe(self,event,**attrs):
         return self.observer.emit(event,**attrs)
     def create_project(self,name,project_id=None):
-        pid=project_id or uid("project"); self.db.conn.execute("INSERT INTO projects VALUES(?,?,?,?)",(pid,name,self.domain.domain_id,utcnow())); self.db.conn.commit(); self.observe("project_created",project_id=pid,domain_id=self.domain.domain_id); return pid
+        pid=project_id or uid("project")
+        self.db.conn.execute("INSERT INTO projects VALUES(?,?,?,?)",(pid,name,self.domain.domain_id,utcnow()))
+        self.db.conn.execute("INSERT INTO project_lifecycle VALUES(?,?,?,?,?,?,?)",(pid,"ACTIVE",None,None,None,None,utcnow()))
+        self.db.conn.commit()
+        self.observe("project_created",project_id=pid,domain_id=self.domain.domain_id)
+        return pid
     def create_scoped_project(self,name,tenant_id,workspace_id,actor_id,project_id=None,domain_revision_id=None):
         pid=self.create_project(name,project_id=project_id)
         self.tenancy.bind_project(pid,tenant_id,workspace_id,actor_id)
