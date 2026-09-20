@@ -191,7 +191,7 @@ def main():
             all(
                 token in installer
                 for token in (
-                    'pip install -e ".[dev,postgres]"',
+                    '"pip", "install", "-e", ".[dev,postgres]"',
                     "domains/research.workflow.yaml",
                     "domains/software.workflow.yaml",
                     "pilots/cqg.research.yaml",
