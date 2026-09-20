@@ -203,6 +203,8 @@ Push-Location $RepoRoot
 try {
     Invoke-Checked $VenvPython tools/gwr_domain.py validate domains/research.workflow.yaml
     Invoke-Checked $VenvPython tools/gwr_domain.py validate domains/software.workflow.yaml
+    Invoke-Checked $VenvPython tools/gwr_pilot.py validate pilots/cqg.research.yaml
+    Invoke-Checked $VenvPython tools/gwr_pilot.py validate pilots/gwf.self-upgrade.yaml
     Invoke-Checked $VenvPython -m compileall -q src tests tools
 } finally {
     Pop-Location
@@ -277,6 +279,10 @@ $report = [ordered]@{
     domains = @{
         research = "PASS"
         software = "PASS"
+    }
+    pilots = @{
+        cqg_next_study = "PASS"
+        gwf_self_upgrade = "PASS"
     }
     compileall = "PASS"
     local_tests = $LocalTests
