@@ -1,0 +1,109 @@
+name: v0.8.5 Domain Skills Installer Pilot Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "v0.8.5-domain-skills-installer-pilots"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  v085-linux-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: gwr
+          POSTGRES_PASSWORD: gwr_test_password
+          POSTGRES_DB: gwr_gate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gwr -d gwr_gate"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      GWR_TEST_DATABASE_URL: postgresql://gwr:gwr_test_password@127.0.0.1:5432/gwr_gate
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install runtime + PostgreSQL dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev,postgres]"
+      - name: Run v0.8.5 gate
+        run: python tools/run_v085_gate.py --out evidence/v0.8.5/live_gate
+      - name: Assert v0.8.5 ready
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('evidence/v0.8.5/live_gate/V085_GATE.json'))
+          assert d['status']=='PASS', d
+          assert d['v084_regression_pass'] is True, d
+          assert d['postgres_live_tested'] is True, d
+          assert d['sqlite_v085_pass'] is True, d
+          assert d['postgres_v085_pass'] is True, d
+          assert d['research_study_lock_pass'] is True, d
+          assert d['research_governed_execution_pass'] is True, d
+          assert d['software_domain_contract_pass'] is True, d
+          assert d['software_governed_execution_pass'] is True, d
+          assert d['pilot_profiles_pass'] is True, d
+          assert d['installer_contract_pass'] is True, d
+          PY
+      - name: Upload v0.8.5 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gwr-v085-gate-evidence
+          path: evidence/v0.8.5/live_gate
+
+  v085-windows-installer:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Parse install.ps1
+        shell: pwsh
+        run: |
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path '.\install.ps1'),
+            [ref]$null,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | Format-List | Out-String | Write-Error
+            exit 1
+          }
+      - name: One-click install and full local qualification
+        shell: pwsh
+        run: .\install.ps1 -InstallPythonIfMissing:$false -SkipPostgres
+      - name: Assert install report
+        shell: pwsh
+        run: |
+          $r = Get-Content '.\.gwr\install\install-report.json' -Raw | ConvertFrom-Json
+          if ($r.status -ne 'PASS') { throw "installer status=$($r.status)" }
+          if ($r.local_tests -ne 'PASS') { throw "local_tests=$($r.local_tests)" }
+          if ($r.domains.research -ne 'PASS' -or $r.domains.software -ne 'PASS') { throw "domain validation failed" }
+          if ($r.pilots.cqg_next_study -ne 'PASS' -or $r.pilots.gwf_self_upgrade -ne 'PASS') { throw "pilot validation failed" }
+          if ($r.postgres.dsn_persisted -ne $false) { throw "installer persisted DSN" }
+      - name: Upload Windows install report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gwr-v085-windows-install
+          path: .gwr/install/install-report.json

@@ -15,6 +15,8 @@ from .github_plugin import GitHubPluginService
 from .github_rest_adapter import GitHubRestAdapter
 from .retrieval import ProductionPaperRetriever, CrossrefConnector, WebDocumentConnector, DurableRetrievalCache, ResilientHttpClient, RetrievalPolicy
 from .stat_verifier import SubprocessStatisticalVerifier
+from .linear_orchestrator import LinearDomainOrchestrator
+from .software_demo import DeterministicSoftwareExecutor
 from .research_orchestrator import (
     ResearchOrchestrator,
     ResearchExecutionContext,
@@ -26,6 +28,8 @@ __all__ = [
     "GovernedWorkflowRuntime",
     "GWRException",
     "ResearchOrchestrator",
+    "LinearDomainOrchestrator",
+    "DeterministicSoftwareExecutor",
     "ResearchExecutionContext",
     "PhaseExecutionResult",
     "EvidenceOutput",

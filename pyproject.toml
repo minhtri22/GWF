@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "governed-workflow-runtime"
-version = "0.8.4"
+version = "0.8.5"
 description = "Domain-neutral governed workflow runtime with artifact validity, execution, recovery, and authority kernels"
 requires-python = ">=3.11"
 dependencies = ["PyYAML>=6.0", "pydantic>=2.0", "fastapi>=0.100"]

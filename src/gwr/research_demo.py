@@ -65,7 +65,22 @@ class DeterministicResearchExecutor:
         payload["_phase"] = context.phase_id
         payload["_generation"] = context.generation
 
-        if artifact_type == "decision_record":
+        if artifact_type == "study_lock":
+            payload.update({
+                "preregistration_sha256": "0" * 64,
+                "source_commit": "a" * 40,
+                "frozen_artifacts": [{"name": "synthetic-parent", "sha256": "1" * 64}],
+                "fresh_data_policy": {"inspect_before_lock": False, "fresh_only_after_lock": True},
+                "seed_or_cohort_policy": {"kind": "fresh_seed_range", "value": "synthetic-1000..1099"},
+                "metrics_and_gates": ["synthetic_precommitted_metric", "synthetic_pass_gate"],
+                "forbidden_adaptations": ["threshold_tuning", "target_swap", "cohort_swap", "silent_retraining"],
+                "amendment_policy": {"execution_only_before_outcome": True, "scientific_change_requires_new_lineage": True},
+                "resource_limits": {"max_runs": 100, "max_repairs": 1},
+                "branch_stop_rules": ["FAIL closes frozen branch", "PASS permits declared downstream only"],
+                "repair_budget": 1,
+                "no_rescue_policy": True,
+            })
+        elif artifact_type == "decision_record":
             if self.scenario == "fail":
                 outcome = "FAIL"
             elif self.scenario == "pivot" and context.generation == 0:

@@ -1,0 +1,48 @@
+pilot_id: gwf-self-upgrade
+version: 0.1.0
+domain_path: domains/software.workflow.yaml
+target_repository: minhtri22/GWF
+default_branch: main
+mode: BOUNDED_SELF_UPGRADE
+baseline_policy: RESOLVE_AT_START
+purpose: >-
+  Dogfood the software-delivery domain by governing a small GWF improvement from
+  remote SHA audit through exact-main post-merge verification.
+
+governance:
+  recovery_mode: AUTO
+  normative_changes_require_human: true
+  high_impact_recovery_requires_human: true
+  scope_lock_required: true
+  independent_qa_required: true
+  exact_main_verification_required: true
+
+github:
+  write_policy: FEATURE_BRANCH_ONLY
+  branch_prefix: gwr/self-upgrade-
+  expected_head_sha_policy: EXACT
+  expected_blob_sha_policy: EXACT
+  post_commit_verification: true
+  direct_main_write: false
+
+first_pilot_target:
+  title: CI concurrency hygiene
+  bounded_change: >-
+    Reduce duplicate superseded GitHub Actions work by introducing reviewed
+    concurrency/cancel-in-progress policy without changing scientific or product
+    acceptance gates.
+  non_goals:
+    - do not weaken any existing gate
+    - do not remove exact-main verification
+    - do not change database semantics
+    - do not change project authority semantics
+    - do not introduce new external integrations
+  rollback: revert only the concurrency workflow change if runner behavior differs from the locked expectation
+
+success_criteria:
+  - baseline main SHA is captured before scope lock
+  - candidate passes dedicated and full regression gates
+  - candidate artifact digest is recorded
+  - merge compares the expected main SHA
+  - all required workflows pass again on the exact merged main SHA
+  - handoff records known limits and next safe target

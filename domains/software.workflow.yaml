@@ -1,0 +1,543 @@
+domain_id: software.delivery
+version: 0.1.0
+compatible_runtime_versions: ["0.8.x"]
+orchestration_mode: linear
+root_confirmation_approval_policy: high_impact_software_change
+environment_fingerprint_artifact: local_test_result
+description: >-
+  Governed software-delivery domain for repository-first implementation with exact
+  SHA baselines, frozen scope/change sets, layered testing, independent QA,
+  candidate verification, merge verification, and release handoff.
+
+product:
+  display_name: Software Delivery
+  category: software
+
+artifact_types:
+  - id: change_request
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: true
+    approval_policy: software_scope_change
+    hard_dependencies: []
+    required_fields: [objective, problem, constraints, non_goals, acceptance_criteria, rollback_conditions]
+
+  - id: repo_baseline
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: []
+    required_fields: [repository, default_branch, verified_head_sha, inspected_paths, current_workflows, current_test_surfaces, known_risks]
+
+  - id: scope_lock
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: true
+    approval_policy: software_scope_change
+    hard_dependencies: [change_request, repo_baseline]
+    required_fields: [in_scope, out_of_scope, invariants, definition_of_done, required_test_matrix, deployment_boundary, rollback_boundary]
+
+  - id: implementation_plan
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [scope_lock, repo_baseline]
+    required_fields: [base_sha, files_expected, implementation_steps, migration_plan, compatibility_plan, test_plan, risk_register]
+
+  - id: change_set_manifest
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [implementation_plan]
+    required_fields: [branch, expected_head_sha, file_changes, expected_blob_shas, proposed_content_hashes, commit_strategy]
+
+  - id: implementation_result
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [change_set_manifest]
+    required_fields: [branch, base_sha, changed_files, commit_shas, build_output, deviations, unresolved_items]
+
+  - id: local_test_result
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [implementation_result]
+    required_fields: [test_commands, passed, failed, compile_status, static_checks, environment_fingerprint, logs]
+
+  - id: regression_result
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [local_test_result, implementation_result]
+    required_fields: [suites, databases, workflows, passed, failed, compatibility_findings, evidence_refs]
+
+  - id: qa_report
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [regression_result, scope_lock]
+    required_fields: [reviewer_independence, acceptance_matrix, regressions, security_checks, sha_checks, known_limits, verdict]
+
+  - id: candidate_record
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [qa_report, implementation_result]
+    required_fields: [candidate_sha, base_sha, workflow_runs, artifact_digests, qa_verdict, merge_ready]
+
+  - id: merge_record
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [candidate_record]
+    required_fields: [candidate_sha, expected_main_sha, merge_sha, merge_method, conflict_status, merged_at]
+
+  - id: exact_main_verification
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [merge_record, regression_result]
+    required_fields: [main_sha, required_workflows, workflow_results, all_required_pass, regression_summary, artifact_digests]
+
+  - id: handoff_package
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: false
+    hard_dependencies: [exact_main_verification]
+    required_fields: [current_status, baseline_sha, candidate_sha, main_sha, changed_files, evidence_manifest, known_limits, open_issues, next_actions, exact_resume_target]
+
+trace_types:
+  - id: derived_from
+    maps_to: PRIM-TRACE
+    strength: HARD
+    invalidates_on_upstream_supersede: true
+    propagation_rule: MARK_STALE
+
+  - id: verifies
+    maps_to: PRIM-TRACE
+    strength: HARD
+    invalidates_on_upstream_supersede: true
+    propagation_rule: MARK_STALE
+
+  - id: releases
+    maps_to: PRIM-TRACE
+    strength: HARD
+    invalidates_on_upstream_supersede: true
+    propagation_rule: MARK_STALE
+
+agent_protocol:
+  default_recovery_mode: AUTO
+  minimum_recovery_mode: AUTO
+  default_retry_budget: 2
+
+skill_contracts:
+  repo_auditor_v1:
+    skill_id: repo-audit
+    version: "1.0.0"
+    markdown: |
+      # Repository Auditor
+      Treat the remote repository as source of truth. Fetch the current default-branch HEAD and inspect relevant new commits before scoping work.
+      Never use a stale local archive as authority. Record exact commit/blob SHAs, test/workflow surfaces, invariants and known risks before implementation.
+      If the remote SHA changes during preparation, mark the baseline stale and restart the affected preparation instead of writing over it.
+    tool_requirements: [github]
+    qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
+
+  software_lead_v1:
+    skill_id: software-lead
+    version: "1.0.0"
+    markdown: |
+      # Software Lead
+      Convert the request and repository audit into a frozen scope with explicit non-goals, invariants and Definition of Done.
+      Do not declare completion from code changes alone. Required tests, independent QA, candidate verification, merge and exact-main verification must all be explicit.
+      Preserve backward compatibility and existing guarantees unless the scope lock intentionally changes them with human authority.
+    tool_requirements: [github]
+    qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
+
+  software_architect_v1:
+    skill_id: software-architecture
+    version: "1.0.0"
+    markdown: |
+      # Software Architect
+      Design the smallest change set that satisfies the locked scope. Bind the plan to the verified base SHA and identify migrations, compatibility boundaries,
+      test surfaces, rollback path and files expected to change. Separate implementation changes from follow-up ideas; do not expand scope during coding.
+    tool_requirements: [github]
+    qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
+
+  implementer_v1:
+    skill_id: software-implementation
+    version: "1.0.0"
+    markdown: |
+      # Implementer
+      Modify only the frozen change set or record an explicit deviation before expanding it. Use exact branch/blob SHA checks for repository writes.
+      Preserve source and documentation safety. A provider commit response is not proof of correctness; persist changed files, commit SHAs and build output.
+      AUTO retry is allowed only for semantically identical transient failures within budget. A changed design or acceptance condition is a replan, not a retry.
+    tool_requirements: [github, python, powershell]
+    qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
+
+  test_engineer_v1:
+    skill_id: software-testing
+    version: "1.0.0"
+    markdown: |
+      # Test Engineer
+      Run the locked test matrix from narrow to broad: compile/static checks, dedicated tests, integration/database tests and full regression.
+      Record failing tests rather than hiding them. Do not change production code merely to make an invalid test green; adjudicate contract vs implementation first.
+      When multiple backends or operating modes are in scope, each required surface must have explicit evidence.
+    tool_requirements: [python, powershell]
+    qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
+
+  independent_qa_v1:
+    skill_id: independent-software-qa
+    version: "1.0.0"
+    markdown: |
+      # Independent QA
+      Review against the frozen scope, not the implementer's narrative. Recheck regressions, security boundaries, archive/authority rules and exact SHA evidence.
+      Verify negative paths and race/stale-state behavior where relevant. A COMMITTED repository change is not QA complete until remote post-write verification succeeds.
+      Reject missing evidence, silently skipped tests, unsupported claims or a candidate built from a different base than the locked baseline.
+    tool_requirements: [github, python]
+    qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
+
+  release_manager_v1:
+    skill_id: software-release
+    version: "1.0.0"
+    markdown: |
+      # Release Manager
+      Promote only a QA-passed candidate with an exact candidate SHA and recorded workflow evidence.
+      Compare the expected main SHA before merge; never silently refresh it after a conflict. After merge, fetch the new exact main SHA and rerun every required gate on it.
+      Declare release complete only when exact-main verification passes and the handoff records evidence digests, known limits and the next safe resume point.
+    tool_requirements: [github]
+    qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
+
+workunit_templates:
+  - id: phase_00_audit_baseline
+    maps_to: PRIM-WORKUNIT
+    inputs: []
+    outputs: [{artifact_type: change_request}, {artifact_type: repo_baseline}]
+    executor_role: repo_auditor
+    skill_ref: repo_auditor_v1
+    required_gate_types: [baseline_ready]
+    evidence_required: [repo_sha_evidence, audit_evidence]
+    success_conditions: [remote_source_of_truth_verified, exact_head_sha_recorded, relevant_surfaces_inspected]
+    known_failure_modes: [repo_sha_stale, audit_incomplete, approval_missing, tool_timeout]
+    retry_policy: {max_attempts: 2, retryable_failure_codes: [tool_timeout], same_signature_limit: 2}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REAUDIT}
+    checkpoint_policy: {before: false, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [repository]
+
+  - id: phase_01_lock_scope
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: change_request}, {artifact_type: repo_baseline}]
+    outputs: [{artifact_type: scope_lock}]
+    executor_role: software_lead
+    skill_ref: software_lead_v1
+    required_gate_types: [scope_locked]
+    evidence_required: [scope_review_evidence]
+    success_conditions: [in_scope_explicit, non_goals_explicit, definition_of_done_complete, invariants_preserved]
+    known_failure_modes: [scope_ambiguity, scope_drift, approval_missing]
+    retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REVISE_CURRENT}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [scope]
+
+  - id: phase_02_plan_change
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: scope_lock}, {artifact_type: repo_baseline}]
+    outputs: [{artifact_type: implementation_plan}, {artifact_type: change_set_manifest}]
+    executor_role: software_architect
+    skill_ref: software_architect_v1
+    required_gate_types: [plan_ready]
+    evidence_required: [change_plan_evidence, repo_sha_evidence]
+    success_conditions: [plan_bound_to_base_sha, change_set_frozen, tests_and_rollback_defined]
+    known_failure_modes: [repo_sha_stale, scope_drift, plan_incomplete]
+    retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REAUDIT_OR_REPLAN}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [repository, scope]
+
+  - id: phase_03_implement
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: implementation_plan}, {artifact_type: change_set_manifest}]
+    outputs: [{artifact_type: implementation_result}]
+    executor_role: implementer
+    skill_ref: implementer_v1
+    required_gate_types: [implementation_ready]
+    evidence_required: [code_change_evidence, repo_sha_evidence]
+    success_conditions: [change_set_applied, changed_files_accounted_for, commit_shas_recorded]
+    known_failure_modes: [repo_sha_stale, implementation_failure, dependency_failure, tool_timeout]
+    retry_policy: {max_attempts: 3, retryable_failure_codes: [dependency_failure, tool_timeout], same_signature_limit: 2}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: RETRY_OR_REPLAN}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [repository]
+
+  - id: phase_04_local_verify
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: implementation_result}, {artifact_type: scope_lock}]
+    outputs: [{artifact_type: local_test_result}]
+    executor_role: test_engineer
+    skill_ref: test_engineer_v1
+    required_gate_types: [local_tests_pass]
+    evidence_required: [local_test_evidence, compile_evidence]
+    success_conditions: [dedicated_tests_pass, compile_pass, static_checks_pass]
+    known_failure_modes: [test_failure, environment_failure, tool_timeout]
+    retry_policy: {max_attempts: 3, retryable_failure_codes: [environment_failure, tool_timeout], same_signature_limit: 2}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: RETRY_OR_REVISE_IMPLEMENTATION}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [test_environment]
+
+  - id: phase_05_integration_regression
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: local_test_result}, {artifact_type: implementation_result}, {artifact_type: scope_lock}]
+    outputs: [{artifact_type: regression_result}]
+    executor_role: test_engineer
+    skill_ref: test_engineer_v1
+    required_gate_types: [regression_pass]
+    evidence_required: [integration_evidence, regression_evidence]
+    success_conditions: [required_backends_pass, full_regression_pass, compatibility_checked]
+    known_failure_modes: [regression_failure, integration_failure, environment_failure]
+    retry_policy: {max_attempts: 2, retryable_failure_codes: [environment_failure], same_signature_limit: 2}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: ROUTE_TO_IMPLEMENTATION_OR_ENVIRONMENT}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [integration_environment]
+
+  - id: phase_06_independent_qa
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: regression_result}, {artifact_type: scope_lock}, {artifact_type: implementation_result}]
+    outputs: [{artifact_type: qa_report}]
+    executor_role: independent_qa
+    skill_ref: independent_qa_v1
+    required_gate_types: [qa_pass]
+    evidence_required: [independent_qa_evidence, sha_verification_evidence]
+    success_conditions: [acceptance_matrix_pass, negative_paths_reviewed, sha_evidence_verified, no_blocking_finding]
+    known_failure_modes: [qa_failure, security_boundary_failure, sha_verification_failure]
+    retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: ROUTE_TO_EARLIEST_INVALID_ANCESTOR}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [qa]
+
+  - id: phase_07_candidate_verify
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: qa_report}, {artifact_type: implementation_result}, {artifact_type: repo_baseline}]
+    outputs: [{artifact_type: candidate_record}]
+    executor_role: release_manager
+    skill_ref: release_manager_v1
+    required_gate_types: [candidate_pass]
+    evidence_required: [candidate_workflow_evidence, artifact_digest_evidence]
+    success_conditions: [candidate_sha_exact, required_candidate_workflows_pass, artifact_digests_recorded]
+    known_failure_modes: [candidate_gate_failure, workflow_environment_failure, repo_sha_stale]
+    retry_policy: {max_attempts: 2, retryable_failure_codes: [workflow_environment_failure], same_signature_limit: 2}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: RETRY_WORKFLOW_OR_ROUTE_TO_IMPLEMENTATION}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [repository, ci]
+
+  - id: phase_08_merge_candidate
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: candidate_record}, {artifact_type: repo_baseline}]
+    outputs: [{artifact_type: merge_record}]
+    executor_role: release_manager
+    skill_ref: release_manager_v1
+    required_gate_types: [merge_verified]
+    evidence_required: [merge_sha_evidence]
+    success_conditions: [candidate_sha_matches, expected_main_sha_matches, merge_sha_recorded, no_silent_force]
+    known_failure_modes: [merge_conflict, repo_sha_stale, approval_missing]
+    retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REAUDIT_OR_ESCALATE}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [repository]
+
+  - id: phase_09_exact_main_verify
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: merge_record}, {artifact_type: regression_result}, {artifact_type: scope_lock}]
+    outputs: [{artifact_type: exact_main_verification}]
+    executor_role: independent_qa
+    skill_ref: independent_qa_v1
+    required_gate_types: [exact_main_pass]
+    evidence_required: [exact_main_workflow_evidence, artifact_digest_evidence]
+    success_conditions: [main_sha_exact, all_required_workflows_pass, regressions_still_pass]
+    known_failure_modes: [exact_main_verification_failure, workflow_environment_failure]
+    retry_policy: {max_attempts: 2, retryable_failure_codes: [workflow_environment_failure], same_signature_limit: 2}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: RETRY_WORKFLOW_OR_REOPEN_RELEASE}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [ci]
+
+  - id: phase_10_release_handoff
+    maps_to: PRIM-WORKUNIT
+    inputs: [{artifact_type: exact_main_verification}, {artifact_type: implementation_result}, {artifact_type: qa_report}]
+    outputs: [{artifact_type: handoff_package}]
+    executor_role: release_manager
+    skill_ref: release_manager_v1
+    required_gate_types: [handoff_complete]
+    evidence_required: [handoff_evidence]
+    success_conditions: [verified_release_state_recorded, known_limits_recorded, exact_resume_target_recorded]
+    known_failure_modes: [handoff_incomplete, evidence_gap]
+    retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
+    recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REVISE_CURRENT}
+    checkpoint_policy: {before: true, after_success: true, on_failure: true, terminal: true}
+    idempotency_semantics: EXACT_PAYLOAD
+    resource_conflict_keys: [handoff]
+
+evidence_types:
+  - {id: repo_sha_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: audit_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: scope_review_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: change_plan_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: code_change_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: local_test_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: compile_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: integration_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: regression_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: independent_qa_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: sha_verification_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: candidate_workflow_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: artifact_digest_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: merge_sha_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: exact_main_workflow_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
+  - {id: handoff_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+
+gate_types:
+  - {id: baseline_ready, maps_to: PRIM-GATE, required_evidence_types: [repo_sha_evidence, audit_evidence], allowed_trust_classes: [AUTHORITATIVE, SUPPORTED], pass_if: [remote_source_of_truth_verified, exact_head_sha_recorded, relevant_surfaces_inspected]}
+  - {id: scope_locked, maps_to: PRIM-GATE, required_validity: {inputs: VALID}, required_evidence_types: [scope_review_evidence], allowed_trust_classes: [SUPPORTED], pass_if: [in_scope_explicit, non_goals_explicit, definition_of_done_complete, invariants_preserved]}
+  - {id: plan_ready, maps_to: PRIM-GATE, required_validity: {inputs: VALID}, required_evidence_types: [change_plan_evidence, repo_sha_evidence], allowed_trust_classes: [SUPPORTED, AUTHORITATIVE], pass_if: [plan_bound_to_base_sha, change_set_frozen, tests_and_rollback_defined]}
+  - {id: implementation_ready, maps_to: PRIM-GATE, required_validity: {inputs: VALID}, required_evidence_types: [code_change_evidence, repo_sha_evidence], allowed_trust_classes: [AUTHORITATIVE], pass_if: [change_set_applied, changed_files_accounted_for, commit_shas_recorded]}
+  - {id: local_tests_pass, maps_to: PRIM-GATE, required_validity: {inputs: VALID}, required_evidence_types: [local_test_evidence, compile_evidence], allowed_trust_classes: [AUTHORITATIVE], pass_if: [dedicated_tests_pass, compile_pass, static_checks_pass]}
+  - {id: regression_pass, maps_to: PRIM-GATE, required_validity: {inputs: VALID}, required_evidence_types: [integration_evidence, regression_evidence], allowed_trust_classes: [AUTHORITATIVE], pass_if: [required_backends_pass, full_regression_pass, compatibility_checked]}
+  - {id: qa_pass, maps_to: PRIM-GATE, required_validity: {inputs: VALID}, required_evidence_types: [independent_qa_evidence, sha_verification_evidence], allowed_trust_classes: [SUPPORTED, AUTHORITATIVE], pass_if: [acceptance_matrix_pass, negative_paths_reviewed, sha_evidence_verified, no_blocking_finding]}
+  - {id: candidate_pass, maps_to: PRIM-GATE, required_validity: {inputs: VALID}, required_evidence_types: [candidate_workflow_evidence, artifact_digest_evidence], allowed_trust_classes: [AUTHORITATIVE], pass_if: [candidate_sha_exact, required_candidate_workflows_pass, artifact_digests_recorded]}
+  - {id: merge_verified, maps_to: PRIM-GATE, required_validity: {inputs: VALID}, required_evidence_types: [merge_sha_evidence], allowed_trust_classes: [AUTHORITATIVE], pass_if: [candidate_sha_matches, expected_main_sha_matches, merge_sha_recorded, no_silent_force]}
+  - {id: exact_main_pass, maps_to: PRIM-GATE, required_validity: {inputs: VALID}, required_evidence_types: [exact_main_workflow_evidence, artifact_digest_evidence], allowed_trust_classes: [AUTHORITATIVE], pass_if: [main_sha_exact, all_required_workflows_pass, regressions_still_pass]}
+  - {id: handoff_complete, maps_to: PRIM-GATE, required_validity: {inputs: VALID}, required_evidence_types: [handoff_evidence], allowed_trust_classes: [SUPPORTED, AUTHORITATIVE], pass_if: [verified_release_state_recorded, known_limits_recorded, exact_resume_target_recorded]}
+
+failure_types:
+  - {id: approval_missing, maps_to: PRIM-FAILURE, default_decision: WAIT, retryable: false, root_candidates: [change_request, scope_lock]}
+  - {id: tool_timeout, maps_to: PRIM-FAILURE, default_decision: RETRY, retryable: true, retry_budget: 2, root_candidates: [implementation_plan]}
+  - {id: repo_sha_stale, maps_to: PRIM-FAILURE, default_decision: REPLAN, retryable: false, root_candidates: [repo_baseline, change_set_manifest, candidate_record]}
+  - {id: audit_incomplete, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [repo_baseline]}
+  - {id: scope_ambiguity, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [scope_lock]}
+  - {id: scope_drift, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [scope_lock, implementation_plan]}
+  - {id: plan_incomplete, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [implementation_plan, change_set_manifest]}
+  - {id: implementation_failure, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [implementation_result, implementation_plan]}
+  - {id: dependency_failure, maps_to: PRIM-FAILURE, default_decision: RETRY, retryable: true, retry_budget: 2, root_candidates: [implementation_result]}
+  - {id: environment_failure, maps_to: PRIM-FAILURE, default_decision: RETRY, retryable: true, retry_budget: 2, root_candidates: [local_test_result, implementation_result]}
+  - {id: test_failure, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [implementation_result, local_test_result]}
+  - {id: integration_failure, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [implementation_result, regression_result]}
+  - {id: regression_failure, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [implementation_result, regression_result]}
+  - {id: qa_failure, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [qa_report, implementation_result]}
+  - {id: security_boundary_failure, maps_to: PRIM-FAILURE, default_decision: ESCALATE, retryable: false, root_candidates: [qa_report, implementation_result]}
+  - {id: sha_verification_failure, maps_to: PRIM-FAILURE, default_decision: REPLAN, retryable: false, root_candidates: [repo_baseline, change_set_manifest, candidate_record]}
+  - {id: candidate_gate_failure, maps_to: PRIM-FAILURE, default_decision: REVISE_UPSTREAM, retryable: false, root_candidates: [candidate_record, implementation_result]}
+  - {id: workflow_environment_failure, maps_to: PRIM-FAILURE, default_decision: RETRY, retryable: true, retry_budget: 2, root_candidates: [candidate_record]}
+  - {id: merge_conflict, maps_to: PRIM-FAILURE, default_decision: WAIT, retryable: false, root_candidates: [candidate_record, repo_baseline]}
+  - {id: exact_main_verification_failure, maps_to: PRIM-FAILURE, default_decision: ESCALATE, retryable: false, root_candidates: [merge_record, exact_main_verification]}
+  - {id: handoff_incomplete, maps_to: PRIM-FAILURE, default_decision: REVISE_CURRENT, retryable: false, root_candidates: [handoff_package]}
+  - {id: evidence_gap, maps_to: PRIM-FAILURE, default_decision: WAIT, retryable: false, root_candidates: [qa_report, exact_main_verification, handoff_package]}
+
+recovery_policies:
+  - failure_type: repo_sha_stale
+    maps_to: PRIM-RECOVERY
+    invalidation_mode: AFFECTED_SUBGRAPH
+    require_root_confirmation: true
+  - failure_type: scope_drift
+    maps_to: PRIM-RECOVERY
+    invalidation_mode: AFFECTED_SUBGRAPH
+    require_root_confirmation: true
+    high_impact: true
+    approval_policy: high_impact_software_change
+  - failure_type: security_boundary_failure
+    maps_to: PRIM-RECOVERY
+    invalidation_mode: AFFECTED_SUBGRAPH
+    require_root_confirmation: true
+    high_impact: true
+    approval_policy: high_impact_software_change
+  - failure_type: merge_conflict
+    maps_to: PRIM-RECOVERY
+    invalidation_mode: AFFECTED_SUBGRAPH
+    require_root_confirmation: true
+  - failure_type: exact_main_verification_failure
+    maps_to: PRIM-RECOVERY
+    invalidation_mode: AFFECTED_SUBGRAPH
+    require_root_confirmation: true
+    high_impact: true
+    approval_policy: high_impact_software_change
+
+roles:
+  - {id: repo_auditor, maps_to: PRIM-ACTOR}
+  - {id: software_lead, maps_to: PRIM-ACTOR}
+  - {id: software_architect, maps_to: PRIM-ACTOR}
+  - {id: implementer, maps_to: PRIM-ACTOR}
+  - {id: test_engineer, maps_to: PRIM-ACTOR}
+  - {id: independent_qa, maps_to: PRIM-ACTOR}
+  - {id: release_manager, maps_to: PRIM-ACTOR}
+  - {id: human_approver, maps_to: PRIM-ACTOR}
+
+authority_policies:
+  - {id: repo-auditor-policy, role: repo_auditor, maps_to: PRIM-AUTHORITY, allow: [PROPOSE, CREATE_REVISION, EXECUTE]}
+  - {id: software-lead-policy, role: software_lead, maps_to: PRIM-AUTHORITY, allow: [PROPOSE, CREATE_REVISION, EXECUTE, ESCALATE]}
+  - {id: software-architect-policy, role: software_architect, maps_to: PRIM-AUTHORITY, allow: [PROPOSE, CREATE_REVISION, EXECUTE]}
+  - {id: implementer-policy, role: implementer, maps_to: PRIM-AUTHORITY, allow: [PROPOSE, CREATE_REVISION, EXECUTE, CANCEL]}
+  - {id: test-engineer-policy, role: test_engineer, maps_to: PRIM-AUTHORITY, allow: [PROPOSE, CREATE_REVISION, EXECUTE]}
+  - {id: independent-qa-policy, role: independent_qa, maps_to: PRIM-AUTHORITY, allow: [PROPOSE, CREATE_REVISION, EXECUTE, ESCALATE]}
+  - {id: release-manager-policy, role: release_manager, maps_to: PRIM-AUTHORITY, allow: [PROPOSE, CREATE_REVISION, EXECUTE, ESCALATE]}
+  - {id: human-approver-policy, role: human_approver, maps_to: PRIM-AUTHORITY, allow: [APPROVE, CONFIRM, ESCALATE, PROPOSE, CREATE_REVISION, CANCEL]}
+
+approval_policies:
+  - id: software_scope_change
+    maps_to: PRIM-APPROVAL
+    requires_actor_type: HUMAN
+    requires_role: human_approver
+    prohibit_self_approval: true
+  - id: high_impact_software_change
+    maps_to: PRIM-APPROVAL
+    requires_actor_type: HUMAN
+    requires_role: human_approver
+    prohibit_self_approval: true
+
+validity_rules:
+  - {artifact_type: scope_lock, valid_if: [current_revision, change_request_current, repo_baseline_current, scope_locked_pass]}
+  - {artifact_type: implementation_result, valid_if: [current_revision, change_set_manifest_current, implementation_ready_pass]}
+  - {artifact_type: qa_report, valid_if: [current_revision, regression_result_current, qa_pass]}
+  - {artifact_type: candidate_record, valid_if: [current_revision, qa_report_current, candidate_pass]}
+  - {artifact_type: exact_main_verification, valid_if: [current_revision, merge_record_current, exact_main_pass]}
+
+loop_policy:
+  maps_to: PRIM-LOOPGUARD
+  same_signature_limit: 2
+  retry_count_limit: 3
+  revision_churn_limit: 3
+  decision_cycle_limit: 2
+  on_exhaustion: ESCALATE
+
+reporting:
+  require_failed_runs: true
+  require_open_questions: true
+  require_exact_revision_ids: true
+
+handoff:
+  artifact: handoff_package
+  must_include:
+    - current_status
+    - baseline_sha
+    - candidate_sha
+    - main_sha
+    - changed_files
+    - evidence_manifest
+    - known_limits
+    - open_issues
+    - next_actions
+    - exact_resume_target
+
+ui_labels:
+  artifact: Software Artifact
+  workunit: Delivery Phase
+  gate: Delivery Gate
+  failure: Delivery Failure
+  recovery_plan: Recovery Plan
+  checkpoint: Delivery Checkpoint
