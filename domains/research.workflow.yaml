@@ -225,7 +225,7 @@ artifact_types:
     maps_to: PRIM-ARTIFACT
     revision_model: PRIM-REVISION
     normative: false
-    hard_dependencies: [decision_record, analysis_result, adversarial_review, replication_result]
+    hard_dependencies: [decision_record, analysis_result, adversarial_review, replication_result, study_lock]
     required_fields:
       - executive_summary
       - research_question
@@ -457,7 +457,7 @@ workunit_templates:
 
   - id: phase_05_prepare_dataset_and_benchmark
     maps_to: PRIM-WORKUNIT
-    inputs: [{artifact_type: protocol}]
+    inputs: [{artifact_type: protocol}, {artifact_type: study_lock}]
     outputs: [{artifact_type: dataset_benchmark_spec}]
     executor_role: experimenter
     skill_ref: experimenter_v2
@@ -473,7 +473,7 @@ workunit_templates:
 
   - id: phase_06_plan_and_implement_experiment
     maps_to: PRIM-WORKUNIT
-    inputs: [{artifact_type: protocol}, {artifact_type: dataset_benchmark_spec}]
+    inputs: [{artifact_type: protocol}, {artifact_type: study_lock}, {artifact_type: dataset_benchmark_spec}]
     outputs: [{artifact_type: experiment_plan}, {artifact_type: implementation_manifest}]
     executor_role: experimenter
     skill_ref: experimenter_v2
@@ -645,6 +645,7 @@ workunit_templates:
       - {artifact_type: hypothesis}
       - {artifact_type: formal_model}
       - {artifact_type: protocol}
+      - {artifact_type: study_lock}
       - {artifact_type: experiment_plan}
       - {artifact_type: experiment_result}
       - {artifact_type: analysis_result}
