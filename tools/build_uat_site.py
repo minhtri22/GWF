@@ -96,6 +96,8 @@ def main():
         "commit": args.commit,
         "mode": "STATIC_UAT",
         "authoritative_backend": False,
+        "secret_storage_allowed": False,
+        "credential_transport": "NONE",
     }
     (out / "build-meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     assert_no_static_secrets(out)
