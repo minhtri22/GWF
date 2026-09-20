@@ -223,11 +223,11 @@ def test_pilot_profiles_validate_and_preserve_feature_branch_boundary():
 def test_install_script_is_one_click_full_qualification_by_default():
     script = (ROOT / "install.ps1").read_text(encoding="utf-8")
     assert '"pip", "install", "-e", ".[dev,postgres]"' in script
-    assert "tools/gwr_domain.py validate domains/research.workflow.yaml" in script
-    assert "tools/gwr_domain.py validate domains/software.workflow.yaml" in script
-    assert "tools/gwr_pilot.py validate pilots/cqg.research.yaml" in script
-    assert "tools/gwr_pilot.py validate pilots/gwf.self-upgrade.yaml" in script
-    assert "Invoke-Checked $VenvPython -m pytest -q" in script
+    assert '"tools/gwr_domain.py", "validate", "domains/research.workflow.yaml"' in script
+    assert '"tools/gwr_domain.py", "validate", "domains/software.workflow.yaml"' in script
+    assert '"tools/gwr_pilot.py", "validate", "pilots/cqg.research.yaml"' in script
+    assert '"tools/gwr_pilot.py", "validate", "pilots/gwf.self-upgrade.yaml"' in script
+    assert '"-m", "pytest", "-q"' in script
     assert "install-report.json" in script
     assert "dsn_persisted = $false" in script
 
