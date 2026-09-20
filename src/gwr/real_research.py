@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 import hashlib, json, math, os, platform, random, sys, urllib.request, urllib.error
 
@@ -182,6 +183,12 @@ class RealResearchExecutor:
     force_live_retrieval_probe: bool = True
     recovery_demo: bool = True
 
+    @staticmethod
+    def _source_fingerprint() -> tuple[str, str]:
+        source_sha256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+        source_commit = os.environ.get("GWR_SOURCE_COMMIT") or f"content-sha256:{source_sha256}"
+        return source_commit, source_sha256
+
     def execute(self, c: ResearchExecutionContext) -> PhaseExecutionResult:
         handler = getattr(self, f"_{c.phase_id}")
         return handler(c)
@@ -288,10 +295,14 @@ class RealResearchExecutor:
         protocol_hash = hashlib.sha256(
             json.dumps(protocol, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest()
+        source_commit, source_sha256 = self._source_fingerprint()
         study_lock = {
             "preregistration_sha256": protocol_hash,
-            "source_commit": os.environ.get("GWR_SOURCE_COMMIT", "0" * 40),
-            "frozen_artifacts": [{"name": "protocol", "sha256": protocol_hash}],
+            "source_commit": source_commit,
+            "frozen_artifacts": [
+                {"name": "protocol", "sha256": protocol_hash},
+                {"name": "real_research.py", "sha256": source_sha256},
+            ],
             "fresh_data_policy": {"primary_results_inspected_only_after_lock": True, "analytic_grid_is_precommitted": True},
             "seed_or_cohort_policy": {"primary": "deterministic exact grid", "replication_seed": 170917},
             "metrics_and_gates": ["relative_mae_reduction>=0.20", "per_n_strict_improvement", "sign_test_p<0.05"],
@@ -335,12 +346,13 @@ class RealResearchExecutor:
             "recovery_revision": recovered,
         }
         plan_hash = hashlib.sha256(json.dumps(plan, sort_keys=True).encode()).hexdigest()
+        source_commit, source_sha256 = self._source_fingerprint()
         manifest={
-            "repository": "packaged source tree", "commit": os.environ.get("GWR_SOURCE_COMMIT", "0" * 40),
+            "repository": "packaged source tree", "commit": source_commit,
             "environment": self._env(), "dependencies": ["Python>=3.11", "PyYAML", "pydantic", "fastapi"],
             "commands": plan["exact_commands"],
             "config_hashes": {"experiment_plan": plan_hash},
-            "source_hashes": {"real_research_executor": hashlib.sha256(__file__.encode()).hexdigest()},
+            "source_hashes": {"real_research.py": source_sha256},
             "artifact_hashes": {"experiment_plan": plan_hash},
             "lineage_checkpoint": c.latest_checkpoint_id or "phase_06_pre_execution",
             "execution_environment_lock": hashlib.sha256(json.dumps(self._env(), sort_keys=True).encode()).hexdigest(),
