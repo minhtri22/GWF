@@ -64,6 +64,11 @@ class ResearchOrchestrator:
     readiness gate.
     """
 
+    state_key = "research_orchestrator_state"
+    checkpoint_kind = "RESEARCH_ORCHESTRATOR"
+    orchestration_audit_type = "ResearchOrchestration"
+    observe_prefix = "research"
+
     def __init__(
         self,
         runtime,
@@ -117,17 +122,17 @@ class ResearchOrchestrator:
             "INSERT INTO orchestrations VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
             (oid, project_id, self.domain.domain_id, "RUNNING", self.phases[0]["id"], 0, None, 0, now, now, None, canonical_json(state)),
         )
-        self.runtime.governance.append_audit(project_id, "SYSTEM", "ORCHESTRATION_STARTED", "ResearchOrchestration", oid)
-        self.runtime.observe("orchestration_started", project_id=project_id, orchestration_id=oid)
+        self.runtime.governance.append_audit(project_id, "SYSTEM", "ORCHESTRATION_STARTED", self.orchestration_audit_type, oid)
+        self.runtime.observe(f"{self.observe_prefix}_orchestration_started", project_id=project_id, orchestration_id=oid)
         self.db.conn.commit()
         return self._drive(state, executor, max_steps=max_steps)
 
     def resume(self, checkpoint_id: str, executor: ResearchPhaseExecutor, *, max_steps: int = 250) -> dict[str, Any]:
         reconciled = self.runtime.execution.reconcile_checkpoint(checkpoint_id)
         metadata = reconciled.get("runtime_metadata", {})
-        state = metadata.get("research_orchestrator_state")
+        state = metadata.get(self.state_key)
         if not state:
-            raise ValidationError("Checkpoint does not contain ResearchOrchestrator state")
+            raise ValidationError(f"Checkpoint does not contain {self.orchestration_audit_type} state")
         state = dict(state)
         state["resumed_from_checkpoint"] = checkpoint_id
         pending_protocol=state.get("pending_protocol_recovery")
@@ -195,8 +200,8 @@ class ResearchOrchestrator:
         if not row:
             raise NotFound("Orchestration referenced by checkpoint not found")
         self.db.conn.execute("UPDATE orchestrations SET status='RUNNING',updated_at=?,metadata=? WHERE orchestration_id=?", (utcnow(), canonical_json(state), oid))
-        self.runtime.governance.append_audit(state["project_id"], "SYSTEM", "ORCHESTRATION_RESUMED", "ResearchOrchestration", oid, reason_code=checkpoint_id)
-        self.runtime.observe("orchestration_resumed", project_id=state["project_id"], orchestration_id=oid, checkpoint_id=checkpoint_id)
+        self.runtime.governance.append_audit(state["project_id"], "SYSTEM", "ORCHESTRATION_RESUMED", self.orchestration_audit_type, oid, reason_code=checkpoint_id)
+        self.runtime.observe(f"{self.observe_prefix}_orchestration_resumed", project_id=state["project_id"], orchestration_id=oid, checkpoint_id=checkpoint_id)
         self.db.conn.commit()
         return self._drive(state, executor, max_steps=max_steps)
 
@@ -688,7 +693,7 @@ class ResearchOrchestrator:
             self.domain.validate_artifact_payload(typ, payload)
             art = self.db.one("SELECT * FROM artifacts WHERE project_id=? AND artifact_type=? ORDER BY created_at LIMIT 1", (project_id, typ))
             if not art:
-                aid = self.runtime.knowledge.create_artifact(project_id, typ, f"research:{typ}", actor_id)
+                aid = self.runtime.knowledge.create_artifact(project_id, typ, f"{self.domain.domain_id}:{typ}", actor_id)
                 art = self.db.one("SELECT * FROM artifacts WHERE artifact_id=?", (aid,))
             proposal_id = None
             cfg = self.domain.artifact(typ)
@@ -697,7 +702,7 @@ class ResearchOrchestrator:
             if cfg.get("normative"):
                 self._checkpoint(state, phase["id"], "BEFORE_NORMATIVE_REVISION", next_phase_index=self.phase_index_by_id[phase["id"]])
                 frozen = {"artifact_id": art["artifact_id"], "payload": payload}
-                idem = f"research:{state['orchestration_id']}:{state['generation']}:{phase['id']}:{typ}:{content_hash(payload)}"
+                idem = f"{self.domain.domain_id}:{state['orchestration_id']}:{state['generation']}:{phase['id']}:{typ}:{content_hash(payload)}"
                 proposal_id = self.runtime.governance.prepare_proposal(project_id, actor_id, "CREATE_REVISION", [art["artifact_id"]], frozen, cfg.get("approval_policy"), idem)
                 prop = self.db.one("SELECT * FROM proposals WHERE proposal_id=?", (proposal_id,))
                 if prop["status"] != "APPROVED":
@@ -780,7 +785,7 @@ class ResearchOrchestrator:
         resume_idx = self.producer_phase_by_artifact[root_type]
         if not self.human_approver_id:
             frozen={"failure_id":failure_id,"root_revision_id":root["revision_id"],"root_type":root_type,"resume_phase_id":self.phases[resume_idx]["id"]}
-            proposal_id=self.runtime.governance.prepare_system_proposal(state["project_id"],"CONFIRM_ROOT",[failure_id,root["revision_id"]],frozen,"high_impact_research_change")
+            proposal_id=self.runtime.governance.prepare_system_proposal(state["project_id"],"CONFIRM_ROOT",[failure_id,root["revision_id"]],frozen,self.domain.data.get("root_confirmation_approval_policy", "high_impact_research_change"))
             state["pending_human_action"]={"type":"CONFIRM_ROOT","proposal_id":proposal_id,"failure_id":failure_id,"root_revision_id":root["revision_id"],"root_type":root_type,"resume_phase_index":resume_idx,"workunit_id":workunit_id,"route":route}
             cp=self._checkpoint(state,phase["id"],"WAITING_AUTHENTICATED_ROOT_CONFIRMATION",next_phase_index=idx,extra={"proposal_id":proposal_id,"failure_id":failure_id})
             return {"action":"PAUSE","reason":"WAITING_HUMAN_CONFIRMATION","checkpoint_id":cp}
@@ -837,10 +842,11 @@ class ResearchOrchestrator:
         for row in self.db.all("SELECT a.artifact_type,r.revision_id,r.content_hash FROM artifacts a JOIN revisions r ON r.revision_id=a.current_revision_id WHERE a.project_id=?", (state["project_id"],)):
             artifact_hashes[row["artifact_type"]] = {"revision_id": row["revision_id"], "content_hash": row["content_hash"]}
         env_fingerprint=None
-        preflight=self._current_revision_by_type(state["project_id"], "preflight_result")
+        env_artifact = self.domain.data.get("environment_fingerprint_artifact", "preflight_result")
+        preflight=self._current_revision_by_type(state["project_id"], env_artifact) if env_artifact else None
         if preflight:
             env_fingerprint=preflight["structured_payload"].get("environment_fingerprint")
-        metadata = {"kind": "RESEARCH_ORCHESTRATOR", "phase_id": phase_id, "reason": reason, "artifact_hashes": artifact_hashes, "environment_fingerprint": env_fingerprint, "research_orchestrator_state": snapshot_state}
+        metadata = {"kind": self.checkpoint_kind, "phase_id": phase_id, "reason": reason, "artifact_hashes": artifact_hashes, "environment_fingerprint": env_fingerprint, self.state_key: snapshot_state}
         if extra:
             metadata.update(extra)
         return self.runtime.execution.create_checkpoint(state["project_id"], state["orchestration_id"], metadata)
@@ -863,7 +869,7 @@ class ResearchOrchestrator:
     def _pause(self, state, reason, checkpoint_id=None):
         cp = checkpoint_id or self._checkpoint(state, self.phases[min(state["next_phase_index"], len(self.phases)-1)]["id"], reason, next_phase_index=state["next_phase_index"])
         self._update_orchestration(state, status="PAUSED", current_phase_id=self.phases[state["next_phase_index"]]["id"] if state["next_phase_index"] < len(self.phases) else None, terminal_checkpoint_id=cp)
-        self.runtime.observe("orchestration_paused", project_id=state["project_id"], orchestration_id=state["orchestration_id"], reason=reason, checkpoint_id=cp, generation=state.get("generation"))
+        self.runtime.observe(f"{self.observe_prefix}_orchestration_paused", project_id=state["project_id"], orchestration_id=state["orchestration_id"], reason=reason, checkpoint_id=cp, generation=state.get("generation"))
         return {"status": "PAUSED", "reason": reason, "orchestration_id": state["orchestration_id"], "project_id": state["project_id"], "checkpoint_id": cp, "outcome": state.get("outcome"), "generation": state.get("generation"), "pivot_count": state.get("pivot_count")}
 
     def _validate_reporting_payload(self, payload: dict[str, Any]):
