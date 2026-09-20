@@ -697,6 +697,23 @@ class ResearchOrchestrator:
             if not art:
                 aid = self.runtime.knowledge.create_artifact(project_id, typ, f"{self.domain.domain_id}:{typ}", actor_id)
                 art = self.db.one("SELECT * FROM artifacts WHERE artifact_id=?", (aid,))
+
+            # A phase may contain multiple normative outputs. Human approval can
+            # therefore pause after an earlier output has already been committed.
+            # On restart, reuse only an exact current revision proven to have been
+            # produced by this same orchestration/phase/generation. This avoids
+            # re-proposing an already COMMITTED normative revision while never
+            # treating an equal-looking artifact from another lineage as current.
+            reusable = self._reusable_partial_output_revision(
+                state,
+                phase,
+                art,
+                payload,
+            )
+            if reusable:
+                result[typ] = reusable
+                continue
+
             proposal_id = None
             cfg = self.domain.artifact(typ)
             if typ == self.domain.data.get("reporting", {}).get("final_report_artifact"):
@@ -726,6 +743,45 @@ class ResearchOrchestrator:
             for inp in self._resolve_inputs(project_id, phase).values():
                 self.runtime.knowledge.create_trace_link(project_id, rid, "REVISION", inp["revision_id"], "derived_from", "HARD", True, "MARK_STALE", actor_id)
         return result
+
+    def _reusable_partial_output_revision(
+        self,
+        state: dict[str, Any],
+        phase: dict[str, Any],
+        artifact_row,
+        payload: dict[str, Any],
+    ) -> str | None:
+        rid = artifact_row["current_revision_id"]
+        if not rid:
+            return None
+        revision = self.db.one(
+            "SELECT revision_id,content_hash FROM revisions WHERE revision_id=?",
+            (rid,),
+        )
+        if not revision or revision["content_hash"] != content_hash(payload):
+            return None
+        lineage = self.db.one(
+            """
+            SELECT pe.phase_execution_id
+            FROM trace_links t
+            JOIN phase_executions pe ON pe.run_id=t.target_id
+            WHERE t.source_revision_id=?
+              AND t.target_kind='RUN'
+              AND t.relation_type='PRODUCED_BY'
+              AND pe.orchestration_id=?
+              AND pe.phase_id=?
+              AND pe.generation=?
+            ORDER BY pe.started_at DESC
+            LIMIT 1
+            """,
+            (
+                rid,
+                state["orchestration_id"],
+                phase["id"],
+                int(state["generation"]),
+            ),
+        )
+        return rid if lineage else None
 
     def _record_phase_evidence(self, project_id: str, phase: dict[str, Any], actor_id: str, run_id: str, input_ids: list[str], output_revisions: dict[str, str], evidence: list[EvidenceOutput]) -> list[str]:
         by_type = {e.evidence_type: e for e in evidence}
