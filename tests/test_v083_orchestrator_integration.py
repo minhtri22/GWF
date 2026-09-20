@@ -51,7 +51,8 @@ def test_runtime_bootstraps_exact_domain_skill_bindings(tmp_path):
         resolved = rt.agent_protocol.resolve_skill_revision(workunit["id"])
         assert resolved["skill_revision_id"]
         assert resolved["skill_hash"]
-        assert resolved["version"] == "1.0.0"
+        skill_ref = workunit["skill_ref"]
+        assert resolved["version"] == rt.domain.data["skill_contracts"][skill_ref]["version"]
         assert rt.db.one(
             "SELECT content_hash FROM skill_revisions WHERE skill_revision_id=?",
             (resolved["skill_revision_id"],),
