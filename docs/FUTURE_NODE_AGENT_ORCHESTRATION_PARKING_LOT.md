@@ -42,7 +42,9 @@ rather than hard-coding a vendor/model directly into every node.
 
 Harness agents are valuable because of their surrounding execution system.
 
-Pool agents are valuable because they can provide specialized, local, free, cheap, or scalable workers.
+Pool agents are valuable because they can provide specialized, local, free, low-cost, or scalable workers.
+
+Resource class and transport are separate concerns. An Agent Pool is not synonymous with ARC; ARC is one possible transport to pool workers.
 
 Neither class is globally superior; assignment depends on the node contract.
 
@@ -52,7 +54,11 @@ No agent, harness, ARC node, MCP client, or future protocol can directly redefin
 
 ### Decision E — delegation must be observable
 
-If a senior agent delegates to junior agents in the future, delegated work must remain attributable in GWF lineage.
+If a senior agent delegates to junior agents in the future, delegated work must remain attributable in GWF lineage and delegated authority must not exceed the parent's granted authority.
+
+### Decision F — independence is a governed requirement
+
+Using a different agent, harness, model, session, or Agent Pool does not by itself establish independent QA. A node that requires independence must state the relevant independence constraints prospectively, and the binding/lineage must demonstrate that those constraints were met.
 
 ## 3. Intended future node contract
 
@@ -69,6 +75,7 @@ risk_class: low
 scientific_sensitivity: low
 privacy_requirement: public_only
 binding_mode: dynamic
+binding_policy_ref: future-policy-ref
 evidence_contract:
   - reference_registry_entries
   - retrieval_log
@@ -88,10 +95,10 @@ junior_dev          → Agent Pool worker
    ↓
 test_writer         → Agent Pool worker
    ↓
-qa_reviewer         → harness or independent pool reviewer
+qa_reviewer         → reviewer satisfying the node's explicit independence contract
 ```
 
-A small project may require no premium harness at all if its risk/capability contract is satisfied.
+A small project may require no harness executor at all if its risk/capability contract is satisfied.
 
 ### Larger software project
 
@@ -112,7 +119,7 @@ paper_scout         → Agent Pool worker
 source_code_scout   → Agent Pool worker
 standards_scout     → Agent Pool worker
       ↓
-reference_curator   → stronger reviewer/harness
+reference_curator   → reviewer meeting declared synthesis and independence requirements
       ↓
 literature_review   → governed synthesis
 ```
@@ -145,7 +152,7 @@ No routing algorithm is selected yet.
 - delegation runtime;
 - agent ranking;
 - cost optimizer;
-- fallback policy engine;
+- reassignment/substitution policy engine;
 - UI for assigning agents to nodes;
 - multi-agent scheduling.
 
@@ -156,6 +163,7 @@ Near-term GWF changes should avoid assumptions that would make this architecture
 - assuming one global agent for an entire project;
 - assuming model/vendor identity is the same thing as a role;
 - assuming every external executor is a fallback;
+- assuming Agent Pool resource class and ARC transport are the same concept;
 - assuming all agents share the same authority;
 - assuming external session IDs are authoritative GWF IDs;
 - assuming every node may dynamically change executor without provenance;
