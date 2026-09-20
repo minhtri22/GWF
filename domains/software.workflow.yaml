@@ -218,7 +218,7 @@ workunit_templates:
     required_gate_types: [baseline_ready]
     evidence_required: [repo_sha_evidence, audit_evidence]
     success_conditions: [remote_source_of_truth_verified, exact_head_sha_recorded, relevant_surfaces_inspected]
-    known_failure_modes: [repo_sha_stale, audit_incomplete, approval_missing]
+    known_failure_modes: [repo_sha_stale, audit_incomplete, approval_missing, tool_timeout]
     retry_policy: {max_attempts: 2, retryable_failure_codes: [tool_timeout], same_signature_limit: 2}
     recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REAUDIT}
     checkpoint_policy: {before: false, after_success: true, on_failure: true}
