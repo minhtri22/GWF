@@ -185,3 +185,110 @@ Audit dimensions: ambiguity, undefined semantics, cross-document conflict, misle
 **OPEN = 0**
 
 No unresolved finding from this audit remains. A future implementation review may discover implementation-specific issues; that does not reopen this documentation checklist unless the specification itself must change.
+
+## 5. Documentation Integrity & Governance specification re-audit
+
+### F-24 — HIGH — RESOLVED
+
+- **Initial finding:** `DocumentRecord` had singular authority scope/key fields even though one normative document can legitimately own multiple non-conflicting authority claims.
+- **Remediation:** Replaced singular fields with `authority_claims` and defined per-claim scope/key/mode semantics.
+- **Final status:** `RESOLVED`
+
+### F-25 — HIGH — RESOLVED
+
+- **Initial finding:** `INTEGRATE` could be misread as a mandatory core dependency or implementation authorization.
+- **Remediation:** Defined BUILD/INTEGRATE/OPTIONAL ADAPTER semantics and required core state to remain reconstructable offline.
+- **Final status:** `RESOLVED`
+
+### F-26 — MEDIUM — RESOLVED
+
+- **Initial finding:** Lifecycle diagram implied supersession might require passing through deprecation.
+- **Remediation:** Defined explicit transitions: ACTIVE may become DEPRECATED or directly SUPERSEDED; both may later archive.
+- **Final status:** `RESOLVED`
+
+### F-27 — HIGH — RESOLVED
+
+- **Initial finding:** `WAIVED` finding status did not state whether it can satisfy a clean gate.
+- **Remediation:** Defined waiver as distinct from verified resolution and allowed PASS only when gate policy explicitly permits it; non-waivable classes remain blocking.
+- **Final status:** `RESOLVED`
+
+### F-28 — MEDIUM — RESOLVED
+
+- **Initial finding:** Change-set classification allowed multiple documents but did not define aggregate governance severity.
+- **Remediation:** Added per-document classes plus an effective change class equal to the strongest governance class triggered.
+- **Final status:** `RESOLVED`
+
+### F-29 — HIGH — RESOLVED
+
+- **Initial finding:** The phrase “stricter boundary governs” left precedence between Documentation Governance and research study-lock authority too implicit.
+- **Remediation:** Made domain research authority non-relaxable by documentation governance and required amendment/new-lineage routing where applicable.
+- **Final status:** `RESOLVED`
+
+### F-30 — HIGH — RESOLVED
+
+- **Initial finding:** Security-leak findings required redaction but did not define what evidence may safely persist.
+- **Remediation:** Limited persisted evidence to non-reversible fingerprint/classification plus redacted remediation context.
+- **Final status:** `RESOLVED`
+
+### F-31 — HIGH — RESOLVED
+
+- **Initial finding:** The spec did not explicitly prevent readers from assuming existing Markdown files are already runtime-governed after document approval.
+- **Remediation:** Added a separate adoption/migration boundary and prohibited silent retroactive authority assignment.
+- **Final status:** `RESOLVED`
+
+### F-32 — MEDIUM — RESOLVED
+
+- **Initial finding:** External-tool capability statements could become stale and be mistaken for permanent vendor guarantees.
+- **Remediation:** Required implementation-time revalidation and version/interface/security pinning for every external adapter.
+- **Final status:** `RESOLVED`
+
+### F-33 — MEDIUM — RESOLVED
+
+- **Initial finding:** `MUST_ALIGN_WITH` said changes on either side require review but relation direction/invalidation behavior was not explicit.
+- **Remediation:** Defined stored direction for identity with default bidirectional-review invalidation semantics.
+- **Final status:** `RESOLVED`
+
+### F-34 — MEDIUM — RESOLVED
+
+- **Initial finding:** The BUILD/INTEGRATE/OPTIONAL ADAPTER matrix named external tools without preserving the capability evidence snapshot that justified those classifications.
+- **Remediation:** Added dated official-reference URLs and explicitly scoped them to capability-class evidence, with mandatory revalidation at implementation time.
+- **Final status:** `RESOLVED`
+
+### F-35 — HIGH — RESOLVED
+
+- **Initial finding:** `DocumentRelation` did not distinguish a floating logical-document dependency from an exact revision-pinned evidentiary dependency.
+- **Remediation:** Added `target_binding_mode: LOGICAL_CURRENT | PINNED_REVISION`, defined semantics, and required exact pinned targets for `VALIDATES` and `GENERATED_FROM`.
+- **Final status:** `RESOLVED`
+
+### F-36 — HIGH — RESOLVED
+
+- **Initial finding:** `DocumentQARecord` was modeled simultaneously as a QA run and as an individual finding, making finding lifecycle and run identity ambiguous.
+- **Remediation:** Split `DocumentQARecord` (one attributable QA run) from `DocumentFinding` (one finding) and linked findings back to their originating run.
+- **Final status:** `RESOLVED`
+
+## 6. Documentation Governance checklist
+
+- [x] A document can own multiple explicit authority claims without duplicate-authority ambiguity.
+- [x] BUILD, INTEGRATE, and OPTIONAL ADAPTER have non-overlapping responsibility semantics.
+- [x] Core document governance remains reconstructable offline without hosted products.
+- [x] Lifecycle transitions distinguish deprecation from supersession.
+- [x] Lifecycle and validity remain separate state dimensions.
+- [x] Waiver does not silently equal verified resolution.
+- [x] Multi-document changes have per-document and effective change classification.
+- [x] Research study-lock authority cannot be relaxed by documentation governance.
+- [x] Secret findings persist only non-reversible/redacted evidence.
+- [x] Existing repository docs are not retroactively treated as migrated runtime records.
+- [x] External tool capabilities must be revalidated at adapter implementation/upgrade time.
+- [x] MUST_ALIGN_WITH invalidation semantics are explicit.
+- [x] Logical-current and exact-revision relation bindings are distinct.
+- [x] QA-run identity and individual finding identity are distinct.
+- [x] External tool classifications have a dated capability-evidence snapshot.
+- [x] No silent cascade editing is allowed.
+- [x] External validators report evidence; GWF owns document validity.
+- [x] Implementation remains unauthorized.
+
+## 7. Current aggregate status
+
+**OPEN = 0**
+
+All findings F-01 through F-36 recorded in this checklist are resolved. The documentation-governance specification remains specification-only; implementation-specific findings require a future implementation audit.
