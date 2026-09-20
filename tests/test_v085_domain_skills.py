@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
+import sys
 
+from fastapi.testclient import TestClient
+
+from gwr.api import create_app
 from gwr.domain_sdk import DomainSDK
 from gwr.linear_orchestrator import LinearDomainOrchestrator
 from gwr.research_demo import DeterministicResearchExecutor
@@ -57,6 +62,24 @@ def test_research_domain_v05_matches_frozen_study_workflow(tmp_path):
     }
     assert {"protocol", "study_lock"}.issubset(outputs)
     assert "study_lock_evidence" in phase04["evidence_required"]
+    for phase_id in (
+        "phase_05_prepare_dataset_and_benchmark",
+        "phase_06_plan_and_implement_experiment",
+        "phase_07_preflight",
+        "phase_08_pilot",
+        "phase_09_main_experiment",
+        "phase_10_analyze_results",
+        "phase_11_adversarial_falsification_review",
+        "phase_12_decide_pass_fail_pivot",
+        "phase_14_replication_or_replay",
+        "phase_15_write_final_report",
+    ):
+        phase = rt.domain.workunit(phase_id)
+        inputs = {
+            x["artifact_type"] if isinstance(x, dict) else x
+            for x in phase.get("inputs", [])
+        }
+        assert "study_lock" in inputs, phase_id
 
     refs = {w["skill_ref"] for w in rt.domain.workunits()}
     assert refs
@@ -176,3 +199,55 @@ def test_example_domain_remains_scaffold_not_software_package():
     assert example.ok
     inspected = DomainSDK.inspect(ROOT / "domains" / "example.workflow.yaml")
     assert inspected["domain_id"] != "software.delivery"
+
+
+def test_pilot_profiles_validate_and_preserve_feature_branch_boundary():
+    for profile in (
+        ROOT / "pilots" / "cqg.research.yaml",
+        ROOT / "pilots" / "gwf.self-upgrade.yaml",
+    ):
+        proc = subprocess.run(
+            [sys.executable, str(ROOT / "tools" / "gwr_pilot.py"), "validate", str(profile)],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        assert proc.returncode == 0, proc.stdout
+        text = profile.read_text(encoding="utf-8")
+        assert "baseline_policy: RESOLVE_AT_START" in text
+        assert "write_policy: FEATURE_BRANCH_ONLY" in text
+        assert "direct_main_write: false" in text
+
+
+def test_install_script_is_one_click_full_qualification_by_default():
+    script = (ROOT / "install.ps1").read_text(encoding="utf-8")
+    assert 'pip install -e ".[dev,postgres]"' in script
+    assert "tools/gwr_domain.py validate domains/research.workflow.yaml" in script
+    assert "tools/gwr_domain.py validate domains/software.workflow.yaml" in script
+    assert "tools/gwr_pilot.py validate pilots/cqg.research.yaml" in script
+    assert "tools/gwr_pilot.py validate pilots/gwf.self-upgrade.yaml" in script
+    assert "Invoke-Checked $VenvPython -m pytest -q" in script
+    assert "install-report.json" in script
+    assert "dsn_persisted = $false" in script
+
+
+def test_v085_product_meta_advertises_domain_and_install_capabilities(tmp_path):
+    rt = GovernedWorkflowRuntime(
+        str(ROOT / "domains" / "software.workflow.yaml"),
+        str(tmp_path / "v085-meta.db"),
+    )
+    client = TestClient(create_app(rt))
+    meta = client.get("/product/meta")
+    assert meta.status_code == 200
+    payload = meta.json()
+    assert tuple(map(int, payload["version"].split("."))) >= (0, 8, 5)
+    for capability in (
+        "research_study_lock",
+        "software_delivery_domain",
+        "linear_domain_orchestration",
+        "pilot_profiles",
+        "one_click_windows_install",
+    ):
+        assert capability in payload["capabilities"]
+    rt.close()
