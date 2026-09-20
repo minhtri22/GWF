@@ -84,7 +84,7 @@ function Get-PythonExecutable {
     }
 
     Write-Step "Python not found; installing Python 3.12 with winget"
-    Invoke-Checked $winget.Source install --id Python.Python.3.12 -e --source winget --accept-package-agreements --accept-source-agreements --silent
+    Invoke-Checked -FilePath $winget.Source -Arguments @("install", "--id", "Python.Python.3.12", "-e", "--source", "winget", "--accept-package-agreements", "--accept-source-agreements", "--silent")
 
     foreach ($candidate in $known) {
         if (Test-Path $candidate) {
@@ -184,14 +184,14 @@ if ($FreshVenv -and (Test-Path $VenvDir)) {
 
 if (-not (Test-Path $VenvPython)) {
     Write-Step "Creating isolated virtual environment"
-    Invoke-Checked $Python -m venv $VenvDir
+    Invoke-Checked -FilePath $Python -Arguments @("-m", "venv", $VenvDir)
 }
 
 Write-Step "Installing GWF and full development/PostgreSQL dependencies"
-Invoke-Checked $VenvPython -m pip install --upgrade pip setuptools wheel
+Invoke-Checked -FilePath $VenvPython -Arguments @("-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel")
 Push-Location $RepoRoot
 try {
-    Invoke-Checked $VenvPython -m pip install -e ".[dev,postgres]"
+    Invoke-Checked -FilePath $VenvPython -Arguments @("-m", "pip", "install", "-e", ".[dev,postgres]")
 } finally {
     Pop-Location
 }
@@ -201,11 +201,11 @@ $env:PYTHONPATH = (Join-Path $RepoRoot "src")
 Write-Step "Validating research and software domain packages"
 Push-Location $RepoRoot
 try {
-    Invoke-Checked $VenvPython tools/gwr_domain.py validate domains/research.workflow.yaml
-    Invoke-Checked $VenvPython tools/gwr_domain.py validate domains/software.workflow.yaml
-    Invoke-Checked $VenvPython tools/gwr_pilot.py validate pilots/cqg.research.yaml
-    Invoke-Checked $VenvPython tools/gwr_pilot.py validate pilots/gwf.self-upgrade.yaml
-    Invoke-Checked $VenvPython -m compileall -q src tests tools
+    Invoke-Checked -FilePath $VenvPython -Arguments @("tools/gwr_domain.py", "validate", "domains/research.workflow.yaml")
+    Invoke-Checked -FilePath $VenvPython -Arguments @("tools/gwr_domain.py", "validate", "domains/software.workflow.yaml")
+    Invoke-Checked -FilePath $VenvPython -Arguments @("tools/gwr_pilot.py", "validate", "pilots/cqg.research.yaml")
+    Invoke-Checked -FilePath $VenvPython -Arguments @("tools/gwr_pilot.py", "validate", "pilots/gwf.self-upgrade.yaml")
+    Invoke-Checked -FilePath $VenvPython -Arguments @("-m", "compileall", "-q", "src", "tests", "tools")
 } finally {
     Pop-Location
 }
@@ -215,7 +215,7 @@ if (-not $SkipTests) {
     Write-Step "Running local full test suite"
     Push-Location $RepoRoot
     try {
-        Invoke-Checked $VenvPython -m pytest -q
+        Invoke-Checked -FilePath $VenvPython -Arguments @("-m", "pytest", "-q")
         $LocalTests = "PASS"
     } finally {
         Pop-Location
@@ -243,7 +243,7 @@ try {
             $env:GWR_TEST_NAMESPACE_PREFIX = "gwr_install_$PID"
             Push-Location $RepoRoot
             try {
-                Invoke-Checked $VenvPython -m pytest -q tests/test_v085_domain_skills.py
+                Invoke-Checked -FilePath $VenvPython -Arguments @("-m", "pytest", "-q", "tests/test_v085_domain_skills.py")
                 $PostgresStatus = "PASS"
             } finally {
                 Pop-Location
