@@ -222,7 +222,7 @@ def test_pilot_profiles_validate_and_preserve_feature_branch_boundary():
 
 def test_install_script_is_one_click_full_qualification_by_default():
     script = (ROOT / "install.ps1").read_text(encoding="utf-8")
-    assert 'pip install -e ".[dev,postgres]"' in script
+    assert '"pip", "install", "-e", ".[dev,postgres]"' in script
     assert "tools/gwr_domain.py validate domains/research.workflow.yaml" in script
     assert "tools/gwr_domain.py validate domains/software.workflow.yaml" in script
     assert "tools/gwr_pilot.py validate pilots/cqg.research.yaml" in script
