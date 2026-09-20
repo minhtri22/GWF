@@ -30,6 +30,8 @@ def test_uat_site_build_contains_product_surfaces(tmp_path):
     assert data["projects"][0]["approvals"]
     assert data["projects"][0]["failures"]
     assert meta["authoritative_backend"] is False
+    assert meta["secret_storage_allowed"] is False
+    assert meta["credential_transport"] == "NONE"
     assert meta["commit"] == "test-sha"
 
 
@@ -51,3 +53,12 @@ def test_static_secret_scan_allows_security_guidance_without_credentials(tmp_pat
         encoding="utf-8",
     )
     assert_no_static_secrets(tmp_path)
+
+
+def test_static_secret_scan_rejects_secret_field_even_with_placeholder(tmp_path):
+    (tmp_path / "config.js").write_text(
+        'const config = "api_key: ENV_PLACEHOLDER";',
+        encoding="utf-8",
+    )
+    with pytest.raises(SystemExit, match="STATIC_UAT_SECRET_SCAN_FAILED"):
+        assert_no_static_secrets(tmp_path)
