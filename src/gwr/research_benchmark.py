@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+import hashlib
 import json
+import os
 import platform
 import sys
 import yaml
@@ -64,6 +66,12 @@ class BenchmarkResearchExecutor:
             "phase_16_handoff_and_archive": self._p16,
         }
 
+    @staticmethod
+    def _source_fingerprint():
+        sha = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+        commit = os.environ.get("GWR_SOURCE_COMMIT") or f"content-sha256:{sha}"
+        return commit, sha
+
     def execute(self, c):
         return self._handlers[c.phase_id](c)
 
@@ -105,7 +113,30 @@ class BenchmarkResearchExecutor:
 
     def _p04(self,c):
         s=self._spec()
-        return PhaseExecutionResult(artifacts={"protocol":{"experimental_design":{"type":"two-group pinned-dataset comparison"},"controls":["frozen CSV hash","precommitted group labels","independent subprocess verifier"],"independent_variables":[s["group_column"]],"dependent_variables":[s["value_column"]],"metrics":["mean difference","permutation p-value"],"thresholds":{"min_effect":s["min_effect"],"alpha":s["alpha"],"min_per_group":s["min_per_group"]},"query_or_compute_budget":{"permutations":s.get("permutations",4000)},"leakage_controls":["target columns declared before execution"],"confound_controls":["benchmark does not infer causality"],"statistical_plan":{"primary":"effect threshold + permutation test"},"stopping_rules":["complete verifier or operationally fail"],"pass_fail_pivot_rules":{"PASS":"effect and p-value criteria met with sufficient sample","FAIL":"valid sample but hypothesis criteria fail","PIVOT":"sample insufficient and predeclared pivot dataset exists"}}},evidence=self._ev(c))
+        protocol={"experimental_design":{"type":"two-group pinned-dataset comparison"},"controls":["frozen CSV hash","precommitted group labels","independent subprocess verifier"],"independent_variables":[s["group_column"]],"dependent_variables":[s["value_column"]],"metrics":["mean difference","permutation p-value"],"thresholds":{"min_effect":s["min_effect"],"alpha":s["alpha"],"min_per_group":s["min_per_group"]},"query_or_compute_budget":{"permutations":s.get("permutations",4000)},"leakage_controls":["target columns declared before execution"],"confound_controls":["benchmark does not infer causality"],"statistical_plan":{"primary":"effect threshold + permutation test"},"stopping_rules":["complete verifier or operationally fail"],"pass_fail_pivot_rules":{"PASS":"effect and p-value criteria met with sufficient sample","FAIL":"valid sample but hypothesis criteria fail","PIVOT":"sample insufficient and predeclared pivot dataset exists"}}
+        protocol_sha=hashlib.sha256(json.dumps(protocol,sort_keys=True,separators=(",",":")).encode()).hexdigest()
+        source_commit,source_sha=self._source_fingerprint()
+        did=self._dataset_id(c)
+        dataset_sha=self.registry.get(did).manifest["sha256"]
+        study_lock={
+            "preregistration_sha256":protocol_sha,
+            "source_commit":source_commit,
+            "frozen_artifacts":[
+                {"name":"protocol","sha256":protocol_sha},
+                {"name":"research_benchmark.py","sha256":source_sha},
+                {"name":did,"sha256":dataset_sha},
+            ],
+            "fresh_data_policy":{"benchmark_snapshot_pinned_before_execution":True,"no_post_outcome_dataset_swap":True},
+            "seed_or_cohort_policy":{"dataset_id":did,"permutation_seed":170917},
+            "metrics_and_gates":["mean_difference","permutation_p_value","min_effect","alpha","min_per_group"],
+            "forbidden_adaptations":["threshold_tuning","metric_swap","group_swap","silent_dataset_swap"],
+            "amendment_policy":{"execution_only_before_outcome":True,"scientific_change_requires_new_lock":True},
+            "resource_limits":{"permutations":s.get("permutations",4000),"repair_budget":1},
+            "branch_stop_rules":["PASS/FAIL uses frozen benchmark contract","PIVOT only to predeclared pivot_dataset_id"],
+            "repair_budget":1,
+            "no_rescue_policy":True,
+        }
+        return PhaseExecutionResult(artifacts={"protocol":protocol,"study_lock":study_lock},evidence=self._ev(c))
 
     def _p05(self,c):
         did=self._dataset_id(c); rec=self.registry.get(did); integrity=self.registry.validate_integrity(did)
@@ -119,7 +150,23 @@ class BenchmarkResearchExecutor:
     def _p06(self,c):
         did=c.current_artifacts["dataset_benchmark_spec"]["generation_dataset"]
         plan={"runs":[{"name":"pilot","rows":"bounded subset"},{"name":"main","rows":"full snapshot"}],"baselines":[],"ablations":[],"adversarial_cases":[],"seeds":[170917],"resources":["CPU","Python standard library"],"expected_artifacts":["raw rows","independent verification"],"exact_commands":["python tools/run_research_benchmark.py"],"dataset_id":did}
-        impl={"repository":"packaged source tree","commit":"archive-manifest-sha256","environment":{"python":sys.version.split()[0],"platform":platform.platform()},"dependencies":["Python>=3.11"],"commands":plan["exact_commands"],"config_hashes":{"dataset_sha256":self.registry.get(did).manifest["sha256"],"benchmark_case":self.case["id"]}}
+        dataset_sha=self.registry.get(did).manifest["sha256"]
+        plan_sha=hashlib.sha256(json.dumps(plan,sort_keys=True,separators=(",",":")).encode()).hexdigest()
+        source_commit,source_sha=self._source_fingerprint()
+        env={"python":sys.version.split()[0],"platform":platform.platform()}
+        env_sha=hashlib.sha256(json.dumps(env,sort_keys=True,separators=(",",":")).encode()).hexdigest()
+        impl={
+            "repository":"packaged source tree",
+            "commit":source_commit,
+            "environment":env,
+            "dependencies":["Python>=3.11"],
+            "commands":plan["exact_commands"],
+            "config_hashes":{"dataset_sha256":dataset_sha,"benchmark_case":self.case["id"]},
+            "source_hashes":{"research_benchmark.py":source_sha},
+            "artifact_hashes":{"dataset":dataset_sha,"experiment_plan":plan_sha},
+            "lineage_checkpoint":c.latest_checkpoint_id or "phase_06_pre_execution",
+            "execution_environment_lock":env_sha,
+        }
         return PhaseExecutionResult(artifacts={"experiment_plan":plan,"implementation_manifest":impl},evidence=self._ev(c))
 
     def _p07(self,c):
