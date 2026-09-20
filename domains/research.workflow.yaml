@@ -1,6 +1,6 @@
 domain_id: research.full-cycle
-version: 0.4.0
-compatible_runtime_versions: ["0.4.x"]
+version: 0.5.0
+compatible_runtime_versions: ["0.8.x"]
 description: >-
   Full-cycle research domain for hypothesis-driven work with explicit provenance,
   preflight, pilot, falsification, PASS/FAIL/PIVOT decisions, checkpoint/resume,
@@ -69,12 +69,32 @@ artifact_types:
       - stopping_rules
       - pass_fail_pivot_rules
 
+  - id: study_lock
+    maps_to: PRIM-ARTIFACT
+    revision_model: PRIM-REVISION
+    normative: true
+    approval_policy: normative_research_change
+    hard_dependencies: [hypothesis, formal_model, protocol]
+    required_fields:
+      - preregistration_sha256
+      - source_commit
+      - frozen_artifacts
+      - fresh_data_policy
+      - seed_or_cohort_policy
+      - metrics_and_gates
+      - forbidden_adaptations
+      - amendment_policy
+      - resource_limits
+      - branch_stop_rules
+      - repair_budget
+      - no_rescue_policy
+
   - id: dataset_benchmark_spec
     maps_to: PRIM-ARTIFACT
     revision_model: PRIM-REVISION
     normative: true
     approval_policy: normative_research_change
-    hard_dependencies: [protocol]
+    hard_dependencies: [protocol, study_lock]
     required_fields:
       - data_sources
       - splits
@@ -90,7 +110,7 @@ artifact_types:
     revision_model: PRIM-REVISION
     normative: true
     approval_policy: normative_research_change
-    hard_dependencies: [protocol, dataset_benchmark_spec]
+    hard_dependencies: [protocol, study_lock, dataset_benchmark_spec]
     required_fields:
       - runs
       - baselines
@@ -105,14 +125,14 @@ artifact_types:
     maps_to: PRIM-ARTIFACT
     revision_model: PRIM-REVISION
     normative: false
-    hard_dependencies: [experiment_plan]
-    required_fields: [repository, commit, environment, dependencies, commands, config_hashes]
+    hard_dependencies: [experiment_plan, study_lock]
+    required_fields: [repository, commit, environment, dependencies, commands, config_hashes, source_hashes, artifact_hashes, lineage_checkpoint, execution_environment_lock]
 
   - id: preflight_result
     maps_to: PRIM-ARTIFACT
     revision_model: PRIM-REVISION
     normative: false
-    hard_dependencies: [implementation_manifest, protocol, dataset_benchmark_spec]
+    hard_dependencies: [implementation_manifest, protocol, study_lock, dataset_benchmark_spec]
     required_fields: [checks, failures, warnings, environment_fingerprint, verdict]
 
   - id: pilot_result
@@ -133,7 +153,7 @@ artifact_types:
     maps_to: PRIM-ARTIFACT
     revision_model: PRIM-REVISION
     normative: false
-    hard_dependencies: [experiment_result, protocol]
+    hard_dependencies: [experiment_result, protocol, study_lock]
     required_fields:
       - statistical_results
       - verification_manifest
@@ -149,7 +169,7 @@ artifact_types:
     maps_to: PRIM-ARTIFACT
     revision_model: PRIM-REVISION
     normative: false
-    hard_dependencies: [analysis_result, hypothesis, protocol]
+    hard_dependencies: [analysis_result, hypothesis, protocol, study_lock]
     required_fields:
       - falsification_attempts
       - alternative_explanations
@@ -164,7 +184,7 @@ artifact_types:
     revision_model: PRIM-REVISION
     normative: true
     approval_policy: research_direction_decision
-    hard_dependencies: [analysis_result, adversarial_review]
+    hard_dependencies: [analysis_result, adversarial_review, study_lock]
     required_fields:
       - outcome
       - evidence_summary
@@ -282,60 +302,75 @@ agent_protocol:
   default_retry_budget: 2
 
 skill_contracts:
-  research_lead_v1:
+  research_lead_v2:
     skill_id: research-lead
-    version: "1.0.0"
+    version: "2.0.0"
     markdown: |
       # Research Lead
-      Load authoritative inputs, preserve frozen decisions, execute the declared research phase, persist evidence, verify gates, and hand off explicit state.
+      Treat persisted project state, frozen study locks, evidence records and lineage as authoritative. Do not infer authority from chat context.
+      Preserve negative results and failed branches. Decide PASS/FAIL/PIVOT only against preregistered gates; never tune thresholds after seeing outcomes.
+      Every new branch must state which prior evidence remains valid, what is invalidated, the exact convergence/stop rule, repair budget and no-rescue boundary.
+      A FAIL is a valid scientific outcome. Do not rescue a failed hypothesis by silently changing target, metric, cohort, controller, threshold or interpretation.
     tool_requirements: []
     qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
-  literature_reviewer_v1:
+  literature_reviewer_v2:
     skill_id: literature-review
-    version: "1.0.0"
+    version: "2.0.0"
     markdown: |
       # Literature Review
-      Resolve the locked research goal, retrieve attributable sources, bound novelty claims, persist evidence, verify gates, and hand off the reviewed landscape.
+      Resolve the locked research question before retrieval. Attribute sources, distinguish prior evidence from current-study evidence, and bound novelty claims.
+      Record collisions and uncertainty instead of stretching novelty. Do not use post-outcome literature to retroactively rewrite a preregistered hypothesis.
     tool_requirements: [source_retrieval]
     qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
-  protocol_designer_v1:
+  protocol_designer_v2:
     skill_id: protocol-design
-    version: "1.0.0"
+    version: "2.0.0"
     markdown: |
       # Protocol Design
-      Translate the hypothesis into a frozen executable protocol with explicit assumptions, controls, metrics, falsification conditions, and reproducibility requirements.
+      Produce a prospective study lock before fresh outcomes are inspected. Freeze hypotheses, controls, metrics, thresholds, seeds/cohort policy, resource limits,
+      artifacts/fingerprints, falsification rules, stop rules, repair budget, forbidden adaptations, and amendment boundaries.
+      Separate execution-only amendments from scientific amendments. Execution-only amendments may repair environment/packaging without changing scientific factors.
+      Any scientific change invalidates the old lock and requires a new lineage branch; never tune to PASS.
     tool_requirements: []
     qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
-  experimenter_v1:
+  experimenter_v2:
     skill_id: experiment-execution
-    version: "1.0.0"
+    version: "2.0.0"
     markdown: |
       # Experiment Execution
-      Verify inputs and environment, execute only the frozen plan, persist run manifests and raw evidence, surface failures before retry, and hand off reproducible outputs.
+      Verify exact source/artifact hashes and environment before fresh execution. Execute only the frozen plan on the declared fresh seeds/cohort.
+      Persist all run manifests, failures, partial runs and raw evidence. Do not inspect fresh scientific outcomes before integrity gates permit adjudication.
+      AUTO retry is allowed only for the same semantic experiment and within policy/budget. A changed formula, target, metric, cohort, threshold or model is not a retry.
     tool_requirements: [python]
     qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
-  reproducibility_reviewer_v1:
+  reproducibility_reviewer_v2:
     skill_id: reproducibility-review
-    version: "1.0.0"
+    version: "2.0.0"
     markdown: |
       # Reproducibility Review
-      Independently verify manifests, replay requirements, environment assumptions, and evidence lineage before accepting reproducibility claims.
+      Independently verify source commit, preregistration hash, artifact digests, functional fingerprints, environment lock, seed coverage and exact commands.
+      Verify that execution amendments occurred before fresh outcome inspection and stayed within their declared boundary.
+      Reject provenance gaps, missing cells/seeds, silent artifact substitution, unverifiable hashes, or replay divergence.
     tool_requirements: [python]
     qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
-  analyst_v1:
+  analyst_v2:
     skill_id: research-analysis
-    version: "1.0.0"
+    version: "2.0.0"
     markdown: |
       # Research Analysis
-      Analyze only committed outputs and evidence, preserve precommitted metrics, report uncertainty and negative results, verify gates, and hand off traceable conclusions.
+      Analyze only the frozen metrics and admissible evidence. Preserve the preregistered bootstrap/unit-of-analysis and multiplicity rules.
+      Report uncertainty, failed gates, negative results and deviations. Post-hoc analysis must be labeled exploratory and cannot alter the formal verdict.
+      Do not convert a near miss into support by changing SESOI, metric, population, aggregation, threshold or interpretation after seeing outcomes.
     tool_requirements: [python]
     qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
-  adversarial_reviewer_v1:
+  adversarial_reviewer_v2:
     skill_id: adversarial-review
-    version: "1.0.0"
+    version: "2.0.0"
     markdown: |
       # Adversarial Review
-      Challenge the strongest claim against the frozen protocol and evidence, record concrete falsification attempts, and hand off unresolved risks without weakening the acceptance gate.
+      Act as an independent falsifier. Challenge the strongest claim against the frozen study lock, raw evidence, alternative mechanisms, leakage, confounds and boundary cases.
+      Check whether a PASS depends on an execution amendment, post-hoc choice, privileged information, hidden tuning or a different population than preregistered.
+      Escalate unresolved material threats; never weaken the acceptance gate to preserve a preferred narrative.
     tool_requirements: []
     qa_contract: {requires_evidence: true, requires_gate_pass: true, requires_handoff: true}
 
@@ -345,7 +380,7 @@ workunit_templates:
     inputs: []
     outputs: [{artifact_type: research_goal}]
     executor_role: research_lead
-    skill_ref: research_lead_v1
+    skill_ref: research_lead_v2
     required_gate_types: [goal_ready]
     evidence_required: [goal_review_evidence]
     success_conditions: [research_goal_approved]
@@ -361,7 +396,7 @@ workunit_templates:
     inputs: [{artifact_type: research_goal}]
     outputs: [{artifact_type: prior_art_landscape}, {artifact_type: novelty_assessment}]
     executor_role: literature_reviewer
-    skill_ref: literature_reviewer_v1
+    skill_ref: literature_reviewer_v2
     required_gate_types: [prior_art_ready]
     evidence_required: [source_citation_evidence, novelty_review_evidence]
     success_conditions: [closest_prior_work_identified, novelty_claim_bounded]
@@ -377,7 +412,7 @@ workunit_templates:
     inputs: [{artifact_type: research_goal}, {artifact_type: novelty_assessment}]
     outputs: [{artifact_type: hypothesis}]
     executor_role: research_lead
-    skill_ref: research_lead_v1
+    skill_ref: research_lead_v2
     required_gate_types: [hypothesis_ready]
     evidence_required: [hypothesis_review_evidence]
     success_conditions: [hypothesis_falsifiable, null_defined, predictions_defined]
@@ -393,7 +428,7 @@ workunit_templates:
     inputs: [{artifact_type: hypothesis}]
     outputs: [{artifact_type: formal_model}]
     executor_role: protocol_designer
-    skill_ref: protocol_designer_v1
+    skill_ref: protocol_designer_v2
     required_gate_types: [formalization_ready]
     evidence_required: [formalization_review_evidence]
     success_conditions: [variables_operationalized, assumptions_explicit, boundary_conditions_defined]
@@ -407,12 +442,12 @@ workunit_templates:
   - id: phase_04_design_protocol
     maps_to: PRIM-WORKUNIT
     inputs: [{artifact_type: hypothesis}, {artifact_type: formal_model}]
-    outputs: [{artifact_type: protocol}]
+    outputs: [{artifact_type: protocol}, {artifact_type: study_lock}]
     executor_role: protocol_designer
-    skill_ref: protocol_designer_v1
+    skill_ref: protocol_designer_v2
     required_gate_types: [protocol_ready]
-    evidence_required: [protocol_review_evidence]
-    success_conditions: [controls_defined, metrics_defined, thresholds_precommitted, falsification_rules_defined]
+    evidence_required: [protocol_review_evidence, study_lock_evidence]
+    success_conditions: [controls_defined, metrics_defined, thresholds_precommitted, falsification_rules_defined, preregistration_frozen, forbidden_adaptations_declared, branch_stop_rules_declared]
     known_failure_modes: [protocol_leakage, circular_metric, confound_uncontrolled, insufficient_statistical_plan, approval_missing]
     retry_policy: {max_attempts: 1, retryable_failure_codes: [], same_signature_limit: 1}
     recovery_policy: {mode: AFFECTED_SUBGRAPH, resume_semantics: REVISE_CURRENT_OR_UPSTREAM}
@@ -425,7 +460,7 @@ workunit_templates:
     inputs: [{artifact_type: protocol}]
     outputs: [{artifact_type: dataset_benchmark_spec}]
     executor_role: experimenter
-    skill_ref: experimenter_v1
+    skill_ref: experimenter_v2
     required_gate_types: [data_ready]
     evidence_required: [dataset_manifest_evidence, contamination_check_evidence]
     success_conditions: [data_provenance_complete, split_policy_locked, contamination_checked]
@@ -441,7 +476,7 @@ workunit_templates:
     inputs: [{artifact_type: protocol}, {artifact_type: dataset_benchmark_spec}]
     outputs: [{artifact_type: experiment_plan}, {artifact_type: implementation_manifest}]
     executor_role: experimenter
-    skill_ref: experimenter_v1
+    skill_ref: experimenter_v2
     required_gate_types: [implementation_ready]
     evidence_required: [code_revision_evidence, environment_manifest_evidence]
     success_conditions: [commands_reproducible, configs_versioned, seeds_locked, baseline_available]
@@ -456,11 +491,12 @@ workunit_templates:
     maps_to: PRIM-WORKUNIT
     inputs:
       - {artifact_type: protocol}
+      - {artifact_type: study_lock}
       - {artifact_type: dataset_benchmark_spec}
       - {artifact_type: implementation_manifest}
     outputs: [{artifact_type: preflight_result}]
     executor_role: reproducibility_reviewer
-    skill_ref: reproducibility_reviewer_v1
+    skill_ref: reproducibility_reviewer_v2
     required_gate_types: [preflight_pass]
     evidence_required: [preflight_log_evidence, environment_manifest_evidence]
     success_conditions: [syntax_ok, smoke_run_ok, evidence_path_ok, no_known_leakage]
@@ -475,11 +511,12 @@ workunit_templates:
     maps_to: PRIM-WORKUNIT
     inputs:
       - {artifact_type: preflight_result}
+      - {artifact_type: study_lock}
       - {artifact_type: experiment_plan}
       - {artifact_type: implementation_manifest}
     outputs: [{artifact_type: pilot_result}]
     executor_role: experimenter
-    skill_ref: experimenter_v1
+    skill_ref: experimenter_v2
     required_gate_types: [pilot_pass]
     evidence_required: [run_manifest_evidence, raw_metrics_evidence]
     success_conditions: [pipeline_non_degenerate, metrics_non_empty, feasibility_confirmed]
@@ -494,11 +531,12 @@ workunit_templates:
     maps_to: PRIM-WORKUNIT
     inputs:
       - {artifact_type: pilot_result}
+      - {artifact_type: study_lock}
       - {artifact_type: experiment_plan}
       - {artifact_type: implementation_manifest}
     outputs: [{artifact_type: experiment_result}]
     executor_role: experimenter
-    skill_ref: experimenter_v1
+    skill_ref: experimenter_v2
     required_gate_types: [experiment_complete]
     evidence_required: [run_manifest_evidence, raw_metrics_evidence, provenance_evidence]
     success_conditions: [all_required_runs_complete, no_silent_missing_metrics, provenance_complete]
@@ -511,10 +549,10 @@ workunit_templates:
 
   - id: phase_10_analyze_results
     maps_to: PRIM-WORKUNIT
-    inputs: [{artifact_type: experiment_result}, {artifact_type: protocol}]
+    inputs: [{artifact_type: experiment_result}, {artifact_type: protocol}, {artifact_type: study_lock}]
     outputs: [{artifact_type: analysis_result}]
     executor_role: analyst
-    skill_ref: analyst_v1
+    skill_ref: analyst_v2
     required_gate_types: [analysis_ready]
     evidence_required: [statistical_analysis_evidence, raw_metrics_evidence, independent_verifier_evidence]
     success_conditions: [precommitted_metrics_evaluated, uncertainty_reported, baselines_compared, deviations_disclosed, independent_verifier_completed]
@@ -531,9 +569,10 @@ workunit_templates:
       - {artifact_type: analysis_result}
       - {artifact_type: hypothesis}
       - {artifact_type: protocol}
+      - {artifact_type: study_lock}
     outputs: [{artifact_type: adversarial_review}]
     executor_role: adversarial_reviewer
-    skill_ref: adversarial_reviewer_v1
+    skill_ref: adversarial_reviewer_v2
     required_gate_types: [adversarial_review_complete]
     evidence_required: [adversarial_review_evidence]
     success_conditions: [strongest_counterargument_tested, leakage_rechecked, confounds_rechecked, boundary_cases_tested]
@@ -546,10 +585,10 @@ workunit_templates:
 
   - id: phase_12_decide_pass_fail_pivot
     maps_to: PRIM-WORKUNIT
-    inputs: [{artifact_type: analysis_result}, {artifact_type: adversarial_review}]
+    inputs: [{artifact_type: analysis_result}, {artifact_type: adversarial_review}, {artifact_type: study_lock}]
     outputs: [{artifact_type: decision_record}]
     executor_role: research_lead
-    skill_ref: research_lead_v1
+    skill_ref: research_lead_v2
     required_gate_types: [research_decision_ready]
     evidence_required: [decision_evidence]
     success_conditions: [outcome_is_structured, thresholds_traced_to_protocol, next_action_explicit]
@@ -565,7 +604,7 @@ workunit_templates:
     inputs: [{artifact_type: decision_record}]
     outputs: [{artifact_type: pivot_plan}]
     executor_role: research_lead
-    skill_ref: research_lead_v1
+    skill_ref: research_lead_v2
     required_gate_types: [pivot_ready]
     evidence_required: [pivot_rationale_evidence]
     success_conditions: [preserved_findings_separated, invalidated_assumptions_explicit, resume_target_explicit]
@@ -583,9 +622,10 @@ workunit_templates:
       - {artifact_type: decision_record}
       - {artifact_type: experiment_result}
       - {artifact_type: analysis_result}
+      - {artifact_type: study_lock}
     outputs: [{artifact_type: replication_result}]
     executor_role: reproducibility_reviewer
-    skill_ref: reproducibility_reviewer_v1
+    skill_ref: reproducibility_reviewer_v2
     required_gate_types: [replication_complete]
     evidence_required: [replication_evidence, provenance_evidence]
     success_conditions: [independent_replay_completed, divergence_reported, reproducibility_verdict_explicit]
@@ -613,7 +653,7 @@ workunit_templates:
       - {artifact_type: replication_result}
     outputs: [{artifact_type: final_report}]
     executor_role: research_lead
-    skill_ref: research_lead_v1
+    skill_ref: research_lead_v2
     required_gate_types: [report_complete]
     evidence_required: [report_manifest_evidence]
     success_conditions: [claims_trace_to_evidence, failures_disclosed, pivots_disclosed, reproduction_steps_included, open_questions_listed]
@@ -629,7 +669,7 @@ workunit_templates:
     inputs: [{artifact_type: final_report}]
     outputs: [{artifact_type: handoff_package}]
     executor_role: reproducibility_reviewer
-    skill_ref: reproducibility_reviewer_v1
+    skill_ref: reproducibility_reviewer_v2
     required_gate_types: [handoff_complete]
     evidence_required: [artifact_manifest_evidence, provenance_evidence]
     success_conditions: [resume_target_recorded, unresolved_issues_recorded, hashes_recorded, commands_recorded]
@@ -650,6 +690,7 @@ evidence_types:
   - {id: hypothesis_review_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
   - {id: formalization_review_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
   - {id: protocol_review_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
+  - {id: study_lock_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
   - {id: dataset_manifest_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
   - {id: contamination_check_evidence, maps_to: PRIM-EVIDENCE, trust_class: SUPPORTED}
   - {id: code_revision_evidence, maps_to: PRIM-EVIDENCE, trust_class: AUTHORITATIVE}
@@ -702,9 +743,9 @@ gate_types:
   - id: protocol_ready
     maps_to: PRIM-GATE
     required_validity: {inputs: VALID}
-    required_evidence_types: [protocol_review_evidence]
-    allowed_trust_classes: [SUPPORTED]
-    pass_if: [controls_defined, leakage_controls_defined, metrics_non_circular, thresholds_precommitted, statistical_plan_defined]
+    required_evidence_types: [protocol_review_evidence, study_lock_evidence]
+    allowed_trust_classes: [SUPPORTED, AUTHORITATIVE]
+    pass_if: [controls_defined, leakage_controls_defined, metrics_non_circular, thresholds_precommitted, statistical_plan_defined, preregistration_frozen, fresh_data_boundary_defined, forbidden_adaptations_declared, amendment_policy_defined, branch_stop_rules_declared]
 
   - id: data_ready
     maps_to: PRIM-GATE
@@ -994,6 +1035,8 @@ validity_rules:
     valid_if: [current_revision, goal_current, novelty_assessment_current, hypothesis_ready_pass]
   - artifact_type: protocol
     valid_if: [current_revision, hypothesis_current, formal_model_current, protocol_ready_pass]
+  - artifact_type: study_lock
+    valid_if: [current_revision, hypothesis_current, formal_model_current, protocol_current, protocol_ready_pass]
   - artifact_type: experiment_result
     valid_if: [current_revision, experiment_plan_current, implementation_manifest_current, experiment_complete_pass]
   - artifact_type: analysis_result
@@ -1110,6 +1153,7 @@ reporting:
     - hypothesis_and_null
     - formal_model_and_assumptions
     - protocol_and_precommitted_gates
+    - study_lock_and_execution_amendments
     - data_and_benchmark
     - implementation_and_environment
     - preflight_and_pilot
@@ -1139,6 +1183,9 @@ handoff:
     - open_questions
     - next_recommended_workunits
     - repository_commit
+    - study_lock_revision
+    - preregistration_sha256
+    - frozen_artifact_hashes
     - environment_fingerprint
     - reproduction_commands
     - evidence_manifest
