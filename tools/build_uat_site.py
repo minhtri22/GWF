@@ -3,12 +3,55 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 REQUIRED = ["index.html", "styles.css", "app.js", "demo-data.json"]
+
+SECRET_PATTERNS = [
+    ("github_pat", re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b")),
+    ("github_classic_pat", re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b")),
+    ("openai_key", re.compile(r"\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b")),
+    ("slack_token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b")),
+    (
+        "secret_field_assignment",
+        re.compile(
+            r"""(?ix)
+            \b(api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|authorization)
+            \b\s*[:=]
+            """
+        ),
+    ),
+]
+
+
+def assert_no_static_secrets(directory: Path) -> None:
+    findings = []
+    for path in sorted(p for p in directory.rglob("*") if p.is_file()):
+        if path.name == ".nojekyll":
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        for label, pattern in SECRET_PATTERNS:
+            match = pattern.search(text)
+            if match:
+                findings.append(
+                    {
+                        "file": str(path.relative_to(directory)),
+                        "pattern": label,
+                        "offset": match.start(),
+                    }
+                )
+    if findings:
+        raise SystemExit(
+            "STATIC_UAT_SECRET_SCAN_FAILED: "
+            + json.dumps(findings, separators=(",", ":"))
+        )
 
 
 def validate_demo(data):
@@ -53,9 +96,18 @@ def main():
         "commit": args.commit,
         "mode": "STATIC_UAT",
         "authoritative_backend": False,
+        "secret_storage_allowed": False,
+        "credential_transport": "NONE",
     }
     (out / "build-meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
-    print(json.dumps({"status": "PASS", "out": str(out), "files": sorted(p.name for p in out.iterdir()), "projects": len(data["projects"])}, indent=2))
+    assert_no_static_secrets(out)
+    print(json.dumps({
+        "status": "PASS",
+        "out": str(out),
+        "files": sorted(p.name for p in out.iterdir()),
+        "projects": len(data["projects"]),
+        "static_secret_scan": "PASS",
+    }, indent=2))
 
 
 if __name__ == "__main__":

@@ -3,6 +3,23 @@ const state={data:null,project:null,view:"dashboard",activeProposal:null,activeP
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 const uid=p=>p+"_"+Math.random().toString(36).slice(2,9);
+const SECRET_FIELD_PATTERN=/\b(api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|authorization)\b\s*[:=]/i;
+const SECRET_LIKE_PATTERNS=[
+ /\bgithub_pat_[A-Za-z0-9_]{20,}\b/i,
+ /\bgh[pousr]_[A-Za-z0-9]{20,}\b/i,
+ /\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b/i,
+ /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/i
+];
+const containsSensitiveMaterial=value=>{const text=String(value??"");return SECRET_FIELD_PATTERN.test(text)||SECRET_LIKE_PATTERNS.some(re=>re.test(text))};
+function purgeSensitiveLocalUatState(){
+ const before=state.domains.length;
+ state.domains=state.domains.filter(d=>!(d.revisions||[]).some(r=>containsSensitiveMaterial(r.yaml_text)));
+ if(state.domains.length!==before){
+   localStorage.setItem(LS_DOMAINS,JSON.stringify(state.domains));
+   return true;
+ }
+ return false;
+}
 const badge=s=>{const v=String(s||"").toUpperCase(),good=["PASS","COMPLETED","SUCCEEDED","VALID","ACTIVE","APPROVED","PUBLISHED","VALIDATED"].includes(v),bad=["FAIL","FAILED","ABANDONED","REJECTED"].includes(v),warn=["PAUSED","READY","RUNNING","DIRTY","STALE","PENDING_APPROVAL","RECOVERY_PLANNED","DRAFT"].includes(v);return `<span class="badge ${good?"good":bad?"bad":warn?"warn":""}">${esc(v)}</span>`};
 function save(){localStorage.setItem(LS_DOMAINS,JSON.stringify(state.domains));localStorage.setItem(LS_PROJECTS,JSON.stringify(state.projects));localStorage.setItem(LS_DECISIONS,JSON.stringify(state.decisions));localStorage.setItem(LS_OVERRIDES,JSON.stringify(state.overrides));localStorage.setItem(LS_PROTOCOL,JSON.stringify(state.protocolState))}
 function defaultDomain(){const d=state.data.product.domain;return {package_id:"domainpkg_demo_research",domain_id:d.domain_id,name:"Research Full Cycle",status:"ACTIVE",revisions:[{revision_id:"domainrev_demo_research_030",revision_number:1,semantic_version:d.version,status:"PUBLISHED",payload_hash:d.fingerprint,yaml_text:"domain_id: research.full-cycle\nversion: 0.3.0\n"}]}}
@@ -11,7 +28,9 @@ function allProjects(){return [...state.data.projects.map(p=>({...p,...(state.ov
 function publishedRevisions(){return allDomains().flatMap(d=>(d.revisions||[]).filter(r=>r.status==="PUBLISHED").map(r=>({...r,domain_id:d.domain_id,domain_name:d.name})))}
 function effectiveApproval(a){const d=state.decisions[a.proposal_id];return d?{...a,status:d.decision,local:true}:a}
 async function init(){
+ const purgedSensitiveState=purgeSensitiveLocalUatState();
  const res=await fetch("./demo-data.json",{cache:"no-store"});state.data=await res.json();
+ if(purgedSensitiveState) alert("Sensitive-looking material was removed from local UAT storage. Never enter API keys, tokens or passwords on GitHub Pages.");
  $("#projectSelect").addEventListener("change",e=>choose(e.target.value));
  document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>show(b.dataset.view)));
  $("#resetUat").onclick=()=>{if(confirm("Reset all local UAT domains, projects and decisions?")){localStorage.removeItem(LS_DOMAINS);localStorage.removeItem(LS_PROJECTS);localStorage.removeItem(LS_DECISIONS);localStorage.removeItem(LS_OVERRIDES);localStorage.removeItem(LS_PROTOCOL);state.domains=[];state.projects=[];state.decisions={};state.overrides={};state.protocolState={};choose(state.data.projects[0].id)}};
@@ -112,7 +131,7 @@ function renderDomains(){
  document.querySelectorAll(".publish-domain").forEach(b=>b.onclick=()=>{const d=state.domains.find(x=>x.package_id===b.dataset.pkg),r=d?.revisions.find(x=>x.revision_id===b.dataset.rev);if(r){r.status="PUBLISHED";save();render()}});
 }
 function openDomainDialog(){const id="uat.domain";$("#domainIdInput").value=id;$("#domainNameInput").value="UAT Domain";$("#domainYamlInput").value=`domain_id: ${id}\nversion: 0.1.0\ndescription: UAT-created domain\nartifact_types: []\ntrace_types: []\nworkunit_templates: []\nevidence_types: []\ngate_types: []\nfailure_types: []\nrecovery_policies: []\nroles: []\nauthority_policies: []\napproval_policies: []\nvalidity_rules: []\nloop_policy: {}\n`;$("#domainDialog").showModal()}
-function createDomain(){const id=$("#domainIdInput").value.trim(),name=$("#domainNameInput").value.trim(),yaml=$("#domainYamlInput").value;if(!id||!name||!yaml.includes("domain_id:")||!yaml.includes("version:"))return alert("Domain ID, name and YAML with domain_id/version are required.");if(allDomains().some(d=>d.domain_id===id))return alert("Domain ID already exists.");const version=(yaml.match(/version:\s*([^\n]+)/)||[])[1]?.trim()||"0.1.0";state.domains.push({package_id:uid("domainpkg"),domain_id:id,name,status:"ACTIVE",revisions:[{revision_id:uid("domainrev"),revision_number:1,semantic_version:version,status:"VALIDATED",payload_hash:"uat:"+uid("hash"),yaml_text:yaml}]});save();$("#domainDialog").close();renderDomains();show("domains")}
+function createDomain(){const id=$("#domainIdInput").value.trim(),name=$("#domainNameInput").value.trim(),yaml=$("#domainYamlInput").value;if(!id||!name||!yaml.includes("domain_id:")||!yaml.includes("version:"))return alert("Domain ID, name and YAML with domain_id/version are required.");if(containsSensitiveMaterial(yaml))return alert("GitHub Pages is public static hosting. Do not enter API keys, tokens, passwords or other secrets here.");if(allDomains().some(d=>d.domain_id===id))return alert("Domain ID already exists.");const version=(yaml.match(/version:\s*([^\n]+)/)||[])[1]?.trim()||"0.1.0";state.domains.push({package_id:uid("domainpkg"),domain_id:id,name,status:"ACTIVE",revisions:[{revision_id:uid("domainrev"),revision_number:1,semantic_version:version,status:"VALIDATED",payload_hash:"uat:"+uid("hash"),yaml_text:yaml}]});save();$("#domainDialog").close();renderDomains();show("domains")}
 function openProjectDialog(){const revs=publishedRevisions();$("#projectDomainSelect").innerHTML=revs.map(r=>`<option value="${r.revision_id}">${esc(r.domain_name)} · ${esc(r.semantic_version)}</option>`).join("");$("#projectNameInput").value="New UAT Project";$("#projectDialog").showModal()}
 function createProject(){const name=$("#projectNameInput").value.trim(),rid=$("#projectDomainSelect").value,rev=publishedRevisions().find(r=>r.revision_id===rid);if(!name||!rev)return alert("Project name and published domain revision are required.");const p={id:uid("project_uat"),name,tenant:"UAT Tenant",workspace:$("#projectWorkspaceInput").value||"UAT Workspace",status:"READY",local:true,audit_count:1,metrics:{pending_approvals:0,open_failures:0,active_jobs:0,phase_executions:0},phases:[],frontier:[],approvals:[],failures:[],distributed:{workers:[],jobs:[]},domain_binding:{domain_revision_id:rev.revision_id,domain_id:rev.domain_id,domain_name:rev.domain_name,semantic_version:rev.semantic_version,revision_status:"PUBLISHED"}};state.projects.push(p);save();$("#projectDialog").close();choose(p.id);show("dashboard")}
 init().catch(err=>{document.body.innerHTML=`<pre style="padding:30px;color:#ff7188">UAT failed: ${esc(err.message)}</pre>`});
