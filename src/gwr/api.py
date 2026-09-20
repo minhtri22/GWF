@@ -369,7 +369,7 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
     def product_meta():
         return {
             "product": "GWR Research Product Alpha",
-            "version": "0.8.4",
+            "version": "0.8.5",
             "domain_id": runtime.domain.domain_id,
             "backend": getattr(runtime.db, "backend_name", "unknown"),
             "capabilities": ["domain_sdk", "domain_registry", "research_study_lock", "software_delivery_domain", "linear_domain_orchestration", "pilot_profiles", "one_click_windows_install", "project_lifecycle", "project_archive", "skill_registry", "observable_agent_protocol", "protocol_driven_orchestration", "handoff_chain", "live_operational_events", "recovery_configuration_hierarchy", "auto_recovery", "human_recovery_approval", "plugin_registry", "github_sha_safe_commit", "standard_sha_qa", "process_inspector", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"],
