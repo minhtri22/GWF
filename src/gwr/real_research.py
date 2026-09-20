@@ -271,7 +271,7 @@ class RealResearchExecutor:
         return PhaseExecutionResult(artifacts=artifacts, evidence=self._evidence(c))
 
     def _phase_04_design_protocol(self, c):
-        artifacts={"protocol": {
+        protocol = {
             "experimental_design": {"type": "paired exact-enumeration comparison", "methods": ["wilson", "wald"]},
             "controls": ["same n,p grid", "same nominal confidence", "same clipping to [0,1]"],
             "independent_variables": ["method", "n", "p"],
@@ -284,8 +284,28 @@ class RealResearchExecutor:
             "statistical_plan": {"primary": "deterministic MAE threshold", "secondary": "two-sided exact sign test across paired grid-point errors", "caveat": "grid points are design points, not a random population sample"},
             "stopping_rules": ["complete all precommitted grid points", "stop on invalid implementation or missing metrics"],
             "pass_fail_pivot_rules": {"PASS": "all primary criteria satisfied", "FAIL": "any primary criterion fails", "PIVOT": "protocol invalidated or effect not measurable"},
-        }}
-        return PhaseExecutionResult(artifacts=artifacts, evidence=self._evidence(c))
+        }
+        protocol_hash = hashlib.sha256(
+            json.dumps(protocol, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        study_lock = {
+            "preregistration_sha256": protocol_hash,
+            "source_commit": os.environ.get("GWR_SOURCE_COMMIT", "0" * 40),
+            "frozen_artifacts": [{"name": "protocol", "sha256": protocol_hash}],
+            "fresh_data_policy": {"primary_results_inspected_only_after_lock": True, "analytic_grid_is_precommitted": True},
+            "seed_or_cohort_policy": {"primary": "deterministic exact grid", "replication_seed": 170917},
+            "metrics_and_gates": ["relative_mae_reduction>=0.20", "per_n_strict_improvement", "sign_test_p<0.05"],
+            "forbidden_adaptations": ["threshold_tuning", "metric_swap", "grid_change_after_outcome", "silent_recalibration"],
+            "amendment_policy": {"execution_only_before_outcome": True, "scientific_change_requires_new_lock": True},
+            "resource_limits": {"main_grid_points": 297, "repair_budget": 1},
+            "branch_stop_rules": ["FAIL closes frozen scientific claim", "PIVOT requires explicit new lineage"],
+            "repair_budget": 1,
+            "no_rescue_policy": True,
+        }
+        return PhaseExecutionResult(
+            artifacts={"protocol": protocol, "study_lock": study_lock},
+            evidence=self._evidence(c),
+        )
 
     def _phase_05_prepare_dataset_and_benchmark(self, c):
         ps=[round(i/100,2) for i in range(1,100)]
@@ -314,11 +334,16 @@ class RealResearchExecutor:
             "pilot_p_grid": pilot_ps,
             "recovery_revision": recovered,
         }
+        plan_hash = hashlib.sha256(json.dumps(plan, sort_keys=True).encode()).hexdigest()
         manifest={
-            "repository": "packaged source tree", "commit": "archive-manifest-sha256",
+            "repository": "packaged source tree", "commit": os.environ.get("GWR_SOURCE_COMMIT", "0" * 40),
             "environment": self._env(), "dependencies": ["Python>=3.11", "PyYAML", "pydantic", "fastapi"],
             "commands": plan["exact_commands"],
-            "config_hashes": {"experiment_plan": hashlib.sha256(json.dumps(plan,sort_keys=True).encode()).hexdigest()},
+            "config_hashes": {"experiment_plan": plan_hash},
+            "source_hashes": {"real_research_executor": hashlib.sha256(__file__.encode()).hexdigest()},
+            "artifact_hashes": {"experiment_plan": plan_hash},
+            "lineage_checkpoint": c.latest_checkpoint_id or "phase_06_pre_execution",
+            "execution_environment_lock": hashlib.sha256(json.dumps(self._env(), sort_keys=True).encode()).hexdigest(),
         }
         return PhaseExecutionResult(artifacts={"experiment_plan":plan,"implementation_manifest":manifest}, evidence=self._evidence(c, {"environment":self._env()}))
 
