@@ -3,14 +3,14 @@ const state={data:null,project:null,view:"dashboard",activeProposal:null,activeP
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 const uid=p=>p+"_"+Math.random().toString(36).slice(2,9);
+const SECRET_FIELD_PATTERN=/\b(api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|authorization)\b\s*[:=]/i;
 const SECRET_LIKE_PATTERNS=[
  /\bgithub_pat_[A-Za-z0-9_]{20,}\b/i,
  /\bgh[pousr]_[A-Za-z0-9]{20,}\b/i,
  /\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b/i,
- /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/i,
- /\b(api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|authorization)\b\s*[:=]\s*["']?[A-Za-z0-9_./+=:@-]{12,}/i
+ /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/i
 ];
-const containsSensitiveMaterial=value=>SECRET_LIKE_PATTERNS.some(re=>re.test(String(value??"")));
+const containsSensitiveMaterial=value=>{const text=String(value??"");return SECRET_FIELD_PATTERN.test(text)||SECRET_LIKE_PATTERNS.some(re=>re.test(text))};
 function purgeSensitiveLocalUatState(){
  const before=state.domains.length;
  state.domains=state.domains.filter(d=>!(d.revisions||[]).some(r=>containsSensitiveMaterial(r.yaml_text)));
