@@ -1,0 +1,43 @@
+name: Public Pages No-Secrets Gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "web/**"
+      - "tools/build_uat_site.py"
+      - "tools/check_public_site_secrets.py"
+      - "tests/test_public_pages_security.py"
+      - "tests/test_v08_uat_site.py"
+      - ".github/workflows/public-pages-security.yml"
+  push:
+    branches: ["main", "security/pages-no-secrets"]
+    paths:
+      - "web/**"
+      - "tools/build_uat_site.py"
+      - "tools/check_public_site_secrets.py"
+      - "tests/test_public_pages_security.py"
+      - "tests/test_v08_uat_site.py"
+      - ".github/workflows/public-pages-security.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  no-public-credentials:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Scan public source tree
+        run: python tools/check_public_site_secrets.py web
+      - name: Build public UAT bundle
+        run: python tools/build_uat_site.py --out dist/uat --commit "$GITHUB_SHA"
+      - name: Scan built public bundle
+        run: python tools/check_public_site_secrets.py dist/uat
+      - name: Run Pages security tests
+        run: python -m pip install pytest && python -m pytest -q tests/test_public_pages_security.py tests/test_v08_uat_site.py

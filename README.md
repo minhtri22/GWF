@@ -81,6 +81,8 @@ Normative/high-impact boundaries can still require human authority regardless of
 
 GWF supports SHA-safe repository changes through the GitHub plugin boundary.
 
+GitHub Pages is treated as a public/static surface and must never contain or accept API keys, tokens, passwords, private keys, or other provider credentials. Public assets are scanned before and after build. See `docs/PUBLIC_PAGES_SECURITY.md`.
+
 A governed write freezes branch/file SHAs, verifies them before write, passes expected head SHA to the provider, then re-fetches the commit/branch/files after write.
 
 Only `VERIFIED` is QA-complete; `COMMITTED` is not.

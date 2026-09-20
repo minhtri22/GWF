@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="color-scheme" content="dark light" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'" />
   <title>GWR v0.8.2 UAT</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
@@ -21,7 +22,7 @@
       <button class="nav-item" data-view="distributed">Distributed runtime</button>
       <button class="nav-item" data-view="domains">Domain Registry</button>
     </nav>
-    <div class="side-note"><strong>Static UAT mode</strong><p>Lifecycle mutations are simulated in browser localStorage. They never mutate GWR authoritative backend state.</p></div>
+    <div class="side-note"><strong>Static UAT mode</strong><p>Lifecycle mutations are simulated in browser localStorage. They never mutate GWR authoritative backend state.</p><p><strong>No credentials:</strong> this public site never accepts or stores API keys, tokens, passwords, or secrets.</p></div>
   </aside>
 
   <main>

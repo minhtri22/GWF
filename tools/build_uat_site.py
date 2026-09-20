@@ -6,6 +6,8 @@ import os
 import shutil
 from pathlib import Path
 
+from check_public_site_secrets import assert_public_tree_safe
+
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 REQUIRED = ["index.html", "styles.css", "app.js", "demo-data.json"]
@@ -36,6 +38,7 @@ def main():
     ap.add_argument("--commit", default=os.environ.get("GITHUB_SHA", "local"))
     args = ap.parse_args()
     out = Path(args.out)
+    assert_public_tree_safe(WEB)
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
@@ -53,9 +56,13 @@ def main():
         "commit": args.commit,
         "mode": "STATIC_UAT",
         "authoritative_backend": False,
+        "credential_policy": "PUBLIC_STATIC_NO_CREDENTIALS",
+        "accepts_api_keys": False,
+        "credential_storage": "NONE",
     }
     (out / "build-meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
-    print(json.dumps({"status": "PASS", "out": str(out), "files": sorted(p.name for p in out.iterdir()), "projects": len(data["projects"])}, indent=2))
+    assert_public_tree_safe(out)
+    print(json.dumps({"status": "PASS", "out": str(out), "files": sorted(p.name for p in out.iterdir()), "projects": len(data["projects"]), "credential_policy": meta["credential_policy"]}, indent=2))
 
 
 if __name__ == "__main__":
