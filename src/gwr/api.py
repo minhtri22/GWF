@@ -172,7 +172,7 @@ class GitHubExecuteBody(BaseModel):
 
 
 def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
-    app = FastAPI(title="Governed Workflow Runtime", version="0.8.4")
+    app = FastAPI(title="Governed Workflow Runtime", version="0.8.5")
 
     @app.exception_handler(GWRException)
     async def gwr_error(_, exc: GWRException):
@@ -327,7 +327,7 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
 
     @app.get('/health')
     def health():
-        return {"ok": True, "domain": runtime.domain.domain_id, "version": "0.8.4"}
+        return {"ok": True, "domain": runtime.domain.domain_id, "version": "0.8.5"}
 
     @app.get('/projects/{project_id}/audit')
     def audit(project_id: str, authorization: str | None = Header(default=None)):
@@ -372,7 +372,7 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
             "version": "0.8.4",
             "domain_id": runtime.domain.domain_id,
             "backend": getattr(runtime.db, "backend_name", "unknown"),
-            "capabilities": ["domain_sdk", "domain_registry", "project_lifecycle", "project_archive", "skill_registry", "observable_agent_protocol", "protocol_driven_orchestration", "handoff_chain", "live_operational_events", "recovery_configuration_hierarchy", "auto_recovery", "human_recovery_approval", "plugin_registry", "github_sha_safe_commit", "standard_sha_qa", "process_inspector", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"],
+            "capabilities": ["domain_sdk", "domain_registry", "research_study_lock", "software_delivery_domain", "linear_domain_orchestration", "pilot_profiles", "one_click_windows_install", "project_lifecycle", "project_archive", "skill_registry", "observable_agent_protocol", "protocol_driven_orchestration", "handoff_chain", "live_operational_events", "recovery_configuration_hierarchy", "auto_recovery", "human_recovery_approval", "plugin_registry", "github_sha_safe_commit", "standard_sha_qa", "process_inspector", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"],
         }
 
     @app.get('/product/domains/current')
