@@ -18,7 +18,9 @@ class LinearDomainOrchestrator(ResearchOrchestrator):
     state_key = "linear_domain_orchestrator_state"
     checkpoint_kind = "LINEAR_DOMAIN_ORCHESTRATOR"
     orchestration_audit_type = "LinearDomainOrchestration"
-    observe_prefix = "domain"
+    orchestration_started_event = "domain_orchestration_started"
+    orchestration_resumed_event = "domain_orchestration_resumed"
+    orchestration_paused_event = "domain_orchestration_paused"
 
     def __init__(
         self,
