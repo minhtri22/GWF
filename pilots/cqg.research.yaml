@@ -1,0 +1,55 @@
+pilot_id: cqg-next-study
+version: 0.1.0
+domain_path: domains/research.workflow.yaml
+target_repository: minhtri22/CQG
+default_branch: main
+mode: NEXT_STUDY
+baseline_policy: RESOLVE_AT_START
+purpose: >-
+  Govern the next new CQG study prospectively without rewriting or re-adjudicating
+  the already committed CQG research lineage.
+
+governance:
+  recovery_mode: AUTO
+  normative_changes_require_human: true
+  high_impact_recovery_requires_human: true
+  no_tune_to_pass: true
+  preserve_negative_results: true
+  lineage_policy: APPEND_ONLY
+  parent_evidence_policy: IMMUTABLE_REFERENCE
+
+research:
+  require_study_lock_before_fresh_outcomes: true
+  require_preregistration_hash: true
+  require_frozen_artifact_hashes: true
+  require_fresh_seed_or_cohort_policy: true
+  require_forbidden_adaptations: true
+  require_execution_amendment_boundary: true
+  require_branch_stop_rules: true
+  require_repair_budget: true
+  formal_outcomes: [PASS, FAIL, PIVOT]
+
+github:
+  write_policy: FEATURE_BRANCH_ONLY
+  branch_prefix: gwr/cqg-
+  expected_head_sha_policy: EXACT
+  post_commit_verification: true
+  direct_main_write: false
+
+adoption:
+  import_history: false
+  freeze_parent_main_sha_at_start: true
+  reference_files:
+    - lineage.md
+    - docs/RESEARCH_LINEAGE.md
+  note: >-
+    Historical CQG studies remain authoritative in CQG. GWF begins governance at
+    the next prospectively opened study and records the frozen CQG main SHA as
+    parent evidence.
+
+success_criteria:
+  - next study is locked before fresh outcomes
+  - all execution amendments are classified and hashed
+  - formal verdict follows frozen gates without rescue tuning
+  - lineage and repository SHA evidence are preserved
+  - final handoff contains exact resume state
