@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import secrets
 import subprocess
 import sys
 
@@ -116,6 +117,84 @@ def test_research_domain_v05_matches_frozen_study_workflow(tmp_path):
             (phase["phase_execution_id"],),
         )
         assert protocol["status"] == "COMPLETED"
+    rt.close()
+
+
+def test_research_multiple_normative_outputs_resume_without_duplicate_revisions(tmp_path):
+    domain_path = ROOT / "domains" / "research.workflow.yaml"
+    rt = GovernedWorkflowRuntime(
+        str(domain_path),
+        str(tmp_path / "research-v085-manual-approval.db"),
+        auth_secret=secrets.token_urlsafe(48),
+    )
+    project = rt.create_project("research-v085-manual-approval")
+    roles = sorted({w["executor_role"] for w in rt.domain.workunits()})
+    actors = _actors(rt, project, roles)
+    human = rt.governance.create_actor(
+        "HUMAN",
+        "v085-manual-approver",
+        ["human_approver"],
+        [project],
+    )
+    password = secrets.token_urlsafe(20)
+    username = "v085-manual-approver"
+    rt.auth.register_human(human, username, password)
+    token = rt.auth.authenticate(
+        username,
+        password,
+        client_metadata={"client": "v085-multi-normative-test"},
+    )
+
+    orch = ResearchOrchestrator(rt, actors)
+    result = orch.start(project, DeterministicResearchExecutor("pass"))
+    approvals = 0
+    safety = 0
+    while result["status"] == "PAUSED":
+        safety += 1
+        assert safety < 80, result
+        assert result["reason"] in {
+            "WAITING_APPROVAL",
+            "WAITING_HUMAN_CONFIRMATION",
+        }, result
+        proposal = rt.db.one(
+            "SELECT * FROM proposals WHERE project_id=? AND status='PENDING_APPROVAL' "
+            "ORDER BY created_at DESC LIMIT 1",
+            (project,),
+        )
+        assert proposal is not None, result
+        rt.governance.approve_proposal_authenticated(
+            proposal["proposal_id"],
+            token,
+            proposal["payload_hash"],
+        )
+        approvals += 1
+        result = orch.resume(
+            result["checkpoint_id"],
+            DeterministicResearchExecutor("pass"),
+        )
+
+    assert result["status"] == "COMPLETED"
+    assert result["outcome"] == "PASS"
+    assert approvals >= 2
+
+    for artifact_type in ("protocol", "study_lock"):
+        count = rt.db.one(
+            "SELECT COUNT(*) n FROM revisions r "
+            "JOIN artifacts a ON a.artifact_id=r.artifact_id "
+            "WHERE a.project_id=? AND a.artifact_type=?",
+            (project, artifact_type),
+        )["n"]
+        assert int(count) == 1, artifact_type
+
+    phase04 = rt.db.all(
+        "SELECT status FROM phase_executions "
+        "WHERE orchestration_id=? AND phase_id='phase_04_design_protocol' "
+        "ORDER BY started_at",
+        (result["orchestration_id"],),
+    )
+    assert [row["status"] for row in phase04].count("SUCCEEDED") == 1
+    assert len(phase04) >= 3
+    rt.auth.revoke(token)
     rt.close()
 
 
