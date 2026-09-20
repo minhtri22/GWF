@@ -67,7 +67,9 @@ class ResearchOrchestrator:
     state_key = "research_orchestrator_state"
     checkpoint_kind = "RESEARCH_ORCHESTRATOR"
     orchestration_audit_type = "ResearchOrchestration"
-    observe_prefix = "research"
+    orchestration_started_event = "orchestration_started"
+    orchestration_resumed_event = "orchestration_resumed"
+    orchestration_paused_event = "orchestration_paused"
 
     def __init__(
         self,
@@ -123,7 +125,7 @@ class ResearchOrchestrator:
             (oid, project_id, self.domain.domain_id, "RUNNING", self.phases[0]["id"], 0, None, 0, now, now, None, canonical_json(state)),
         )
         self.runtime.governance.append_audit(project_id, "SYSTEM", "ORCHESTRATION_STARTED", self.orchestration_audit_type, oid)
-        self.runtime.observe(f"{self.observe_prefix}_orchestration_started", project_id=project_id, orchestration_id=oid)
+        self.runtime.observe(self.orchestration_started_event, project_id=project_id, orchestration_id=oid)
         self.db.conn.commit()
         return self._drive(state, executor, max_steps=max_steps)
 
@@ -201,7 +203,7 @@ class ResearchOrchestrator:
             raise NotFound("Orchestration referenced by checkpoint not found")
         self.db.conn.execute("UPDATE orchestrations SET status='RUNNING',updated_at=?,metadata=? WHERE orchestration_id=?", (utcnow(), canonical_json(state), oid))
         self.runtime.governance.append_audit(state["project_id"], "SYSTEM", "ORCHESTRATION_RESUMED", self.orchestration_audit_type, oid, reason_code=checkpoint_id)
-        self.runtime.observe(f"{self.observe_prefix}_orchestration_resumed", project_id=state["project_id"], orchestration_id=oid, checkpoint_id=checkpoint_id)
+        self.runtime.observe(self.orchestration_resumed_event, project_id=state["project_id"], orchestration_id=oid, checkpoint_id=checkpoint_id)
         self.db.conn.commit()
         return self._drive(state, executor, max_steps=max_steps)
 
@@ -869,7 +871,7 @@ class ResearchOrchestrator:
     def _pause(self, state, reason, checkpoint_id=None):
         cp = checkpoint_id or self._checkpoint(state, self.phases[min(state["next_phase_index"], len(self.phases)-1)]["id"], reason, next_phase_index=state["next_phase_index"])
         self._update_orchestration(state, status="PAUSED", current_phase_id=self.phases[state["next_phase_index"]]["id"] if state["next_phase_index"] < len(self.phases) else None, terminal_checkpoint_id=cp)
-        self.runtime.observe(f"{self.observe_prefix}_orchestration_paused", project_id=state["project_id"], orchestration_id=state["orchestration_id"], reason=reason, checkpoint_id=cp, generation=state.get("generation"))
+        self.runtime.observe(self.orchestration_paused_event, project_id=state["project_id"], orchestration_id=state["orchestration_id"], reason=reason, checkpoint_id=cp, generation=state.get("generation"))
         return {"status": "PAUSED", "reason": reason, "orchestration_id": state["orchestration_id"], "project_id": state["project_id"], "checkpoint_id": cp, "outcome": state.get("outcome"), "generation": state.get("generation"), "pivot_count": state.get("pivot_count")}
 
     def _validate_reporting_payload(self, payload: dict[str, Any]):
