@@ -24,3 +24,8 @@ def test_uat_site_build_contains_product_surfaces(tmp_path):
     assert data["projects"][0]["failures"]
     assert meta["authoritative_backend"] is False
     assert meta["commit"] == "test-sha"
+    assert meta["credential_policy"] == "PUBLIC_STATIC_NO_CREDENTIALS"
+    assert meta["accepts_api_keys"] is False
+    assert meta["credential_storage"] == "NONE"
+    assert "No credentials:" in html
+    assert "connect-src 'self'" in html
