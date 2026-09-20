@@ -17,13 +17,11 @@ SECRET_PATTERNS = [
     ("openai_key", re.compile(r"\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b")),
     ("slack_token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b")),
     (
-        "secret_assignment",
+        "secret_field_assignment",
         re.compile(
             r"""(?ix)
             \b(api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|authorization)
-            \b\s*[:=]\s*
-            ["']?
-            [A-Za-z0-9_./+=:@-]{12,}
+            \b\s*[:=]
             """
         ),
     ),
