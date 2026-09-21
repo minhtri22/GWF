@@ -12,12 +12,19 @@ from typing import Any, Callable, Mapping, Sequence
 from urllib.parse import quote
 
 from .canonical import CanonicalModel, ExactRef, Provenance, canonical_hash, canonical_json
-from .engine import ProofOutcome, evaluate_goal, resolve_claim, transition_protected_resource
+from .engine import (
+    ProofOutcome,
+    evaluate_goal,
+    materialize_proof_result,
+    resolve_claim,
+    transition_protected_resource,
+)
 from .schema_registry import schema_model
 from .schemas import (
     Adjudication,
     AttemptState,
     BackendQualificationStatus,
+    ClaimGraph,
     ClaimResolution,
     ClaimResolutionPolicy,
     EvidenceCapsule,
@@ -41,12 +48,15 @@ from .schemas import (
     PackageManifest,
     PackageMember,
     PackageSeal,
+    ProofObligation,
     ProofResolution,
     ProofResult,
+    ProofRetryPolicy,
     ProtectedResource,
     RuntimeCapability,
     RuntimeCapabilityManifest,
     RuntimeMode,
+    DecisionRule,
     SynthesisResult,
 )
 
@@ -1176,6 +1186,16 @@ class StandaloneEvidenceLibrary:
     def require_capability(
         manifest: LibraryCapabilityManifest, capability_id: str
     ) -> None:
+        if (
+            manifest.backend_type != "STANDALONE"
+            or manifest.backend_id != "g2e-standalone-library"
+            or manifest.adapter_version != "0.1"
+            or manifest.runtime_version != RUNTIME_VERSION
+            or manifest.silent_fallback_allowed is not False
+        ):
+            raise UnsupportedCapabilityError(
+                "BACKEND_IDENTITY_MISMATCH:g2e-standalone-library"
+            )
         cap = next(
             (c for c in manifest.capabilities if c.capability_id == capability_id),
             None,
@@ -1196,13 +1216,79 @@ class StandaloneEvidenceLibrary:
         external_resolver: Callable[[PackageExternalReference], bytes | None] | None = None,
     ) -> str:
         self.require_capability(capability_manifest, "publish")
+        if capsule.source_claim_resolution == ClaimResolution.UNKNOWN:
+            raise StandaloneRuntimeError(
+                "source Claim resolution must be terminal before publication"
+            )
+        if capsule.source_package_type != "GOAL_RESULT":
+            raise UnsupportedCapabilityError(
+                "BACKEND_CAPABILITY_UNSUPPORTED:source_package_type:"
+                + capsule.source_package_type
+            )
         verified_source = verify_result_package(
             source_package_dir, external_resolver=external_resolver
         )
         if verified_source.seal.package_type != capsule.source_package_type:
             raise StandaloneRuntimeError("verified source package type mismatch")
+        if verified_source.seal.object_id != capsule.source_package_ref:
+            raise StandaloneRuntimeError("verified source package identity mismatch")
         if verified_source.seal.content_hash != capsule.source_package_seal_hash:
             raise StandaloneRuntimeError("verified source package seal mismatch")
+
+        source_root = Path(source_package_dir)
+        try:
+            source_goal = GoalContract.parse_authoritative(
+                json.loads((source_root / "GOAL.json").read_bytes())
+            )
+            source_graph = ClaimGraph.parse_authoritative(
+                json.loads((source_root / "CLAIM_GRAPH.json").read_bytes())
+            )
+        except Exception as exc:
+            raise StandaloneRuntimeError(
+                f"verified source package semantic content invalid: {exc}"
+            ) from exc
+        if source_goal.exact_ref() != capsule.source_goal_ref:
+            raise StandaloneRuntimeError("source Goal ref does not match sealed package")
+        source_claim = next(
+            (
+                claim
+                for claim in source_graph.claims
+                if claim.exact_ref() == capsule.source_claim_ref
+            ),
+            None,
+        )
+        if source_claim is None:
+            raise StandaloneRuntimeError("source Claim ref does not match sealed package")
+        resolution_path = (
+            source_root
+            / "claims"
+            / _safe_component(source_claim.object_id)
+            / "RESOLUTION.json"
+        )
+        if not resolution_path.is_file():
+            raise StandaloneRuntimeError(
+                "source Claim resolution missing from sealed package"
+            )
+        resolution_doc = json.loads(resolution_path.read_bytes())
+        try:
+            resolution_ref = ExactRef.model_validate(resolution_doc["claim_ref"])
+            resolution_value = ClaimResolution(resolution_doc["resolution"])
+        except Exception as exc:
+            raise StandaloneRuntimeError(
+                f"source Claim resolution content invalid: {exc}"
+            ) from exc
+        if resolution_ref != source_claim.exact_ref():
+            raise StandaloneRuntimeError(
+                "source Claim resolution ref does not match sealed package Claim"
+            )
+        if resolution_value == ClaimResolution.UNKNOWN:
+            raise StandaloneRuntimeError(
+                "source Claim resolution must be terminal before publication"
+            )
+        if resolution_value != capsule.source_claim_resolution:
+            raise StandaloneRuntimeError(
+                "source Claim resolution does not match sealed package"
+            )
         if contract.subject_ref != capsule.exact_ref():
             raise StandaloneRuntimeError("publication contract subject mismatch")
         if contract.source_package_type != capsule.source_package_type:
@@ -1586,12 +1672,114 @@ def export_goal_result_package(
     if goal_closure.claim_graph_ref != claim_graph.exact_ref():
         raise StandaloneRuntimeError("GoalClosureContract does not bind exact ClaimGraph")
     proof_by_id = {proof.object_id: proof for proof in proofs}
+    if len(proof_by_id) != len(tuple(proofs)):
+        raise StandaloneRuntimeError("duplicate packaged Proof IDs")
+
+    adjudication_by_ref = {
+        (
+            adjudication.object_id,
+            adjudication.revision_id,
+            adjudication.content_hash,
+        ): adjudication
+        for adjudication in adjudications
+    }
+    if len(adjudication_by_ref) != len(tuple(adjudications)):
+        raise StandaloneRuntimeError("duplicate packaged Adjudication refs")
+
+    retry_policy_by_ref = {
+        (dependency.object_id, dependency.revision_id, dependency.content_hash): dependency
+        for dependency in proof_dependencies
+        if isinstance(dependency, ProofRetryPolicy)
+    }
+    decision_rule_by_ref = {
+        (dependency.object_id, dependency.revision_id, dependency.content_hash): dependency
+        for dependency in proof_dependencies
+        if isinstance(dependency, DecisionRule)
+    }
+    evidence_refs = {
+        (record.object_id, record.revision_id, record.content_hash)
+        for record in evidence
+    }
+
     result_by_proof_id: dict[str, ProofResult] = {}
     proof_outcomes: dict[str, ProofOutcome] = {}
     for result in proof_results:
         proof = proof_by_id.get(result.proof_ref.object_id)
         if proof is None or proof.exact_ref() != result.proof_ref:
             raise StandaloneRuntimeError("ProofResult does not bind packaged exact Proof")
+        if proof.object_id in result_by_proof_id:
+            raise StandaloneRuntimeError("duplicate ProofResult for packaged Proof")
+
+        retry_key = (
+            result.retry_policy_ref.object_id,
+            result.retry_policy_ref.revision_id,
+            result.retry_policy_ref.content_hash,
+        )
+        retry_policy = retry_policy_by_ref.get(retry_key)
+        if (
+            retry_policy is None
+            or retry_policy.exact_ref() != proof.retry_policy_ref
+        ):
+            raise StandaloneRuntimeError(
+                "ProofResult RetryPolicy does not match packaged frozen Proof"
+            )
+
+        rule_key = (
+            proof.decision_rule_ref.object_id,
+            proof.decision_rule_ref.revision_id,
+            proof.decision_rule_ref.content_hash,
+        )
+        decision_rule = decision_rule_by_ref.get(rule_key)
+        if decision_rule is None:
+            raise StandaloneRuntimeError(
+                "frozen DecisionRule missing from packaged proof dependencies"
+            )
+
+        history: list[Adjudication] = []
+        for adjudication_ref in result.adjudication_refs:
+            key = (
+                adjudication_ref.object_id,
+                adjudication_ref.revision_id,
+                adjudication_ref.content_hash,
+            )
+            adjudication = adjudication_by_ref.get(key)
+            if adjudication is None:
+                raise StandaloneRuntimeError(
+                    "ProofResult adjudication history missing from decision ledger"
+                )
+            if adjudication.proof_ref != proof.exact_ref():
+                raise StandaloneRuntimeError(
+                    "ProofResult adjudication history binds different Proof"
+                )
+            if adjudication.decision_rule_hash != decision_rule.content_hash:
+                raise StandaloneRuntimeError(
+                    "Adjudication DecisionRule hash does not match frozen Proof"
+                )
+            for evidence_ref in adjudication.admitted_evidence_refs:
+                if (
+                    evidence_ref.object_id,
+                    evidence_ref.revision_id,
+                    evidence_ref.content_hash,
+                ) not in evidence_refs:
+                    raise StandaloneRuntimeError(
+                        "Adjudication admitted evidence missing from package"
+                    )
+            history.append(adjudication)
+
+        expected_result = materialize_proof_result(
+            proof,
+            retry_policy,
+            tuple(history),
+            invalid_attempt_count=result.invalid_attempt_count,
+            object_id=result.object_id,
+            revision_id=result.revision_id,
+            provenance=result.provenance,
+        )
+        if expected_result != result:
+            raise StandaloneRuntimeError(
+                "ProofResult does not match deterministic P2 closure replay"
+            )
+
         result_by_proof_id[proof.object_id] = result
         proof_outcomes[proof.object_id] = ProofOutcome(result.outcome.value)
 
@@ -1972,6 +2160,15 @@ class StandaloneRuntime:
         manifest: RuntimeCapabilityManifest,
         required: Sequence[str],
     ) -> None:
+        if (
+            manifest.runtime_id != RUNTIME_ID
+            or manifest.runtime_version != RUNTIME_VERSION
+            or manifest.runtime_mode != RuntimeMode.STANDALONE
+            or manifest.persistence_backend != "sqlite+filesystem"
+        ):
+            raise UnsupportedCapabilityError(
+                "RUNTIME_IDENTITY_MISMATCH:g2e-standalone"
+            )
         available = {
             cap.capability_id: cap.available for cap in manifest.capabilities
         }

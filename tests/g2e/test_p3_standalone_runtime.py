@@ -35,15 +35,19 @@ from g2e import (
     GoalRequirement,
     GoalVerdict,
     IndependencePolicy,
+    LibraryCapabilityManifest,
     LibraryPublicationContract,
     LibraryQueryContract,
     MetricPredicate,
     PackageExternalReference,
     ProofLifecycle,
     ProofObligation,
+    ProofResolution,
+    ProofResult,
     ProofRetryPolicy,
     ProtectedResource,
     Provenance,
+    RuntimeCapabilityManifest,
     RuntimeMode,
     canonical_hash,
 )
@@ -979,3 +983,109 @@ def test_result_package_derives_fail_from_proof_result_not_caller_claim(tmp_path
         (package_dir / "claims" / "claim-1" / "RESOLUTION.json").read_text()
     )
     assert claim_resolution["resolution"] == ClaimResolution.FAIL.value
+
+
+
+def test_package_rejects_forged_proof_result_not_backed_by_decision_ledger(tmp_path):
+    runtime = StandaloneRuntime(tmp_path / "runtime")
+    program = build_program()
+    report, admitted, adjudication, proof_result = execute_and_adjudicate(
+        runtime, program, score="0.60"
+    )
+    forged = ProofResult.sealed(
+        **{
+            **proof_result.model_dump(mode="python", exclude={"content_hash"}),
+            "revision_id": "forged-pass",
+            "outcome": ProofResolution.PASS,
+        }
+    )
+    with pytest.raises(StandaloneRuntimeError, match="deterministic P2 closure replay"):
+        export_goal_result_package(
+            tmp_path / "forged-package",
+            goal=program["goal"],
+            goal_closure=program["closure"],
+            claim_graph=program["graph"],
+            proofs=(program["proof"],),
+            proof_results=(forged,),
+            proof_dependencies=(
+                program["decision_rule"],
+                program["admission"],
+                program["retry"],
+                program["amendment"],
+                program["independence"],
+                program["resolution_policy"],
+            ),
+            evidence=(admitted,),
+            adjudications=(adjudication,),
+            reproducibility_manifest={},
+            package_lineage=runtime.store.events(),
+            provenance=P,
+        )
+
+
+def test_standalone_library_rejects_foreign_capability_manifest(tmp_path):
+    runtime = StandaloneRuntime(tmp_path)
+    qualified = qualified_library_manifest(runtime)
+    foreign = LibraryCapabilityManifest.sealed(
+        **{
+            **qualified.model_dump(mode="python", exclude={"content_hash"}),
+            "revision_id": "foreign",
+            "backend_id": "foreign-library",
+        }
+    )
+    with pytest.raises(UnsupportedCapabilityError, match="BACKEND_IDENTITY_MISMATCH"):
+        runtime.library.require_capability(foreign, "query")
+
+
+def test_standalone_runtime_rejects_foreign_runtime_manifest(tmp_path):
+    runtime = StandaloneRuntime(tmp_path)
+    manifest = runtime.capability_manifest(
+        provenance=P, qualification_refs=("fixture:p3",)
+    )
+    foreign = RuntimeCapabilityManifest.sealed(
+        **{
+            **manifest.model_dump(mode="python", exclude={"content_hash"}),
+            "revision_id": "foreign",
+            "runtime_id": "foreign-runtime",
+        }
+    )
+    with pytest.raises(UnsupportedCapabilityError, match="RUNTIME_IDENTITY_MISMATCH"):
+        runtime.require_capabilities(foreign, ("atomic_persistence",))
+
+
+def test_library_publication_rejects_capsule_resolution_mismatch_with_sealed_source(tmp_path):
+    runtime = StandaloneRuntime(tmp_path / "runtime")
+    program, package_dir, verification = build_source_package(
+        runtime, tmp_path, resolution=ClaimResolution.FAIL, suffix="mismatch"
+    )
+    capsule, contract = make_capsule(
+        program, verification, resolution=ClaimResolution.PASS
+    )
+    manifest = qualified_library_manifest(runtime)
+    with pytest.raises(StandaloneRuntimeError, match="resolution does not match"):
+        runtime.library.publish_capsule(
+            capsule,
+            contract,
+            {},
+            capability_manifest=manifest,
+            source_package_dir=package_dir,
+        )
+
+
+def test_library_publication_rejects_nonterminal_source_claim_resolution(tmp_path):
+    runtime = StandaloneRuntime(tmp_path / "runtime")
+    program, package_dir, verification = build_source_package(
+        runtime, tmp_path, resolution=ClaimResolution.FAIL, suffix="unknown"
+    )
+    capsule, contract = make_capsule(
+        program, verification, resolution=ClaimResolution.UNKNOWN
+    )
+    manifest = qualified_library_manifest(runtime)
+    with pytest.raises(StandaloneRuntimeError, match="must be terminal"):
+        runtime.library.publish_capsule(
+            capsule,
+            contract,
+            {},
+            capability_manifest=manifest,
+            source_package_dir=package_dir,
+        )
