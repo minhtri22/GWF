@@ -1157,3 +1157,62 @@ DG-W2                     = OPEN / NOT_EXECUTED
 DG-P7/P8                  = NOT_STARTED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+## 46. DG-W2 Wave 2 exit-gate findings
+
+### F-84 — LOW — RESOLVED
+
+- **Initial finding:** The first generated DG-W2 workflow was serialized with literal `\\n` sequences instead of YAML line breaks. GitHub therefore rejected the workflow before creating any job.
+- **Negative evidence:** workflow `35602654364` on HEAD `d5307d116b81f95bf8ee386685846522487cb249`; zero jobs created.
+- **Resolution:** Normalize workflow newlines only. No gate logic, P4/P5/P6 runtime, schema, frozen specification or acceptance invariant changed.
+- **Repair evidence:** commit `bdce1392db5e54597a12e5de02d4d916aa081b6f`; workflow `35602717476` PASS.
+- **Final status:** `RESOLVED`
+
+## 47. DG-W2 qualification checklist
+
+- [x] exact DG-P6 formal-close HEAD `0c09d16e6a1fe6e01081015f2d7490ba07e58316` used as base.
+- [x] DG-P4, DG-P5 and DG-P6 fixture matrices rerun on one exact HEAD.
+- [x] real DG-P4 provider gate PASS on exact Wave-2 HEAD.
+- [x] DG-P5 component gate PASS on exact Wave-2 HEAD.
+- [x] DG-P6 component gate PASS on exact Wave-2 HEAD.
+- [x] document identity remains stable across revision/path change.
+- [x] new revision identity is distinct.
+- [x] exact QA on R1 does not validate R2.
+- [x] R2 begins UNVERIFIED.
+- [x] R2 FAIL QA creates finding and effective BLOCKED.
+- [x] effective BLOCKED leaves kernel non-VALID.
+- [x] global KnowledgeKernel VALIDITY unchanged.
+- [x] document_findings is the only Wave-2 documentation-specific table.
+- [x] no duplicate document/revision/QA/validity/lifecycle subsystem.
+- [x] P4 has no migration.
+- [x] P5 has exactly one bounded migration.
+- [x] P6 has no migration.
+- [x] no Wave-3 authority/relation state created.
+- [x] targeted Knowledge/Execution/Decision/Persistence/P4/P5/P6 regressions PASS.
+- [x] full repository regression PASS.
+- [x] compile PASS.
+- [x] evidence artifact `10638479929` recorded.
+- [x] DG-P7/P8 remain NOT_STARTED.
+- [x] GAC remains locked until DG-W4 PASS.
+- [ ] committed handoff exact-head requalification PASS.
+
+## 48. Current aggregate state during DG-W2 handoff
+
+**OPEN = 0**
+
+All findings F-01 through F-84 are resolved.
+
+```text
+DG-P4                     = FORMALLY_CLOSED / REQUALIFIED_PASS
+DG-P5                     = FORMALLY_CLOSED / REQUALIFIED_PASS
+DG-P6                     = FORMALLY_CLOSED / REQUALIFIED_PASS
+DG-W2 qualification       = PASS
+DG-W2 QA HEAD             = bdce1392db5e54597a12e5de02d4d916aa081b6f
+DG-W2 workflow            = 35602717476 PASS
+DG-W2 artifact            = 10638479929
+DG-W2 handoff             = PENDING_COMMIT
+DG-W2 exact-head QA       = PENDING
+DG-W2 overall             = NOT_YET_FORMALLY_CLOSED
+DG-P7/P8                  = NOT_STARTED
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+```

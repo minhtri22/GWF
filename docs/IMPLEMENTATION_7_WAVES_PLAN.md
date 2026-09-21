@@ -303,12 +303,22 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 
 ### Wave 2 exit gate — DG-W2
 
-- [x] DG-P4 PASS
-- [x] DG-P5 PASS
-- [x] DG-P6 PASS
-- [ ] exact-revision QA invalidation demonstrated
-- [ ] no duplicate knowledge subsystem created without justification
-- [ ] handoff contains schema/migration decisions and compatibility evidence
+- **Status:** **QUALIFIED PASS / HANDOFF EXACT-HEAD QA PENDING**
+- **Qualified QA HEAD:** `bdce1392db5e54597a12e5de02d4d916aa081b6f`
+- **Workflow:** `35602717476` PASS
+- **Evidence artifact:** `10638479929`
+- **Digest:** `sha256:9fd5937a0c87dd51c9f6b10148bcea64fe1c0e65a9431b788a5933a7bd3f0f15`
+- **QA:** `docs/DOCUMENT_QA_DG_W2_WAVE2.md`
+- [x] DG-P4 PASS and same-head requalification PASS
+- [x] DG-P5 PASS and same-head requalification PASS
+- [x] DG-P6 PASS and same-head requalification PASS
+- [x] exact-revision QA invalidation demonstrated
+- [x] no duplicate knowledge subsystem created without justification
+- [x] handoff contains schema/migration decisions and compatibility evidence
+- [x] global KnowledgeKernel VALIDITY remains unchanged
+- [x] no Wave-3 authority/relation state introduced
+- [x] targeted regressions + full regression + compile PASS
+- [ ] committed handoff exact-head workflow PASS
 
 ---
 
@@ -973,13 +983,16 @@ DG-P6 — Lifecycle + validity mapping
       exact-head run 35598699495 PASS
        ↓
 DG-W2 — Wave 2 exit gate
-      OPEN / NOT_EXECUTED
+      QUALIFIED PASS
+      QA HEAD bdce1392db5e54597a12e5de02d4d916aa081b6f
+      workflow 35602717476 PASS
+      HANDOFF EXACT-HEAD QA PENDING
        ↓
 STOP
 ```
 
-DG-P6 is formally closed. The next roadmap frontier is the separate DG-W2 Wave 2 exit-gate qualification, which remains OPEN / NOT_EXECUTED.
+DG-W2 combined qualification has passed, but formal closure still requires exact-head requalification of the committed handoff package.
 
-DG-P7/P8 and later-wave semantics remain unopened until the applicable exit gate is explicitly authorized and passed.
+DG-P7/P8 and later-wave semantics remain unopened until DG-W2 is formally closed.
 
 GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.

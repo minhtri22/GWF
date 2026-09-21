@@ -161,3 +161,13 @@ Rules:
 - Evidence artifact: `10637792150`.
 - Evidence artifact digest: `sha256:370e34264c5ac33dec4c1303a6a8abc5e4e5065a4935fa70e46ae0128b89bfe4`.
 - Outcome: document lifecycle and effective validity are now qualified over existing Artifact/Revision/P5 primitives with zero schema migration and unchanged global KnowledgeKernel validity vocabulary.
+
+
+## 2026-09-21 — DG-W2 Wave 2 requalification completed
+
+- Result: DG-W2 combined Wave-2 requalification PASS.
+- Qualified QA HEAD: `bdce1392db5e54597a12e5de02d4d916aa081b6f`.
+- Workflow: `35602717476` PASS.
+- Evidence artifact: `10638479929`.
+- Evidence artifact digest: `sha256:9fd5937a0c87dd51c9f6b10148bcea64fe1c0e65a9431b788a5933a7bd3f0f15`.
+- Outcome: DG-P4/P5/P6 pass together on one exact HEAD; exact-revision QA invalidation, single-subsystem ownership and Wave-2 schema compatibility are jointly demonstrated.
