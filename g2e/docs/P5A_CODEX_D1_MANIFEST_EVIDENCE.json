@@ -1,0 +1,55 @@
+{
+  "schema": "G2E-P5A-CODEX-D1-MANIFEST-EVIDENCE-v1",
+  "status": "PASS",
+  "qualified_candidate": "2385a853ac37e6b8937a830e0441fbec6e6f7501",
+  "result_commit": "940e0c8248d2f2e7c84d1c039f2551fed1abc1a6",
+  "result_blob": "dda69bf5f690efb83cd92d184f8c5f8fe42c9de1",
+  "workflow": {
+    "run_id": 35599808982,
+    "job_id": 106332973410,
+    "conclusion": "PASS",
+    "artifact_id": 10637903885,
+    "artifact_digest": "sha256:4502122d331de20a472284f6a96710acab3caf3501d4b0391d623a98e65643a7"
+  },
+  "exact_sha_regressions": {
+    "p1": {
+      "run_id": 35599809068,
+      "conclusion": "PASS"
+    },
+    "p2": {
+      "run_id": 35599809106,
+      "conclusion": "PASS"
+    },
+    "p3": {
+      "run_id": 35599809084,
+      "conclusion": "PASS"
+    },
+    "p4": {
+      "run_id": 35599809011,
+      "conclusion": "PASS"
+    }
+  },
+  "blobs": {
+    "spec": "9243ed8ea21b5afae62bc1be62e2de0a539f16c4",
+    "materializer": "3fb03310561793faf2451437694e02b1cfe98b46",
+    "test": "1f95e2647a018503f97a6c79a68a1db8f1036d4d",
+    "workflow": "ee36ed396eedadbaf5375b810770047e88481236"
+  },
+  "manifest": {
+    "file_sha256": "0b5ad6c71ee5fa74a1ca917a943a38bd96687d7b5571901daa8a6acb8e927eac",
+    "exact_ref": {
+      "object_id": "agent-capability-manifest-codex-d1",
+      "revision_id": "a337b7433ebb351c-d1-v1",
+      "content_hash": "585d59b32457484e8d4706c3e79a94398569ab4bc3e39ff8fca5502541ece5c5"
+    },
+    "harness_ref": "sha256:a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8",
+    "d1_structural_only": true
+  },
+  "authorization": {
+    "d2_preregistration_authorized": true,
+    "d2_execution_authorized": false,
+    "codex_runtime_adapter_authorized": false,
+    "chatgpt_p5b_touched": false
+  },
+  "next_admissible_step": "P5A_D2_P5_FX_001_PREREGISTRATION_SPECIFICATION_ONLY"
+}
