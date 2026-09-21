@@ -165,8 +165,9 @@ def test_d1_adjudicator_never_executes_codex_or_g2e_runtime():
         "ProofObligation",
         "ExecutionAttemptEnvelope",
         "AgentBinding",
-        "thread/start",
-        "codex app-server",
+        "Popen(",
+        "os.system",
+        "shutil.which",
     )
     for token in forbidden:
         assert token not in source
