@@ -76,3 +76,55 @@ This invariant must remain green after remediation.
 `OPEN = 3`
 
 **P3 NOT CLOSED.**
+
+
+## Post-remediation semantic audit
+
+The implementation at `49e4c6e787bad65eb86ba84b3dd33c9ebc16d4ae` addresses the original F01–F03 mechanisms, but closure remains blocked by the findings below.
+
+## P3-QA-F04 — HIGH — OPEN — Goal package trusts caller-supplied ProofResult without replaying its exact closure
+
+The package builder checks that ProofResult points at a packaged Proof, but it does not prove that:
+- every ProofResult adjudication ref is present in the supplied decision ledger;
+- the exact RetryPolicy is present and matches both Proof and ProofResult;
+- the ProofResult outcome/reason codes are exactly what P2 `materialize_proof_result` would derive.
+
+A fabricated canonical ProofResult can therefore assert PASS/FAIL independently of the supplied adjudication history.
+
+**Required:** replay materialization from exact packaged Proof + RetryPolicy + ordered Adjudications and require exact ProofResult identity before Claim resolution.
+
+- [ ] RESOLVED
+
+## P3-QA-F05 — HIGH — OPEN — Standalone Library accepts capability manifests without exact backend identity binding
+
+`require_capability` checks only capability status. A manifest for another backend/adapter/runtime could be supplied and authorize standalone operations.
+
+**Required:** bind `backend_type=STANDALONE`, exact standalone backend ID, adapter version, runtime version and no-silent-fallback before capability status is considered.
+
+- [ ] RESOLVED
+
+## P3-QA-F06 — MEDIUM — OPEN — Runtime capability check does not bind exact standalone runtime identity
+
+`require_capabilities` checks availability flags but not runtime ID/version/mode. A foreign RuntimeCapabilityManifest could authorize standalone runtime operations.
+
+**Required:** exact runtime ID/version/mode/persistence identity validation before capability checks.
+
+- [ ] RESOLVED
+
+## P3-QA-F07 — HIGH — OPEN — Capsule source Claim terminality/resolution is not verified from sealed source package
+
+Publication verifies package integrity/type/seal, but does not prove that `source_goal_ref`, `source_claim_ref` and `source_claim_resolution` match the authoritative content inside the sealed GOAL_RESULT package. It also does not fail closed on `UNKNOWN` source Claim resolution.
+
+**Required for the P3 standalone publication path:**
+- support only source package types whose semantic verifier is implemented;
+- for GOAL_RESULT, parse authoritative GOAL/CLAIM_GRAPH/claim resolution files from the verified package;
+- exact source Goal/Claim refs and terminal resolution must match the capsule;
+- unsupported source package types fail closed instead of being accepted by seal-string agreement alone.
+
+- [ ] RESOLVED
+
+## Current closure state
+
+`OPEN = 7`
+
+P3 remains **NOT CLOSED** until F01–F07 are all demonstrated resolved on one exact qualified SHA.
