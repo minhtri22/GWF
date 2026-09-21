@@ -122,6 +122,17 @@ class RuntimeMode(StrEnum):
     GWF = "GWF"
 
 
+class AgentProfileAvailability(StrEnum):
+    AVAILABLE = "AVAILABLE"
+    UNAVAILABLE = "UNAVAILABLE"
+    UNQUALIFIED = "UNQUALIFIED"
+
+
+class BindingMode(StrEnum):
+    DYNAMIC = "DYNAMIC"
+    FROZEN = "FROZEN"
+
+
 class ExternalReferencePolicy(StrEnum):
     OFFLINE_ONLY = "OFFLINE_ONLY"
     VERIFY_WHEN_AVAILABLE = "VERIFY_WHEN_AVAILABLE"
@@ -443,6 +454,100 @@ class RuntimeCapabilityManifest(CanonicalModel):
         return self
 
 
+class AgentCapability(StrictModel):
+    capability_id: str = Field(min_length=1)
+    available: bool
+    qualification_refs: tuple[str, ...] = ()
+    limitations: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def _qualified_when_available(self):
+        if self.available and not self.qualification_refs:
+            raise ValueError("available agent capability requires qualification_refs")
+        return self
+
+
+class AgentCapabilityManifest(CanonicalModel):
+    schema_kind = "agent_capability_manifest"
+    agent_app: str = Field(min_length=1)
+    profile_version: str = Field(min_length=1)
+    harness_ref: str = Field(min_length=1)
+    exact_harness_revision: str | None = None
+    provider_ref: str | None = None
+    model_ref: str | None = None
+    transport_ref: str | None = None
+    availability: AgentProfileAvailability
+    capabilities: tuple[AgentCapability, ...] = ()
+    execution_constraints: tuple[str, ...] = ()
+    max_authority_scope: tuple[str, ...] = ()
+    credential_ref_classes: tuple[str, ...] = ()
+    external_session_attribution: bool = False
+    interruption_supported: bool = False
+    artifact_extraction_supported: bool = False
+    structured_output_supported: bool = False
+    status_normalization_supported: bool = False
+    discovery_evidence_refs: tuple[str, ...] = ()
+    limitations: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def _manifest_invariants(self):
+        ids = [c.capability_id for c in self.capabilities]
+        if len(ids) != len(set(ids)):
+            raise ValueError("agent capability IDs must be unique")
+        if self.availability == AgentProfileAvailability.AVAILABLE and not self.discovery_evidence_refs:
+            raise ValueError("AVAILABLE agent profile requires discovery_evidence_refs")
+        if len(self.max_authority_scope) != len(set(self.max_authority_scope)):
+            raise ValueError("max_authority_scope entries must be unique")
+        return self
+
+
+class AgentEquivalencePolicy(CanonicalModel):
+    schema_kind = "agent_equivalence_policy"
+    material_dimensions: tuple[str, ...]
+    allowed_substitution_dimensions: tuple[str, ...] = ()
+    substitution_requires_new_attempt: Literal[True] = True
+    prospective: Literal[True] = True
+
+    @model_validator(mode="after")
+    def _equivalence_invariants(self):
+        if not self.material_dimensions:
+            raise ValueError("material_dimensions must not be empty")
+        if len(self.material_dimensions) != len(set(self.material_dimensions)):
+            raise ValueError("material_dimensions must be unique")
+        if len(self.allowed_substitution_dimensions) != len(set(self.allowed_substitution_dimensions)):
+            raise ValueError("allowed_substitution_dimensions must be unique")
+        undeclared = set(self.allowed_substitution_dimensions) - set(self.material_dimensions)
+        if undeclared:
+            raise ValueError("allowed substitution dimensions must be declared material dimensions")
+        return self
+
+
+class AgentBinding(CanonicalModel):
+    schema_kind = "agent_binding"
+    resolved_attempt_id: str = Field(min_length=1)
+    agent_app: str = Field(min_length=1)
+    capability_manifest_ref: ExactRef
+    equivalence_policy_ref: ExactRef
+    binding_mode: BindingMode
+    harness_ref: str = Field(min_length=1)
+    provider_ref: str | None = None
+    model_ref: str | None = None
+    transport_ref: str | None = None
+    required_capability_ids: tuple[str, ...] = ()
+    execution_constraints: tuple[str, ...] = ()
+    authority_scope: tuple[str, ...] = ()
+    resolved_at: str
+    resolution_ref: str | None = None
+
+    @model_validator(mode="after")
+    def _binding_invariants(self):
+        if len(self.required_capability_ids) != len(set(self.required_capability_ids)):
+            raise ValueError("required_capability_ids must be unique")
+        if len(self.authority_scope) != len(set(self.authority_scope)):
+            raise ValueError("authority_scope entries must be unique")
+        return self
+
+
 class ExecutionAttemptEnvelope(CanonicalModel):
     schema_kind = "execution_attempt_envelope"
     attempt_id: str = Field(min_length=1)
@@ -457,10 +562,26 @@ class ExecutionAttemptEnvelope(CanonicalModel):
     model_ref: str | None = None
     harness_ref: str | None = None
     transport_ref: str | None = None
+    agent_binding_ref: ExactRef | None = None
     resource_identity: str | None = None
     protected_resource_refs: tuple[ExactRef, ...] = ()
     retry_policy_ref: ExactRef
     authority_scope: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def _agent_binding_identity_required(self):
+        identities = (
+            self.agent_app,
+            self.provider_ref,
+            self.model_ref,
+            self.harness_ref,
+            self.transport_ref,
+        )
+        if any(item is not None for item in identities) and self.agent_binding_ref is None:
+            raise ValueError("agent identity requires agent_binding_ref")
+        if self.agent_binding_ref is not None and (self.agent_app is None or self.harness_ref is None):
+            raise ValueError("agent_binding_ref requires agent_app and harness_ref")
+        return self
 
 
 class ExecutionResult(CanonicalModel):
@@ -478,9 +599,25 @@ class ExecutionResult(CanonicalModel):
     model_ref: str | None = None
     harness_ref: str | None = None
     transport_ref: str | None = None
+    agent_binding_ref: ExactRef | None = None
     technical_error_class: str | None = None
     technical_error_reason: str | None = None
     redaction_metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _agent_binding_identity_required(self):
+        identities = (
+            self.agent_app,
+            self.provider_ref,
+            self.model_ref,
+            self.harness_ref,
+            self.transport_ref,
+        )
+        if any(item is not None for item in identities) and self.agent_binding_ref is None:
+            raise ValueError("agent identity requires agent_binding_ref")
+        if self.agent_binding_ref is not None and (self.agent_app is None or self.harness_ref is None):
+            raise ValueError("agent_binding_ref requires agent_app and harness_ref")
+        return self
 
     @model_validator(mode="after")
     def _terminal_executor_state(self):
@@ -496,6 +633,54 @@ class ExecutionResult(CanonicalModel):
         if not self.started_at.endswith("Z") or not self.ended_at.endswith("Z"):
             raise ValueError("ExecutionResult timestamps must be RFC3339 UTC ending in Z")
         return self
+
+
+def validate_agent_binding_identity(
+    manifest: AgentCapabilityManifest,
+    equivalence_policy: AgentEquivalencePolicy,
+    binding: AgentBinding,
+    attempt: ExecutionAttemptEnvelope,
+    result: ExecutionResult | None = None,
+) -> None:
+    if binding.capability_manifest_ref != manifest.exact_ref():
+        raise ValueError("binding capability manifest reference mismatch")
+    if binding.equivalence_policy_ref != equivalence_policy.exact_ref():
+        raise ValueError("binding equivalence policy reference mismatch")
+    if binding.resolved_attempt_id != attempt.attempt_id:
+        raise ValueError("binding resolved attempt ID mismatch")
+    if attempt.agent_binding_ref != binding.exact_ref():
+        raise ValueError("attempt agent binding reference mismatch")
+
+    identity_fields = ("agent_app", "provider_ref", "model_ref", "harness_ref", "transport_ref")
+    for field in identity_fields:
+        manifest_value = getattr(manifest, field)
+        binding_value = getattr(binding, field)
+        attempt_value = getattr(attempt, field)
+        if field in {"agent_app", "harness_ref"} or manifest_value is not None:
+            if binding_value != manifest_value:
+                raise ValueError(f"binding {field} does not match manifest")
+        if attempt_value != binding_value:
+            raise ValueError(f"attempt {field} does not match binding")
+
+    capabilities = {cap.capability_id: cap for cap in manifest.capabilities}
+    for capability_id in binding.required_capability_ids:
+        capability = capabilities.get(capability_id)
+        if capability is None or not capability.available or not capability.qualification_refs:
+            raise ValueError(f"required capability unavailable or unqualified: {capability_id}")
+
+    if not set(binding.authority_scope).issubset(set(manifest.max_authority_scope)):
+        raise ValueError("binding authority scope exceeds manifest maximum")
+
+    if result is None:
+        return
+
+    if result.attempt_ref != attempt.exact_ref():
+        raise ValueError("result attempt reference mismatch")
+    if result.agent_binding_ref != binding.exact_ref():
+        raise ValueError("result agent binding reference mismatch")
+    for field in identity_fields:
+        if getattr(result, field) != getattr(binding, field):
+            raise ValueError(f"result {field} does not match binding")
 
 
 class EvidenceRecord(CanonicalModel):
@@ -911,6 +1096,9 @@ SCHEMA_MODELS = (
     ProofRetryPolicy,
     DecisionRule,
     RuntimeCapabilityManifest,
+    AgentCapabilityManifest,
+    AgentEquivalencePolicy,
+    AgentBinding,
     ExecutionResult,
     EvidenceAdmissionPolicy,
     IndependencePolicy,
