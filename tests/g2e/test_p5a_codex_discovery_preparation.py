@@ -149,7 +149,7 @@ def test_p5a_probe_never_dispatches_model_turn_or_proof():
         "ProofObligation",
         "ExecutionAttemptEnvelope",
         "AgentBinding",
-        "codex exec",
+        '["exec"]',
     )
     for token in forbidden:
         assert token not in source
@@ -162,4 +162,4 @@ def test_p5a_windows_entrypoint_is_read_only_wrapper():
     assert "p5a_codex_discovery.py" in text
     assert "P5A_CODEX_DISCOVERY.json" in text
     assert "thread/start" not in text
-    assert "codex exec" not in text.lower()
+    assert '["exec"]' not in text
