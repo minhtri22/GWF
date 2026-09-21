@@ -648,7 +648,7 @@ def test_result_package_seal_detects_mutation_and_unclassified_files(tmp_path):
     ].content_hash
 
     (package_dir / "GOAL.json").write_text("{}", encoding="utf-8")
-    with pytest.raises(PackageVerificationError, match="hash mismatch"):
+    with pytest.raises(PackageVerificationError, match="(size|hash) mismatch"):
         verify_goal_result_package(package_dir)
 
 
