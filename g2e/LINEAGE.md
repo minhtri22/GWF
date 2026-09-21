@@ -185,3 +185,16 @@
 - **Result:** P5A now has a qualified read-only discovery instrument for exact Codex harness evidence. D0 official documentation/source is explicitly separated from D1 actual-harness structural evidence and D2 bounded functional qualification. The probe captures exact executable/version/schema fingerprints plus app-server initialize handshake without model turn, ProofObligation dispatch, repository mutation, credentials or side effects. P1/P1.4/P2/P3/P4 regressions PASS.
 - **Implementation boundary:** Codex profile remains unavailable until D1 actual-harness evidence passes. No Codex runtime adapter, ChatGPT runtime, MCP/ARC execution path, or D2 functional task is authorized.
 - **Next:** execute the qualified P5A discovery probe on the exact target Codex harness, freeze `P5A_CODEX_DISCOVERY.json`, and adjudicate D1 before constructing the Codex AgentCapabilityManifest.
+
+
+### G2E-P5A.1 — Codex D1 Adjudication Lock
+
+- **Status:** PASS / ZERO-FRESH
+- **Qualified candidate:** `685739bf607ed456ace1bf723a352ab72a5237d3`
+- **Authoritative workflow:** `35593990611` / job `106314510193` — PASS
+- **Evidence artifact:** `10636246771`; digest `sha256:d844fcd43f3327c24f5ce7eede11df255895215cbeb84f64a485a216c9a9b184`
+- **Evidence closure:** `8a2ae060aafec0b4382b76f88812b0ecc8f2b530`
+- **Result:** PASS/FAIL/INVALID D1 adjudication semantics are frozen before any target Codex discovery evidence is consumed. The one-shot adjudicator verifies exact discovery schema, executable/version identity, schema-inventory digest, required protocol tokens, initialize handshake and sanitization, and contains no Codex/process/G2E execution path.
+- **No-rescue boundary:** after first D1 evidence, required tokens/verdict rules may not be changed, D0 documentation may not substitute for D1, and rerun-until-PASS/version-switch rescue is prohibited.
+- **Implementation boundary:** Codex profile is still not AVAILABLE; D2 and Codex runtime adapter remain NOT AUTHORIZED; ChatGPT P5B remains untouched.
+- **Next:** one exact target-harness P5A discovery run, freeze `P5A_CODEX_DISCOVERY.json`, then apply the frozen adjudicator once.
