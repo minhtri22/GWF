@@ -40,9 +40,10 @@ jobs:
           sha256sum -c "${ASSET}.sha256"
           mkdir -p /tmp/lychee-bin
           tar -xzf "${ASSET}" -C /tmp/lychee-bin
-          chmod +x /tmp/lychee-bin/lychee
-          echo "/tmp/lychee-bin" >> "$GITHUB_PATH"
-          /tmp/lychee-bin/lychee --version
+          BIN="/tmp/lychee-bin/lychee-x86_64-unknown-linux-gnu/lychee"
+          test -x "${BIN}"
+          echo "/tmp/lychee-bin/lychee-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
+          "${BIN}" --version
 
       - name: DG-P2 unit tests
         run: python -m pytest -q tests/test_document_validation_p2.py
@@ -50,7 +51,7 @@ jobs:
       - name: Real Lychee link smoke gate
         run: >-
           python tools/run_dg_p2_gate.py
-          --executable /tmp/lychee-bin/lychee
+          --executable /tmp/lychee-bin/lychee-x86_64-unknown-linux-gnu/lychee
           --out evidence/dg-p2/DG_P2_GATE.json
 
       - name: Assert P2 gate
