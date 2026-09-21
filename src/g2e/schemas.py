@@ -501,6 +501,48 @@ class AgentCapabilityManifest(CanonicalModel):
         return self
 
 
+class QualificationAuthorityGrant(CanonicalModel):
+    schema_kind = "qualification_authority_grant"
+    mode: Literal["QUALIFICATION_ONLY"] = "QUALIFICATION_ONLY"
+    proof_ref: ExactRef
+    capability_manifest_ref: ExactRef
+    attempt_id: str = Field(min_length=1)
+    target_capability_ids: tuple[str, ...]
+    authority_policy_ref: ExactRef
+    granted_role: str = Field(min_length=1)
+    granted_authority_scope: tuple[str, ...]
+    allowed_read_paths: tuple[str, ...] = ()
+    allowed_write_paths: tuple[str, ...] = ()
+    network_allowed: Literal[False] = False
+    interactive_approval_allowed: Literal[False] = False
+    single_attempt: Literal[True] = True
+    may_imply_capability_available: Literal[False] = False
+    may_be_reused_for_operational_binding: Literal[False] = False
+    qualification_lineage_ref: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _qualification_grant_invariants(self):
+        if not self.target_capability_ids:
+            raise ValueError("target_capability_ids must not be empty")
+        if len(self.target_capability_ids) != len(set(self.target_capability_ids)):
+            raise ValueError("target_capability_ids must be unique")
+        if not self.granted_authority_scope:
+            raise ValueError("granted_authority_scope must not be empty")
+        if len(self.granted_authority_scope) != len(set(self.granted_authority_scope)):
+            raise ValueError("granted_authority_scope must be unique")
+        for field_name, paths in (
+            ("allowed_read_paths", self.allowed_read_paths),
+            ("allowed_write_paths", self.allowed_write_paths),
+        ):
+            if len(paths) != len(set(paths)):
+                raise ValueError(f"{field_name} must be unique")
+            for path in paths:
+                parts = path.replace("\\", "/").split("/")
+                if not path or path.startswith(("/", "\\")) or ":" in parts[0] or ".." in parts:
+                    raise ValueError(f"{field_name} entries must be relative traversal-free paths")
+        return self
+
+
 class AgentEquivalencePolicy(CanonicalModel):
     schema_kind = "agent_equivalence_policy"
     material_dimensions: tuple[str, ...]
@@ -534,6 +576,8 @@ class AgentBinding(CanonicalModel):
     model_ref: str | None = None
     transport_ref: str | None = None
     required_capability_ids: tuple[str, ...] = ()
+    qualification_authority_ref: ExactRef | None = None
+    qualification_target_capability_ids: tuple[str, ...] = ()
     execution_constraints: tuple[str, ...] = ()
     authority_scope: tuple[str, ...] = ()
     resolved_at: str
@@ -543,6 +587,14 @@ class AgentBinding(CanonicalModel):
     def _binding_invariants(self):
         if len(self.required_capability_ids) != len(set(self.required_capability_ids)):
             raise ValueError("required_capability_ids must be unique")
+        if len(self.qualification_target_capability_ids) != len(set(self.qualification_target_capability_ids)):
+            raise ValueError("qualification_target_capability_ids must be unique")
+        if set(self.required_capability_ids) & set(self.qualification_target_capability_ids):
+            raise ValueError("qualification targets must not overlap required capabilities")
+        has_grant = self.qualification_authority_ref is not None
+        has_targets = bool(self.qualification_target_capability_ids)
+        if has_grant != has_targets:
+            raise ValueError("qualification authority ref and target capabilities must appear together")
         if len(self.authority_scope) != len(set(self.authority_scope)):
             raise ValueError("authority_scope entries must be unique")
         if not self.resolved_at.endswith("Z"):
@@ -673,6 +725,108 @@ def validate_agent_binding_identity(
 
     if not set(binding.authority_scope).issubset(set(manifest.max_authority_scope)):
         raise ValueError("binding authority scope exceeds manifest maximum")
+
+    if result is None:
+        return
+
+    if result.attempt_ref != attempt.exact_ref():
+        raise ValueError("result attempt reference mismatch")
+    if result.agent_binding_ref != binding.exact_ref():
+        raise ValueError("result agent binding reference mismatch")
+    for field in identity_fields:
+        if getattr(result, field) != getattr(binding, field):
+            raise ValueError(f"result {field} does not match binding")
+
+
+def validate_qualification_agent_binding_identity(
+    manifest: AgentCapabilityManifest,
+    equivalence_policy: AgentEquivalencePolicy,
+    grant: QualificationAuthorityGrant,
+    authority_policy: AuthorityPolicy,
+    proof: ProofObligation,
+    binding: AgentBinding,
+    attempt: ExecutionAttemptEnvelope,
+    result: ExecutionResult | None = None,
+    *,
+    expected_allowed_read_paths: tuple[str, ...] | None = None,
+    expected_allowed_write_paths: tuple[str, ...] | None = None,
+) -> None:
+    if manifest.availability != AgentProfileAvailability.AVAILABLE:
+        raise ValueError("agent capability manifest is not AVAILABLE")
+    if proof.lifecycle not in {ProofLifecycle.FROZEN, ProofLifecycle.AUTHORIZED}:
+        raise ValueError("qualification proof must be FROZEN or AUTHORIZED")
+    if grant.proof_ref != proof.exact_ref():
+        raise ValueError("qualification grant proof reference mismatch")
+    if grant.capability_manifest_ref != manifest.exact_ref():
+        raise ValueError("qualification grant capability manifest reference mismatch")
+    if grant.authority_policy_ref != authority_policy.exact_ref():
+        raise ValueError("qualification grant authority policy reference mismatch")
+    if grant.attempt_id != attempt.attempt_id:
+        raise ValueError("qualification grant attempt ID mismatch")
+    if binding.qualification_authority_ref != grant.exact_ref():
+        raise ValueError("binding qualification authority reference mismatch")
+    if tuple(binding.qualification_target_capability_ids) != tuple(grant.target_capability_ids):
+        raise ValueError("binding qualification target capabilities mismatch")
+    if binding.capability_manifest_ref != manifest.exact_ref():
+        raise ValueError("binding capability manifest reference mismatch")
+    if binding.equivalence_policy_ref != equivalence_policy.exact_ref():
+        raise ValueError("binding equivalence policy reference mismatch")
+    if binding.resolved_attempt_id != attempt.attempt_id:
+        raise ValueError("binding resolved attempt ID mismatch")
+    if attempt.proof_ref != proof.exact_ref():
+        raise ValueError("attempt proof reference mismatch")
+    if attempt.agent_binding_ref != binding.exact_ref():
+        raise ValueError("attempt agent binding reference mismatch")
+    if tuple(attempt.authority_scope) != tuple(binding.authority_scope):
+        raise ValueError("attempt authority scope must equal binding authority scope")
+
+    identity_fields = ("agent_app", "provider_ref", "model_ref", "harness_ref", "transport_ref")
+    for field in identity_fields:
+        manifest_value = getattr(manifest, field)
+        binding_value = getattr(binding, field)
+        attempt_value = getattr(attempt, field)
+        if binding_value != manifest_value:
+            raise ValueError(f"binding {field} does not match manifest")
+        if attempt_value != binding_value:
+            raise ValueError(f"attempt {field} does not match binding")
+
+    capabilities = {cap.capability_id: cap for cap in manifest.capabilities}
+    for capability_id in binding.required_capability_ids:
+        capability = capabilities.get(capability_id)
+        if capability is None or not capability.available or not capability.qualification_refs:
+            raise ValueError(f"required capability unavailable or unqualified: {capability_id}")
+
+    for capability_id in binding.qualification_target_capability_ids:
+        capability = capabilities.get(capability_id)
+        if capability is None:
+            raise ValueError(f"qualification target capability missing: {capability_id}")
+        if capability.available:
+            raise ValueError(f"qualification target already available: {capability_id}")
+
+    if set(binding.required_capability_ids) & set(binding.qualification_target_capability_ids):
+        raise ValueError("qualification targets overlap required capabilities")
+
+    policy_actions: dict[str, set[str]] = {}
+    for action in authority_policy.actions:
+        policy_actions.setdefault(action.action, set()).update(action.allowed_roles)
+    for action_name in grant.granted_authority_scope:
+        allowed_roles = policy_actions.get(action_name)
+        if allowed_roles is None:
+            raise ValueError(f"qualification authority action absent from policy: {action_name}")
+        if grant.granted_role not in allowed_roles:
+            raise ValueError(f"qualification role not permitted for action: {action_name}")
+
+    effective_authority = set(manifest.max_authority_scope) | set(grant.granted_authority_scope)
+    if not set(binding.authority_scope).issubset(effective_authority):
+        raise ValueError("qualification binding authority exceeds manifest plus grant")
+    outside_manifest = set(binding.authority_scope) - set(manifest.max_authority_scope)
+    if not outside_manifest.issubset(set(grant.granted_authority_scope)):
+        raise ValueError("qualification binding authority outside manifest is not granted")
+
+    if expected_allowed_read_paths is not None and tuple(grant.allowed_read_paths) != tuple(expected_allowed_read_paths):
+        raise ValueError("qualification grant read path contract mismatch")
+    if expected_allowed_write_paths is not None and tuple(grant.allowed_write_paths) != tuple(expected_allowed_write_paths):
+        raise ValueError("qualification grant write path contract mismatch")
 
     if result is None:
         return
@@ -1100,6 +1254,7 @@ SCHEMA_MODELS = (
     DecisionRule,
     RuntimeCapabilityManifest,
     AgentCapabilityManifest,
+    QualificationAuthorityGrant,
     AgentEquivalencePolicy,
     AgentBinding,
     ExecutionResult,
