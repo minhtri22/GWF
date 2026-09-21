@@ -1,0 +1,113 @@
+{
+  "schema": "G2E-P4L-CAPABILITY-DEPENDENCY-AUDIT-v1",
+  "status": "CLOSED",
+  "implementation_authorized": false,
+  "audit_start_head": "dec4c73ad15e9ee0a5883dee4a35bf6f7621bf89",
+  "audit_document_commit": "5d56c54d505b0173bc6d5152250089ca0a4fac2d",
+  "audit_document_blob": "c4af132c10dffaee192e942f8d8c554e8970b263",
+  "p4_qualified_implementation": "1f6d49957c0c0dffa7b83c11caebed4ab2b90e0b",
+  "g2e_library_mapping_blob": "24009aba306c97102366d59070db952168e736de",
+  "governing_gwf_reconciliation": {
+    "commit": "be7d606c64a97d9525d1f72d744fe5b7a336ff0c",
+    "plan_blob": "229decfb067ead7ef38d51012b06abf69cc12fc0",
+    "gac_spec_blob": "831a4f9260ff6a1f74d531d9d24a91cdb6feff7e",
+    "gac_integration_boundary_blob": "2fef77627127bf58c6376202f96de681d5b3050a",
+    "reference_acquisition_spec_blob": "110dae0b492b56492c52eec2dfc64a8d2070d966",
+    "gac_reconciliation_qa_blob": "624bc36f9012af92711f80b2ee1d6157b358f570",
+    "cross_document_qa_blob": "fe5e076c34f7665bb0d6cd354ae779b83e18a29a",
+    "runtime_qualification": false
+  },
+  "latest_documentation_governance_execution": {
+    "branch": "v0.8.6-dg-p5-qa-finding-persistence",
+    "branch_head_observed": "58a4cf5f0ca33ca8e15513eb07234dc575b097bc",
+    "handoff_blob": "2bd030d3e73847a60207dffe2d2b7f98685e73f4",
+    "plan_blob": "33b3c91af37dba3da8335cecb0ee6d913da53a98",
+    "qualified_implementation_head": "fda9f7b3c5486f629e47f13652a758de158f7d22",
+    "qualification_workflow": 35584865418,
+    "qualification_artifact": 10631014201,
+    "qualification_artifact_digest": "sha256:feb5203fafaac98640569a1d0816b6626fe7279214dfed2d41488f819f2c852e",
+    "formal_close_handoff_head": "dc4e9d721bf9ee7f8bca16142f239c9fbc8364f9",
+    "formal_close_workflow": 35585124780,
+    "formal_close_artifact": 10631794399,
+    "formal_close_artifact_digest": "sha256:a468ca9ee878606653c2f7a46b6ff015f50f67832c8ea5f149a6d73b05ef1703",
+    "next_roadmap_item": "DG-P6",
+    "dg_w2_open": true,
+    "gac_locked_until_dg_w4": true
+  },
+  "branch_inventory": {
+    "count": 29,
+    "dg_p6_or_later_branch_present": false,
+    "dg_w2_w3_w4_qualification_branch_present": false,
+    "gac_runtime_implementation_branch_present": false,
+    "reference_acquisition_runtime_branch_present": false,
+    "note": "Branch absence is corroborating evidence only; final gate adjudication is based on exact handoff/plan dependencies and absence of qualifying gate evidence."
+  },
+  "base_opening_predicate": {
+    "DG-W4": false,
+    "GAC-P0": false,
+    "GAC-P1": false,
+    "GAC-P4B": false,
+    "result": false
+  },
+  "gate_adjudication": {
+    "DG-W4": {
+      "required_for_base_p4l": true,
+      "status": "NOT_QUALIFIED",
+      "reason_code": "P4L-AUDIT-DG-W4-NOT-PASS"
+    },
+    "GAC-P0": {
+      "required_for_base_p4l": true,
+      "status": "BLOCKED_BY_DG_W4",
+      "reason_code": "P4L-AUDIT-GAC-P0-BLOCKED"
+    },
+    "GAC-P1": {
+      "required_for_base_p4l": true,
+      "status": "BLOCKED_BY_GAC_P0_AND_DG_W4",
+      "reason_code": "P4L-AUDIT-GAC-P1-BLOCKED"
+    },
+    "GAC-P4B": {
+      "required_for_base_p4l": true,
+      "status": "NOT_QUALIFIED",
+      "reason_code": "P4L-AUDIT-GAC-P4B-NOT-PASS"
+    },
+    "GAC-P2A": {
+      "required_for_base_p4l": false,
+      "trigger": "ObjectRef subjects requested",
+      "status": "CONDITIONAL_UNAVAILABLE"
+    },
+    "DG-GAC-W5": {
+      "required_for_base_p4l": false,
+      "trigger": "cross-project Shared Library capability requested",
+      "status": "NOT_QUALIFIED",
+      "transitive_blockers": ["DG-P17..DG-P20", "GAC-P0", "GAC-P1", "GAC-P2A", "GAC-P4A"]
+    },
+    "RA-P1C": {
+      "required_for_base_p4l": false,
+      "trigger": "PRD-13 research-curated GWF_CATALOG discovery requested",
+      "status": "NOT_REQUESTED_AND_NOT_QUALIFIED"
+    },
+    "RA-GAC-W6": {
+      "required_for_base_p4l": false,
+      "trigger": "full research workflow Shared Library bridge requested",
+      "status": "NOT_REQUESTED_AND_NOT_QUALIFIED"
+    },
+    "GAC-P3": {
+      "required_for_base_p4l": false,
+      "trigger": "optional FTS/vector/external search requested",
+      "status": "OPTIONAL_UNAVAILABLE"
+    }
+  },
+  "blocking_reason_codes": [
+    "P4L-AUDIT-DG-W4-NOT-PASS",
+    "P4L-AUDIT-GAC-P0-BLOCKED",
+    "P4L-AUDIT-GAC-P1-BLOCKED",
+    "P4L-AUDIT-GAC-P4B-NOT-PASS"
+  ],
+  "next_external_dependency_frontier": "DG-P6",
+  "p5_dependency_note": {
+    "p4l_is_hard_dependency_of_prd09": false,
+    "prd09_hard_dependency": "PRD-07",
+    "prd09_integration_dependency": "PRD-08",
+    "p5_authorized_by_this_audit": false
+  }
+}
