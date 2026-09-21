@@ -1,0 +1,140 @@
+name: G2E P5A D2 P5-FX-001 Preimplementation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - "g2e/docs/P5A_D2_P5_FX_001_PREIMPLEMENTATION_QUALIFICATION.md"
+      - "scripts/g2e/p5a_d2_p5_fx_001_preregister.py"
+      - "tests/g2e/test_p5a_d2_p5_fx_001_preimplementation.py"
+      - ".github/workflows/g2e-p5a-d2-p5-fx-001-preimplementation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  p5a-d2-preimplementation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+      BASELINE_SHA: "3d2206ad06a84bb78ee81983dfa06f8cae2cf002"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Verify zero-fresh bounded diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$BASELINE_SHA^{commit}"
+          mapfile -t changed < <(git diff --name-only "$BASELINE_SHA"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            ".github/workflows/g2e-p5a-d2-p5-fx-001-preimplementation.yml"
+            "g2e/docs/P5A_D2_P5_FX_001_PREIMPLEMENTATION_QUALIFICATION.md"
+            "scripts/g2e/p5a_d2_p5_fx_001_preregister.py"
+            "tests/g2e/test_p5a_d2_p5_fx_001_preimplementation.py"
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for item in "${allowed[@]}"; do
+              if [[ "$path" == "$item" ]]; then ok=true; break; fi
+            done
+            if [[ "$ok" != true ]]; then
+              echo "Out-of-scope P5A D2 preimplementation mutation: $path" >&2
+              exit 1
+            fi
+          done
+          if git diff --name-only "$BASELINE_SHA"...HEAD | grep -E '^(src/g2e|src/gwr)/'; then
+            echo "D2 preimplementation must not mutate runtime/core" >&2
+            exit 1
+          fi
+          if git ls-files | grep -E '(^|/)P5A_D2_(EXECUTION_RESULT|ADJUDICATION|RESULT)\.json$'; then
+            echo "Fresh D2 outcome evidence exists before lock" >&2
+            exit 1
+          fi
+
+      - name: Compile
+        run: python -m compileall -q src/g2e src/gwr scripts/g2e/p5a_d2_p5_fx_001_preregister.py
+
+      - name: Run P1 regression
+        run: pytest -q tests/g2e/test_p1_core_schemas.py
+
+      - name: Run P1.4 regression
+        run: pytest -q tests/g2e/test_p1_4_agent_binding.py
+
+      - name: Run P2 regression
+        run: pytest -q tests/g2e/test_p2_deterministic_core.py
+
+      - name: Run P3 regression
+        run: pytest -q tests/g2e/test_p3_standalone_runtime.py
+
+      - name: Run P4 regression
+        run: pytest -q tests/g2e/test_p4_gwf_adapter.py
+
+      - name: Run D2 zero-fresh qualification
+        run: pytest -q tests/g2e/test_p5a_d2_p5_fx_001_preimplementation.py
+
+      - name: Materialize preregistration pack
+        run: python scripts/g2e/p5a_d2_p5_fx_001_preregister.py --output P5A_D2_P5_FX_001_PREREGISTRATION.json
+
+      - name: Emit qualification report
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, json, subprocess
+          from pathlib import Path
+
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          pack_path = Path("P5A_D2_P5_FX_001_PREREGISTRATION.json")
+          raw = pack_path.read_bytes()
+          pack = json.loads(raw)
+          assert pack["execution_admission"]["authorized"] is False
+          assert pack["execution_admission"]["reason"] == "D2-F01"
+          assert pack["model_turn_authorized"] is False
+          assert pack["runtime_adapter_authorized"] is False
+
+          report = {
+              "schema": "G2E-P5A-D2-P5-FX-001-PREIMPLEMENTATION-v1",
+              "candidate_sha": git("rev-parse", "HEAD"),
+              "baseline_sha": "3d2206ad06a84bb78ee81983dfa06f8cae2cf002",
+              "spec_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2_P5_FX_001_PREIMPLEMENTATION_QUALIFICATION.md"),
+              "builder_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2_p5_fx_001_preregister.py"),
+              "test_blob": git("rev-parse", "HEAD:tests/g2e/test_p5a_d2_p5_fx_001_preimplementation.py"),
+              "workflow_blob": git("rev-parse", "HEAD:.github/workflows/g2e-p5a-d2-p5-fx-001-preimplementation.yml"),
+              "preregistration_file_sha256": hashlib.sha256(raw).hexdigest(),
+              "proof_ref": pack["refs"]["proof_obligation"],
+              "preflight_binding_ref": pack["refs"]["preflight_agent_binding"],
+              "input_sha256": pack["fixture"]["input_sha256"],
+              "task_sha256": pack["fixture"]["task_sha256"],
+              "adjudication": "SPEC_PASS_EXECUTION_BLOCKED",
+              "blocking_finding": "D2-F01",
+              "model_turn_authorized": False,
+              "runtime_adapter_authorized": False,
+          }
+          Path("p5a_d2_preimplementation_report.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p5a-d2-p5-fx-001-preimplementation
+          path: |
+            P5A_D2_P5_FX_001_PREREGISTRATION.json
+            p5a_d2_preimplementation_report.json
+          if-no-files-found: error
