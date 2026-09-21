@@ -351,3 +351,46 @@ All findings F-01 through F-36 recorded in this checklist are resolved. The docu
 **OPEN = 0**
 
 All findings F-01 through F-42 recorded in this checklist are resolved.
+
+## 11. DG-P0 implementation findings
+
+### F-43 — MEDIUM — RESOLVED
+
+- **Initial finding:** The first real-tool gate assumed a successful `markdownlint-cli2 --help` probe must exit 0, while pinned markdownlint-cli2 0.23.3 intentionally exits 2 after printing the valid banner.
+- **Remediation:** The probe accepts only 0 or 2 when the exact version banner parses successfully; a regression test covers exit-code-2 behavior.
+- **Evidence:** run `35560396897` → repair `cc2b15adb8d5ad0a5ee855e77ae93b6043bbe826` → PASS run `35560545865`.
+- **Final status:** `RESOLVED`
+
+### F-44 — HIGH — RESOLVED
+
+- **Initial finding:** markdownlint default formatter output may include `[Context: "..."]` with raw source text, which could leak document content or secrets if normalized findings persisted it.
+- **Remediation:** Normalized finding messages remove Context excerpts; a regression test verifies `SECRET_TOKEN=abc` is not retained.
+- **Final status:** `RESOLVED`
+
+## 12. DG-P0 completion checklist
+
+- [x] PLAN-QA exact dependency PASS.
+- [x] DIG-SPEC exact dependency identified.
+- [x] markdownlint-cli2 exact version pinned to 0.23.3.
+- [x] config identity/hash recorded.
+- [x] provider-neutral adapter contract implemented.
+- [x] exact subject hashes recorded.
+- [x] valid real fixture PASS.
+- [x] invalid real fixture emits a structural finding.
+- [x] missing validator is NOT_EVALUATED, not document FAIL.
+- [x] source mutation is detected.
+- [x] raw Context source excerpt is not persisted.
+- [x] real pinned executable smoke PASS.
+- [x] P0 unit tests 10/10 PASS.
+- [x] bounded regression 24/24 PASS.
+- [x] compile PASS.
+- [x] first failed real-tool run preserved.
+- [x] schema/migration changes = NONE.
+- [x] handoff records explicit non-scope and rollback.
+- [x] authorization frontier stops after DG-P0.
+
+## 13. Current aggregate status after DG-P0
+
+**OPEN = 0**
+
+All findings F-01 through F-44 recorded in this checklist are resolved. DG-P1 remains unauthorized.
