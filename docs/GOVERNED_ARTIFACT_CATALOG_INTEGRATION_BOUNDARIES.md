@@ -46,6 +46,18 @@ Ranking/search score returns candidates. It never establishes evidence validity,
 
 Formal catalog membership binds exact subject identity. Convenience aliases may resolve current state but must return the exact resolved identity.
 
+### B-07 — Catalog visibility never broadens source permission
+
+Effective read permission is catalog visibility AND underlying source permission. Catalog publication cannot grant access to a source/object/reference the caller could not otherwise read.
+
+### B-08 — Derived indexes are disposable projections
+
+FTS/vector/external search indexes are rebuildable from authoritative CatalogEntry state. They do not own publication truth or access control.
+
+### B-09 — Extension metadata is namespaced
+
+Domain/G2E metadata uses namespaced schema/version ownership. GWF catalog core does not reinterpret consumer-specific fields.
+
 ## 4. Documentation Governance integration
 
 Expected future handshake:
@@ -88,7 +100,7 @@ immutable-reference eligibility
 GAC candidate/publish
 ~~~
 
-A mutable URL string alone is insufficient immutable identity when the source can change.
+A mutable URL string alone is insufficient immutable identity when the source can change. External publication requires verified digest or provider-issued immutable snapshot/version identity accepted by PublicationPolicy.
 
 ## 6. G2E integration boundary
 

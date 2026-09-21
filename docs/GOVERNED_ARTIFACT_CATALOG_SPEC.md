@@ -125,12 +125,23 @@ Required conceptual fields:
 - `search_metadata`;
 - `provenance_refs`;
 - `publication_policy_ref`;
+- `publication_policy_revision`;
+- `publication_policy_hash`;
+- `publication_identity_key`;
+- `eligibility_snapshot`;
+- `extension_metadata` keyed by namespace + schema/version;
 - `published_by`;
 - `published_at`;
 - `withdrawn_at`;
 - `withdrawal_reason`.
 
 CatalogEntry is an index/publication record, not a payload copy.
+
+Publication identity MUST be idempotent for the tuple:
+
+`subject_kind + exact subject identity/hash + publication_scope + publication_policy_hash`.
+
+Publishing the same tuple again returns/reuses the same active logical publication identity rather than creating ambiguous duplicate active entries. A materially different scope/policy/subject revision is a different publication identity.
 
 ### 5.2 Subject kinds
 
@@ -150,6 +161,15 @@ Catalog membership is independent from source lifecycle/validity:
 
 A catalog transition MUST NOT rewrite source artifact lifecycle or validity.
 
+Allowed v0.x transitions:
+
+- `CANDIDATE → PUBLISHED | WITHDRAWN`;
+- `PUBLISHED → WITHDRAWN | TOMBSTONED`;
+- `WITHDRAWN → PUBLISHED` only by a new authorized publication action that records a new publication event/revision while preserving withdrawal history;
+- `TOMBSTONED` is terminal for that CatalogEntry identity.
+
+Withdrawal/tombstone require explicit authority and audit. History is never deleted.
+
 ### 5.4 PublicationPolicy
 
 Policy defines:
@@ -166,6 +186,8 @@ Policy defines:
 
 Domain-specific payload validity remains owned by the producer/domain.
 
+Every publication MUST bind the exact PublicationPolicy revision/hash and record an eligibility snapshot sufficient to reconstruct why publication was allowed, including source validity/classification observed at publication time where applicable.
+
 ### 5.5 CatalogQuery / CatalogQueryResult
 
 Query SHOULD support:
@@ -179,7 +201,19 @@ Query SHOULD support:
 - optional full-text/semantic query delegated to a qualified adapter;
 - pagination and stable ordering.
 
-Result MUST return exact subject identity and catalog-entry identity.
+Query execution and query content are separate.
+
+`CatalogQueryExecution` MUST report at least:
+
+- execution status: `SUCCEEDED | BACKEND_UNAVAILABLE | PARTIAL | FAILED`;
+- authoritative catalog snapshot/revision;
+- derived index backend/version/revision when used;
+- query ID and timing;
+- completeness declaration/reason.
+
+`CatalogQueryResultSet` contains zero or more candidate records only when execution semantics allow interpretation. A backend/index failure MUST NOT be encoded as a valid empty result set.
+
+Each candidate MUST return exact subject identity and catalog-entry identity.
 
 A result is a **candidate discovery record**, not evidence admission.
 
@@ -217,7 +251,12 @@ Initial visibility scopes:
 
 Cross-tenant/global publication is deferred.
 
-Query MUST enforce caller access before metadata or subject locator disclosure. Metadata itself may be sensitive.
+Effective read authorization is the intersection of:
+
+1. catalog-entry visibility/scope; and
+2. the underlying source/object/external-reference read permission.
+
+Catalog publication MUST NOT broaden source access. Query MUST enforce effective access before metadata, relevance information, provenance details or subject locator disclosure. Metadata itself may be sensitive.
 
 ## 8. Identity and immutability
 
@@ -225,13 +264,20 @@ For `GWF_REVISION`: bind `revision_id + content_hash`.
 
 For `GWF_OBJECT_REF`: bind `ref_id + sha256 + size`.
 
-For `EXTERNAL_IMMUTABLE_REF`: require canonical locator, exact snapshot/version, digest when available, and retrieval provenance.
+For `EXTERNAL_IMMUTABLE_REF`: require canonical locator, retrieval provenance, and either:
+
+- a verified content digest; or
+- a provider-issued immutable snapshot/version identity explicitly accepted by the bound PublicationPolicy.
+
+If neither exists, publication MUST fail; a mutable URL/string is not an immutable subject identity.
 
 A PUBLISHED entry never silently floats when source gets a new revision. New revision requires a new entry or explicit supersession publication.
 
 ## 9. Provenance and relations
 
 Catalog is primarily an index over existing provenance from TraceLinks, producer run/evidence, supersession, object refs and external acquisition records.
+
+Core searchable metadata is governed by the catalog schema. Consumer/domain extensions MUST be namespaced (for example `g2e.*`, `software.*`) and bind an extension schema/version owner. Extension metadata may be indexed but does not acquire core semantic meaning.
 
 Generic catalog relations may include:
 
@@ -257,7 +303,11 @@ Search backend MAY rank candidates but MUST NOT:
 - omit exact identity;
 - become source of publication state.
 
-Semantic/vector search must report backend/version, index revision/snapshot, query execution ID and score interpretation when defined.
+The authoritative catalog record set is the rebuild source for every derived search index. Search indexes are projections, never system of record.
+
+Every derived index MUST expose backend/version, index revision/snapshot, source catalog snapshot/revision and rebuild status. Stale/mismatched index state must be visible and may cause `PARTIAL` or fail-closed query execution according to query policy.
+
+Semantic/vector search must additionally report query execution ID and score interpretation when defined.
 
 ## 11. Security and privacy
 
@@ -292,7 +342,11 @@ Future implementation should distinguish at least:
 - `INDEX_REVISION_MISMATCH`;
 - `QUERY_SCOPE_DENIED`;
 - `SUBJECT_RESOLUTION_FAILED`;
-- `WITHDRAWAL_NOT_AUTHORIZED`.
+- `WITHDRAWAL_NOT_AUTHORIZED`;
+- `DUPLICATE_PUBLICATION_CONFLICT`;
+- `SOURCE_ACCESS_DENIED`;
+- `EXTERNAL_IDENTITY_NOT_IMMUTABLE`;
+- `QUERY_PARTIAL_INDEX`.
 
 Search/index failure is not equivalent to “no matching artifacts exist”.
 

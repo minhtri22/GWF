@@ -33,7 +33,11 @@ Separate Documentation Governance P0 implementation branches were inspected for 
 7. G2E owns applicability/reuse/synthesis semantics.
 8. Cross-tenant/global sharing is deferred.
 9. Search backend is adapterized; no vector/FTS dependency in core.
-10. This pack authorizes no code.
+10. Publication is idempotent by exact subject/scope/policy identity.
+11. Search indexes are derived/rebuildable, never system of record.
+12. Catalog visibility cannot broaden source permission.
+13. Domain metadata is namespaced; GWF does not reinterpret it.
+14. This pack authorizes no code.
 
 ## 5. Reconciliation required before implementation
 
@@ -45,7 +49,8 @@ Future implementation agent MUST re-read the then-current:
 - ObjectRef service;
 - tenancy/project governance;
 - Reference Acquisition implementation status;
-- G2E Evidence Library Adapter contract when available.
+- G2E Evidence Library Adapter contract when available;
+- any new catalog/search/index primitives added by intervening GWF releases.
 
 If those differ materially from this pack, create compatibility findings and update the implementation plan before code.
 
