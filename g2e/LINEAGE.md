@@ -12,3 +12,13 @@
 - **Result:** G2E established as an independent Goal-to-Evidence core; GWF is the default execution/governance backend; standalone execution remains required.
 - **Agent direction:** Codex/ChatGPT first; Claude/Gemini next; ARC is retained as transport for other model-backed agents.
 - **Next:** P1 — Core Schemas.
+
+
+### G2E-P0.1 — Semantic Specification Hardening
+
+- **Status:** PASS
+- **Findings audit:** `2fab50299800e9ac437f92aec796b3b104c46cc1`
+- **Remediation:** `ed88ec721342456bbb90006b41e2308bdc043fcd`
+- **QA:** `affbcbc8c8441d3d10cae0d47620b19e9e3d262f`
+- **Result:** 22 semantic/logic findings resolved; state/verdict namespaces, Goal/Claim closure, retry, evidence admission, freshness, authority, dependency and runtime-parity contracts are now frozen for P1 handoff.
+- **Next:** P1 — Core Schemas.
