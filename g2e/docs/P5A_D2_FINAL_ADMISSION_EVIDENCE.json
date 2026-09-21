@@ -1,0 +1,62 @@
+{
+  "schema": "G2E-P5A-D2-FINAL-ADMISSION-EVIDENCE-v1",
+  "adjudication": "FINAL_ADMISSION_PASS",
+  "qualified_candidate": "75e10b5a68616c2f48bf1b091a850daa8b0da60d",
+  "baseline": "926d6a46344e8ac4822907fdc6b597f8d6ba6feb",
+  "result_commit": "43573b444049cf71d62654f643f2a4bb9b216f02",
+  "result_blob": "efd432d1f23053c71cd731c829f6cde46918e8b7",
+  "workflow": {
+    "run_id": 35608071469,
+    "job_id": 106359996540,
+    "conclusion": "PASS",
+    "artifact_id": 10642813459,
+    "artifact_digest": "sha256:f2bdebc1f5f272c9465bf9961375bbbd2086b1ab23304a480fa87a95c6ff26f3"
+  },
+  "blobs": {
+    "spec": "6b00c9ddec549e59d7d0234da0d27b782608d990",
+    "builder": "a8ae87414a3c69333d13600b6d3d7ebb506a138b",
+    "test": "130568e3e619a868b3d87e348a2ff36a057b19f9",
+    "workflow": "99f5d61d440c33ed652b6d1d21d2d7940b6ce1e2"
+  },
+  "refs": {
+    "authority_policy": {
+      "object_id": "p5a-d2-p5-fx-001-authority-policy",
+      "revision_id": "p5-fx-001-v1",
+      "content_hash": "8bf59660f19437120d2b26169b0bf7dc7670a5e075e0252ac951c8ad0aa20971"
+    },
+    "qualification_grant": {
+      "object_id": "p5a-d2-p5-fx-001-qualification-grant",
+      "revision_id": "p5-fx-001-v1",
+      "content_hash": "656cb4c2e06518ecf7d2da668b03d4f6084ebd2ed2bc03cd3289d3639efdafab"
+    },
+    "final_agent_binding": {
+      "object_id": "p5a-d2-final-agent-binding",
+      "revision_id": "p5-fx-001-v1",
+      "content_hash": "472eb3a0573c093a8b7cb63b1dc320b4292f1c30b6d6dfd493f29014472999e1"
+    },
+    "predispatch_attempt": {
+      "object_id": "p5a-d2-predispatch-attempt-envelope",
+      "revision_id": "p5-fx-001-v1",
+      "content_hash": "34369e7eacd0ad03a3ca4433c2ad0d643de9a1057ed7bcbc1729d10e33511ea3"
+    }
+  },
+  "execution_config_hash": "740d5303d29b757e47571bc50b6367770296f7186a5528cef25adbb806669c3a",
+  "materialized_files_sha256": {
+    "P5A_D2_AUTHORITY_POLICY.json": "984027e5911c37b5e0b7a9788d836558d0525dbb3b070ce33687788eb4b68e49",
+    "P5A_D2_QUALIFICATION_AUTHORITY_GRANT.json": "420415c832531c0e59960acd81409857545ae4aeed35c21d3682fbb5bb938f82",
+    "P5A_D2_FINAL_AGENT_BINDING.json": "03eb1bb5502fb4418f1d88695779bbb9535aa0f4ff0f84e73771c10a524a66bb",
+    "P5A_D2_PREDISPATCH_ATTEMPT.json": "115ce76ac31139f42be264ae52b0928321ea718f8080d3da1f85e59547ec8e9a",
+    "P5A_D2_FINAL_ADMISSION.json": "d505bbb2c68ddff8ddbc2246ed0d1d8891fa01d976adfa575c0f7270535463ba"
+  },
+  "zero_fresh": {
+    "fresh_d2_outcome_consumed": false,
+    "model_turn_executed": false,
+    "runtime_adapter_authorized": false
+  },
+  "authorization": {
+    "exact_scientific_attempts_authorized": 1,
+    "retry_authorized": false,
+    "codex_runtime_adapter_authorized": false
+  },
+  "next_admissible_step": "EXECUTE_EXACTLY_ONE_FROZEN_P5_FX_001_D2_ATTEMPT"
+}
