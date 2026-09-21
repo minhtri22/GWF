@@ -42,7 +42,7 @@ Before formal inclusion/adjudication, freeze:
 - search universe/library snapshot or cutoff;
 - inclusion/exclusion criteria;
 - eligible ClaimSignature dimensions;
-- quality/integrity gate;
+- quality/integrity gate that is outcome-direction blind by default;
 - ApplicabilityPolicy;
 - independence/overlap policy;
 - aggregation method;
@@ -90,9 +90,26 @@ It binds one or more:
 
 All candidates and exclusion reasons are retained.
 
+SynthesisUniverse MUST also record a `CoverageStatement` containing:
+
+- declared target universe/population of studies/results;
+- catalog/library scopes and snapshots searched;
+- external sources/retrieval sessions searched;
+- known inaccessible/missing sources;
+- known publication/selection-bias risks;
+- temporal cutoff;
+- coverage limitations/confidence.
+
+A reproducible snapshot is not automatically a complete evidence universe.
+
 A search backend's changing ranking cannot redefine the frozen universe after lock.
 
 ## 5. Inclusion
+
+Inclusion/exclusion and quality rules MUST be independent of favorable/unfavorable result direction by default.
+
+If outcome direction is itself a prospectively declared stratification dimension required by the synthesis question, the contract must state that before result selection and MUST NOT use it to drop inconvenient results within the declared stratum.
+
 
 A capsule enters synthesis only when:
 
@@ -154,7 +171,13 @@ The frozen conflict policy may classify whether the conflict indicates:
 
 New post-hoc exclusion of an inconvenient result is prohibited.
 
-## 10. ConvergenceClassification
+## 10. Coverage and conclusion strength
+
+A synthesis conclusion applies only to its declared SynthesisUniverse unless the contract justifies broader transport.
+
+If material universe incompleteness/publication bias prevents the stated question from being answered, the classification must narrow scope or resolve to `INSUFFICIENT_EVIDENCE` / `UNRESOLVED` according to the frozen contract. Missing coverage cannot be hidden behind a reproducible catalog snapshot.
+
+## 11. ConvergenceClassification
 
 Synthesis may produce a descriptive `ConvergenceClassification`:
 
@@ -167,7 +190,7 @@ Synthesis may produce a descriptive `ConvergenceClassification`:
 
 This classification is NOT an Adjudication verdict and NOT a GoalVerdict. It is an output artifact derived under SynthesisContract; normal G2E Claims/GoalClosure still determine PASS/FAIL/ACHIEVED/FALSIFIED.
 
-## 11. SynthesisResult
+## 12. SynthesisResult
 
 Must bind:
 
@@ -188,7 +211,7 @@ Must bind:
 
 A sealed SynthesisResult may generate a new EvidenceCapsule with DERIVED_FROM ancestry to all source capsules.
 
-## 12. No-rescue rules
+## 13. No-rescue rules
 
 After synthesis lock and outcome exposure, do not silently change:
 
@@ -213,7 +236,9 @@ A normative change creates a new synthesis lineage.
 6. PASS-count voting is not the default.
 7. Boundary/regime differences may yield BOUNDARY_IDENTIFIED instead of forced contradiction.
 8. ConvergenceClassification never replaces Adjudication/Goal verdict namespaces.
-9. Synthesis output can be packaged/published without rewriting source results.
+9. Inclusion/quality criteria cannot select by favorable result direction unless a prospective outcome stratum is explicitly part of the question.
+10. Coverage/publication-bias limitations are explicit and constrain conclusion scope/strength.
+11. Synthesis output can be packaged/published without rewriting source results.
 
 ## Dependencies
 

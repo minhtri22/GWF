@@ -24,7 +24,24 @@ GWF GAC          Standalone
 
 The adapter does not decide applicability, admission, synthesis or Claim resolution.
 
-## 2. Required operations
+## 2. LibraryCapabilityManifest
+
+Before selecting a backend, runtime MUST resolve a `LibraryCapabilityManifest` containing:
+
+- backend ID/type;
+- adapter/runtime version;
+- supported schema versions;
+- publish/withdraw/query/snapshot/provenance capabilities;
+- optional search capabilities;
+- qualification status/evidence reference;
+- availability status;
+- security/access model.
+
+Default preference is GWF GAC only when the GAC backend is implemented and qualified. If it is unavailable/unqualified, G2E may explicitly select a qualified standalone backend. There is no silent fallback.
+
+If no qualified backend satisfies the Proof/Synthesis requirements, fail closed with `LIBRARY_UNAVAILABLE`.
+
+## 3. Required operations
 
 Provider-neutral logical interface:
 
@@ -40,7 +57,7 @@ Optional:
 
 - semantic/full-text search if backend capability is qualified.
 
-## 3. Query contract
+## 4. Query contract
 
 Every query MUST record:
 
@@ -56,7 +73,7 @@ Every query MUST record:
 
 Library/backend failure cannot be represented as a valid empty result set.
 
-## 4. GWF default mapping
+## 5. GWF default mapping
 
 When using GWF:
 
@@ -68,7 +85,7 @@ When using GWF:
 
 The adapter MUST respect GAC rule that catalog visibility never broadens source access.
 
-## 5. Standalone mapping
+## 6. Standalone mapping
 
 Standalone may use filesystem/SQLite for:
 
@@ -80,7 +97,7 @@ Standalone may use filesystem/SQLite for:
 
 Canonical EvidenceCapsule/SynthesisResult IDs/hashes MUST remain identical when migrated to GWF. Backend publication IDs are mappings only.
 
-## 6. Publication policy
+## 7. Publication policy
 
 G2E requests publication only for eligible immutable semantic outputs.
 
@@ -97,7 +114,7 @@ Negative results are not excluded because they are FAIL/UNRESOLVED.
 
 Backend PublicationPolicy may impose stricter requirements.
 
-## 7. Retrieval is not admission
+## 8. Retrieval is not admission
 
 ```text
 query result
@@ -108,7 +125,7 @@ query result
 
 Retrieved capsule begins as a candidate prior-evidence object. PRD-15 governs applicability/reuse; PRD-04 governs admission.
 
-## 8. Library snapshot semantics
+## 9. Library snapshot semantics
 
 A synthesis or reproducible reuse decision may require a frozen library snapshot.
 
@@ -119,7 +136,7 @@ Adapter must expose a stable snapshot/manifest identity sufficient to replay:
 - exact returned publication/subject IDs;
 - derived search-index identity if used.
 
-## 9. Security
+## 10. Security
 
 Adapter must not leak metadata for inaccessible subjects.
 
@@ -127,7 +144,7 @@ Effective access is backend catalog visibility AND subject/source permission.
 
 No provider tokens, credentials or hidden source snippets are persisted in G2E query records.
 
-## 10. Failure classes
+## 11. Failure classes
 
 At minimum normalize:
 
@@ -153,6 +170,7 @@ These are adapter/execution conditions, not G2E scientific verdicts.
 6. Negative-result capsules may be published.
 7. Access rules fail closed before metadata leakage.
 8. Synthesis can freeze/replay exact library snapshot/query identity.
+9. Unimplemented/unqualified GWF GAC is never treated as available; backend selection is capability-gated and explicit.
 
 ## Dependencies
 

@@ -31,7 +31,7 @@ An `EvidenceCapsule` is an immutable, portable semantic summary of one governed 
 It MUST bind:
 
 - `capsule_id`, schema/version/hash;
-- exact source Goal Result Package seal/hash;
+- exact sealed source package type and seal/hash (`ClaimResultPackage`, `GoalResultPackage`, or sealed synthesis source package);
 - source Goal/Claim/Proof IDs and revisions;
 - source Claim resolution;
 - source Adjudication/result references;
@@ -47,6 +47,8 @@ It MUST bind:
 - capsule-generation policy/version.
 
 FAIL and UNRESOLVED results are first-class publishable capsules when provenance is complete. Library publication MUST NOT select only favorable PASS results.
+
+A capsule is generated **after** its source package has been sealed. It is not included as authoritative content inside that source package and therefore cannot participate in the source package's manifest/seal hash cycle.
 
 A capsule is a derived semantic summary; it does not erase or replace the sealed source package.
 
@@ -170,7 +172,7 @@ Semantic similarity/relevance score cannot determine ReuseDisposition by itself.
 
 A capsule is eligible for publication only when:
 
-- source Goal Result Package is sealed/verified;
+- source ClaimResultPackage, Goal Result Package, or sealed synthesis source package is sealed/verified;
 - source Claim resolution is terminal;
 - source provenance references are complete enough for configured policy;
 - capsule hash binds source package seal;

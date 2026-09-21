@@ -20,7 +20,6 @@ GOAL_RESULT/
 ├── PACKAGE_MANIFEST.json
 ├── PACKAGE_SEAL.json
 ├── library/
-│   ├── EVIDENCE_CAPSULE.json
 │   └── IMPORTS.json
 ├── synthesis/
 │   └── SYNTHESIS_RESULT.json
@@ -37,9 +36,33 @@ GOAL_RESULT/
 
 Large binaries may be represented by immutable content-addressed references.
 
-`EVIDENCE_CAPSULE.json` is an optional publishable derivative of the sealed Goal Result Package and binds `PACKAGE_SEAL.json`; it does not replace the source package.
+An EvidenceCapsule is generated **after** the source package is sealed and is stored/published as a sibling derivative outside the sealed source package. It binds the source `PACKAGE_SEAL.json`. This avoids a circular `seal → manifest → capsule → seal` dependency.
 
 For synthesis Goals, `SYNTHESIS_RESULT.json` binds SynthesisContract, universe, inclusion/exclusion, provenance clusters and transitive ancestry.
+
+## ClaimResultPackage
+
+A terminal Claim may need reuse before the whole Goal closes. G2E therefore defines a sealed claim-level result package:
+
+```text
+CLAIM_RESULT/
+├── CLAIM.json
+├── CLAIM_RESOLUTION.json
+├── PROOF_RESULTS.json
+├── EVIDENCE_REFS.json
+├── PROVENANCE.json
+├── LIMITATIONS.json
+├── PACKAGE_MANIFEST.json
+└── PACKAGE_SEAL.json
+```
+
+A ClaimResultPackage:
+
+- is allowed only when Claim lifecycle is CLOSED with terminal resolution PASS/FAIL/UNRESOLVED;
+- binds exact GoalContract/ClaimGraph revisions;
+- does not assert a Goal verdict;
+- uses the same non-circular manifest/seal rules as Goal Result Package;
+- may be the source package for a post-seal EvidenceCapsule.
 
 ## Final verdict
 
@@ -88,8 +111,9 @@ Record:
 5. Missing required external/binary refs are detectable under verification policy.
 6. Human report regeneration cannot alter formal verdict.
 7. Runtime migration does not change package semantic identities.
-8. Optional EvidenceCapsule binds exact package seal and preserves negative/unresolved source verdicts.
-9. Imported prior evidence and synthesis ancestry are explicitly listed.
+8. EvidenceCapsule is outside the sealed source package and binds its exact seal.
+9. ClaimResultPackage can seal a terminal Claim without implying Goal closure.
+10. Imported prior evidence and synthesis ancestry are explicitly listed.
 
 ## Dependencies
 

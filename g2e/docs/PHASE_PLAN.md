@@ -55,11 +55,12 @@ Implement canonical schemas for:
 - AmendmentPolicy;
 - AuthorityPolicy, IndependencePolicy, GovernanceDisposition;
 - canonical identity/hash/version fields;
-- EvidenceCapsule and ClaimSignature;
+- ClaimResultPackage, EvidenceCapsule and ClaimSignature;
 - ApplicabilityPolicy/ApplicabilityAssessment/ReuseDisposition;
 - reuse-proof metadata and provenance-cluster identifiers;
 - SynthesisContract, SynthesisUniverse, SynthesisResult, ConvergenceClassification;
-- Evidence Library Adapter query/publication/snapshot contracts.
+- Evidence Library Adapter query/publication/snapshot contracts;
+- LibraryCapabilityManifest and explicit backend selection/fail-closed contract.
 
 Exit:
 - schema validation;
@@ -86,7 +87,8 @@ Implement:
 - applicability/reuse-policy engine;
 - Reuse ProofObligation qualification fixtures;
 - provenance-overlap/independence clustering;
-- synthesis universe/inclusion determinism;
+- synthesis universe/inclusion determinism and outcome-blind inclusion checks;
+- synthesis coverage/publication-bias declaration checks;
 - synthesis no-rescue and transitive-ancestry checks.
 
 Exit:

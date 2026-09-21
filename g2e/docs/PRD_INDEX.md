@@ -40,7 +40,7 @@ P0.2 adds PRD-15/16/17 before schema implementation. GWF Governed Artifact Catal
 
 ## Implementation phases
 
-See [PHASE_PLAN.md](PHASE_PLAN.md). P1 includes the original core schemas plus EvidenceCapsule, ClaimSignature, ApplicabilityAssessment, ReuseDisposition/Reuse Proof metadata, SynthesisContract/SynthesisResult, provenance-cluster and Evidence Library Adapter contracts.
+See [PHASE_PLAN.md](PHASE_PLAN.md). P1 includes the original core schemas plus ClaimResultPackage, EvidenceCapsule, ClaimSignature, ApplicabilityAssessment, ReuseDisposition/Reuse Proof metadata, SynthesisContract/SynthesisResult, provenance-cluster, LibraryCapabilityManifest and Evidence Library Adapter contracts.
 
 ## Architectural references
 
