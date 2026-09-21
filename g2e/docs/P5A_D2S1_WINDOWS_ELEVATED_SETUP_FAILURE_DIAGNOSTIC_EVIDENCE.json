@@ -1,0 +1,38 @@
+{
+  "schema": "G2E-P5A-D2S1-WINDOWS-ELEVATED-SETUP-FAILURE-DIAGNOSTIC-EVIDENCE-v1",
+  "status": "IMPLEMENTATION_PASS_LOCAL_DIAGNOSTIC_REQUIRED",
+  "diagnostic_qa_baseline_sha": "867e43a6af0a3ba4855a903c7c3a359e215c45c1",
+  "candidate_sha": "b28008b92b835e6a9d47858f9c591b38b4133652",
+  "workflow_run_id": 35647078146,
+  "workflow_job_id": 106490039480,
+  "artifact_id": 10660830635,
+  "artifact_digest": "sha256:c05282af4876e6b5846356a8e732935f9c8d01d58581e003af1717017704ff91",
+  "blobs": {
+    "preflight_script": "21a7ac5054cc6bf60515baae481069fb6b9db004",
+    "tests": "c512917dcf6320ba0e0224d1a46cf9c18d1fb078",
+    "workflow": "38bac2632e465933565a5d9dd7ad9562c9ab3435"
+  },
+  "config_toml_sha256": "a21289d995d75416ade0f4483bb93f0c54cf1808f0c2ae289c29fe89a9050cd4",
+  "execution_config_hash": "72874872ea241efecbdd537e0a7fbf0718fd036cf4abd564b27b0bcd03dd81ce",
+  "diagnostic_fields": [
+    "windows_sandbox_setup_mode",
+    "windows_sandbox_setup_success",
+    "windows_sandbox_setup_error_code",
+    "windows_sandbox_setup_error_redacted",
+    "windows_sandbox_setup_error_sha256"
+  ],
+  "unredacted_error_persisted": false,
+  "no_turn_dispatch_token": true,
+  "regressions": {
+    "p1": "PASS",
+    "p1_4": "PASS",
+    "p1_5": "PASS",
+    "p2": "PASS",
+    "p3": "PASS",
+    "p4": "PASS"
+  },
+  "model_turn_executed": false,
+  "scientific_attempt_authorized": false,
+  "runtime_adapter_authorized": false,
+  "next_gate": "FRESH_LOCAL_NO_TURN_ELEVATED_SETUP_DIAGNOSTIC"
+}
