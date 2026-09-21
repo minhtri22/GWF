@@ -239,3 +239,18 @@
 - **Exact-SHA regressions:** P1 `35599809068` PASS; P2 `35599809106` PASS; P3 `35599809084` PASS; P4 `35599809011` PASS.
 - **Implementation boundary:** no `src/g2e` or `src/gwr` mutation; D2 execution and Codex runtime adapter remain NOT AUTHORIZED; ChatGPT P5B remains untouched.
 - **Next:** P5A D2 / P5-FX-001 pre-registration and functional qualification specification only. No model turn before that lock passes.
+
+
+### G2E-P5A-D2 — P5-FX-001 Pre-Implementation Qualification
+
+- **Status:** SPEC_PASS_EXECUTION_BLOCKED
+- **Qualified candidate:** `15eeae4776a969cb0d64b9d55f33146e303161ec`
+- **Authoritative workflow:** `35603125876` / job `106343728888` — PASS
+- **Evidence artifact:** `10639439364`; digest `sha256:ff7d2ef4592e734767bcb297b51c8b06d7b037d80968beeeb35956bc3d8559ef`
+- **Preregistration artifact SHA-256:** `eaeff7a8141697b2ecb824709277ba51db5e60643a722f2d06b3d5d3f6d4d4b4`
+- **Exact ProofObligation:** `p5a-d2-p5-fx-001-proof@p5-fx-001-v1#8e275db790fe4c83061385f9988f4165f54d514611a44a4a555c5d01f6d3dbcd`
+- **Exact preflight identity binding:** `p5a-d2-preflight-binding@p5-fx-001-v1#a5a9287d464d3d3450e9cf82d7866d45e9e2fc2921b0c28d938fd7257a3940f8`
+- **Result:** P5-FX-001 input/task/workspace, zero retry, mutation boundary, approvals, evidence extraction, timeout/cancellation, PASS/FAIL/INVALID and no-rescue rules are frozen before any model turn. P1/P1.4/P2/P3/P4 regressions PASS.
+- **Blocking finding D2-F01:** the exact D1 Codex manifest has `max_authority_scope=()` while D2 requires bounded `READ_FROZEN_FIXTURE` + `WRITE_DESIGNATED_OUTPUT`; therefore a final execution AgentBinding cannot be frozen without violating P1.4 authority validation.
+- **Implementation boundary:** no D2 outcome/model turn, Codex runtime adapter, core/runtime mutation or ChatGPT P5B work. D2 execution remains NOT AUTHORIZED.
+- **Next:** bounded prospective D2 qualification-authority admission prerequisite; distinguish authority to attempt an unqualified capability from evidence that the capability is already available.
