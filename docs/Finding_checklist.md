@@ -2032,7 +2032,7 @@ DG-P11 opened = NO
 
 ## 72. Windows one-click UAT portability finding
 
-### F-143 — HIGH — RESOLVED_PENDING_VERIFY
+### F-143 — HIGH — RESOLVED
 
 - **Negative evidence:** exact repaired HEAD `b551c7978ec7cc14047c8adae06902f0d75e8b9b`, GitHub qualification run `35635200766`, Windows job `windows-oneclick-uat`; independently reproduced by local UAT on Windows.
 - **Observed outcome:** bounded DG-P10 gate PASS before full tests; SQLite/Linux full regression PASS; PostgreSQL 17 PASS; Windows full suite failed 21 P0/P1/P2 document-validation tests at version probing.
@@ -2040,17 +2040,40 @@ DG-P11 opened = NO
 - **Root cause:** test fixtures created extensionless Python files with POSIX shebang + chmod and passed them directly to `subprocess.run`. Linux executes these files; Windows does not treat shebang/chmod as an executable contract.
 - **Production impact adjudication:** no evidence of a defect in the validator adapters' real Windows executable contract. Real Windows validator launch targets are executable entry points such as `.cmd` or `.exe`; the failure is confined to the test harness representation of fake tools.
 - **Repair:** keep production adapters unchanged. On Windows, fake validators are wrapped in a `.cmd` launcher invoking the exact current Python interpreter; on POSIX, retain executable shebang scripts. Expected version, findings, fail-closed, mutation-detection and network semantics remain unchanged.
-- **Status:** RESOLVED_PENDING_VERIFY until the same DG-P10 qualification workflow passes Windows one-click UAT on the repaired exact HEAD.
+- **Verification:** exact repair HEAD `cc5ec5dc15cf28f7960ddf90a409de7578effe53`, workflow `35645249596` PASS; Windows `One-click local UAT setup`, `Assert UAT report`, and evidence upload all PASS; SQLite/full regression and PostgreSQL qualification also PASS.
+- **Status:** RESOLVED
 
 ### Current implementation finding state after F-143 repair
 
 ```text
 F-142 = RESOLVED
-F-143 = RESOLVED_PENDING_VERIFY
-active unresolved implementation findings = 1
+F-143 = RESOLVED
+active unresolved implementation findings = 0
 negative run preserved = 35635200766
 local Windows negative evidence preserved = YES
 validator production semantics changed = NO
 D10 frozen semantics changed = NO
 DG-P11 opened = NO
+```
+
+
+## 73. DG-P10 implementation qualification state
+
+**OPEN = 0**
+
+All findings F-01 through F-143 are resolved.
+
+```text
+DG-P10 amended specification = FROZEN
+DG-P10 implementation HEAD   = cc5ec5dc15cf28f7960ddf90a409de7578effe53
+DG-P10 qualification run     = 35645249596 PASS
+SQLite artifact              = 10659577518
+PostgreSQL artifact           = 10659608214
+Windows UAT artifact          = 10660730609
+Finding OPEN                 = 0
+DG-P10 implementation QA     = PASS
+DG-P10 formal close          = PENDING_EXACT_HANDOFF_REQUALIFICATION
+DG-P11+                      = NOT_STARTED / NOT_AUTHORIZED
+DG-W3                        = OPEN / NOT_EXECUTED
+GAC                          = LOCKED_UNTIL_DG-W4_PASS
 ```

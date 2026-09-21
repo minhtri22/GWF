@@ -1128,8 +1128,10 @@ DG-P9 — Logical-current vs pinned-revision binding
        ↓
 DG-P10 — Change classification
       AMENDMENT-1 SPEC FROZEN
-      AMENDMENT QA PASS / SERIOUS UNRESOLVED = 0
-      BOUNDED IMPLEMENTATION AUTHORIZED / NOT_STARTED
+      IMPLEMENTATION QUALIFIED / PASS
+      qualified HEAD cc5ec5dc15cf28f7960ddf90a409de7578effe53
+      workflow 35645249596 PASS
+      FORMAL CLOSE PENDING EXACT-HANDOFF REQUALIFICATION
        ↓
 STOP
 
@@ -1138,6 +1140,6 @@ DG-P11+ = NOT_STARTED / NOT_AUTHORIZED
 
 DG-P9 is formally closed at final exact closure evidence. The explicitly authorized DG-P10 pre-implementation specification/dependency qualification has passed.
 
-DG-P10 bounded implementation is explicitly authorized by the user's conditional instruction because Amendment 1 QA passed with no unresolved serious findings. DG-P11+ remain unopened. DG-W3 remains OPEN / NOT_EXECUTED.
+DG-P10 bounded implementation is qualified on SQLite, PostgreSQL 17 and Windows one-click UAT at exact HEAD `cc5ec5dc15cf28f7960ddf90a409de7578effe53`. Formal close still requires committed handoff requalification and final exact-head closure evidence. DG-P11+ remain unopened. DG-W3 remains OPEN / NOT_EXECUTED.
 
 GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.
