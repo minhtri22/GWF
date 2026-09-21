@@ -5,6 +5,7 @@ param(
     [switch]$SkipTests,
     [switch]$SkipPostgres,
     [switch]$RequirePostgres,
+    [switch]$SkipUat,
     [string]$PostgresUrl = $env:GWR_TEST_DATABASE_URL
 )
 
@@ -16,6 +17,8 @@ $VenvDir = Join-Path $RepoRoot ".venv"
 $VenvPython = Join-Path $VenvDir "Scripts\python.exe"
 $ReportDir = Join-Path $RepoRoot ".gwr\install"
 $ReportPath = Join-Path $ReportDir "install-report.json"
+$DgP10ReportPath = Join-Path $ReportDir "dg-p10-gate.json"
+$UatRoot = Join-Path $RepoRoot ".gwr\uat"
 $StartedAt = (Get-Date).ToUniversalTime().ToString("o")
 $DockerContainer = $null
 $OriginalPostgresUrl = $env:GWR_TEST_DATABASE_URL
@@ -197,6 +200,7 @@ try {
 }
 
 $env:PYTHONPATH = (Join-Path $RepoRoot "src")
+New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
 
 Write-Step "Validating research and software domain packages"
 Push-Location $RepoRoot
@@ -208,6 +212,52 @@ try {
     Invoke-Checked -FilePath $VenvPython -Arguments @("-m", "compileall", "-q", "src", "tests", "tools")
 } finally {
     Pop-Location
+}
+
+$DgP10Status = "SKIPPED"
+if (-not $SkipUat) {
+    Write-Step "Running bounded DG-P10 governance/UAT gate"
+    Push-Location $RepoRoot
+    try {
+        Invoke-Checked -FilePath $VenvPython -Arguments @("tools/run_dg_p10_gate.py", "--out", $DgP10ReportPath)
+        $dg = Get-Content $DgP10ReportPath -Raw | ConvertFrom-Json
+        if ($dg.status -ne "PASS") { throw "DG-P10 gate status=$($dg.status)" }
+        $DgP10Status = "PASS"
+    } finally {
+        Pop-Location
+    }
+
+    Write-Step "Preparing local project-document UAT workspace"
+    New-Item -ItemType Directory -Force -Path (Join-Path $UatRoot "docs\gov\archive") | Out-Null
+    New-Item -ItemType Directory -Force -Path (Join-Path $UatRoot "docs\phase1\archive") | Out-Null
+    @"
+# GWF local UAT
+
+This workspace is disposable and is not an authoritative project.
+
+Prepared document layout:
+
+```text
+docs/
+  gov/
+    archive/
+  phase1/
+    archive/
+```
+
+Re-run the bounded DG-P10 gate:
+
+```powershell
+.\.venv\Scripts\python.exe tools\run_dg_p10_gate.py --out .gwr\uat\DG_P10_UAT.json
+```
+
+Expected gate result: PASS.
+
+Policy checks exercised by the automated suite include AUTO owner-scope authority,
+HUMAN_APPROVE, GOV/FROZEN blocking, semantic escalation, exact proposed-content
+digest, deterministic vN -> archive/vN + vN+1 lineage planning, and zero DG-P11
+source-mutation side effects.
+"@ | Set-Content -Path (Join-Path $UatRoot "UAT.md") -Encoding UTF8
 }
 
 $LocalTests = "SKIPPED"
@@ -265,9 +315,10 @@ try {
     Remove-Item Env:GWR_TEST_NAMESPACE_PREFIX -ErrorAction SilentlyContinue
 }
 
-New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
+$RuntimeVersion = (& $VenvPython -c "import importlib.metadata; print(importlib.metadata.version('governed-workflow-runtime'))" | Select-Object -First 1)
 $report = [ordered]@{
-    version = "0.8.5"
+    project = "Governed Workflow Runtime (GWF)"
+    runtime_version = $RuntimeVersion
     status = "PASS"
     started_at = $StartedAt
     finished_at = (Get-Date).ToUniversalTime().ToString("o")
@@ -286,6 +337,14 @@ $report = [ordered]@{
     }
     compileall = "PASS"
     local_tests = $LocalTests
+    dg_p10 = @{
+        status = $DgP10Status
+        evidence = if ($DgP10Status -eq "PASS") { $DgP10ReportPath } else { $null }
+    }
+    uat = @{
+        prepared = (-not $SkipUat)
+        root = if (-not $SkipUat) { $UatRoot } else { $null }
+    }
     postgres = @{
         status = $PostgresStatus
         source = $PostgresSource
@@ -298,6 +357,7 @@ Write-Step "GWF installation complete"
 Write-Host "status=PASS" -ForegroundColor Green
 Write-Host "venv=$VenvDir"
 Write-Host "report=$ReportPath"
+Write-Host "uat=$UatRoot"
 Write-Host ""
 Write-Host "Activate when needed:"
 Write-Host "  .\.venv\Scripts\Activate.ps1"

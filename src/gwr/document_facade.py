@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from .errors import ValidationError
+from .errors import InvalidTransition, ValidationError
+from .document_change import normalize_document_governance
 
 
 DOCUMENT_ARTIFACT_TYPE = "governed_document"
@@ -61,6 +62,7 @@ class DocumentFacadeService:
         expected_repository_id: str | int | None,
         expected_commit_sha: str | None,
         expected_blob_sha: str | None,
+        document_governance: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         self._require_exact_expectations(
             expected_repository_id,
@@ -80,8 +82,8 @@ class DocumentFacadeService:
         )
 
     @staticmethod
-    def _payload(document_key: str, title: str, source: dict[str, Any]) -> dict[str, Any]:
-        return {
+    def _payload(document_key: str, title: str, source: dict[str, Any], document_governance: dict[str, Any] | None = None) -> dict[str, Any]:
+        payload = {
             "schema": DOCUMENT_REVISION_SCHEMA,
             "document_key": document_key,
             "title": title,
@@ -99,6 +101,9 @@ class DocumentFacadeService:
             },
             "source_resolved_at": source["resolved_at"],
         }
+        if document_governance is not None:
+            payload["document_governance"] = dict(document_governance)
+        return payload
 
     @staticmethod
     def _key_from_artifact(artifact: dict[str, Any]) -> str:
@@ -138,6 +143,7 @@ class DocumentFacadeService:
             expected_commit_sha=expected_commit_sha,
             expected_blob_sha=expected_blob_sha,
         )
+        governed_metadata = normalize_document_governance(document_governance, source["path_locator"]) if document_governance is not None else None
         document_id = self.knowledge.create_artifact(
             project_id,
             DOCUMENT_ARTIFACT_TYPE,
@@ -146,7 +152,7 @@ class DocumentFacadeService:
         )
         revision = self.knowledge.create_revision(
             document_id,
-            self._payload(key, normalized_title, source),
+            self._payload(key, normalized_title, source, governed_metadata),
             actor_id,
             expected_artifact_version=0,
         )
@@ -185,6 +191,8 @@ class DocumentFacadeService:
             raise ValidationError("Artifact is not a governed document")
         key = self._key_from_artifact(artifact)
         current = self.knowledge.get_current_revision(document_id)
+        if current["structured_payload"].get("document_governance") is not None:
+            raise InvalidTransition("DG-P10-enrolled document revision requires classified lineage plan and DG-P11 DocumentChangeSet")
         current_title = str(current["structured_payload"].get("title") or "")
         normalized_title = self._title(title if title is not None else current_title)
         source = self._resolve_source(
@@ -234,6 +242,8 @@ class DocumentFacadeService:
             "lifecycle_state": artifact["lifecycle_status"],
             "kernel_validity_state": revision["validity_state"],
         }
+        if payload.get("document_governance") is not None:
+            result["document_governance"] = dict(payload["document_governance"])
         if self.document_state is not None:
             state = self.document_state.inspect_document_state(document_id)
             result.update(

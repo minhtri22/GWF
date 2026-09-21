@@ -1,10 +1,100 @@
-# Governed Workflow Runtime (GWF) v0.8.5
+# Governed Workflow Runtime (GWF)
 
-GWF is a governance and execution-quality runtime for long-running AI/agent work.
+GWF is a domain-neutral governance and execution runtime for long-running AI/agent work.
 
-It is deliberately **not** an n8n-style integration platform. External systems are tools/plugins; GWF focuses on authority, frozen plans, evidence, QA, recovery, provenance, handoff and reproducible outcomes that do not depend on one particular agent retaining context.
+Its purpose is to make agent work **resumable, auditable, authority-aware and reproducible** even when the agent, model, machine or session changes. GWF treats plans, revisions, evidence, approvals, failures, QA, checkpoints and handoffs as governed runtime state rather than relying on chat history.
 
-## One-click Windows install
+GWF is not an n8n-style integration platform and is not a replacement for Git, GitHub, documentation tools or domain-specific scientific methods. External systems remain tools/plugins; GWF owns the control plane around them.
+
+## What GWF governs
+
+A governed execution can make explicit:
+
+- who or what is allowed to act;
+- the exact artifact/revision/SHA being used;
+- what scope is frozen before work starts;
+- what evidence was produced and by which run;
+- what failed and whether retry/recovery is allowed;
+- when human approval is required;
+- which QA result applies to which exact revision;
+- what remains valid/stale/blocked;
+- where execution can safely resume;
+- what must be preserved in the final handoff.
+
+The core design principle is:
+
+> Preserve exact state and evidence; do not silently repair history to make a workflow look clean.
+
+## Project documentation governance
+
+Projects using the current Documentation Governance contract organize governed documentation under their own repository:
+
+```text
+docs/
+  gov/
+    <document>.vN.md
+    archive/
+  <phase-id>/
+    <document>.vN.md
+    archive/
+```
+
+The active document is versioned. On revision, the previous source is destined for the sibling `archive/`, and the new version links to it. Stable GWF Artifact/Revision identity remains canonical even when paths change.
+
+Document mutation consumes the workflow mode already frozen for the running PhaseExecution:
+
+- `AUTO` — the agent may mutate documents owned by its authorized phase/workflow scope;
+- `HUMAN_APPROVE` — document mutation requires human approval.
+
+This does **not** broaden AUTO recovery semantics.
+
+A frozen governance document is stronger than either mode:
+
+```text
+GOV / FROZEN
+    -> BLOCK_REQUIRES_EXPLICIT_USER_AUTHORIZATION
+```
+
+DG-P10 classifies the change, decides mutation authority and computes the deterministic archive/version lineage plan. Concrete multi-file source mutation remains a governed DG-P11 DocumentChangeSet.
+
+## Agent execution protocol
+
+Agent work is observable through:
+
+```text
+LOAD -> PREFLIGHT -> PLAN -> EXECUTE -> VERIFY -> HANDOFF -> COMPLETE
+```
+
+Important invariants include:
+
+- no preflight PASS -> no plan;
+- no plan -> no execution;
+- persist a problem before retry/replan;
+- no QA PASS -> no handoff;
+- no handoff -> no complete;
+- project/database state, not chat context, is authoritative.
+
+## Domain packages
+
+GWF ships domain packages that map domain-specific artifacts, phases, gates, failure modes and approval policies onto the same runtime primitives.
+
+Current first-party examples include:
+
+- `domains/research.workflow.yaml` — governed research execution;
+- `domains/software.workflow.yaml` — repository-first software delivery;
+- `domains/example.workflow.yaml` — scaffold/reference domain.
+
+The runtime is designed so other domains can reuse the same governance substrate without copying the kernel.
+
+## GitHub safety
+
+GWF's GitHub boundary uses exact repository/commit/blob identities and optimistic expected-SHA writes.
+
+For a governed write, GWF freezes the expected branch/file state, verifies it before mutation, writes with an expected head, then re-fetches and verifies the resulting commit, branch and content.
+
+`COMMITTED` alone is not QA-complete; exact verification is required.
+
+## One-click Windows setup + local UAT
 
 After clone or pull:
 
@@ -12,88 +102,52 @@ After clone or pull:
 .\install.ps1
 ```
 
-The installer:
+By default the installer:
 
-- resolves Python >=3.11 (prefers Python 3.12 and can install it with winget);
+- resolves Python >=3.11 (prefers Python 3.12);
 - creates/updates `.venv`;
-- installs development + PostgreSQL dependencies;
-- validates the research and software domain packages;
-- validates the CQG and GWF pilot profiles;
-- runs Python compile checks;
-- runs the full local test suite by default;
-- uses `GWR_TEST_DATABASE_URL` when supplied, or an ephemeral PostgreSQL 17 Docker container when Docker is available;
-- writes a non-secret report to `.gwr/install/install-report.json`.
+- installs runtime, development and PostgreSQL dependencies;
+- validates production domain/pilot contracts;
+- compiles Python sources;
+- runs the complete local test suite;
+- runs the bounded DG-P10 classification/policy gate;
+- prepares a local UAT workspace under `.gwr\uat`;
+- uses `GWR_TEST_DATABASE_URL` when supplied, otherwise can use ephemeral PostgreSQL 17 when Docker is available;
+- writes a non-secret report to `.gwr\install\install-report.json`.
 
-Useful options:
+Useful commands:
 
 ```powershell
+.\install.ps1
 .\install.ps1 -FreshVenv
 .\install.ps1 -SkipPostgres
 .\install.ps1 -RequirePostgres
 .\install.ps1 -SkipTests -SkipPostgres
 ```
 
-## Production domain packages
+After installation, open:
 
-### Research — `domains/research.workflow.yaml`
+```text
+.gwr\uat\UAT.md
+```
 
-Research v0.5 adds a prospective `study_lock` so scientific validity is not left to agent memory.
+for the exact local DG-P10 UAT command and the project-document folder skeleton.
 
-The lock covers preregistration/source/artifact hashes, fresh-data policy, metrics/gates, forbidden adaptations, execution-amendment boundaries, resource limits, stop rules, repair budget and no-rescue policy.
+## Repository map
 
-Execution remains the 17-phase research cycle with explicit PASS/FAIL/PIVOT, replication/replay, reporting and handoff.
+```text
+src/gwr/       runtime kernels/services
+domains/       governed domain packages
+tests/         regression + governance fixtures
+tools/         gates, QA and operational utilities
+docs/          architecture/governance/research records for GWF itself
+pilots/        bounded pilot profiles
+evidence/      generated qualification evidence
+web/           product/UAT web surface
+```
 
-### Software delivery — `domains/software.workflow.yaml`
+## Current development model
 
-Software delivery governs:
+GWF evolves through bounded governance transitions. A documentation/specification PASS does not automatically authorize implementation, an implementation PASS does not automatically formal-close a phase, and a later phase is not inferred merely because an earlier one passed.
 
-repository audit → scope lock → implementation plan → implementation → local tests → integration/regression → independent QA → candidate verification → merge → exact-main verification → handoff.
-
-A commit is not a release. The outcome is complete only after required gates pass again on the exact merged main SHA.
-
-### Example — `domains/example.workflow.yaml`
-
-Scaffold/reference only. It is not the production software domain.
-
-## Agent execution protocol
-
-Real phases are governed by:
-
-`LOAD → PREFLIGHT → PLAN → EXECUTE → VERIFY → HANDOFF → COMPLETE`
-
-Important invariants include:
-
-- no preflight PASS → no plan;
-- no plan → no execution;
-- persist ProblemRecord before retry/replan;
-- no QA PASS → no handoff;
-- no handoff → no complete;
-- project/database state, not chat context, is authoritative.
-
-Recovery mode is configurable:
-
-- `AUTO`: safe/transient retries may proceed within policy and budget;
-- `HUMAN_APPROVE`: pause before retry for human approval.
-
-Normative/high-impact boundaries can still require human authority regardless of default recovery mode.
-
-## GitHub safety
-
-GWF supports SHA-safe repository changes through the GitHub plugin boundary.
-
-A governed write freezes branch/file SHAs, verifies them before write, passes expected head SHA to the provider, then re-fetches the commit/branch/files after write.
-
-Only `VERIFIED` is QA-complete; `COMMITTED` is not.
-
-See `docs/GITHUB_SHA_QA_STANDARD.md`.
-
-## Initial dogfood pilots
-
-- CQG next new research study: `pilots/cqg.research.yaml`
-- GWF bounded self-upgrade: `pilots/gwf.self-upgrade.yaml`
-
-See `docs/PILOT_CQG_GWF_V0.8.5.md`.
-
-## Validation
-
-The v0.8.5 acceptance gate nests the complete v0.8.4 regression chain and adds domain-skill, installer and pilot qualification on SQLite, PostgreSQL and Windows.
+Negative runs and findings are preserved rather than erased by rerun.

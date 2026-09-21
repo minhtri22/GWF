@@ -23,6 +23,7 @@ from .document_qa import DocumentQAService
 from .document_state import DocumentLifecycleValidityService
 from .document_authority import DocumentAuthorityService
 from .document_relation import DocumentRelationService
+from .document_change import DocumentChangeClassificationService
 
 class GovernedWorkflowRuntime:
     def __init__(self, domain: str|DomainPackage, db_path=":memory:", *, auth_secret=None, object_store_root=None, observer=None, observability_path=None):
@@ -82,6 +83,14 @@ class GovernedWorkflowRuntime:
             self.knowledge,
             self.governance,
             self.project_governance,
+        )
+        self.document_changes=DocumentChangeClassificationService(
+            self.db,
+            self.knowledge,
+            self.execution,
+            self.governance,
+            self.project_governance,
+            self.agent_protocol,
         )
         self.documents=DocumentFacadeService(self.knowledge,self.github,self.document_state)
         self.process=ProcessInspectorService(self)

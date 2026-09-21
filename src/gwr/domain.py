@@ -31,6 +31,12 @@ CORE_EVIDENCE_TYPES = {
         "trust_class": "AUTHORITATIVE",
         "core_reserved": True,
     },
+    "document_change_classification": {
+        "id": "document_change_classification",
+        "maps_to": "PRIM-EVIDENCE",
+        "trust_class": "AUTHORITATIVE",
+        "core_reserved": True,
+    },
 }
 
 @dataclass
