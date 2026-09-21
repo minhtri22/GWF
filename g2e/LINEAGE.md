@@ -55,3 +55,25 @@
 - **Evidence closure:** `edfc8e805d3b061111f3012fdce0891177dcabd8`
 - **Result:** 35 authoritative G2E schema models are canonically hashable/versioned and pass fail-closed structural qualification; 21/21 P1 tests and compile gate pass. No executor, standalone runtime, GWF adapter or GAC/P4L implementation was opened.
 - **Next:** P2 — Deterministic Core Engine.
+
+
+### G2E-P1.1 — Frozen Decision Rule Binding
+
+- **Status:** PASS
+- **Finding:** `P2-F01`
+- **Qualified schema:** `0002790f0ea3da1c6e03b69124e3bfd38741b3b5`
+- **Authoritative workflow:** `35572749902` / job `106247706920` — PASS
+- **Evidence closure:** `16ae28f5279825b87379e56e7c36d3fa297423c7`
+- **Result:** ProofObligation now binds an exact canonical DecisionRule, closing the no-rescue dependency required by deterministic adjudication.
+- **Next:** P2 — Deterministic Core Engine.
+
+
+### G2E-P2 — Deterministic Core Engine
+
+- **Status:** PASS
+- **Qualified implementation:** `c2fc03a7470b835904252246421e1b8d9a1ec5ef`
+- **Authoritative workflow:** `35573628326` / job `106250444186` — PASS
+- **P1 regression:** `35573628248` / job `106250444424` — PASS
+- **Evidence closure:** `290164347db6c52043dfa9f863122d145c288293`
+- **Result:** Deterministic Claim/Goal validation, proof admissibility, evidence admission, protected-resource freshness, one-shot adjudication, bounded retry, Claim/Goal resolution, Next-Step selection, no-rescue, applicability/reuse, independence clustering and synthesis/convergence mechanics qualified with P1 23/23 + P2 41/41 fixtures; no runtime/DB/agent/GWF/GAC dependency opened.
+- **Next:** P3 — Standalone Runtime.
