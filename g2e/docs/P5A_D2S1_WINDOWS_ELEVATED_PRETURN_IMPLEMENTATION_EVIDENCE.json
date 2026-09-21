@@ -1,0 +1,31 @@
+{
+  "schema": "G2E-P5A-D2S1-WINDOWS-ELEVATED-PRETURN-IMPLEMENTATION-EVIDENCE-v1",
+  "status": "IMPLEMENTATION_PASS_LOCAL_EXECUTION_REQUIRED",
+  "materializer_closure_baseline_sha": "d02e1a93f531ace89f97ea89c8cfb4faa9a5289f",
+  "candidate_sha": "46d23cfc4ee903b22f4e75e9833b6f210c1374da",
+  "workflow_run_id": 35644949786,
+  "workflow_job_id": 106483017569,
+  "artifact_id": 10660151258,
+  "artifact_digest": "sha256:eca874b89aa7d90b5d92069c3b9546b23c4a4844d15a4d67bba2bb70940ba47c",
+  "blobs": {
+    "preflight_script": "062920e6d27289ec6285fa0e6c2da3d7ffd85a70",
+    "tests": "d2e61ce190ef58595d8ccec78e357f59877803d4",
+    "workflow": "a7131a702adf51161f0334e593b660c2d61e54b4"
+  },
+  "config_toml_sha256": "a21289d995d75416ade0f4483bb93f0c54cf1808f0c2ae289c29fe89a9050cd4",
+  "execution_config_hash": "72874872ea241efecbdd537e0a7fbf0718fd036cf4abd564b27b0bcd03dd81ce",
+  "windows_sandbox_mode": "elevated",
+  "regressions": {
+    "p1": "PASS",
+    "p1_4": "PASS",
+    "p1_5": "PASS",
+    "p2": "PASS",
+    "p3": "PASS",
+    "p4": "PASS"
+  },
+  "no_turn_dispatch_token": true,
+  "model_turn_executed": false,
+  "scientific_attempt_authorized": false,
+  "runtime_adapter_authorized": false,
+  "next_gate": "FRESH_LOCAL_ELEVATED_NO_TURN_PREFLIGHT"
+}
