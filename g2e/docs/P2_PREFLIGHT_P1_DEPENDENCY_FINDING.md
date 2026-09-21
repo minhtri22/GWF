@@ -37,6 +37,6 @@ No executor/runtime/GWF/GAC work is authorized.
 
 ## Verdict
 
-`OPEN = 1`
+`OPEN = 0`
 
-**P2 CORE ENGINE BLOCKED ONLY ON P2-F01.**
+**PASS — P2 adjudicator dependency is now satisfied by P1.1 qualification.**

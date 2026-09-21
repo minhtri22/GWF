@@ -1,0 +1,23 @@
+{
+  "schema": "G2E-P1.1-DECISION-RULE-BINDING-v1",
+  "status": "PASS",
+  "finding": "P2-F01",
+  "qualified_schema_sha": "0002790f0ea3da1c6e03b69124e3bfd38741b3b5",
+  "workflow": {
+    "run_id": 35572749902,
+    "job_id": 106247706920,
+    "conclusion": "success",
+    "head_sha": "0002790f0ea3da1c6e03b69124e3bfd38741b3b5"
+  },
+  "tests": {
+    "passed": 23,
+    "failed": 0,
+    "compileall": true
+  },
+  "change": {
+    "decision_rule_schema": true,
+    "proof_decision_rule_ref_required": true,
+    "no_runtime_changes": true
+  },
+  "p2_authorized": true
+}
