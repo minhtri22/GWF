@@ -92,8 +92,11 @@ Relevant frozen/runtime state at the DG-P9 closure frontier:
 | `docs/DG_P5_QA_FINDING_PERSISTENCE_SPEC.md` | `29ca1c85f665468aade7fc555b634a134af9a46a` |
 | `docs/DG_P7_AUTHORITY_CLAIMS_SPEC.md` | `63d2252314e753b7485f1a0249dc011468be275b` |
 | `src/gwr/db.py` | `b9825998757423822ab7ffb22bd37dd202f3e30d` |
-| `src/gwr/document_facade.py` | current DG-P9 closure blob |
+| `src/gwr/document_facade.py` | `3284f2f32241e316def87ae563535deff8dfcd1e` |
 | `src/gwr/document_state.py` | `7b9bbd45199904f0ab6b2bad31c51a61d050bd70` |
+| `src/gwr/document_qa.py` | `6179e6d756e52d663eddf107e6355873ddda29f6` |
+| `src/gwr/execution.py` | `87e7d90a85527f1f25e46172b1c2a559a0abe00c` |
+| `src/gwr/governance.py` | `0eb8f3eeb7a6ee01512bc778241fa2ee0b42f6a6` |
 | `src/gwr/domain.py` | `387f98b47575bc889e9bf88057fd010af2dce853` |
 | `src/gwr/knowledge.py` | `2c4ae7f406031613c1bd885aa90b80b3f6f93606` |
 
@@ -340,6 +343,10 @@ candidate classes =
     + conservative ambiguity escalation
 
 effective_change_class = max(candidate classes)
+
+adjudication_status = EVALUATED | NOT_EVALUATED
+
+Only EVALUATED classification Evidence may authorize a future Revision commit.
 ```
 
 No byte count, line count, token count or file size participates as a downgrade signal.
@@ -371,7 +378,9 @@ Examples:
 
 QA escalation must be attributable to immutable evidence or normalized QA output.
 
-A tool error / NOT_EVALUATED signal cannot be interpreted as clean confirmation of the lower class.
+A classification review that confirms no escalation must also be attributable. The classification record therefore freezes `qa_review_refs[]` plus an adjudication status.
+
+A tool error / unavailable semantic review produces `NOT_EVALUATED`. It cannot be interpreted as clean confirmation of the lower class, and `NOT_EVALUATED` classification Evidence cannot authorize Revision commit.
 
 ## 17. Agent downgrade prohibition
 
@@ -491,7 +500,9 @@ expected_artifact_version
 candidate_source_identity
 declared_change_class
 declared_triggers[]
+qa_review_refs[]
 qa_escalation_refs[]
+adjudication_status
 ambiguity_status
 effective_change_class
 governance_rank
@@ -647,7 +658,7 @@ Declared EDITORIAL remains EDITORIAL only when no higher trigger/escalation appl
 
 ### D10-F5 — clarification clean case
 
-Declared CLARIFICATION remains CLARIFICATION only when required semantic review establishes no normative trigger.
+Declared CLARIFICATION remains CLARIFICATION only when required semantic review is EVALUATED and establishes no normative trigger.
 
 ### D10-F6 — clarification ambiguity escalates
 
@@ -685,9 +696,9 @@ Classification fails if base Revision is not current or expected Artifact versio
 
 Mutable ref/path without exact immutable source identity cannot be classified as commit-authorizing Evidence.
 
-### D10-F15 — pre-commit failure has zero revision side effect
+### D10-F15 — pre-commit failure / NOT_EVALUATED has zero revision side effect
 
-Classification/approval failure leaves Artifact current Revision and version unchanged.
+Classification failure, approval failure or required semantic QA `NOT_EVALUATED` leaves Artifact current Revision and version unchanged.
 
 ### D10-F16 — NORMATIVE+ approval minimum
 
@@ -725,6 +736,8 @@ DG-P10 pre-implementation qualification may PASS only if all are true:
 - proposer declaration is mandatory;
 - structured trigger-to-minimum-class mapping is frozen;
 - CLARIFICATION/NORMATIVE ambiguity resolves conservatively;
+- QA review attribution and `EVALUATED | NOT_EVALUATED` status are frozen;
+- only EVALUATED classification may authorize commit;
 - QA escalation is monotonic;
 - agent unilateral downgrade is forbidden;
 - governed human replacement semantics are bounded and immutable;
