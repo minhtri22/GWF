@@ -2,76 +2,109 @@
 
 ## Status
 
-**SEMANTIC QA: FAIL / remediation required.**
+**SEMANTIC QA: PASS**
 
 Candidate commit:
 
 `ca001f806f9306bbd1ba6a57185879b3ec3ee71a`
 
-P1 Core Schemas remains blocked.
+Findings commit:
 
-## Findings
+`b3730d095272b2c29f19e5baba7269272b667fec`
 
-### P02-F01 — HIGH — OPEN — EvidenceCapsule creates a circular package seal dependency
+Remediation commit under final QA:
 
-PRD-12 places `EVIDENCE_CAPSULE.json` inside the Goal Result Package while PRD-15 requires the capsule to bind the source package seal. If the package manifest hashes the capsule, the dependency becomes:
+`eb7eed90ad6a5c5820ff981775aa77aa15c5f7f5`
 
-`PACKAGE_SEAL → PACKAGE_MANIFEST → EVIDENCE_CAPSULE → PACKAGE_SEAL`.
+## Findings and resolution
 
-**Required:** EvidenceCapsule must be generated as an external/post-seal derivative (or explicitly non-authoritative excluded content). Prefer a sibling derivative outside the sealed source package.
+### P02-F01 — HIGH — RESOLVED — Circular package seal/capsule dependency
 
-- [ ] RESOLVED
+**Resolution:** EvidenceCapsule is generated after source package sealing and stored/published as a sibling derivative outside the sealed source package. It binds the source package seal but is not hashed into the source manifest.
 
-### P02-F02 — HIGH — OPEN — Reuse is unnecessarily blocked until whole Goal closure
+**Proof:** PRD-12, PRD-15, Core Semantics §15.
 
-PRD-15 requires a sealed Goal Result Package. A long-running Goal may contain a terminal, reusable Claim months before the whole Goal closes.
+- [x] RESOLVED
 
-**Required:** define a sealed `ClaimResultPackage` (or equivalent exact claim-level source package) so terminal Claim results can be published without pretending the entire Goal is terminal.
+### P02-F02 — HIGH — RESOLVED — Reuse blocked until whole Goal closure
 
-- [ ] RESOLVED
+**Resolution:** PRD-12 now defines sealed `ClaimResultPackage` for terminal Claim PASS/FAIL/UNRESOLVED. It binds Goal/Claim graph revisions without asserting Goal closure and may source an EvidenceCapsule.
 
-### P02-F03 — HIGH — OPEN — Synthesis inclusion/quality rules are not explicitly outcome-blind
+**Proof:** PRD-12 ClaimResultPackage; PRD-15 capsule source contract; P1 schema plan.
 
-The SynthesisContract freezes inclusion/exclusion and quality gates but does not forbid criteria based on favorable/unfavorable result direction.
+- [x] RESOLVED
 
-**Risk:** prospective-looking rules could still encode result-direction cherry-picking.
+### P02-F03 — HIGH — RESOLVED — Synthesis inclusion not explicitly outcome-blind
 
-**Required:** inclusion/quality criteria must not depend on result direction/verdict except when the synthesis question explicitly requires a prospectively declared outcome stratum.
+**Resolution:** inclusion/exclusion and quality rules are outcome-direction blind by default. Outcome direction may be a stratum only when prospectively declared by the synthesis question and cannot be used to drop inconvenient results inside that stratum.
 
-- [ ] RESOLVED
+**Proof:** PRD-16 §§3,5; Core Semantics §17.
 
-### P02-F04 — MEDIUM — OPEN — Library universe completeness/publication bias is not represented
+- [x] RESOLVED
 
-A frozen catalog snapshot can be reproducible while still missing unpublished/failed/unindexed studies.
+### P02-F04 — MEDIUM — RESOLVED — Evidence-universe completeness/publication bias missing
 
-**Required:** SynthesisUniverse must record coverage scope, known missing sources and publication/selection-bias limitations; inability to justify coverage constrains conclusion strength and may force INSUFFICIENT_EVIDENCE/UNRESOLVED.
+**Resolution:** SynthesisUniverse now requires CoverageStatement covering searched scope/sources, known inaccessible/missing channels, publication/selection-bias risks, cutoff and limitations. Reproducible snapshot is explicitly not proof of completeness; material coverage gaps constrain conclusion strength.
 
-- [ ] RESOLVED
+**Proof:** PRD-16 §§4,10; Core Semantics §17.
 
-### P02-F05 — MEDIUM — OPEN — GWF GAC default backend is documentation-only but runtime capability gating is underspecified
+- [x] RESOLVED
 
-PRD-17 identifies GWF GAC as default backend although GAC has only a packing spec and no implementation.
+### P02-F05 — MEDIUM — RESOLVED — GWF GAC availability/qualification assumed
 
-**Required:** runtime must resolve a LibraryCapabilityManifest. If GAC is unavailable/unqualified, it must fail closed or explicitly select qualified standalone backend; it must never pretend the default backend exists.
+**Resolution:** PRD-17 now requires a `LibraryCapabilityManifest`. GWF GAC is selected only when implemented/qualified. Otherwise a qualified standalone backend must be explicitly selected; there is no silent fallback. If none qualifies, fail closed with `LIBRARY_UNAVAILABLE`.
 
-- [ ] RESOLVED
+**Proof:** PRD-17 §2 and acceptance criteria; P1 schema plan.
 
-## Existing checks
+- [x] RESOLVED
+
+## Final checklist
 
 - [x] Prior result cannot directly set current Claim PASS.
 - [x] QUALIFIED_REUSE flows through Reuse ProofObligation + EvidenceAdmission.
-- [x] FAIL/UNRESOLVED results are eligible; no PASS-only library policy.
-- [x] Library evidence remains EXPOSED.
+- [x] FAIL/UNRESOLVED results can be published; no PASS-only library policy.
+- [x] EvidenceCapsule is post-seal and cannot create package hash circularity.
+- [x] Terminal Claim can be sealed/reused before parent Goal closes.
+- [x] Library evidence never becomes FRESH again.
 - [x] Applicability binds exact source/target/policy.
-- [x] Shared provenance is modeled for anti-double-counting.
+- [x] Shared provenance prevents false independence/double counting.
 - [x] Synthesis universe/inclusion rules freeze prospectively.
-- [x] ConvergenceClassification is separate from core verdict namespaces.
-- [x] GWF owns catalog infrastructure; G2E owns reuse/synthesis meaning.
+- [x] Inclusion/quality rules are outcome-blind by default.
+- [x] Coverage/publication-bias limitations are explicit.
+- [x] Excluded candidates and reasons remain observable.
+- [x] Search ranking cannot redefine synthesis universe post-lock.
+- [x] ConvergenceClassification is separate from Adjudication and GoalVerdict.
+- [x] Synthesis result keeps transitive source ancestry.
+- [x] Library adapter does not own applicability/synthesis semantics.
+- [x] GWF GAC is default only when capability is implemented/qualified.
+- [x] Standalone backend remains supported.
 - [x] Query failure cannot masquerade as zero results.
-- [x] P1 has been re-blocked by README/QA/Phase Plan.
+- [x] G2E references GWF GAC as packing-only contract, not production service.
+- [x] P1/P2 phase plan includes new schemas/engines.
+- [x] 17/17 component PRDs contain Purpose, Dependencies, References and Acceptance Criteria.
+- [x] HARD dependency graph is a DAG.
+- [x] P0.2 remediation changes only `g2e/` paths.
+- [x] GWF GAC packing QA resolves with `OPEN=0/PASS`.
+
+## QA evidence
+
+Remediation SHA:
+
+`eb7eed90ad6a5c5820ff981775aa77aa15c5f7f5`
+
+Structural/semantic checks:
+
+- P02-F01..F05: all proof checks PASS;
+- 17/17 PRD structure: PASS;
+- HARD dependency DAG: PASS;
+- required new P0.2 files present: PASS;
+- scope outside `g2e/`: 0 files;
+- GWF GAC packing QA: PASS.
 
 ## Verdict
 
-`OPEN = 5`
+`OPEN = 0`
 
-**FAIL until all findings are resolved.**
+**G2E P0.2 — EVIDENCE REUSE & CONVERGENCE QA: PASS**
+
+P1 — Core Schemas is authorized again, now under the expanded P0/P0.1/P0.2 specification. No implementation has been executed.

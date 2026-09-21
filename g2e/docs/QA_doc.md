@@ -266,4 +266,6 @@ Checks:
 
 `OPEN = 0` for P0.1.
 
-A later scope extension introduced Evidence Reuse, Library and Synthesis/Convergence semantics. **P1 is re-blocked** until [P0.2 Library/Synthesis QA](P0_2_LIBRARY_SYNTHESIS_QA.md) is PASS with `OPEN = 0`.
+P0.2 subsequently added Evidence Reuse, Library and Synthesis/Convergence semantics. [P0.2 Library/Synthesis QA](P0_2_LIBRARY_SYNTHESIS_QA.md) is now **PASS / OPEN=0**.
+
+**Current handoff status:** P1 — Core Schemas is authorized under the combined P0 + P0.1 + P0.2 specification. No implementation has been executed.
