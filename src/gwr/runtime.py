@@ -114,7 +114,7 @@ class GovernedWorkflowRuntime:
         if p["action"]=="CREATE_REVISION": return self.knowledge.commit_revision_from_proposal(proposal_id,actor_id,expected_version)
         if p["action"] in {"DECLARE_DOCUMENT_AUTHORITY","DECLARE_COMPOSED_DOCUMENT_AUTHORITY","RETIRE_DOCUMENT_AUTHORITY"}:
             return self.document_authority.apply_approved_proposal(proposal_id,actor_id)
-        if p["action"] in {"DECLARE_DOCUMENT_RELATION","RETIRE_DOCUMENT_RELATION"}:
+        if p["action"] in {"DECLARE_DOCUMENT_RELATION","BIND_DOCUMENT_RELATION","RETIRE_DOCUMENT_RELATION"}:
             return self.document_relations.apply_approved_proposal(proposal_id,actor_id)
         raise ValueError(f"No runtime dispatcher for proposal action {p['action']}")
     def close(self):

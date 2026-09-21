@@ -105,17 +105,55 @@ def _relation(
     *,
     invalidation_policy=None,
 ):
+    pinned_types = {"SUPERSEDES", "DERIVED_FROM", "VALIDATES", "GENERATED_FROM"}
+    mode = "PINNED_REVISION" if relation_type in pinned_types else "LOGICAL_CURRENT"
+    pin = None
+    if mode == "PINNED_REVISION" and target_kind == "DOCUMENT":
+        pin = rt.knowledge.get_artifact(target_ref)["current_revision_id"]
     proposal = rt.document_relations.prepare_relation(
         source_document_id,
         relation_type,
         target_kind,
         target_ref,
         lead,
+        target_binding_mode=mode,
+        target_revision_or_hash=pin,
         invalidation_policy=invalidation_policy,
     )
     approval = _approve(rt, proposal, owner)
     row = rt.document_relations.apply_approved_declaration(proposal, lead)
     return row, proposal, approval
+
+
+
+def _legacy_relation_row(
+    rt,
+    project,
+    source_document_id,
+    source_revision_id,
+    relation_type,
+    target_kind,
+    target_ref,
+):
+    relation_id = f"legacy-{relation_type.lower()}-{source_revision_id}"
+    now = "2026-09-21T00:00:00+00:00"
+    rt.db.conn.execute(
+        "INSERT INTO document_relations("
+        "relation_id,project_id,source_document_id,relation_type,"
+        "target_kind,target_ref,invalidation_policy,status,"
+        "created_revision_id,create_proposal_id,retired_revision_id,"
+        "retired_by_proposal_id,version,created_at,updated_at,retired_at,"
+        "target_binding_mode,target_revision_or_hash"
+        ") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            relation_id, project, source_document_id, relation_type,
+            target_kind, target_ref, "LEGACY_P8_POLICY", "ACTIVE",
+            source_revision_id, "legacy-p8-proposal", None, None, 0,
+            now, now, None, None, None,
+        ),
+    )
+    rt.db.conn.commit()
+    return rt.document_relations.get_relation(relation_id)
 
 
 def _primary_claim(rt, document_id, scope, key, lead, owner):
@@ -260,10 +298,12 @@ def test_d8_f9_stale_retirement_rejected(configured):
 def test_d8_f10_exact_duplicate_active_relation_rejected(configured):
     rt, _, owner, lead, d1, _, d2, _ = configured
     p1 = rt.document_relations.prepare_relation(
-        d1, "DEPENDS_ON", "DOCUMENT", d2, lead
+        d1, "DEPENDS_ON", "DOCUMENT", d2, lead,
+        target_binding_mode="LOGICAL_CURRENT",
     )
     p2 = rt.document_relations.prepare_relation(
-        d1, "DEPENDS_ON", "DOCUMENT", d2, lead
+        d1, "DEPENDS_ON", "DOCUMENT", d2, lead,
+        target_binding_mode="LOGICAL_CURRENT",
     )
     _approve(rt, p1, owner)
     _approve(rt, p2, owner)
@@ -281,6 +321,7 @@ def test_d8_f11_self_document_relation_rejected(configured):
             "DOCUMENT",
             d1,
             lead,
+            target_binding_mode="LOGICAL_CURRENT",
         )
 
 
@@ -301,24 +342,25 @@ def test_d8_f12_document_target_integrity(configured):
             "DOCUMENT",
             foreign_doc,
             lead,
+            target_binding_mode="LOGICAL_CURRENT",
         )
 
 
-def test_d8_f13_external_target_kind_preserved_without_binding_claim(configured):
-    rt, _, owner, lead, d1, _, _, _ = configured
-    row, _, _ = _relation(
+def test_d8_f13_external_target_kind_preserved_for_legacy_p8_row(configured):
+    rt, project, _, _, d1, r1, _, _ = configured
+    row = _legacy_relation_row(
         rt,
+        project,
         d1,
+        r1,
         "IMPLEMENTS",
         "SCHEMA",
         "schema://research/protocol-v1",
-        lead,
-        owner,
     )
     assert row["target_kind"] == "SCHEMA"
     assert row["target_ref"] == "schema://research/protocol-v1"
-    assert "target_binding_mode" not in row
-    assert "target_revision_or_hash" not in row
+    assert row["target_binding_mode"] is None
+    assert row["target_revision_or_hash"] is None
 
 
 def test_d8_f14_relation_semantics_remain_distinct(configured):
@@ -362,21 +404,22 @@ def test_d8_f15_supersedes_has_no_p7_or_lifecycle_side_effect(configured):
     assert rt.knowledge.get_artifact(d2)["lifecycle_status"] == d2_before
 
 
-def test_d8_f16_validates_not_evidence_before_p9_binding(configured):
-    rt, project, owner, lead, d1, _, d2, _ = configured
+def test_d8_f16_legacy_validates_is_not_evidence_before_binding(configured):
+    rt, project, _, _, d1, r1, d2, _ = configured
     before = rt.db.one(
         "SELECT COUNT(*) n FROM evidence WHERE project_id=?",
         (project,),
     )["n"]
-    row, _, _ = _relation(rt, d1, "VALIDATES", "DOCUMENT", d2, lead, owner)
+    row = _legacy_relation_row(
+        rt, project, d1, r1, "VALIDATES", "DOCUMENT", d2
+    )
     after = rt.db.one(
         "SELECT COUNT(*) n FROM evidence WHERE project_id=?",
         (project,),
     )["n"]
     assert after == before
-    assert row["invalidation_policy"] == "REQUIRES_PINNED_BINDING"
-    assert "target_binding_mode" not in row
-    assert "target_revision_or_hash" not in row
+    assert row["target_binding_mode"] is None
+    assert row["target_revision_or_hash"] is None
 
 
 def test_d8_f17_generated_from_not_reproducibility_proof(configured):

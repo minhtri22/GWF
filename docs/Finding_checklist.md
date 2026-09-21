@@ -1702,3 +1702,14 @@ DG-P10+                   = NOT_STARTED / NOT_AUTHORIZED
 DG-W3                     = OPEN / NOT_EXECUTED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ~~~
+
+
+## 63. DG-P9 implementation compatibility finding
+
+### F-116 — MEDIUM — RESOLVED
+
+- **Initial finding:** Historical P8 fixtures D8-F13 and D8-F16 asserted that P9 binding columns did not exist in returned relation rows. That assertion was intentionally true before DG-P9 but is phase-bound and would make the authorized additive migration 0011 impossible while not protecting the durable P8 semantic boundary.
+- **Resolution:** Preserve the historical P8 invariants instead: pre-P9 external and VALIDATES rows remain representable as legacy rows with NULL binding; they do not create Evidence or TraceLinks; canonical DocumentRelation and TraceLink state remain distinct. P8 regression fixtures were updated only at those phase-bound assertions and all D9-F1..D9-F20 remain frozen.
+- **Final status:** RESOLVED
+
+**OPEN = 0**
