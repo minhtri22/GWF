@@ -126,3 +126,13 @@
 - **Evidence closure:** `fbae7dcf6484556a1acf339f8187f8a2092faef0`
 - **Result:** Base GWF mapping preserves canonical G2E exact refs/hashes while keeping GWF IDs, hashes and runtime success states as mappings only; standalone↔GWF parity is qualified through ExecutionAttempt, provider-neutral ExecutionResult, Evidence, P2 Adjudication, protected-resource fail-closed recovery, Claim/Goal resolution and Result Package semantic manifest. Fresh-runtime restart reconstruction and authority/retry/mapping negative fixtures PASS. P1–P3 qualified blobs remain unchanged.
 - **Next:** exact P4L capability/dependency audit only; P4L Shared Library integration remains CONDITIONAL/CLOSED until `GWF_LIBRARY_INTEGRATION_MAPPING.md` gates are independently satisfied.
+
+
+### G2E-P4 — Post-Close Integrity Verification
+
+- **Status:** PASS
+- **Qualified implementation:** `1f6d49957c0c0dffa7b83c11caebed4ab2b90e0b`
+- **Evidence closure:** `fbae7dcf6484556a1acf339f8187f8a2092faef0`
+- **Verified close-through:** `74570fe8074732258285e945322096ac13b0ba10`
+- **Result:** Post-qualification compare contains only `g2e/docs/P4_IMPLEMENTATION_RESULT.md`, `g2e/docs/P4_QUALIFICATION_EVIDENCE.json` and append-only `g2e/LINEAGE.md`; post-qualification mutation in `src/`, `tests/` and `.github/` is 0. The qualified P4 implementation therefore remains exactly the implementation exercised by the authoritative exact-SHA workflows.
+- **Next:** exact P4L capability/dependency audit only; P4L remains CONDITIONAL/CLOSED.
