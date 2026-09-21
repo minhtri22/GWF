@@ -97,7 +97,7 @@ jobs:
               "AgentBinding",
               '"method": "thread/start"',
               "'method': 'thread/start'",
-              "codex exec",
+              '["exec"]',
           )
           hits = [token for token in forbidden if token in probe]
           assert not hits, hits
