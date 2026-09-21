@@ -1194,7 +1194,7 @@ GAC                       = LOCKED_UNTIL_DG-W4_PASS
 - [x] evidence artifact `10638479929` recorded.
 - [x] DG-P7/P8 remain NOT_STARTED.
 - [x] GAC remains locked until DG-W4 PASS.
-- [ ] committed handoff exact-head requalification PASS.
+- [x] committed handoff exact-head requalification PASS — run `35603196674` on `be02cdd7eaeadc0534631f15fbe183ddb4b6c7f3`, artifact `10640780655`.
 
 ## 48. Current aggregate state during DG-W2 handoff
 
@@ -1210,9 +1210,10 @@ DG-W2 qualification       = PASS
 DG-W2 QA HEAD             = bdce1392db5e54597a12e5de02d4d916aa081b6f
 DG-W2 workflow            = 35602717476 PASS
 DG-W2 artifact            = 10638479929
-DG-W2 handoff             = PENDING_COMMIT
-DG-W2 exact-head QA       = PENDING
-DG-W2 overall             = NOT_YET_FORMALLY_CLOSED
-DG-P7/P8                  = NOT_STARTED
+DG-W2 handoff HEAD        = be02cdd7eaeadc0534631f15fbe183ddb4b6c7f3
+DG-W2 exact-head workflow = 35603196674 PASS
+DG-W2 exact-head artifact = 10640780655
+DG-W2 overall             = FORMALLY_CLOSED
+DG-P7/P8                  = NOT_STARTED / NOT_AUTHORIZED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```

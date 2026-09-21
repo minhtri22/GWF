@@ -171,3 +171,13 @@ Rules:
 - Evidence artifact: `10638479929`.
 - Evidence artifact digest: `sha256:9fd5937a0c87dd51c9f6b10148bcea64fe1c0e65a9431b788a5933a7bd3f0f15`.
 - Outcome: DG-P4/P5/P6 pass together on one exact HEAD; exact-revision QA invalidation, single-subsystem ownership and Wave-2 schema compatibility are jointly demonstrated.
+
+
+## 2026-09-21 — DG-W2 formally closed
+
+- Result: DG-W2 PASS / formally closed.
+- Handoff HEAD: `be02cdd7eaeadc0534631f15fbe183ddb4b6c7f3`.
+- Exact-head workflow: `35603196674` PASS.
+- Evidence artifact: `10640780655`.
+- Evidence artifact digest: `sha256:1c52ad48c2d4b38995325b4b34e55520dd0ed24d772f6b20fe3d7e14176525db`.
+- Outcome: Wave 2 Minimal Documentation Kernel jointly preserves exact document identity, revision-scoped QA freshness, bounded finding persistence and compatible lifecycle/validity semantics without a parallel knowledge subsystem.

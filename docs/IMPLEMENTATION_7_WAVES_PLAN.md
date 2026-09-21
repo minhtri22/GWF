@@ -303,7 +303,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 
 ### Wave 2 exit gate — DG-W2
 
-- **Status:** **QUALIFIED PASS / HANDOFF EXACT-HEAD QA PENDING**
+- **Status:** **COMPLETED / PASS / FORMALLY CLOSED**
 - **Qualified QA HEAD:** `bdce1392db5e54597a12e5de02d4d916aa081b6f`
 - **Workflow:** `35602717476` PASS
 - **Evidence artifact:** `10638479929`
@@ -318,7 +318,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 - [x] global KnowledgeKernel VALIDITY remains unchanged
 - [x] no Wave-3 authority/relation state introduced
 - [x] targeted regressions + full regression + compile PASS
-- [ ] committed handoff exact-head workflow PASS
+- [x] committed handoff exact-head workflow PASS — run `35603196674` on `be02cdd7eaeadc0534631f15fbe183ddb4b6c7f3`, artifact `10640780655`
 
 ---
 
@@ -983,16 +983,19 @@ DG-P6 — Lifecycle + validity mapping
       exact-head run 35598699495 PASS
        ↓
 DG-W2 — Wave 2 exit gate
-      QUALIFIED PASS
-      QA HEAD bdce1392db5e54597a12e5de02d4d916aa081b6f
-      workflow 35602717476 PASS
-      HANDOFF EXACT-HEAD QA PENDING
+      PASS / FORMALLY CLOSED
+      handoff HEAD be02cdd7eaeadc0534631f15fbe183ddb4b6c7f3
+      exact-head run 35603196674 PASS
+       ↓
+Wave 3 — Semantic Documentation Governance
+      DEPENDENCY UNLOCKED
+      DG-P7/P8 NOT_STARTED / NOT_AUTHORIZED
        ↓
 STOP
 ```
 
-DG-W2 combined qualification has passed, but formal closure still requires exact-head requalification of the committed handoff package.
+DG-W2 is formally closed. Wave 3 dependency sequencing is now unlocked, but no DG-P7/P8 implementation or pre-implementation work is authorized by DG-W2 closure itself.
 
-DG-P7/P8 and later-wave semantics remain unopened until DG-W2 is formally closed.
+A separate explicit authorization is required before opening the next Wave-3 item.
 
 GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.

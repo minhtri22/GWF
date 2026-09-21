@@ -128,3 +128,28 @@ Formal close requires:
 6. re-run the same gate on the final closure HEAD.
 
 Until then Wave 3 remains unopened.
+
+
+## 11. Exact-handoff qualification
+
+The committed DG-W2 handoff HEAD `be02cdd7eaeadc0534631f15fbe183ddb4b6c7f3` was requalified with the same combined Wave-2 gate.
+
+- exact-head workflow: `35603196674`
+- conclusion: **PASS**
+- evidence artifact: `10640780655`
+- artifact digest: `sha256:1c52ad48c2d4b38995325b4b34e55520dd0ed24d772f6b20fe3d7e14176525db`
+
+The exact committed handoff HEAD again passed:
+
+- combined D4/D5/D6 fixtures;
+- real P4 provider gate;
+- P5/P6 component gates;
+- cross-wave exact-revision invalidation;
+- no-duplicate-subsystem/schema checks;
+- targeted regressions;
+- full regression;
+- compile.
+
+**DG-W2 status: FORMALLY CLOSED.**
+
+Wave 3 is dependency-unlocked only. DG-P7/P8 remain NOT_STARTED / NOT_AUTHORIZED. GAC remains locked until DG-W4 PASS.
