@@ -1503,3 +1503,76 @@ DG-P9+                    = NOT_STARTED / NOT_AUTHORIZED
 DG-W3                     = OPEN / NOT_EXECUTED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+## 57. DG-P8 implementation findings
+
+### F-104 — MEDIUM — RESOLVED
+
+- **Initial finding:** Initial DG-P8 run `35621370994` on `2081f730e38dc874c29335f77e441ed794fcb885` passed D8-F1..D8-F20 and the bounded P8 gate on both SQLite and PostgreSQL, but the SQLite targeted regression failed at historical D7-F20 because that test asserted that the downstream `document_relations` table must not exist.
+- **Why this was stale:** The P7 invariant was "P7 must not create later-wave relation side effects." Once P8 is explicitly authorized, migration `0010` legitimately creates the table globally. Schema absence is therefore no longer equivalent to "P7 produced no side effect."
+- **Resolution:** Repair commit `e784d7f56c0cfdf25ca453da48d570cd202ad0cc` changed only D7-F20. When `document_relations` exists, the test snapshots its project row count, executes P7 authority operations, and requires the count to remain unchanged. P9+/GAC table-absence assertions remain.
+- **Non-rescue evidence:** DG-P8 runtime, migration, frozen specification, D8 matrix and workflow were unchanged by the repair.
+- **Repair evidence:** workflow `35621561857` PASS.
+- **Final status:** `RESOLVED`
+
+## 58. DG-P8 implementation qualification checklist
+
+- [x] implementation started from exact qualification HEAD `cf5a268b58bd9f1bb69df2a4bfeed5a2809380b1`.
+- [x] frozen spec commit/blob remained `211308141106481104590b3d55cdc8c19d6b6d8e` / `d6996951522caa061b29f94d1b1f4f579251adaa`.
+- [x] exactly one migration `0010_v086_dg_p8_document_relations` added.
+- [x] exactly one P8 canonical table `document_relations` added.
+- [x] no relation node/type/event/projection/finding table added.
+- [x] `KnowledgeKernel` TraceLink runtime unchanged.
+- [x] no TraceLink projection.
+- [x] required relation types enforced.
+- [x] required target kinds enforced.
+- [x] logical source document + exact declaration revision provenance implemented.
+- [x] relation ACTIVE -> RETIRED implemented.
+- [x] optimistic relation retirement implemented.
+- [x] Proposal/Approval/Audit reuse implemented.
+- [x] exact duplicate ACTIVE relation rejected.
+- [x] self-document relation rejected.
+- [x] DOCUMENT target project/type integrity enforced.
+- [x] no Markdown/TraceLink inference.
+- [x] no DG-P9 binding fields/semantics.
+- [x] VALIDATES creates no validation Evidence.
+- [x] GENERATED_FROM creates no reproducibility Evidence/TraceLink.
+- [x] SUPERSEDES creates no P7 authority/lifecycle side effect.
+- [x] D8-F1..D8-F20 PASS on SQLite.
+- [x] D8-F1..D8-F20 PASS on PostgreSQL 17.
+- [x] bounded P8 gate PASS on SQLite.
+- [x] bounded P8 gate PASS on PostgreSQL 17.
+- [x] Knowledge/Trace/P4/P5/P6/P7 targeted regressions PASS.
+- [x] full repository regression PASS.
+- [x] compile PASS.
+- [x] negative run `35621370994` preserved.
+- [x] compatibility repair limited to historical D7-F20 regression.
+- [x] qualified run `35621561857` recorded.
+- [x] SQLite evidence artifact `10649881388` recorded.
+- [x] PostgreSQL evidence artifact `10649322400` recorded.
+- [x] DG-P9+ remain NOT_STARTED / NOT_AUTHORIZED.
+- [x] DG-W3 remains OPEN / NOT_EXECUTED.
+- [x] GAC remains locked until DG-W4 PASS.
+- [ ] committed handoff exact-head requalification PASS.
+
+## 59. Current aggregate state during DG-P8 handoff
+
+**OPEN = 0**
+
+All findings F-01 through F-104 are resolved.
+
+```text
+DG-P7                     = FORMALLY_CLOSED
+DG-P8 specification       = FROZEN
+DG-P8 implementation      = QUALIFIED_PASS
+DG-P8 implementation SHA  = e784d7f56c0cfdf25ca453da48d570cd202ad0cc
+DG-P8 workflow            = 35621561857 PASS
+DG-P8 SQLite artifact     = 10649881388
+DG-P8 PostgreSQL artifact = 10649322400
+DG-P8 handoff             = PENDING_COMMIT
+DG-P8 exact-head QA       = PENDING
+DG-P8 overall             = NOT_YET_FORMALLY_CLOSED
+DG-P9+                    = NOT_STARTED / NOT_AUTHORIZED
+DG-W3                     = OPEN / NOT_EXECUTED
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+```

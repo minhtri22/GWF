@@ -219,3 +219,13 @@ Rules:
 - Specification blob: `d6996951522caa061b29f94d1b1f4f579251adaa`.
 - Dependency: DG-P7 final formal-close HEAD `cf143d959b338e8d77811f5b2b79789ccbbb20aa`, final exact-head workflow `35611830804` PASS.
 - Outcome: canonical typed document relations require one logical-document current-state table, while existing `trace_links` remains a distinct revision-level operational/provenance substrate whose projection use is deferred until binding and relation-specific semantics are qualified.
+
+
+## 2026-09-21 — DG-P8 implementation qualification completed
+
+- Result: DG-P8 implementation qualification PASS.
+- Qualified implementation HEAD: `e784d7f56c0cfdf25ca453da48d570cd202ad0cc`.
+- Workflow: `35621561857` PASS.
+- SQLite evidence artifact: `10649881388`, digest `sha256:18b47ce4c730bd66a70de43eb881785281fc141c12a4f72564d4682be618d474`.
+- PostgreSQL evidence artifact: `10649322400`, digest `sha256:62214aecf3fb2347626417ac467f82f32968a576b477ef8a07c387d6d7eaf05b`.
+- Outcome: canonical typed document relations now have explicit logical-document current state, governed lifecycle and provenance, while TraceLink remains unchanged as a distinct operational/provenance primitive and DG-P9 binding semantics remain unopened.

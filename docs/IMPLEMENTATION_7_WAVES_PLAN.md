@@ -365,7 +365,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P8 — Typed document relations
 
 - **Complexity:** 3
-- **Status:** **PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **Status:** **IMPLEMENTATION QUALIFIED / HANDOFF + EXACT-HEAD QA PENDING**
 - **HARD dependencies:** DG-P4; roadmap Wave-3 dependency DG-P7 is formally closed.
 - **Frozen specification:** `docs/DG_P8_TYPED_DOCUMENT_RELATIONS_SPEC.md`, commit `211308141106481104590b3d55cdc8c19d6b6d8e`, blob `d6996951522caa061b29f94d1b1f4f579251adaa`.
 - **Document QA:** `docs/DOCUMENT_QA_DG_P8_PREIMPLEMENTATION.md` — PASS.
@@ -384,17 +384,20 @@ Every completed item must record exact dependency revisions/evidence used. A dep
   - [x] SUPERSEDES has no P7/lifecycle side effect in P8;
   - [x] D8-F1..D8-F20 frozen;
   - [x] QA PASS.
-- **Implementation acceptance remains open:**
-  - [ ] bounded migration adds `document_relations` only;
-  - [ ] relation service uses Proposal/Approval/Audit + optimistic versioning;
-  - [ ] required relation types/target kinds enforced;
-  - [ ] no Markdown/TraceLink inference;
-  - [ ] no target binding mode/revision/hash semantics;
-  - [ ] no TraceLink projection;
-  - [ ] D8-F1..D8-F20 PASS;
-  - [ ] P4/P5/P6/P7 + Knowledge/Trace regressions PASS;
-  - [ ] no DG-P9+ semantics;
-  - [ ] implementation QA PASS.
+- **Implementation evidence:** HEAD `e784d7f56c0cfdf25ca453da48d570cd202ad0cc`; workflow `35621561857` PASS; SQLite artifact `10649881388`; PostgreSQL artifact `10649322400`.
+- **Implementation acceptance:**
+  - [x] bounded migration adds `document_relations` only;
+  - [x] relation service uses Proposal/Approval/Audit + optimistic versioning;
+  - [x] required relation types/target kinds enforced;
+  - [x] no Markdown/TraceLink inference;
+  - [x] no target binding mode/revision/hash semantics;
+  - [x] no TraceLink projection;
+  - [x] D8-F1..D8-F20 PASS on SQLite and PostgreSQL 17;
+  - [x] P4/P5/P6/P7 + Knowledge/Trace regressions PASS;
+  - [x] full repository regression PASS;
+  - [x] no DG-P9+ semantics;
+  - [x] implementation QA PASS;
+  - [ ] handoff exact-head workflow PASS.
 
 ### DG-P9 — Logical-current vs pinned-revision binding
 
@@ -1042,17 +1045,18 @@ DG-P7 — Authority claims + duplicate-authority detection
       final exact-head run 35611830804 PASS
        ↓
 DG-P8 — Typed document relations
-      PRE-IMPLEMENTATION SPEC FROZEN
-      DEPENDENCY / DOCUMENT QA PASS
-      IMPLEMENTATION NOT_STARTED
+      IMPLEMENTATION QUALIFIED
+      HEAD e784d7f56c0cfdf25ca453da48d570cd202ad0cc
+      workflow 35621561857 PASS
+      HANDOFF EXACT-HEAD QA PENDING
        ↓
 STOP
 
 DG-P9+ = NOT_STARTED / NOT_AUTHORIZED
 ```
 
-DG-P7 is formally closed at final exact closure evidence, and the explicitly authorized DG-P8 pre-implementation qualification has passed.
+DG-P8 bounded implementation qualification has passed on both SQLite and PostgreSQL 17, but formal closure still requires exact-head requalification of the committed handoff package.
 
-DG-P8 implementation remains NOT_STARTED and requires a separate explicit bounded implementation authorization. DG-P9+ remain unopened. DG-W3 remains OPEN / NOT_EXECUTED.
+DG-P9+ remain unopened and DG-W3 remains OPEN / NOT_EXECUTED.
 
 GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.
