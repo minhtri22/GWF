@@ -2,78 +2,83 @@
 
 ## Purpose
 
-Make GWF the **default execution and governance backend** for G2E without making GWF a hard dependency of the G2E core.
+Make GWF the default execution/governance/persistence backend for G2E without making GWF a hard dependency of G2E core semantics.
 
 ## Architecture boundary
 
 ```text
-G2E Core
-  goal / claim / proof / adjudication
-          ↓
-      GWF Adapter
-          ↓
-GWF runtime primitives
+G2E Core Semantics
+  Goal / Claim / Proof / Evidence / Adjudication
+                ↓
+            GWF Adapter
+                ↓
+GWF runtime / system of record
   artifacts/revisions
   authority/approval
-  phase protocol
-  recovery
-  GitHub plugin
-  domain/skill registry
-  handoff
+  recovery/handoff
+  GitHub/plugin infrastructure
+  agent interoperability
 ```
 
-G2E remains responsible for proof semantics. GWF remains responsible for governed execution state.
+G2E owns semantic meaning. GWF owns default durable persistence/governance execution. GWF MUST NOT reinterpret canonical G2E verdict/state semantics.
 
-## Adapter responsibilities
+## Adapter mappings
 
 The adapter MUST map:
 
-- Goal Contract → governed GWF project/artifact revision;
-- Claim/Proof identities → GWF artifacts and traces;
-- G2E execution envelope → GWF phase/workunit execution;
-- G2E authority requirement → GWF actor/approval policy;
-- G2E evidence → GWF evidence/artifact references;
-- G2E terminal adjudication → immutable governed decision artifact;
-- G2E selection/handoff → GWF checkpoint/handoff state.
+- GoalContract/GoalClosureContract → governed GWF artifact revisions;
+- ClaimGraph/ProofObligation → exact GWF artifact/trace refs;
+- ExecutionAttempt → GWF execution/workunit state;
+- G2E authority action → GWF actor/approval policy;
+- EvidenceRecord → GWF artifact/evidence refs;
+- Adjudication/GovernanceDisposition → immutable governed records;
+- SelectionDecision/handoff → governed checkpoint/handoff state.
 
-The adapter MUST NOT:
+Canonical G2E IDs/hashes remain unchanged. GWF IDs are runtime mappings.
 
-- implement claim decomposition inside GWF core;
-- silently translate GWF `SUCCEEDED` to G2E PASS;
-- weaken G2E no-rescue/freshness semantics;
-- require a new GWF domain for every dynamically generated proof.
+## Dynamic proof work
 
-## Dynamic work
+G2E dynamically creates ProofObligations. The adapter SHOULD use a generic governed G2E execution facade/workunit rather than generating arbitrary trusted domain YAML at runtime.
 
-Because G2E generates proof obligations dynamically, the adapter should prefer a generic G2E execution domain/workunit facade over runtime generation of arbitrary trusted domain YAML.
+Dynamic work still passes normal GWF authority, preflight, execution, verification and handoff controls.
 
-Any dynamic workunit representation must still pass authority, skill, preflight, execution, verification and handoff controls.
+## System-of-record rule
+
+In GWF mode:
+
+- GWF is the durable system of record for canonical G2E objects;
+- G2E schemas/semantics remain normative;
+- runtime state may not silently mutate frozen canonical content;
+- export back to standalone must preserve canonical IDs/hashes.
 
 ## Versioning
 
-The adapter records:
+Record:
 
-- G2E core version;
+- G2E core/schema versions;
 - GWF runtime version;
+- adapter mapping version;
 - GWF domain revision if used;
-- mapping schema version;
-- active agent-interoperability contract revision.
+- active Agent Interoperability contract revision.
+
+Unknown incompatible schema/runtime mappings fail closed.
 
 ## Acceptance criteria
 
-1. Same G2E Proof Obligation can execute in GWF and standalone modes with equivalent semantic identity.
-2. GWF persisted state can reconstruct G2E execution/evidence mapping.
-3. No GWF PASS/phase state is confused with G2E claim PASS.
-4. Recovery paths respect frozen G2E retry policy.
-5. GWF approval/authority remains stricter where applicable.
-6. GWF can be upgraded independently when adapter compatibility holds.
+1. Same G2E objects retain IDs/hashes in standalone and GWF.
+2. GWF persistence reconstructs complete G2E execution/evidence mapping.
+3. GWF completion/PASS-like runtime state is never Claim PASS by implication.
+4. Recovery respects frozen G2E RetryPolicy/freshness.
+5. GWF stricter authority remains effective.
+6. GWF upgrades are independent when compatibility contract passes.
+7. PRD-09/10 can be integrated later without being hard prerequisites for core GWF mapping.
 
 ## Dependencies
 
-- [PRD-07 Execution Protocol](PRD_07_EXECUTION_PROTOCOL.md)
-- [PRD-09 Agent App Adapters](PRD_09_AGENT_APP_ADAPTERS.md)
-- [PRD-10 GitHub Adapter](PRD_10_GITHUB_ADAPTER.md)
-- [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **HARD:** [PRD-07 Execution Protocol](PRD_07_EXECUTION_PROTOCOL.md)
+- **INTEGRATION:** [PRD-09 Agent App Adapters](PRD_09_AGENT_APP_ADAPTERS.md), [PRD-10 GitHub Adapter](PRD_10_GITHUB_ADAPTER.md)
+- **CROSS_CUTTING:** [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
 
 ## References
 
@@ -81,4 +86,3 @@ The adapter records:
 - [GWF DomainSDK](../../src/gwr/domain_sdk.py)
 - [GWF Runtime](../../src/gwr/runtime.py)
 - [GWF Agent Interoperability Foundation](../../docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md)
-- [GWF 7-Wave implementation plan](../../docs/IMPLEMENTATION_7_WAVES_PLAN.md)

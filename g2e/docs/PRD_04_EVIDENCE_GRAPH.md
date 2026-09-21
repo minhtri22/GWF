@@ -2,71 +2,72 @@
 
 ## Purpose
 
-Represent what has actually been observed, which exact execution produced it, and which claims it can or cannot support.
+Represent candidate/admitted evidence, exact provenance, freshness, conflicts, and immutable relations without allowing narrative or last-write-wins evidence to resolve Claims.
 
-## Core distinction
+## EvidenceRecord
 
-Evidence is not narrative. A claim cannot become PASS because an agent says “looks good.” G2E requires attributable evidence.
+Each EvidenceRecord MUST include:
 
-## Evidence node
-
-Each evidence record MUST include:
-
-- `evidence_id`;
-- evidence type/class;
-- producer execution/attempt identity;
-- source commit/artifact/config hashes as applicable;
-- subject claim/proof-obligation IDs;
+- `evidence_id`, schema/hash;
+- evidence/source class;
+- lifecycle: `CANDIDATE | ADMITTED | REJECTED | INVALIDATED`;
+- producer ExecutionAttempt identity when execution-produced;
+- exact source/artifact/config/resource identities;
+- subject Claim/Proof IDs;
 - timestamp;
 - environment/resource identity;
 - payload digest or immutable external reference;
-- trust class;
-- freshness/protection classification;
+- freshness/protection state;
 - redaction/security metadata;
-- validity status;
-- supersession relation if applicable.
+- EvidenceAdmissionPolicy decision/provenance.
 
-## Evidence graph relations
+Only ADMITTED evidence may be consumed by adjudication.
 
-Minimum relations:
+## EvidenceAdmissionPolicy
 
-- `PRODUCED_BY`
-- `SUPPORTS`
-- `FALSIFIES`
-- `VALIDATES`
-- `DERIVED_FROM`
-- `REPRODUCES`
-- `CONFLICTS_WITH`
-- `SUPERSEDES`
+Normative requirements are defined in [Core Semantics §10](CORE_SEMANTICS.md). The policy freezes accepted source classes, integrity, producer linkage, freshness, independence, redaction, derivation and missing-data rules.
 
-An evidence record may be valid while not sufficient for a claim. Evidence validity and claim sufficiency are separate.
+“Trust class” alone is insufficient and is not a substitute for admission.
+
+External reference/context material does not become empirical proof solely by being retained.
+
+## Relations
+
+Relation direction and immutable binding are normative in [Core Semantics §10](CORE_SEMANTICS.md):
+
+- evidence → attempt: `PRODUCED_BY`;
+- evidence → claim/proof: `SUPPORTS/FALSIFIES`;
+- evidence → exact artifact/contract revision: `VALIDATES`;
+- evidence → evidence: `DERIVED_FROM/REPRODUCES/CONFLICTS_WITH/SUPERSEDES`.
+
+Authoritative relations never float to an unspecified “current” target.
 
 ## Freshness
 
-Protected evidence/resources must preserve exposure state. Once a confirmatory result is inspected, it cannot be treated as fresh in a later obligation.
+Freshness uses the `FRESH | RESERVED | EXPOSED` model from [Core Semantics §8](CORE_SEMANTICS.md). Once EXPOSED, a resource/evidence source cannot become FRESH again.
 
-## Negative evidence
+## Conflicts
 
-FAIL/negative results remain first-class graph nodes. New evidence may create a new claim or proof lineage, but must not erase prior negative evidence.
+Conflicting evidence remains visible. ClaimResolutionPolicy, not insertion order, determines Claim resolution.
 
 ## Acceptance criteria
 
-1. Evidence identity is reconstructable from exact inputs/references.
-2. Same evidence cannot be reclassified as fresh after exposure.
-3. Evidence invalidation propagates to dependent claim sufficiency without deleting history.
-4. Redacted evidence remains attributable without persisting secrets.
-5. Standalone and GWF adapters expose the same logical graph semantics.
-6. Conflicting evidence is represented, not silently resolved by last-write-wins.
+1. Every admitted evidence item has exact identity/integrity provenance.
+2. Candidate/reference evidence cannot bypass EvidenceAdmissionPolicy.
+3. Freshness is monotonic and crash recovery fails closed.
+4. Relation direction/binding is deterministic.
+5. Conflicts are retained without last-write-wins.
+6. Invalidating evidence recomputes dependent sufficiency without deleting history.
+7. Standalone/GWF expose equivalent logical evidence semantics.
 
 ## Dependencies
 
-- [PRD-02 Claim Graph](PRD_02_CLAIM_GRAPH.md)
-- [PRD-03 Proof Planner](PRD_03_PROOF_PLANNER.md)
-- [PRD-07 Execution Protocol](PRD_07_EXECUTION_PROTOCOL.md) for producer identities.
-- [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **HARD:** [PRD-02 Claim Graph](PRD_02_CLAIM_GRAPH.md), [PRD-03 Proof Planner](PRD_03_PROOF_PLANNER.md)
+- **CONDITIONAL/INTEGRATION:** [PRD-07 Execution Protocol](PRD_07_EXECUTION_PROTOCOL.md) for live producer binding
+- **CROSS_CUTTING:** [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
 
 ## References
 
 - [GWF Documentation Integrity & Governance](../../docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md)
-- [GWF research experiment/evidence artifacts](../../domains/research.workflow.yaml)
 - [MindForge M3 evidence](https://github.com/minhtri22/MindForge/blob/62141d530832f7694342fe92704a5975bfdbbded/artifacts/model-training-pipeline/m3/M3_QUALIFICATION_EVIDENCE.json)

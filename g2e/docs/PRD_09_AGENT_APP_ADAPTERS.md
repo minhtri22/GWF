@@ -2,90 +2,88 @@
 
 ## Purpose
 
-Provide normalized execution bindings for agent applications while leveraging each application's existing harness, tools, context handling and coding/research capabilities.
+Provide normalized bindings for agent applications while leveraging each application's existing harness/tools without assuming capability parity.
 
-## Priority
+## Priority profiles
 
-### P0 — Codex / ChatGPT
+### P0a — Codex app profile
 
-Primary implementation target.
+Separate `agent_app=codex` capability/binding profile.
 
-Goals:
+### P0b — ChatGPT app profile
 
-- exploit existing coding/research harness rather than rebuilding shell/browser/Git tooling;
-- allow G2E/GWF to assign a frozen proof objective;
-- receive attributable execution/evidence/handoff;
-- preserve attempt identity and authority boundary.
+Separate `agent_app=chatgpt` capability/binding profile.
 
-### P1 — Claude
+Codex and ChatGPT are the same priority wave, but MUST be discovered, qualified and versioned independently.
 
-Implement the same normalized adapter contract after P0 semantics stabilize.
+### P1 — Claude profile
 
-### P2 — Gemini
+Same normalized adapter contract; no core schema changes.
 
-Implement the same normalized adapter contract after P0/P1.
+### P2 — Gemini profile
 
-### P3 — Other model-backed agents through ARC
+Same normalized adapter contract; no core schema changes.
 
-ARC is a **transport**, not a model/resource class. Model/provider/resource identities remain explicit.
+### P3 — ARC transport paths
+
+ARC is transport only. Provider/model/app/harness/resource identities remain separate.
 
 ## AgentBinding
 
-A normalized binding SHOULD contain:
+A normalized binding MUST distinguish:
 
 - `agent_app`;
 - `provider_ref`;
-- `agent/model identity` where available;
+- `model_ref` when material/available;
 - `harness_ref`;
 - `transport_ref`;
-- `capabilities`;
-- `execution_constraints`;
-- `authority_scope`;
+- capabilities;
+- execution constraints;
+- authority scope;
 - `binding_mode: dynamic | frozen`;
 - equivalence policy;
 - resolved attempt identity.
 
+Capability discovery is required before assignment. An adapter must not infer ChatGPT capability from Codex qualification or vice versa.
+
 ## Adapter behavior
 
-The adapter must support:
+Support:
 
 - capability discovery;
-- binding resolution before attempt;
-- prompt/task envelope submission;
-- streaming or batched progress normalization;
-- artifact/evidence extraction;
+- binding resolution before each attempt;
+- frozen task/proof envelope submission;
+- progress/status normalization;
+- artifact/candidate-evidence extraction;
 - interruption/cancellation;
 - final handoff;
-- redaction of secrets/provider tokens.
+- credential redaction.
 
-The adapter may preserve provider-native reasoning/status fields for diagnostics, but G2E must not treat hidden chain-of-thought as required evidence. Formal evidence is explicit artifact/result data.
+Provider-native reasoning fields may be diagnostic, but hidden chain-of-thought is not required G2E evidence.
 
 ## Independence
 
-Using a different provider does not automatically create independent QA. Independence must be a prospective constraint over lineage, data exposure, implementation role and binding identity.
-
-## No hard provider dependency
-
-G2E core cannot require an OpenAI-, Anthropic-, Google-, or ARC-specific schema. Provider-specific behavior lives behind the adapter.
+Independence is governed by the ProofObligation's IndependencePolicy. A different provider/app alone does not prove independent QA.
 
 ## Acceptance criteria
 
-1. Codex/ChatGPT adapter can execute one frozen proof through an existing harness and return a normalized envelope.
-2. Provider/transport/harness identities remain distinct.
-3. Dynamic reassignment creates a new attempt identity.
+1. Codex and ChatGPT profiles have separate capability manifests and qualification evidence.
+2. Provider/model/app/harness/transport identities remain separate.
+3. Dynamic reassignment creates a new attempt ID.
 4. Frozen binding detects material substitution.
-5. Secret material never persists.
-6. Claude/Gemini can be added without changing core proof schemas.
-7. ARC-backed execution preserves provider/model identity separately from ARC transport identity.
+5. Required independence dimensions are verified prospectively.
+6. Secret material never persists.
+7. Claude/Gemini/ARC additions do not change core proof schemas.
+8. Unsupported app capability fails closed rather than degrading silently.
 
 ## Dependencies
 
-- [PRD-07 Execution Protocol](PRD_07_EXECUTION_PROTOCOL.md)
-- [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
-- GWF default integration: [PRD-08 GWF Adapter](PRD_08_GWF_ADAPTER.md)
+- **HARD:** [PRD-07 Execution Protocol](PRD_07_EXECUTION_PROTOCOL.md)
+- **INTEGRATION:** [PRD-08 GWF Adapter](PRD_08_GWF_ADAPTER.md) in default GWF mode
+- **CROSS_CUTTING:** [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
 
 ## References
 
 - [GWF Agent Interoperability Foundation](../../docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md)
-- [GWF interoperability findings/checklist](../../docs/Finding_checklist.md)
-- [GWF Agent Protocol overview](../../README.md)
+- [GWF findings/checklist](../../docs/Finding_checklist.md)

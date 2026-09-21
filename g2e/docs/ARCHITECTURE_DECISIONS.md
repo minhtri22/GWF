@@ -2,49 +2,51 @@
 
 ## ADR-001 — G2E core is independent; GWF is the default runtime
 
-**Decision:** G2E owns goal→claim→proof→evidence→adjudication→next-step semantics. GWF is the default execution/governance backend through an adapter.
+**Decision:** G2E owns goal→claim→proof→evidence→adjudication→resolution→next-step semantics. GWF is the default execution/governance/persistence backend through an adapter.
 
-**Reason:** GWF already solves authority, persistent governed state, recovery, GitHub safety, agent protocol and handoff. Putting the G2E reasoning engine directly in GWF core would conflate workflow runtime with proof planning.
+**Reason:** GWF already solves authority, persistent governed state, recovery, GitHub safety, agent protocol and handoff. Putting the G2E proof-reasoning engine directly in GWF core would conflate workflow runtime with proof planning.
 
 ## ADR-002 — Do not hard-code MindForge phases
 
 **Decision:** M0–M4 are empirical reference evidence, not canonical G2E phases.
 
-**Reason:** G2E must work for model engineering, systems research, scientific studies and other technical goals.
+## ADR-003 — State namespaces are separate
 
-## ADR-003 — GWF execution success is not G2E PASS
+**Decision:** executor state, Adjudication verdict, Claim lifecycle/resolution, Proof lifecycle, and Goal verdict use separate enums defined in Core Semantics.
 
-**Decision:** executor completion and proof adjudication remain separate states.
+**Reason:** a completed executor can yield a substantive FAIL; an INVALID attempt does not invalidate a Claim or Goal.
 
-**Reason:** a valid experiment may complete successfully and scientifically FAIL.
+## ADR-004 — Dynamic proof generation, static governance
 
-## ADR-004 — Agent apps are adapters, never source of truth
+**Decision:** ProofObligations may be proposed dynamically from current state, but must be reviewed/frozen/authorized before execution. Outcome-dependent semantic mutation creates new governed lineage.
 
-**Decision:** Codex/ChatGPT are first-class priority adapters; Claude/Gemini follow; ARC is a transport for other model agents.
+## ADR-005 — GWF execution success is not G2E PASS
 
-**Reason:** leverage existing harnesses while keeping G2E portable and provider-neutral.
+**Decision:** backend completion is execution evidence only. Adjudication and Claim resolution remain separate.
 
-## ADR-005 — Standalone mode is mandatory
+## ADR-006 — Agent apps are adapters, never source of truth
 
-**Decision:** G2E can run without GWF using a minimal durable runtime.
+**Decision:** Codex and ChatGPT are separate first-priority app profiles; Claude/Gemini follow; ARC is transport, not provider/model/resource identity.
 
-**Reason:** avoid architectural lock-in and enable bootstrapping/lightweight adoption. Standalone mode may expose fewer capabilities but may not weaken core proof invariants.
+## ADR-007 — Standalone mode is mandatory
 
-## ADR-006 — Dynamic proof generation, static governance
+**Decision:** G2E can run without GWF using a minimal durable runtime. Standalone may expose fewer capabilities but may not weaken core proof invariants.
 
-**Decision:** proof obligations may be generated dynamically from the current claim/evidence graph, but every executable obligation must be frozen before execution.
+## ADR-008 — Semantic authority and persistence authority are separate
 
-**Reason:** adaptability is required; post-outcome semantic drift is not.
+**Decision:** G2E defines canonical semantics; the active runtime is the durable system of record. GWF is default. Runtime-specific IDs never replace G2E IDs/hashes.
 
-## ADR-007 — Integrate + qualify before rebuild
+## ADR-009 — Claim and Goal closure are policy-driven
+
+**Decision:** claims resolve only through frozen ClaimResolutionPolicy; goals close only through GoalClosureContract. Last-write-wins evidence and narrative closure are forbidden.
+
+## ADR-010 — Integrate + qualify before rebuild
 
 **Decision:** mature trainers, evaluators, SCMs, runtimes and agent harnesses should be integrated behind adapters and qualified.
-
-**Reason:** G2E’s differentiator is evidence-governed proof orchestration, not reimplementation of commodity infrastructure.
 
 ## References
 
 - [G2E README](../README.md)
+- [Core Semantics](CORE_SEMANTICS.md)
 - [PRD Index](PRD_INDEX.md)
-- [GWF Agent Interoperability Foundation](../../docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md)
-- [MindForge reference evidence](https://github.com/minhtri22/MindForge/tree/62141d530832f7694342fe92704a5975bfdbbded/artifacts/model-training-pipeline)
+- [Reference Baseline](REFERENCE_BASELINE.md)

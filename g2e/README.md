@@ -1,19 +1,19 @@
 # G2E Framework — Goal-to-Evidence
 
-**Status:** specification baseline  
+**Status:** specification baseline / semantic QA hardening  
 **Repository:** GWF  
 **Branch:** `feature/g2e-framework`  
 **Execution default:** GWF  
 **Standalone mode:** required  
-**Primary agent-app adapters:** Codex / ChatGPT first; Claude and Gemini next; ARC transport for other model-backed agents.
+**Primary agent-app priority:** Codex and ChatGPT first as separate app profiles; Claude and Gemini next; ARC transport for other model-backed agents.
 
-G2E turns a user goal into a governed sequence of claims, proof obligations, executions, evidence, adjudications, and next-step decisions until the goal is either sufficiently supported, falsified, invalidated, unresolved, or explicitly stopped.
+G2E turns a user goal into a governed sequence of claims, proof obligations, executions, evidence, adjudications, claim resolutions, and next-step decisions until the goal is ACHIEVED, FALSIFIED, UNRESOLVED, or explicitly STOPPED.
 
-G2E is **not** a training framework, benchmark suite, workflow UI, or agent model. It is the reasoning-and-proof layer that answers:
+G2E is **not** a training framework, benchmark suite, workflow UI, or agent model. It is the proof-reasoning layer that answers:
 
-> Given only a goal, what must be true before we are allowed to claim the goal is achieved, what is the next admissible proof, what evidence is sufficient, and what conclusions remain valid after execution?
+> Given only a goal, what must be true before we may claim the goal is achieved, what is the next admissible proof, what evidence is sufficient, and what conclusions remain valid after execution?
 
-The framework is extracted from the working method used to qualify the MindForge model pipeline: prerequisites before downstream claims, fixture-scale falsification before expensive runs, frozen decision rules before outcomes, exact evidence identity, technical INVALID distinct from scientific FAIL, no silent rescue, and “what remains unproven?” after every result.
+The framework is extracted from working qualification practice, including MindForge M0–M4: prerequisites before downstream claims, fixture-scale falsification before expensive runs, frozen decision rules before outcomes, exact evidence identity, technical INVALID distinct from substantive FAIL, no silent rescue, and “what remains unproven?” after every result.
 
 ## 1. Architecture
 
@@ -22,124 +22,148 @@ flowchart TD
     U[User Goal] --> GI[Goal Interpreter]
     GI --> GC[Goal Contract]
     GC --> CC[Claim Compiler]
-    CC --> CG[Claim Graph]
+    CC --> CG[Claim Graph + Goal Closure Contract]
     CG --> PP[Proof Planner]
     PP --> PO[Proof Obligations]
     PO --> NS[Next-Step Selector]
 
     NS --> EP[Execution Protocol]
     EP --> EX{Execution Backend}
-
-    EX -->|default| GWF[GWF Runtime]
-    EX -->|standalone| SR[Standalone Runtime]
+    EX -->|default| GWF[GWF Runtime / System of Record]
+    EX -->|standalone| SR[Standalone Runtime / System of Record]
 
     GWF --> AA[Agent App Adapters]
     SR --> AA
-
-    AA --> C1[Codex / ChatGPT]
-    AA --> C2[Claude]
-    AA --> C3[Gemini]
-    AA --> C4[ARC transport / other model agents]
+    AA --> C1[Codex profile]
+    AA --> C2[ChatGPT profile]
+    AA --> C3[Claude profile]
+    AA --> C4[Gemini profile]
+    AA --> C5[ARC transport / other agents]
 
     GWF --> GH[GitHub Adapter]
     SR --> GH
-
     GWF --> TOOLS[Domain Tools / External Frameworks]
     SR --> TOOLS
 
-    GH --> EV[Evidence]
+    GH --> EV[Candidate Evidence]
     TOOLS --> EV
     AA --> EV
-
-    EV --> EG[Evidence Graph]
-    EG --> ADJ[Adjudicator]
-    ADJ -->|PASS / FAIL / INVALID / UNRESOLVED| EG
-    EG --> NS
-
-    EG --> FV[Final Goal Verdict]
-    FV --> RP[Goal Result Package]
+    EV --> EA[Evidence Admission]
+    EA --> EG[Evidence Graph]
+    EG --> ADJ[Attempt Adjudicator]
+    ADJ --> CR[Claim Resolver]
+    CR --> NS
+    CR --> GV[Goal Evaluator]
+    GV --> RP[Goal Result Package]
 ```
 
-## 2. Core principle
+## 2. Normative semantics and source of truth
 
-**Agents propose; G2E validates and freezes; execution produces evidence; adjudication decides.**
+Shared state, verdict, lock, freshness, evidence-admission, authority, selection, and integrity semantics are normative in [CORE_SEMANTICS.md](docs/CORE_SEMANTICS.md).
 
-ChatGPT, Codex, Claude, Gemini, or any other agent must never be the authoritative record of:
+The exact design baselines are pinned in [REFERENCE_BASELINE.md](docs/REFERENCE_BASELINE.md).
 
-- what was frozen;
-- which claim was under test;
-- which resources were fresh/protected;
-- what threshold applied;
-- whether a run was terminal;
-- whether a FAIL may be retried;
-- which evidence supports a final claim.
+**Semantic authority:** G2E defines what Goal/Claim/Proof/Evidence/Adjudication objects and verdicts mean.
 
-Those facts belong to G2E state and, when GWF is used, to governed GWF state.
+**Persistence/system-of-record authority:** the active runtime stores the canonical G2E objects.
 
-## 3. Main loop
+- In default mode, GWF is the durable system of record and governance runtime.
+- In standalone mode, the standalone runtime stores the same canonical G2E IDs/hashes.
+- Runtime adapters may add runtime-specific IDs but may not reinterpret G2E semantics.
+
+This avoids competing sources of truth.
+
+## 3. Core principle
+
+**Agents propose; authorized G2E contracts freeze semantics; execution produces candidate evidence; evidence admission controls use; adjudication decides attempts; frozen resolution policies decide claims/goals.**
+
+No agent app is authoritative for:
+
+- frozen semantic identity;
+- fresh/protected-resource state;
+- thresholds/baselines;
+- admitted evidence;
+- terminal adjudication;
+- Claim resolution;
+- Goal verdict.
+
+## 4. Main loop
 
 ```text
 USER GOAL
    ↓
-Goal Contract
+freeze GoalContract requirements
    ↓
-Claim Graph
+compile/review ClaimGraph
    ↓
-Proof Obligations
+freeze GoalClosureContract
    ↓
-select next admissible proof
+plan + freeze ProofObligation
    ↓
-freeze execution contract
+deterministic admissibility
+   ↓
+governed Next-Step selection
    ↓
 execute via GWF by default
    ↓
-collect attributable evidence
+admit attributable evidence
    ↓
+attempt verdict:
 PASS / FAIL / INVALID / UNRESOLVED
    ↓
-update evidence graph
+resolve Proof/Claim under frozen policies
    ↓
-ask: "what remains unproven?"
+evaluate GoalClosureContract
    ↓
-repeat until goal terminal
+ask "what remains unproven?"
+   ↓
+repeat while GoalVerdict = IN_PROGRESS
    ↓
 Goal Result Package
 ```
 
 The framework must **not** hard-code MindForge phases such as M0/M1/M2. Those phases are reference evidence from which generic meta-rules are extracted.
 
-## 4. G2E versus GWF
+## 5. G2E versus GWF
 
-| Concern | G2E | GWF |
+| Concern | G2E | GWF default runtime |
 | --- | --- | --- |
-| Interpret user goal | Owns | Does not own |
-| Derive falsifiable claims | Owns | Does not own |
-| Construct proof obligations | Owns | Does not own |
-| Determine admissible next proof | Owns | Executes selected work |
-| Persist governed execution state | Minimal standalone implementation | **Default authoritative runtime** |
-| Authority / approval | Policy interface | **Default implementation** |
-| Recovery / handoff | Declares semantics | **Default implementation** |
-| GitHub SHA-safe writes | Adapter contract | **Default implementation** |
+| Interpret user goal | Owns semantic contract | Persists governed revision |
+| Derive falsifiable claims | Owns | Persists/authorizes |
+| Construct proof obligations | Owns | Persists/authorizes execution |
+| Determine admissible next proof | Owns policy | Enforces governed execution |
+| Persist authoritative state | Canonical schema/identity | **Default system of record** |
+| Authority / approval | Declares required actions/policies | **Default implementation** |
+| Recovery / handoff | Declares semantic invariants | **Default implementation** |
+| GitHub SHA-safe writes | Adapter contract | Existing/default implementation path |
 | Agent app execution | Adapter abstraction | GWF interop layer by default |
-| Scientific/technical adjudication | Owns | Persists/enforces when integrated |
-| Final goal closure | Owns | Provides governed evidence/history |
+| Adjudication semantics | Owns | Persists/enforces record |
+| Final goal closure | Owns | Persists governed result/history |
 
-G2E must remain runnable without GWF, but standalone mode may not silently weaken mandatory proof invariants.
+G2E remains runnable without GWF, but standalone mode may not silently weaken mandatory proof invariants.
 
-## 5. Agent-app strategy
+## 6. Agent-app strategy
 
-G2E consumes the GWF Agent Interoperability model rather than inventing a competing agent runtime.
+Priority wave:
 
-Priority:
+1. **Codex app profile** and **ChatGPT app profile** — same priority, separately resolved capabilities/harness identities; no assumed parity.
+2. **Claude adapter profile**.
+3. **Gemini adapter profile**.
+4. **ARC transport paths** for other model-backed agents.
 
-1. **Codex / ChatGPT app harnesses** — primary development target.
-2. **Claude adapter** — same normalized binding/execution envelope.
-3. **Gemini adapter** — same normalized binding/execution envelope.
-4. **ARC transport** — transport option for other model-backed agents. ARC is not treated as a resource class or model identity.
+Provider identity, model identity, agent-app identity, transport identity, harness identity, capabilities, constraints, and attempt identity remain separate.
 
-Provider identity, transport identity, harness identity, capabilities, constraints, and attempt identity must remain separate.
+## 7. Framework documents
 
-## 6. Framework components
+- [Core Semantics](docs/CORE_SEMANTICS.md)
+- [Reference Baseline](docs/REFERENCE_BASELINE.md)
+- [PRD Index](docs/PRD_INDEX.md)
+- [Architecture Decisions](docs/ARCHITECTURE_DECISIONS.md)
+- [Phase Plan](docs/PHASE_PLAN.md)
+- [Current Semantic QA](docs/QA_doc.md)
+- [Append-only Lineage](LINEAGE.md)
+
+Component PRDs:
 
 | Component | PRD |
 | --- | --- |
@@ -158,50 +182,31 @@ Provider identity, transport identity, harness identity, capabilities, constrain
 | Reference Acquisition | [PRD-13](docs/PRD_13_REFERENCE_ACQUISITION.md) |
 | Security & Authority | [PRD-14](docs/PRD_14_SECURITY_AUTHORITY.md) |
 
-See the full document map in [PRD_INDEX.md](docs/PRD_INDEX.md).
+## 8. Governing meta-rules
 
-## 7. Governing meta-rules
+1. Do not test a downstream claim until HARD prerequisites are supported.
+2. Use the smallest **admissible under frozen SelectionPolicy** fixture before expensive/fresh resources.
+3. Distinguish executor state, Adjudication verdict, Claim resolution, and Goal verdict.
+4. Freeze decision rules before OUTCOME_EXPOSED.
+5. PASS authorizes only dependent semantics defined by frozen resolution/closure contracts.
+6. FAIL remains in lineage and cannot be rescued by post-outcome semantic mutation.
+7. Integrate + qualify mature external implementations before rebuilding them.
+8. Agent output is proposal until validated/frozen/admitted.
+9. Evidence must bind exact producer/source/resource/artifact identities.
+10. After every adjudication, recompute “what remains unproven?” from the governed graph.
+11. Fresh/protected resources require prospective authorization and durable exposure tracking.
+12. Normative post-outcome changes create new affected lineage; old verdicts remain immutable.
 
-The initial rule set extracted from real qualification work is:
+## 9. Lineage
 
-1. Do not test a downstream claim until its hard prerequisites are supported.
-2. Use the smallest fixture capable of falsifying the mechanism before consuming expensive or fresh resources.
-3. Distinguish technical `INVALID` from substantive `FAIL`.
-4. Freeze decision rules before outcome exposure.
-5. A PASS authorizes only claims whose dependencies are satisfied; it does not prove the final goal.
-6. A FAIL remains part of lineage and cannot be silently rescued by threshold, seed, data, or semantic mutation.
-7. Reuse mature external implementations when available; integrate + qualify instead of rebuilding.
-8. Agent output is a proposal until validated and frozen by the framework.
-9. Evidence must be attributable to exact source, execution, resource, and artifact identities.
-10. After every adjudication, recompute “what remains unproven?” from the claim/evidence graph.
-11. Fresh/protected resources may be consumed only by prospectively authorized proof obligations.
-12. A change to a scientific or normative claim after outcome exposure creates a new lineage unless the frozen amendment policy explicitly allows it.
+Project-level completed phase outcomes are recorded in append-only [LINEAGE.md](LINEAGE.md). Development mistakes, transient test failures, and implementation debugging remain in Git/CI evidence, not scientific/project lineage.
 
-## 8. Lineage
+## 10. Reference implementation source
 
-G2E project-level results are recorded in the append-only [LINEAGE.md](LINEAGE.md).
-
-The lineage is intentionally short. It records only completed phase outcomes and authoritative identities. Development mistakes, transient test failures, and implementation debugging belong in normal Git history/CI evidence, not in project scientific lineage.
-
-## 9. Reference implementation source
-
-The first empirical source for G2E methodology is the MindForge model-pipeline qualification lineage through M4:
-
-- [MindForge M0–M4 evidence tree](https://github.com/minhtri22/MindForge/tree/62141d530832f7694342fe92704a5975bfdbbded/artifacts/model-training-pipeline)
-- [M3 governance result](https://github.com/minhtri22/MindForge/blob/62141d530832f7694342fe92704a5975bfdbbded/artifacts/model-training-pipeline/m3/IMPLEMENTATION_RESULT.md)
-- [M4 reasoning result](https://github.com/minhtri22/MindForge/blob/62141d530832f7694342fe92704a5975bfdbbded/artifacts/model-training-pipeline/m4/IMPLEMENTATION_RESULT.md)
-
-These are **reference evidence**, not a fixed G2E workflow.
-
-## 10. GWF references
-
-- [GWF README](../README.md)
-- [Agent Interoperability Foundation](../docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md)
-- [Reference Acquisition Specification](../docs/V0.8.6_REFERENCE_ACQUISITION_SPEC.md)
-- [Documentation Integrity & Governance](../docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md)
-- [7-Wave GWF implementation plan](../docs/IMPLEMENTATION_7_WAVES_PLAN.md)
-- [Research domain](../domains/research.workflow.yaml)
+MindForge M0–M4 is empirical method evidence, not a G2E phase template. Exact identities are pinned in [REFERENCE_BASELINE.md](docs/REFERENCE_BASELINE.md).
 
 ## 11. Current authorization frontier
 
-This branch currently authorizes **specification and architecture only**. No G2E runtime implementation, agent execution, GWF schema change, or migration is implied merely by the presence of these PRDs.
+Implementation authorization is controlled by [QA_doc.md](docs/QA_doc.md) and [PHASE_PLAN.md](docs/PHASE_PLAN.md).
+
+P1 — Core Schemas MUST NOT start while the current semantic QA has open findings. A PASS semantic QA opens P1 only; it does not authorize later phases.

@@ -2,71 +2,70 @@
 
 ## Purpose
 
-Allow G2E to obtain external prior art, specifications, repository evidence and current capability information without contaminating protected study outcomes or creating an ungoverned evidence universe.
+Acquire prior art/specifications/repository capability evidence without contaminating protected outcomes or treating contextual references as empirical proof by default.
 
 ## Default strategy
 
-When GWF is the runtime, G2E SHOULD consume the GWF Reference Acquisition capability rather than duplicate it.
+In GWF mode, reuse the GWF Reference Acquisition capability. G2E adds Claim/Proof relation semantics and EvidenceAdmissionPolicy.
 
-G2E adds one semantic layer: acquired references may inform **Goal interpretation, Claim decomposition and Proof design**, but they do not automatically prove the target claim.
+## Temporal modes
 
-## Acquisition modes
+Terms map exactly to [Core Semantics §7](CORE_SEMANTICS.md):
 
-G2E must preserve temporal semantics compatible with GWF:
+- `PRE_LOCK`: before PROOF_FROZEN;
+- `LOCKED_PRE_OUTCOME`: PROOF_FROZEN through before OUTCOME_EXPOSED;
+- `POST_OUTCOME`: from OUTCOME_EXPOSED onward.
 
-- `PRE_LOCK`;
-- `LOCKED_PRE_OUTCOME`;
-- `POST_OUTCOME`.
-
-A newly discovered reference that changes the study/claim meaning after lock must route through amendment or new lineage; it cannot silently rewrite the frozen proof.
+A discovered reference that would normatively alter a locked proof follows amendment/new-lineage rules; it never silently rewrites the old proof.
 
 ## Reference record
 
-G2E needs:
+Record:
 
 - canonical source identity;
 - exact inspected snapshot/revision;
-- retrieval query/session identity;
-- provider;
-- timestamp;
+- retrieval session/query identity;
+- provider/timestamp;
 - disposition;
-- relevant extracted capability/fact;
-- relation to claims/proofs;
-- content digest where feasible.
+- extracted capability/fact;
+- relation to Goal/Claim/Proof;
+- content digest where feasible;
+- source/evidence class;
+- exposure/temporal mode.
 
 ## Use classes
 
-References may be classified as:
+Examples:
 
 - prior art/context;
 - implementation capability evidence;
 - specification authority;
 - baseline source;
-- direct empirical evidence.
+- candidate direct empirical evidence.
 
-The class determines whether it can support a formal claim.
+Classification alone does not admit evidence. Formal use in adjudication requires the frozen EvidenceAdmissionPolicy from PRD-04.
 
-## Implementation references
+## Tool capability evidence
 
-For external frameworks/tools, G2E should prefer official docs/source and pin/revalidate capability at implementation time. Examples include trainer, evaluator, converter, runtime and agent-app harness integrations.
+External tool/framework capability claims must be revalidated and pinned at implementation/upgrade time. Current docs are design references, not permanent vendor guarantees.
 
 ## Acceptance criteria
 
-1. Exact executed queries/retrieval sessions are attributable.
-2. Canonical source and inspected snapshot are separate.
-3. Reference acquisition after outcome exposure cannot rewrite the original proof.
-4. A tool capability statement has dated/pinned evidence.
-5. GWF mode reuses GWF registry/retrieval primitives.
-6. Standalone mode can export equivalent reference records.
+1. Exact executed retrieval/query sessions attributable.
+2. Canonical source and inspected snapshot distinct.
+3. PRE_LOCK/LOCKED_PRE_OUTCOME/POST_OUTCOME use canonical event boundaries.
+4. Post-outcome discoveries cannot rewrite old proofs.
+5. Reference class does not bypass EvidenceAdmissionPolicy.
+6. GWF mode reuses GWF registry/log primitives.
+7. Standalone exports equivalent records.
 
 ## Dependencies
 
-- [PRD-01 Goal Contract](PRD_01_GOAL_CONTRACT.md)
-- [PRD-02 Claim Graph](PRD_02_CLAIM_GRAPH.md)
-- Cross-cutting [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **HARD:** [PRD-01 Goal Contract](PRD_01_GOAL_CONTRACT.md), [PRD-02 Claim Graph](PRD_02_CLAIM_GRAPH.md)
+- **CROSS_CUTTING:** [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
 
 ## References
 
 - [GWF Reference Acquisition Specification](../../docs/V0.8.6_REFERENCE_ACQUISITION_SPEC.md)
-- [GWF 7-Wave plan — Reference Acquisition](../../docs/IMPLEMENTATION_7_WAVES_PLAN.md)
-- [GWF Finding checklist — temporal/reference findings](../../docs/Finding_checklist.md)
+- [Reference Baseline](REFERENCE_BASELINE.md)

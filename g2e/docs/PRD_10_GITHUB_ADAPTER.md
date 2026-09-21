@@ -2,75 +2,78 @@
 
 ## Purpose
 
-Use GitHub as the default source/evidence/independent-execution ledger for code-centric G2E proofs while keeping G2E core repository-provider neutral.
+Use GitHub as the default source/external-execution/evidence ledger for code-centric proofs while keeping G2E core SCM-provider neutral.
+
+GitHub execution is not automatically “independent”; IndependencePolicy determines independence.
 
 ## Capabilities
 
 The adapter SHOULD support:
 
-- exact repository/branch/commit/blob identity;
-- feature-branch creation;
-- expected-head safe writes;
+- exact repo/branch/commit/blob identity;
+- safe branch creation;
+- expected-head writes;
 - commit verification;
 - workflow dispatch/observation;
-- job/log evidence capture;
-- artifact references;
+- job/log/artifact evidence capture;
 - compare/ancestry verification;
-- evidence-only commit verification;
-- release/tag identity where needed.
+- evidence-only closure verification;
+- release/tag identity when needed.
 
 ## Safety model
 
-Every governed write must:
+Every governed write:
 
-1. freeze expected base/head;
-2. prepare explicit file/change scope;
-3. execute through an authorized provider;
-4. re-fetch resulting commit/ref;
-5. verify expected changes and absence of unintended changes.
+1. freezes expected base/head;
+2. freezes intended file/change scope;
+3. executes through authorized credentials/provider;
+4. re-fetches resulting commit/ref;
+5. verifies expected and unintended changes.
 
-A commit is not itself proof PASS. GitHub Actions success is execution evidence; G2E adjudication decides the proof claim.
+Git commit/workflow success is candidate execution evidence, never automatic proof PASS.
 
-## Evidence patterns
+## Evidence-only closure pattern
 
-The adapter should natively normalize patterns learned from MindForge:
+When a proof chooses this pattern:
 
 ```text
-implementation commit
+implementation SHA
   ↓
-CI on exact SHA
+workflow on exact SHA
   ↓
-authoritative result hashes
+admitted result hashes
   ↓
 evidence-only commit
   ↓
-compare confirms no code changed after qualification
+compare verifies no code mutation after qualification
 ```
 
-This pattern is optional per proof, not globally mandatory.
+The pattern is optional per ProofObligation.
 
-## GitHub-independent core
+## Provider-neutral core
 
-G2E must allow another SCM/executor provider later. Core schemas therefore refer to generic source revisions and external execution references.
+Core source identity uses generic revision/artifact references. GitHub-specific fields remain adapter metadata.
 
 ## Acceptance criteria
 
-1. Exact commit/blob identity is recorded.
+1. Exact source identity recorded.
 2. Stale expected-head write fails closed.
-3. Workflow evidence is bound to exact source SHA.
-4. Evidence-only ancestry can be verified.
-5. Adapter cannot translate workflow green status directly into proof PASS.
-6. Tokens/secrets are never persisted.
-7. Read-only acquisition and mutation paths are distinct.
+3. Workflow evidence binds exact source SHA.
+4. Evidence-only ancestry verifiable.
+5. GitHub green never maps directly to G2E PASS.
+6. Read-only acquisition and mutation paths remain distinct.
+7. Tokens/secrets never persist.
+8. Independence is never inferred solely from GitHub-hosted execution.
 
 ## Dependencies
 
-- [PRD-07 Execution Protocol](PRD_07_EXECUTION_PROTOCOL.md)
-- [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
-- Default GWF mode: [PRD-08 GWF Adapter](PRD_08_GWF_ADAPTER.md)
+- **HARD:** [PRD-07 Execution Protocol](PRD_07_EXECUTION_PROTOCOL.md)
+- **INTEGRATION:** [PRD-08 GWF Adapter](PRD_08_GWF_ADAPTER.md) in default mode
+- **CROSS_CUTTING:** [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
 
 ## References
 
-- [GWF GitHub safety overview](../../README.md)
-- [GWF GitHub Plugin/SHA QA plan references](../../docs/IMPLEMENTATION_7_WAVES_PLAN.md)
+- [GWF README](../../README.md)
+- [GWF 7-Wave GitHub/revision plan](../../docs/IMPLEMENTATION_7_WAVES_PLAN.md)
 - [MindForge M4 evidence-only closure](https://github.com/minhtri22/MindForge/commit/62141d530832f7694342fe92704a5975bfdbbded)

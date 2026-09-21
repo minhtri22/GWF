@@ -2,79 +2,91 @@
 
 ## Purpose
 
-Derive the propositions that must be supported before G2E may claim the Goal Contract is achieved, and represent their hard dependencies explicitly.
-
-## Core idea
-
-G2E must not hard-code project-specific stages such as M0→M8. It must derive claims from the goal.
-
-Example:
-
-```text
-Goal: deploy a reproducible reasoning model locally
-  ↓
-C1 data identity is fixed
-C2 training can recover exactly
-C3 evaluation cannot be rescued post hoc
-C4 reasoning representation is well-defined
-C5 canonical model artifact is loadable
-C6 conversion preserves required behavior
-C7 target runtime preserves required semantics
-```
+Derive falsifiable propositions from a frozen GoalContract, represent their HARD dependencies, and freeze the GoalClosureContract that maps Claim resolutions back to the user's goal requirements.
 
 ## Claim model
 
-Each claim MUST include:
+Each Claim MUST include:
 
-- `claim_id`;
+- `claim_id`, schema/revision/hash;
 - proposition;
-- claim class: functional / scientific / quality / safety / reproducibility / compatibility / governance;
-- scope;
-- assumptions;
-- hard prerequisite claim IDs;
-- supporting-evidence policy;
+- descriptive claim class;
+- scope and assumptions;
+- HARD prerequisite Claim IDs;
+- ClaimResolutionPolicy;
 - falsification semantics;
-- terminal relevance to the parent goal;
-- status;
+- mapped `goal_requirement_id` values;
+- lifecycle state;
+- resolution state;
 - derivation provenance;
-- compiler version/agent proposal identity.
+- compiler/agent proposal identity.
 
-Recommended states:
+Claim class is metadata only in v0.x. It does not silently alter verdict semantics unless a future explicit domain policy is bound.
 
-`UNKNOWN | BLOCKED | READY | RUNNING | PASS | FAIL | INVALID | UNRESOLVED | SUPERSEDED`.
+Lifecycle and resolution are separate namespaces in [Core Semantics §2.3–2.4](CORE_SEMANTICS.md).
 
-## Compiler behavior
+## ClaimResolutionPolicy
 
-The Claim Compiler MAY use an LLM/agent to propose decomposition, but the resulting graph must pass deterministic validation:
+Each terminal Claim MUST freeze either `ALL_REQUIRED` or `ANY_SUFFICIENT` semantics according to [Core Semantics §4](CORE_SEMANTICS.md). Multiple proofs/evidence may not resolve a Claim by last-write-wins.
 
-- no unknown dependencies;
-- no forbidden cycles;
-- all terminal goal requirements mapped to at least one claim;
-- no claim with unfalsifiable PASS semantics when evidence is required;
-- assumptions explicit;
-- duplicate or semantically overlapping claims surfaced for review;
-- claims that are merely implementation tasks must not masquerade as outcome claims.
+## Graph requirements
 
-## Minimality
+The compiler MAY use an LLM/agent to propose decomposition, but the graph MUST pass deterministic validation:
 
-The compiler SHOULD prefer the smallest sufficient claim set. New claims may be added when evidence exposes a previously unknown prerequisite, but the addition must have explicit lineage and may not retroactively convert an old FAIL into PASS.
+- all IDs/references resolve;
+- HARD dependency graph is a DAG in v0.x;
+- every Goal requirement has explicit Claim coverage or an explicit unresolved coverage finding;
+- implementation tasks do not masquerade as outcome Claims;
+- ClaimResolutionPolicy is complete before the Claim can become READY;
+- assumptions are explicit;
+- duplicates/overlaps are surfaced for review.
+
+Fixed-point/cyclic HARD dependencies are not supported in v0.x.
+
+## GoalClosureContract
+
+Before `CLAIM_GRAPH_FROZEN`, G2E MUST create and review a GoalClosureContract containing:
+
+- exact GoalContract ID/revision/hash;
+- exact ClaimGraph ID/revision/hash;
+- requirement→Claim mappings;
+- success expression;
+- falsification expression;
+- terminal Claim set;
+- authorized stop policy.
+
+Expression semantics are defined in [Core Semantics §5](CORE_SEMANTICS.md).
+
+The ClaimGraph and GoalClosureContract freeze together.
+
+## Completeness boundary
+
+G2E cannot mathematically prove that agent-generated decomposition is globally complete. Therefore freeze requires:
+
+- deterministic structural validation;
+- a `coverage_statement`;
+- unresolved-risk/unknown list;
+- configured authority approval.
+
+Newly discovered prerequisites after outcome exposure follow [Core Semantics §9](CORE_SEMANTICS.md); old results are not rewritten.
 
 ## Acceptance criteria
 
-1. Every required goal outcome has a claim path.
-2. Hard dependency graph is acyclic or contains only explicitly allowed fixed-point structures.
-3. Claims can be serialized and hashed canonically.
-4. Agent-generated claims are attributable.
-5. Graph mutation after locked downstream execution is classified and governed.
-6. “PASS all leaves” alone is insufficient; final goal closure must evaluate the explicit terminal mapping.
+1. Every Goal requirement has mapped coverage or an explicit blocking/unresolved finding.
+2. HARD dependency graph is acyclic.
+3. Claim lifecycle and Claim resolution are separate.
+4. Every terminal Claim has a frozen ClaimResolutionPolicy.
+5. GoalClosureContract binds exact GoalContract/ClaimGraph revisions.
+6. Agent-generated Claims are attributable and non-authoritative until approved.
+7. Post-outcome graph changes create governed new revision/lineage.
 
 ## Dependencies
 
-- [PRD-01 Goal Contract](PRD_01_GOAL_CONTRACT.md)
-- Cross-cutting [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **HARD:** [PRD-01 Goal Contract](PRD_01_GOAL_CONTRACT.md)
+- **CROSS_CUTTING:** [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
 
 ## References
 
-- [G2E README — governing meta-rules](../README.md)
-- [GWF research hypothesis/protocol structure](../../domains/research.workflow.yaml)
-- [MindForge M3 governance result](https://github.com/minhtri22/MindForge/blob/62141d530832f7694342fe92704a5975bfdbbded/artifacts/model-training-pipeline/m3/IMPLEMENTATION_RESULT.md)
+- [G2E README](../README.md)
+- [MindForge M3 governance reference](https://github.com/minhtri22/MindForge/blob/62141d530832f7694342fe92704a5975bfdbbded/artifacts/model-training-pipeline/m3/IMPLEMENTATION_RESULT.md)

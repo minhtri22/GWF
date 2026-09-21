@@ -2,88 +2,81 @@
 
 ## Purpose
 
-Convert an unstructured user goal into a versioned, reviewable, machine-readable contract without prematurely deciding the implementation path.
+Convert an unstructured user goal into a versioned, reviewable, machine-readable contract without prematurely deciding implementation or Claim IDs.
 
-A Goal Contract answers: **what outcome does the user want, under what constraints, and what would make the goal terminal?**
+## Required contract
 
-## User problem
+A GoalContract MUST contain:
 
-A solo researcher often begins with a sentence such as:
-
-> “Build a small model that learns domain knowledge, exposes a reasoning rationale, runs locally, and is reproducible.”
-
-If execution begins directly from prose, agents can silently change scope, success criteria, runtime targets, cost limits, or evidence expectations. G2E must establish a stable goal identity before claim decomposition.
-
-## Required capabilities
-
-The Goal Contract MUST contain:
-
-- `goal_id` and revision identity;
+- `goal_id`, revision, schema version and canonical hash;
 - user-authored goal statement;
+- stable `goal_requirement_id` records;
 - desired outputs;
-- explicit constraints and non-goals;
+- hard constraints and explicit non-goals;
+- preferences separated from hard constraints;
 - target environments/runtimes when known;
-- acceptable terminal outcomes;
 - resource/privacy/locality constraints;
-- required confidence/evidence class when specified;
-- unresolved ambiguities;
-- amendment policy;
+- acceptable governance stop conditions;
+- ambiguity records;
+- AmendmentPolicy reference;
 - authority/approval metadata.
 
-The contract MUST distinguish:
+Each ambiguity record MUST contain:
 
-- **goal semantics** from implementation choices;
-- **hard constraints** from preferences;
-- **success outputs** from proof requirements;
-- **unknown** from “not required.”
+- ambiguity ID;
+- description;
+- `blocking: true|false`;
+- owner/resolution authority;
+- resolution/disposition when closed.
+
+GoalContract MUST NOT refer to Claim IDs. Claims are generated later from the frozen GoalContract.
 
 ## Lifecycle
 
-```text
-DRAFT → REVIEWED → FROZEN
-                  ↓
-             AMENDED*
-```
+Normative lifecycle is defined in [Core Semantics §2.1](CORE_SEMANTICS.md):
 
-A semantic amendment after evidence exposure creates a new goal revision and may require a new lineage. The framework must never silently rewrite the original goal to match observed results.
+`DRAFT → REVIEWED → FROZEN → SUPERSEDED`.
 
-## Input / output
+A GoalContract cannot become FROZEN while any blocking ambiguity remains unresolved.
 
-Input:
-- user natural-language goal;
-- optional files/specifications;
-- optional GWF project context.
+Normative amendments follow [Core Semantics §9](CORE_SEMANTICS.md). Post-outcome normative changes never rewrite the old lineage.
 
-Output:
-- canonical `GoalContract`;
-- unresolved-question list;
+## Output
+
+The component emits:
+
+- canonical GoalContract;
 - goal hash;
-- amendment class.
+- unresolved ambiguity list;
+- amendment classification.
+
+Claim compilation later creates a GoalClosureContract bound to this exact GoalContract revision.
 
 ## Acceptance criteria
 
-1. Same canonical content produces same goal hash.
-2. Implementation-specific suggestions can change without changing goal semantics.
-3. Semantic changes produce a new revision/hash.
-4. Goal cannot become `FROZEN` while blocking ambiguities remain.
-5. Agent proposal is not authoritative until accepted by the configured authority policy.
-6. Standalone and GWF modes produce equivalent canonical Goal Contract content.
+1. Same canonical semantic content produces the same hash under Core Semantics.
+2. Implementation suggestions can change without changing frozen goal semantics.
+3. Normative changes create a new revision and follow amendment/lineage rules.
+4. Blocking ambiguities prevent FROZEN.
+5. Agent proposals are non-authoritative until approved.
+6. Standalone/GWF modes preserve canonical GoalContract IDs/hashes.
+7. GoalContract contains stable requirements sufficient for later Claim coverage review without pre-creating Claim IDs.
 
 ## Non-goals
 
-- generating the claim graph;
-- choosing tools or agents;
-- executing research;
-- deciding PASS/FAIL.
+- Claim generation;
+- GoalClosureContract generation;
+- proof planning;
+- execution;
+- verdict calculation.
 
 ## Dependencies
 
-- None inside G2E core.
-- Cross-cutting authority semantics: [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md).
+- **CROSS_CUTTING:** [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
 
 ## References
 
 - [G2E README](../README.md)
-- [GWF research goal artifact](../../domains/research.workflow.yaml)
-- [GWF Agent Interoperability Foundation](../../docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md)
-- [MindForge evidence root](https://github.com/minhtri22/MindForge/tree/62141d530832f7694342fe92704a5975bfdbbded/artifacts/model-training-pipeline)
+- [Reference Baseline](REFERENCE_BASELINE.md)
+- [GWF research domain](../../domains/research.workflow.yaml)

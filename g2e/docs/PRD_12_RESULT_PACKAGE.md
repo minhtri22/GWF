@@ -2,86 +2,91 @@
 
 ## Purpose
 
-Produce the final auditable artifact bundle showing what the user asked for, what G2E proved or failed to prove, the evidence lineage, and the actual output artifacts.
+Produce a final auditable package showing the frozen goal, Claim/Proof/Evidence lineage, formal Goal verdict, limitations and actual outputs.
 
-## Required structure
-
-A canonical package SHOULD contain:
+## Canonical structure
 
 ```text
 GOAL_RESULT/
 ├── GOAL.json
+├── GOAL_CLOSURE.json
 ├── CLAIM_GRAPH.json
 ├── PROOF_GRAPH.json
 ├── EVIDENCE_GRAPH.json
 ├── DECISION_LEDGER.json
-├── LINEAGE.json
+├── PACKAGE_LINEAGE.json
 ├── FINAL_VERDICT.json
 ├── REPRODUCIBILITY_MANIFEST.json
+├── PACKAGE_MANIFEST.json
+├── PACKAGE_SEAL.json
 ├── claims/
 │   └── <claim-id>/
 │       ├── CONTRACT.json
-│       ├── ADJUDICATION.json
+│       ├── RESOLUTION.json
 │       └── evidence/
 └── outputs/
     └── domain-specific artifacts
 ```
 
-Large binaries may be referenced by immutable content-addressed identity rather than copied.
+`PACKAGE_LINEAGE.json` is the machine event lineage for this result package and is distinct from repository project-level `g2e/LINEAGE.md`.
+
+Large binaries may be represented by immutable content-addressed references.
 
 ## Final verdict
 
-The package MUST state:
+Normative Goal verdicts are:
 
-- goal revision/hash;
-- achieved / falsified / unresolved / stopped state;
-- which terminal goal claims are PASS;
-- which claims are FAIL/INVALID/UNRESOLVED;
-- limitations;
-- unsupported claims explicitly not made;
-- reproducibility scope;
-- authoritative source/evidence identities.
+- ACHIEVED;
+- FALSIFIED;
+- UNRESOLVED;
+- STOPPED.
 
-A partially achieved goal must not be summarized as achieved.
+INVALID is an attempt-level Adjudication verdict and does not itself become a Goal verdict.
+
+Final verdict derives only from the frozen GoalClosureContract and governed stop policy. Partial achievement cannot be summarized as ACHIEVED.
+
+## Integrity
+
+Package integrity follows [Core Semantics §14](CORE_SEMANTICS.md):
+
+- PACKAGE_MANIFEST lists authoritative content hashes/sizes, excluding manifest/seal;
+- PACKAGE_SEAL hashes the canonical manifest and records framework/runtime/attestation identity;
+- verification fails on missing/changed/unclassified authoritative content;
+- external-reference verification policy is explicit.
+
+No circular self-hash is permitted.
 
 ## Reproducibility manifest
 
-The manifest records enough identity to replay or audit:
+Record:
 
-- framework version;
-- runtime adapter/version;
+- G2E core/schema versions;
+- runtime/adapter versions;
 - source revisions;
-- proof contracts;
-- data/artifact hashes;
+- proof/decision policy hashes;
+- data/artifact/resource hashes;
 - tool/provider versions where material;
-- execution environment classes;
-- agent binding identities;
+- environment classes;
+- agent-binding identities;
 - evidence digests.
-
-## Human-readable report
-
-A generated report may summarize the package, but JSON/structured authoritative artifacts remain the source of truth.
 
 ## Acceptance criteria
 
-1. Package closure is derived from Claim Graph terminal mapping, not narrative judgment.
-2. Every claimed result links to evidence/adjudication.
-3. Package can be verified offline except explicitly external immutable references.
-4. Missing binary artifacts are detectable.
-5. Unsupported/failed claims remain visible.
-6. Re-generating the human report cannot change the formal verdict.
+1. Goal verdict derives from GoalClosureContract, not prose.
+2. Every Claim resolution links frozen Proof/evidence decisions.
+3. Failed/unresolved/unsupported Claims remain visible.
+4. Package seal detects mutation.
+5. Missing required external/binary refs are detectable under verification policy.
+6. Human report regeneration cannot alter formal verdict.
+7. Runtime migration does not change package semantic identities.
 
 ## Dependencies
 
-- [PRD-01 Goal Contract](PRD_01_GOAL_CONTRACT.md)
-- [PRD-02 Claim Graph](PRD_02_CLAIM_GRAPH.md)
-- [PRD-03 Proof Planner](PRD_03_PROOF_PLANNER.md)
-- [PRD-04 Evidence Graph](PRD_04_EVIDENCE_GRAPH.md)
-- [PRD-05 Adjudicator](PRD_05_ADJUDICATOR.md)
-- [PRD-06 Next-Step Selector](PRD_06_NEXT_STEP_SELECTOR.md)
+- **HARD:** PRD-01 through PRD-06
+- **CROSS_CUTTING:** [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
 
 ## References
 
-- [GWF handoff package model](../../domains/research.workflow.yaml)
-- [MindForge M2 evidence package](https://github.com/minhtri22/MindForge/tree/62141d530832f7694342fe92704a5975bfdbbded/artifacts/model-training-pipeline/m2)
-- [MindForge M4 evidence package](https://github.com/minhtri22/MindForge/tree/62141d530832f7694342fe92704a5975bfdbbded/artifacts/model-training-pipeline/m4)
+- [GWF research handoff model](../../domains/research.workflow.yaml)
+- [MindForge evidence root](https://github.com/minhtri22/MindForge/tree/62141d530832f7694342fe92704a5975bfdbbded/artifacts/model-training-pipeline)

@@ -2,89 +2,80 @@
 
 ## Purpose
 
-Define the provider-neutral contract between a frozen Proof Obligation and any execution backend.
+Define the provider-neutral contract between one frozen/authorized ProofObligation and execution backends.
 
-G2E plans proof; execution backends perform work. The protocol must preserve exact semantic identity across GWF, standalone mode, GitHub Actions, local shell, or external frameworks.
+## ExecutionAttempt
 
-## Execution envelope
+Each attempt MUST bind:
 
-Each execution attempt MUST freeze:
-
-- proof-obligation ID/hash;
+- unique `attempt_id`;
+- ProofObligation ID/hash;
 - implementation/source revision;
 - config/artifact/data identities;
-- executor/agent binding identity;
-- transport/harness identity;
+- agent/provider/model/app/harness/transport identities as applicable;
 - resource/environment identity;
-- fresh-resource authorization;
-- expected outputs/evidence;
-- retry policy;
+- protected-resource authorization;
+- expected output/evidence classes;
+- RetryPolicy;
 - authority scope;
-- attempt ID.
+- IndependencePolicy requirements.
 
-Recommended lifecycle:
+## Executor lifecycle
 
-`CREATED → PREFLIGHT → LOCKED → RUNNING → SUCCEEDED | FAILED | INVALIDATED`.
+Normative states are:
 
-Executor `SUCCEEDED` means “the executor completed,” **not** G2E PASS.
+`CREATED → PREFLIGHT → LOCKED → RUNNING → COMPLETED | EXECUTOR_FAILED | CANCELLED | TIMED_OUT | PREEMPTED`.
 
-## Harness versus agent
+These states are executor-only. None means G2E PASS/FAIL/INVALID/UNRESOLVED.
 
-The protocol must preserve the GWF distinction:
+A COMPLETED attempt may still adjudicate FAIL, INVALID or UNRESOLVED. An EXECUTOR_FAILED attempt normally produces evidence leading to INVALID, but the Adjudicator owns that verdict.
 
-- **Harness** — deterministic or semi-deterministic execution shell/tool environment.
-- **Agent/App** — decision-capable actor using the harness/tools.
-- **Transport** — communication path such as ARC/MCP/API.
-- **Provider** — agent/model/service provider.
+## Protected access
 
-These are separate identities.
+If protected resources are needed:
 
-## Retry rules
+1. authorization is checked;
+2. resource is durably RESERVED before access;
+3. OUTCOME_EXPOSED is recorded according to Core Semantics;
+4. uncertain crash recovery fails closed to EXPOSED.
 
-Infrastructure retry is allowed only inside the frozen retry policy.
+## Retry
 
-A retry must not mutate:
+Infrastructure retry is allowed only under frozen RetryPolicy and must preserve semantic ProofObligation identity. Material agent/provider/resource reassignment creates a new attempt identity and must satisfy equivalence/IndependencePolicy.
 
-- proof semantics;
-- evidence rule;
-- protected data;
-- comparator/baseline;
-- threshold;
-- resource equivalence class, unless prospectively allowed.
+## ExecutionResult
 
-Reassignment to a materially different agent/provider/resource produces a new attempt identity and must satisfy any independence/equivalence policy.
+Normalized result contains:
 
-## Output
-
-Execution returns a normalized `ExecutionResult` containing:
-
-- status;
+- executor state;
 - start/end;
-- commands/actions summary;
-- raw artifact references;
-- logs/evidence references;
+- action/command summary;
+- artifact/log/candidate-evidence references;
 - resource identity;
-- agent/harness/transport identities;
-- errors classified technical vs semantic;
-- no-secret redacted metadata.
+- agent/provider/model/app/harness/transport identities;
+- technical error class/reason;
+- redaction metadata.
+
+Executor must not assign scientific/substantive FAIL.
 
 ## Acceptance criteria
 
-1. GWF and standalone executors can consume the same frozen proof envelope.
-2. Execution completion cannot itself update claim verdict.
-3. Every evidence artifact resolves to an execution attempt.
-4. Material executor reassignment is visible.
-5. Retry budget and semantics are enforceable.
-6. Provider credentials never persist in envelopes/evidence.
+1. GWF/standalone consume the same canonical ProofObligation/envelope semantics.
+2. Execution state cannot directly update Claim resolution.
+3. Every execution-produced EvidenceRecord links to an attempt.
+4. Protected-resource transitions are durable/fail-closed.
+5. Material reassignment is visible.
+6. Retry budget and semantic equivalence are enforceable.
+7. Provider credentials never persist.
 
 ## Dependencies
 
-- [PRD-03 Proof Planner](PRD_03_PROOF_PLANNER.md)
-- [PRD-05 Adjudicator](PRD_05_ADJUDICATOR.md)
-- [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **HARD:** [PRD-03 Proof Planner](PRD_03_PROOF_PLANNER.md)
+- **INTEGRATION:** [PRD-05 Adjudicator](PRD_05_ADJUDICATOR.md) consumes execution/evidence
+- **CROSS_CUTTING:** [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
 
 ## References
 
 - [GWF Agent Interoperability Foundation](../../docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md)
-- [GWF Agent Execution Protocol behavior](../../README.md)
-- [GWF software delivery exact-SHA model](../../domains/software.workflow.yaml)
+- [GWF software domain](../../domains/software.workflow.yaml)

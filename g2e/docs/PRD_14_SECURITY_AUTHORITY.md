@@ -2,73 +2,81 @@
 
 ## Purpose
 
-Define the cross-cutting trust boundary for goals, agent actions, protected resources, credentials, evidence, approvals and external adapters.
+Define cross-cutting authority, independence, protected-resource, credential and adapter-trust rules.
 
-## Authority model
+## Roles and authority actions
 
-G2E core defines required authority classes; runtime adapters implement them.
+Runtime may map roles differently, but MUST identify authority for each normative action:
 
-Minimum roles:
+- goal owner: approve/freeze GoalContract, authorized STOP;
+- planner/proposer: propose Claims/Proofs/Next Steps;
+- executor: execute authorized attempt;
+- evidence authority: admit/reject EvidenceRecord;
+- machine adjudicator: deterministic attempt verdict;
+- reviewer: evaluate process/evidence as required;
+- approver: approve GovernanceDisposition/normative amendments;
+- runtime/system: enforce persistence/locks/credentials.
 
-- goal owner;
-- planner/proposer;
-- executor;
-- reviewer/adjudicator;
-- runtime/system.
+One identity may hold multiple roles only when the Proof/AuthorityPolicy permits it.
 
-In single-user standalone mode, roles may map to one human identity, but self-review limitations must remain explicit.
+## Separation of duty and independence
+
+A ProofObligation MAY require an IndependencePolicy across:
+
+- implementation author vs reviewer;
+- planner vs adjudicator;
+- provider/app identity;
+- protected outcome exposure;
+- environment/resource lineage.
+
+Different provider/app alone is never sufficient evidence of independence.
+
+If required separation cannot be satisfied, proof execution/use fails closed.
 
 ## Agent authority
 
-An agent may:
+Agents may propose/analyze/execute within authority. They may not self-elevate, mutate frozen semantics, access unauthorized protected resources, replace terminal verdicts, or expand write scope beyond authorization.
 
-- propose claims;
-- propose proof obligations;
-- execute authorized tasks;
-- analyze evidence;
-- propose next steps.
+Delegated authority ≤ parent authority.
 
-An agent may not, without required authority:
+## Machine verdict vs governance disposition
 
-- change frozen goal semantics;
-- consume protected resources;
-- mutate frozen decision rules;
-- replace terminal adjudication;
-- expand repository/write scope;
-- elevate its own permissions.
+Adjudication verdict is immutable.
 
-Delegated child authority must be <= parent authority.
+Authorized governance may attach:
 
-## Secret boundary
+- `ACCEPT_FOR_USE`;
+- `REJECT_FOR_USE`;
+- `REQUEST_NEW_PROOF`;
+- `STOP`.
 
-Provider/API credentials MUST NOT persist in:
-
-- Goal Contracts;
-- Claim/Proof graphs;
-- AgentBindings;
-- execution envelopes;
-- logs/evidence;
-- result packages;
-- static UI/repository docs.
-
-Use external credential resolvers or runtime secret stores.
-
-Security findings persist only non-reversible fingerprints/classification plus redacted remediation context.
+GovernanceDisposition never rewrites PASS/FAIL/INVALID/UNRESOLVED.
 
 ## Protected resources
 
-Fresh seeds, confirmatory datasets, hidden tests, unpublished results and private corpora may be marked protected.
+Use the canonical resource model in [Core Semantics §8](CORE_SEMANTICS.md).
 
 Access requires:
 
-- eligible Proof Obligation;
-- frozen access policy;
-- attributable attempt identity;
-- exposure event persisted immediately.
+- exact resource identity;
+- authorized ProofObligation;
+- durable reservation before access;
+- exposure record before/atomically with external availability;
+- reuse policy.
 
-## Adapter trust
+Uncertain crash recovery is EXPOSED fail-closed.
 
-Every external adapter must declare:
+## Secret boundary
+
+Credentials/secrets MUST NOT persist in Goal/Claim/Proof graphs, AgentBindings, envelopes, logs/evidence, result packages or static docs.
+
+Use external credential resolver/runtime secret store.
+
+Security findings persist only non-reversible fingerprint/classification plus redacted context.
+
+## Adapter trust contract
+
+Every external adapter declares:
 
 - capabilities;
 - mutation surface;
@@ -77,25 +85,26 @@ Every external adapter must declare:
 - security assumptions;
 - failure semantics.
 
-External tools report results; they do not own G2E verdict semantics.
+External tools do not own G2E verdicts.
 
 ## Acceptance criteria
 
-1. Unauthorized protected-resource access fails closed.
-2. Agent cannot approve its own forbidden normative mutation.
-3. Secret fixtures do not appear in persisted artifacts/logs.
-4. Adapter mutation scope is explicit.
-5. Delegation cannot escalate authority.
-6. Standalone capability limitations are visible.
-7. GWF mode defers to stricter GWF authority when policies overlap.
+1. Every normative action has an authority check.
+2. Required separation-of-duty/independence fails closed when unavailable.
+3. Agent cannot approve forbidden self-mutation/elevation.
+4. Machine verdict remains immutable under governance disposition.
+5. Protected-resource exposure is monotonic/fail-closed.
+6. Secret fixtures never persist.
+7. Adapter mutation scope explicit.
+8. GWF stricter policy governs in GWF mode.
 
 ## Dependencies
 
-Cross-cutting dependency for all PRDs.
+- **CROSS_CUTTING:** applies to all PRDs
+- **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
 
 ## References
 
 - [GWF Agent Interoperability Foundation](../../docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md)
 - [GWF Documentation Integrity & Governance](../../docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md)
-- [GWF Finding checklist — authority/secrets/ARC findings](../../docs/Finding_checklist.md)
-- [GWF Runtime/Governance architecture](../../README.md)
+- [GWF Findings](../../docs/Finding_checklist.md)

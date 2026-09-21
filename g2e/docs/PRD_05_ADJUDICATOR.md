@@ -2,66 +2,71 @@
 
 ## Purpose
 
-Produce a deterministic, attributable decision for a proof obligation using only its frozen rules and admitted evidence.
+Produce a deterministic one-shot verdict for one ExecutionAttempt using only the frozen ProofObligation and ADMITTED evidence.
 
-## Required outcomes
+## Verdict namespace
 
-G2E core MUST distinguish:
+Only these Adjudication verdicts are normative:
 
-- **PASS** — valid evidence satisfies the frozen success rule.
-- **FAIL** — valid substantive execution/evidence violates a required success rule.
-- **INVALID** — the run cannot answer the claim because execution/evidence/protocol validity failed.
-- **UNRESOLVED** — execution is valid but evidence does not support a decisive PASS/FAIL under the frozen rule.
+- `PASS`;
+- `FAIL`;
+- `INVALID`;
+- `UNRESOLVED`.
 
-Optional domain-specific verdicts may be mapped on top, but these four meanings are normative.
+Meanings are defined in [Core Semantics §2.7](CORE_SEMANTICS.md). They are not Claim lifecycle states, Goal verdicts, or executor states.
 
 ## One-shot semantics
 
-An adjudication is terminal for a specific proof-obligation execution identity. It cannot be rerun with replacement evidence to obtain a preferred verdict.
+Each ExecutionAttempt may be adjudicated at most once. The verdict artifact binds:
 
-If a technically invalid run is repaired, the replacement attempt must preserve the same semantic proof contract or receive a new obligation identity according to the frozen retry/amendment policy.
+- ProofObligation ID/hash;
+- attempt ID and execution envelope hash;
+- admitted evidence IDs/hashes;
+- decision-rule hash;
+- adjudicator implementation/version;
+- verdict and reason codes.
 
-## No-rescue invariants
+A second verdict for the same attempt is rejected.
 
-After outcome exposure, the adjudicator must reject silent changes to:
+Proof retry/closure semantics follow [Core Semantics §3](CORE_SEMANTICS.md). INVALID may permit a replacement attempt only under frozen RetryPolicy; PASS/FAIL/UNRESOLVED never permit “same obligation until desired result”.
 
-- threshold/operator;
-- seed/cohort;
-- target metric;
-- baseline/control;
-- refund/budget semantics;
-- dataset inclusion/exclusion;
-- artifact under test;
-- claim semantics.
+## No-rescue
 
-## Intentional negative qualification
+After OUTCOME_EXPOSED the adjudicator rejects semantic mutation of thresholds, cohorts/seeds, metrics, baselines/controls, budgets/refunds, data inclusion, artifacts, evidence rules or Claim meaning.
 
-Before production use, the adjudicator itself MUST pass fixtures demonstrating:
+## Governance disposition
 
-- known PASS → PASS;
-- known scientific negative → FAIL;
-- missing/invalid evidence → INVALID where appropriate;
-- ambiguous valid evidence → UNRESOLVED;
-- second adjudication attempt → rejected;
-- post-lock threshold mutation → rejected.
+Human review/approval may attach a `GovernanceDisposition` defined in [Core Semantics §12](CORE_SEMANTICS.md), but it never rewrites the machine verdict.
+
+## Qualification fixtures
+
+Before production use, the adjudicator MUST demonstrate:
+
+- known positive → PASS;
+- valid negative → FAIL;
+- invalid execution/evidence → INVALID;
+- valid but indecisive → UNRESOLVED;
+- second adjudication → rejected;
+- post-lock semantic mutation → rejected.
 
 ## Acceptance criteria
 
-1. Same frozen contract + same admitted evidence yields same decision.
-2. Decision carries exact contract/evidence hashes.
-3. FAIL is preserved as terminal history.
-4. INVALID is never presented as scientific FAIL.
+1. Same frozen inputs produce same verdict.
+2. Verdict carries exact contract/attempt/evidence hashes.
+3. FAIL remains immutable history.
+4. INVALID never becomes substantive FAIL.
 5. Adjudicator does not launch retries or mutate proof design.
-6. Human override, if allowed, is a separate governance event and never rewrites the machine verdict.
+6. GovernanceDisposition cannot overwrite verdict.
+7. IndependencePolicy is verified before verdict use when required.
 
 ## Dependencies
 
-- [PRD-03 Proof Planner](PRD_03_PROOF_PLANNER.md)
-- [PRD-04 Evidence Graph](PRD_04_EVIDENCE_GRAPH.md)
-- [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **HARD:** [PRD-03 Proof Planner](PRD_03_PROOF_PLANNER.md), [PRD-04 Evidence Graph](PRD_04_EVIDENCE_GRAPH.md)
+- **CONDITIONAL/INTEGRATION:** [PRD-07 Execution Protocol](PRD_07_EXECUTION_PROTOCOL.md) supplies execution evidence
+- **CROSS_CUTTING:** [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
 
 ## References
 
-- [MindForge M3 — one-shot adjudication and anti-rescue](https://github.com/minhtri22/MindForge/blob/62141d530832f7694342fe92704a5975bfdbbded/artifacts/model-training-pipeline/m3/IMPLEMENTATION_RESULT.md)
-- [GWF research study lock/no-rescue](../../domains/research.workflow.yaml)
-- [GWF Agent Execution status distinction](../../docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md)
+- [MindForge M3 one-shot adjudication](https://github.com/minhtri22/MindForge/blob/62141d530832f7694342fe92704a5975bfdbbded/artifacts/model-training-pipeline/m3/IMPLEMENTATION_RESULT.md)
+- [GWF Agent Interoperability Foundation](../../docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md)

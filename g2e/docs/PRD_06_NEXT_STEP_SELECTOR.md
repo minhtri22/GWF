@@ -2,102 +2,63 @@
 
 ## Purpose
 
-Select the next scientifically/technically admissible proof after every adjudication by recomputing the gap between the current evidence graph and final goal closure.
+Recompute what remains unproven and select the next admissible ProofObligation/attempt under deterministic admissibility and a frozen SelectionPolicy.
 
-This component formalizes the recurring question:
+## Stage A — admissibility
 
-> **What remains unproven, and what is the smallest valid next proof?**
+A candidate is admissible only when:
 
-## Inputs
+- all HARD dependencies are satisfied;
+- Claim lifecycle is READY/ACTIVE as appropriate;
+- no closed ProofObligation is being replayed;
+- RetryPolicy allows a replacement INVALID attempt when applicable;
+- freshness/protected-resource rules allow access;
+- authority and IndependencePolicy can be satisfied;
+- lineage/amendment rules are valid.
 
-- frozen Goal Contract;
-- current Claim Graph;
-- Proof Obligation registry;
-- Evidence Graph;
-- latest adjudications;
-- resource/freshness state;
-- user authority constraints;
-- optional cost/time preferences.
+The admissible set must be deterministic from canonical state.
 
-## Selection algorithm
+## Stage B — ranking/choice
 
-The selector MUST:
+Ranking semantics are normative in [Core Semantics §11](CORE_SEMANTICS.md).
 
-1. exclude claims already terminally satisfied unless replication/reconfirmation is explicitly required;
-2. exclude BLOCKED claims whose hard prerequisites are not PASS;
-3. identify READY claims with sufficient prerequisites;
-4. obtain or validate one or more candidate Proof Obligations;
-5. reject candidates that consume protected resources prematurely;
-6. reject candidates that silently modify failed lineage;
-7. rank only among **admissible** candidates;
-8. record why the chosen proof is admissible and why alternatives were deferred.
+Default SelectionPolicy orders by:
 
-The default ranking SHOULD prefer:
+1. hard dependencies unblocked, descending;
+2. protected resource cost, ascending;
+3. resource cost class, ascending;
+4. implementation complexity, ascending;
+5. proof ID lexical tie-break.
 
-- prerequisite-enabling claims;
-- high information gain;
-- lower complexity/cost;
-- smaller/faster falsifiable fixtures;
-- lower freshness consumption;
-- reuse of qualified external tooling.
+“Information gain” may be advisory metadata but is not a default deterministic field.
 
-User policy may override ranking among admissible candidates, but may not authorize an inadmissible proof without a governed amendment.
+An authorized user may choose a different member of the admissible set; the SelectionDecision records that choice/rationale. An inadmissible candidate requires a prior governed normative amendment.
 
-## PASS behavior
+## Outcome behavior
 
-A PASS does not imply “continue to the next numbered phase.” It triggers a graph recomputation.
-
-Example:
-
-```text
-checkpoint-resume PASS
-  ↓
-newly READY:
-  evaluation-governance
-  runtime-export
-  security-contract
-
-selector:
-  evaluation-governance first
-  because runtime-export depends on evaluation identity
-```
-
-## FAIL behavior
-
-A FAIL must remain terminal for the tested obligation.
-
-The selector MAY propose:
-
-- close branch;
-- open a new hypothesis/claim;
-- design an upstream decomposition study;
-- stop goal as falsified.
-
-It MUST NOT propose “same study with easier threshold” as an equivalent retry.
-
-## INVALID behavior
-
-INVALID may authorize repair only if semantic proof identity remains unchanged and the frozen retry policy permits it. Otherwise create a new proof obligation.
+- PASS: recompute Claim/Goal state and admissible set.
+- FAIL: preserve terminal proof result; open a different Claim/proof only if graph/policy permits.
+- INVALID: replacement attempt only under the same frozen ProofObligation and retry budget; otherwise no retry.
+- UNRESOLVED: close the ProofObligation; further evidence requires a new ProofObligation unless bounded multi-part collection was predeclared.
 
 ## Acceptance criteria
 
-1. Selector never chooses a claim with unsatisfied hard dependencies.
-2. Selector recomputes after every adjudication/evidence invalidation.
-3. Protected resources cannot be selected before eligibility.
-4. FAIL cannot be hidden by selecting a modified equivalent obligation under the same identity.
-5. Selection rationale is persisted and attributable.
-6. Deterministic policy inputs produce a stable admissible set even if an agent proposes different wording.
+1. Selector never chooses unsatisfied HARD dependencies.
+2. Same canonical state + SelectionPolicy produces same admissible set/ranking.
+3. Protected resources cannot be selected early.
+4. FAIL/UNRESOLVED cannot be converted into hidden retries.
+5. INVALID retry preserves semantic ProofObligation identity.
+6. SelectionDecision records policy hash and any authorized non-default choice.
+7. Minimality is treated as ranking, not proof validity.
 
 ## Dependencies
 
-- [PRD-02 Claim Graph](PRD_02_CLAIM_GRAPH.md)
-- [PRD-03 Proof Planner](PRD_03_PROOF_PLANNER.md)
-- [PRD-04 Evidence Graph](PRD_04_EVIDENCE_GRAPH.md)
-- [PRD-05 Adjudicator](PRD_05_ADJUDICATOR.md)
-- [PRD-13 Reference Acquisition](PRD_13_REFERENCE_ACQUISITION.md) when novelty/prior art changes admissibility.
+- **HARD:** PRD-02 through PRD-05
+- **CONDITIONAL:** [PRD-13 Reference Acquisition](PRD_13_REFERENCE_ACQUISITION.md)
+- **CROSS_CUTTING:** [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
 
 ## References
 
-- [G2E README — governing rules](../README.md)
-- [GWF 7-Wave dependency/complexity selection rule](../../docs/IMPLEMENTATION_7_WAVES_PLAN.md)
-- [MindForge M4 result and next-step logic](https://github.com/minhtri22/MindForge/blob/62141d530832f7694342fe92704a5975bfdbbded/artifacts/model-training-pipeline/m4/IMPLEMENTATION_RESULT.md)
+- [G2E README](../README.md)
+- [GWF 7-Wave dependency selection model](../../docs/IMPLEMENTATION_7_WAVES_PLAN.md)

@@ -2,73 +2,65 @@
 
 ## Purpose
 
-Allow G2E to operate without GWF while preserving the minimum invariants required for trustworthy goal-to-evidence execution.
+Run G2E without GWF while preserving the same canonical semantics and minimum governance invariants.
 
-Standalone mode exists for portability, bootstrapping and lightweight use. It must not become a weaker “unsafe mode.”
+Standalone is portability/bootstrap mode, not a weaker unsafe mode.
 
-## Minimum standalone services
+## Minimum services
 
-Standalone mode MUST provide:
+MUST provide:
 
-- Goal/Claim/Proof persistence;
-- canonical hashing/versioning;
-- evidence graph persistence;
-- execution-attempt ledger;
+- canonical object persistence/versioning;
+- Goal/Claim/Proof/Evidence graph storage;
+- attempt ledger;
 - adjudication terminality;
-- freshness/protected-resource ledger;
-- authority mode at least `single_user`;
-- retry/amendment enforcement;
-- artifact references;
-- exportable Goal Result Package.
+- protected-resource reservation/exposure ledger;
+- Retry/Amendment enforcement;
+- minimum authority mode (`single_user`);
+- RuntimeCapabilityManifest;
+- artifact refs;
+- sealed Goal Result Package.
 
-A filesystem + SQLite implementation is acceptable for v0.x if crash recovery and atomic writes are explicit.
+Filesystem + SQLite is acceptable for v0.x when atomic/crash recovery is explicit.
 
-## Compatibility
+## Identity and migration
 
-Standalone logical schemas must match the GWF adapter’s semantic schemas even if storage differs.
+Canonical G2E IDs/hashes are runtime-independent.
 
-Required invariant:
+Standalone→GWF migration:
 
-```text
-same GoalContract
-same ClaimGraph
-same ProofObligation
-same EvidenceGraph semantics
-same Adjudication
-```
+- preserves every canonical G2E ID/hash;
+- creates separate runtime mapping IDs;
+- preserves adjudications/exposure history;
+- records import/export manifest hashes;
+- fails closed on incompatible major schema/runtime capability.
 
-Moving a project from standalone to GWF must not reinterpret prior verdicts.
+No migration may reinterpret a prior verdict.
 
 ## Reduced capabilities
 
-Standalone MAY lack:
+Standalone MAY lack multi-user approval, distributed workers, rich domain registry or GWF-native mutation enforcement. Missing capability is explicit in RuntimeCapabilityManifest.
 
-- multi-user approval;
-- distributed workers;
-- rich domain registry;
-- advanced tenancy;
-- GWF-native GitHub mutation enforcement.
-
-Missing capabilities must be explicit in a `RuntimeCapabilityManifest`; they cannot be silently emulated.
+If a ProofObligation requires an unavailable capability (e.g. separation of duty), execution fails closed; standalone may not silently waive it.
 
 ## Acceptance criteria
 
-1. A complete small proof program can run without GWF.
-2. Terminal adjudication remains immutable.
-3. Protected-resource exposure is persisted across restarts.
-4. Atomic/crash-safe persistence is tested.
-5. Export/import roundtrip into GWF preserves semantic identities.
-6. Unsupported governance capability fails closed where required.
+1. Complete bounded proof program runs without GWF.
+2. Terminal adjudication immutable across restart.
+3. Protected exposure survives crash/restart fail-closed.
+4. Atomic persistence tested.
+5. Export/import to GWF preserves canonical identities and semantics.
+6. Unsupported required governance capability fails closed.
+7. Result package integrity verifies independently.
 
 ## Dependencies
 
-- [PRD-04 Evidence Graph](PRD_04_EVIDENCE_GRAPH.md)
-- [PRD-05 Adjudicator](PRD_05_ADJUDICATOR.md)
-- [PRD-07 Execution Protocol](PRD_07_EXECUTION_PROTOCOL.md)
-- [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **HARD:** [PRD-04 Evidence Graph](PRD_04_EVIDENCE_GRAPH.md), [PRD-05 Adjudicator](PRD_05_ADJUDICATOR.md), [PRD-07 Execution Protocol](PRD_07_EXECUTION_PROTOCOL.md)
+- **INTEGRATION:** [PRD-08 GWF Adapter](PRD_08_GWF_ADAPTER.md) for migration/parity
+- **CROSS_CUTTING:** [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
+- **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
 
 ## References
 
-- [G2E README](../README.md)
 - [GWF Runtime](../../src/gwr/runtime.py)
-- [GWF state-authoritative philosophy](../../README.md)
+- [G2E README](../README.md)

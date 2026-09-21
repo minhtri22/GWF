@@ -1,6 +1,6 @@
 # G2E Initial Phase Plan
 
-This plan is intentionally implementation-neutral. Phase progression requires the prior phase exit gate.
+This plan is implementation-neutral. Phase progression requires the prior phase exit gate and a clean current [semantic QA](QA_doc.md).
 
 ## P0 — Foundation Specification
 
@@ -8,77 +8,109 @@ Scope:
 - architecture;
 - README/lineage;
 - PRD set;
-- reference/dependency map.
+- normative Core Semantics;
+- reference/dependency baseline;
+- semantic QA.
 
 Exit:
 - documents internally consistent;
 - all components have PRD;
+- state/verdict namespaces separated;
 - standalone/GWF boundary explicit;
-- agent-app priority explicit.
+- agent-app priority explicit;
+- current semantic QA PASS with OPEN=0.
 
 ## P1 — Core Schemas
 
-Implement:
-- GoalContract;
-- Claim;
-- ClaimGraph;
-- ProofObligation;
-- EvidenceRecord/relations;
+Implement canonical schemas for:
+
+- GoalContract and GoalRequirement;
+- GoalClosureContract and satisfaction/falsification expressions;
+- Claim and ClaimGraph;
+- ClaimResolutionPolicy;
+- ProofObligation and ProofRetryPolicy;
+- ExecutionAttempt identity/envelope schema (no executor implementation);
+- EvidenceRecord, EvidenceRelation, EvidenceAdmissionPolicy;
+- ProtectedResource and freshness/reuse policy;
 - Adjudication;
-- SelectionDecision.
+- SelectionPolicy and SelectionDecision;
+- AmendmentPolicy;
+- AuthorityPolicy, IndependencePolicy, GovernanceDisposition;
+- canonical identity/hash/version fields.
 
 Exit:
 - schema validation;
-- canonical serialization/hashing;
-- fixture graph;
+- canonical JSON/identity conformance fixtures;
+- HARD dependency DAG fixture;
+- schema-version compatibility/fail-closed fixtures;
 - no execution backend.
 
 ## P2 — Deterministic Core Engine
 
 Implement:
-- graph validation;
-- evidence admission;
-- adjudicator;
-- next-step admissibility engine;
-- intentional PASS/FAIL/INVALID/UNRESOLVED fixtures;
-- anti-rescue tests.
+
+- ClaimGraph/GoalClosure validation;
+- Proof admissibility validation;
+- Evidence admission and relation validation;
+- protected-resource/freshness state machine;
+- deterministic attempt adjudicator;
+- Proof closure and Claim resolver;
+- Goal evaluator;
+- Next-Step admissible-set engine;
+- deterministic SelectionPolicy ranking/tie-break;
+- amendment/no-rescue enforcement;
+- intentional PASS/FAIL/INVALID/UNRESOLVED fixtures.
 
 Exit:
 - no agent required;
+- no runtime adapter required;
+- known negative fixtures cannot be rescued;
+- multiple-proof Claim resolution tested;
+- alternate-path Goal closure tested;
 - deterministic fixtures PASS.
 
 ## P3 — Standalone Runtime
 
 Implement:
-- durable local state;
+- durable local system of record;
 - atomic persistence;
 - attempt ledger;
 - protected-resource ledger;
-- local executor facade.
+- local executor facade;
+- Result Package manifest/seal.
 
 Exit:
 - restart/recovery;
 - terminality preserved;
-- exportable result package.
+- protected exposure fail-closed;
+- exportable/verifiable result package.
 
 ## P4 — GWF Adapter
 
 Implement:
-- G2E↔GWF mapping;
+- canonical G2E↔GWF mapping;
 - authority/recovery/handoff integration;
-- generic dynamic proof execution facade.
+- generic dynamic proof execution facade;
+- runtime-specific IDs as mappings only.
 
 Exit:
 - parity fixture against standalone;
+- canonical G2E IDs/hashes unchanged across export/import;
 - no semantic reinterpretation.
 
-## P5 — Codex / ChatGPT Agent Adapter
+## P5 — Codex and ChatGPT App Profiles
 
-Implement first-priority agent-app binding using the GWF interoperability contracts and existing harness capabilities.
+Implement in the same priority wave but as separate adapter profiles:
+
+- Codex profile;
+- ChatGPT profile;
+- independent capability discovery/binding;
+- no assumed harness parity.
 
 Exit:
-- one frozen proof executed end-to-end;
+- each available profile executes one frozen proof end-to-end through its actual harness;
 - binding/attempt/evidence identities attributable;
+- unsupported capability fails closed;
 - no hidden authority escalation.
 
 ## P6 — GitHub Evidence Adapter
@@ -86,17 +118,20 @@ Exit:
 Implement SHA-safe code/workflow/evidence loop.
 
 Exit:
-- implementation SHA → workflow evidence → adjudication → evidence-only closure fixture.
+- implementation SHA → workflow evidence → admission → adjudication → evidence-only closure fixture;
+- green workflow is not automatically PASS.
 
 ## P7 — Adaptive Goal-to-Evidence Pilot
 
 Use a new bounded technical goal not hard-coded into tests.
 
 Exit:
-- goal compiled to claims;
+- goal requirements frozen;
+- claim graph + goal closure compiled;
 - multiple dynamic proof obligations;
 - at least one non-PASS outcome handled correctly;
-- final Goal Result Package.
+- Next-Step recomputation demonstrated;
+- final sealed Goal Result Package.
 
 ## P8 — Additional Agent Providers
 
@@ -109,6 +144,8 @@ No provider may require a G2E core schema change.
 
 ## References
 
+- [Core Semantics](CORE_SEMANTICS.md)
 - [PRD Index](PRD_INDEX.md)
+- [Reference Baseline](REFERENCE_BASELINE.md)
 - [GWF Agent Interoperability Foundation](../../docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md)
 - [GWF 7-Wave plan](../../docs/IMPLEMENTATION_7_WAVES_PLAN.md)
