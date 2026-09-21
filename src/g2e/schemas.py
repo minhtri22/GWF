@@ -111,6 +111,17 @@ class GovernanceDispositionValue(StrEnum):
     STOP = "STOP"
 
 
+class RuntimeMode(StrEnum):
+    STANDALONE = "STANDALONE"
+    GWF = "GWF"
+
+
+class ExternalReferencePolicy(StrEnum):
+    OFFLINE_ONLY = "OFFLINE_ONLY"
+    VERIFY_WHEN_AVAILABLE = "VERIFY_WHEN_AVAILABLE"
+    REQUIRE_RESOLUTION = "REQUIRE_RESOLUTION"
+
+
 class LibraryExecutionStatus(StrEnum):
     SUCCEEDED = "SUCCEEDED"
     BACKEND_UNAVAILABLE = "BACKEND_UNAVAILABLE"
@@ -390,6 +401,42 @@ class ProofObligation(CanonicalModel):
         return value
 
 
+class RuntimeCapability(StrictModel):
+    capability_id: str = Field(min_length=1)
+    available: bool
+    qualification_refs: tuple[str, ...] = ()
+    limitations: tuple[str, ...] = ()
+
+
+class RuntimeCapabilityManifest(CanonicalModel):
+    schema_kind = "runtime_capability_manifest"
+    runtime_id: str = Field(min_length=1)
+    runtime_version: str = Field(min_length=1)
+    runtime_mode: RuntimeMode
+    authority_mode: str = Field(min_length=1)
+    persistence_backend: str = Field(min_length=1)
+    supported_schema_versions: tuple[str, ...]
+    capabilities: tuple[RuntimeCapability, ...]
+    security_assumptions: tuple[str, ...] = ()
+    exact_runtime_revision: str | None = None
+
+    @field_validator("supported_schema_versions")
+    @classmethod
+    def _runtime_supported_versions(cls, value):
+        if not value:
+            raise ValueError("supported_schema_versions must not be empty")
+        for version in value:
+            assert_supported_schema_version(version)
+        return value
+
+    @model_validator(mode="after")
+    def _capability_ids_unique(self):
+        ids = [c.capability_id for c in self.capabilities]
+        if len(ids) != len(set(ids)):
+            raise ValueError("runtime capability IDs must be unique")
+        return self
+
+
 class ExecutionAttemptEnvelope(CanonicalModel):
     schema_kind = "execution_attempt_envelope"
     attempt_id: str = Field(min_length=1)
@@ -408,6 +455,41 @@ class ExecutionAttemptEnvelope(CanonicalModel):
     protected_resource_refs: tuple[ExactRef, ...] = ()
     retry_policy_ref: ExactRef
     authority_scope: tuple[str, ...] = ()
+
+
+class ExecutionResult(CanonicalModel):
+    schema_kind = "execution_result"
+    attempt_ref: ExactRef
+    executor_state: AttemptState
+    started_at: str
+    ended_at: str
+    action_summary: str = Field(min_length=1)
+    artifact_refs: tuple[str, ...] = ()
+    candidate_evidence_refs: tuple[ExactRef, ...] = ()
+    resource_identity: str | None = None
+    agent_app: str | None = None
+    provider_ref: str | None = None
+    model_ref: str | None = None
+    harness_ref: str | None = None
+    transport_ref: str | None = None
+    technical_error_class: str | None = None
+    technical_error_reason: str | None = None
+    redaction_metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _terminal_executor_state(self):
+        allowed = {
+            AttemptState.COMPLETED,
+            AttemptState.EXECUTOR_FAILED,
+            AttemptState.CANCELLED,
+            AttemptState.TIMED_OUT,
+            AttemptState.PREEMPTED,
+        }
+        if self.executor_state not in allowed:
+            raise ValueError("ExecutionResult requires terminal executor state")
+        if not self.started_at.endswith("Z") or not self.ended_at.endswith("Z"):
+            raise ValueError("ExecutionResult timestamps must be RFC3339 UTC ending in Z")
+        return self
 
 
 class EvidenceRecord(CanonicalModel):
@@ -486,6 +568,38 @@ class PackageMember(StrictModel):
     path: str = Field(min_length=1)
     sha256: str = Field(min_length=64, max_length=64)
     size: int = Field(ge=0)
+
+
+class PackageManifest(CanonicalModel):
+    schema_kind = "package_manifest"
+    members: tuple[PackageMember, ...]
+    external_reference_policy: ExternalReferencePolicy = ExternalReferencePolicy.OFFLINE_ONLY
+    non_authoritative_paths: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def _manifest_paths_valid(self):
+        paths = [m.path for m in self.members]
+        if paths != sorted(paths):
+            raise ValueError("package manifest members must be path-sorted")
+        if len(paths) != len(set(paths)):
+            raise ValueError("package manifest member paths must be unique")
+        forbidden = {"PACKAGE_MANIFEST.json", "PACKAGE_SEAL.json"}
+        for path in paths:
+            if path in forbidden:
+                raise ValueError("manifest/seal must not self-appear in package members")
+            if path.startswith("/") or ".." in path.split("/"):
+                raise ValueError("package manifest paths must be safe relative paths")
+        return self
+
+
+class PackageSeal(CanonicalModel):
+    schema_kind = "package_seal"
+    manifest_ref: ExactRef
+    manifest_file_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    framework_version: str = Field(min_length=1)
+    runtime_id: str = Field(min_length=1)
+    runtime_version: str = Field(min_length=1)
+    attestation_identity: str | None = None
 
 
 class ClaimResultPackage(CanonicalModel):
@@ -751,6 +865,8 @@ SCHEMA_MODELS = (
     ClaimGraph,
     ProofRetryPolicy,
     DecisionRule,
+    RuntimeCapabilityManifest,
+    ExecutionResult,
     EvidenceAdmissionPolicy,
     IndependencePolicy,
     AmendmentPolicy,
@@ -764,6 +880,8 @@ SCHEMA_MODELS = (
     SelectionPolicy,
     SelectionDecision,
     GovernanceDisposition,
+    PackageManifest,
+    PackageSeal,
     ClaimResultPackage,
     ClaimSignature,
     EvidenceCapsule,

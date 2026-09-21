@@ -24,6 +24,7 @@ from g2e import (
     EvidenceLifecycle,
     EvidenceRecord,
     ExecutionAttemptEnvelope,
+    ExecutionResult,
     GoalContract,
     GoalContractLifecycle,
     GoalExpression,
@@ -34,11 +35,17 @@ from g2e import (
     LibraryQueryContract,
     LibraryQueryExecution,
     MetricPredicate,
+    PackageManifest,
+    PackageMember,
+    PackageSeal,
     ProofLifecycle,
     ProofObligation,
     ProofRetryPolicy,
     Provenance,
     ReuseProofMetadata,
+    RuntimeCapability,
+    RuntimeCapabilityManifest,
+    RuntimeMode,
     SCHEMA_REGISTRY,
     SelectionPolicy,
     SelectionRankField,
@@ -122,7 +129,9 @@ def test_schema_registry_covers_p1_surface():
         "proof_obligation",
         "proof_retry_policy",
         "decision_rule",
+        "runtime_capability_manifest",
         "execution_attempt_envelope",
+        "execution_result",
         "evidence_record",
         "evidence_relation",
         "evidence_admission_policy",
@@ -134,6 +143,8 @@ def test_schema_registry_covers_p1_surface():
         "authority_policy",
         "independence_policy",
         "governance_disposition",
+        "package_manifest",
+        "package_seal",
         "claim_result_package",
         "evidence_capsule",
         "claim_signature",
@@ -626,3 +637,138 @@ def test_proof_binds_exact_decision_rule():
         amendment_policy_ref=amendment.exact_ref(),
     )
     assert proof.decision_rule_ref == rule.exact_ref()
+
+
+
+def test_runtime_capability_manifest_is_canonical_and_fail_closed():
+    manifest = sealed(
+        RuntimeCapabilityManifest,
+        "runtime-capabilities",
+        runtime_id="g2e-standalone",
+        runtime_version="0.1",
+        runtime_mode=RuntimeMode.STANDALONE,
+        authority_mode="single_user",
+        persistence_backend="sqlite",
+        supported_schema_versions=("1.0",),
+        capabilities=(
+            RuntimeCapability(
+                capability_id="atomic_persistence",
+                available=True,
+                qualification_refs=("fixture:p3",),
+            ),
+        ),
+        security_assumptions=("local-user-controls-filesystem",),
+    )
+    assert manifest.runtime_mode == RuntimeMode.STANDALONE
+    with pytest.raises(ValidationError, match="capability IDs must be unique"):
+        sealed(
+            RuntimeCapabilityManifest,
+            "runtime-capabilities-bad",
+            runtime_id="g2e-standalone",
+            runtime_version="0.1",
+            runtime_mode=RuntimeMode.STANDALONE,
+            authority_mode="single_user",
+            persistence_backend="sqlite",
+            supported_schema_versions=("1.0",),
+            capabilities=(
+                RuntimeCapability(capability_id="x", available=True),
+                RuntimeCapability(capability_id="x", available=False),
+            ),
+        )
+
+
+def test_execution_result_requires_terminal_state():
+    retry = sealed(
+        ProofRetryPolicy,
+        "retry-exec-result",
+        max_invalid_replacement_attempts=0,
+    )
+    _, admission, _, amendment, _ = base_policies()
+    rule = base_decision_rule()
+    proof = sealed(
+        ProofObligation,
+        "proof-exec-result",
+        lifecycle=ProofLifecycle.FROZEN,
+        target_claim_id="claim-1",
+        proposition="p",
+        metric_ids=("accuracy",),
+        decision_thresholds={"accuracy": "0.8"},
+        decision_rule_ref=rule.exact_ref(),
+        evidence_admission_policy_ref=admission.exact_ref(),
+        retry_policy_ref=retry.exact_ref(),
+        amendment_policy_ref=amendment.exact_ref(),
+    )
+    attempt = sealed(
+        ExecutionAttemptEnvelope,
+        "attempt-exec-result",
+        attempt_id="attempt-exec-result",
+        proof_ref=proof.exact_ref(),
+        state=AttemptState.COMPLETED,
+        implementation_ref="fixture@sha",
+        config_hash="a" * 64,
+        retry_policy_ref=retry.exact_ref(),
+    )
+    result = sealed(
+        ExecutionResult,
+        "exec-result",
+        attempt_ref=attempt.exact_ref(),
+        executor_state=AttemptState.COMPLETED,
+        started_at="2026-09-21T07:00:00Z",
+        ended_at="2026-09-21T07:00:01Z",
+        action_summary="fixture execution",
+    )
+    assert result.executor_state == AttemptState.COMPLETED
+    with pytest.raises(ValidationError, match="terminal executor state"):
+        sealed(
+            ExecutionResult,
+            "exec-result-bad",
+            attempt_ref=attempt.exact_ref(),
+            executor_state=AttemptState.RUNNING,
+            started_at="2026-09-21T07:00:00Z",
+            ended_at="2026-09-21T07:00:01Z",
+            action_summary="not terminal",
+        )
+
+
+def test_package_manifest_and_seal_are_non_circular_and_safe():
+    members = (
+        PackageMember(path="A.json", sha256="a" * 64, size=1),
+        PackageMember(path="nested/B.json", sha256="b" * 64, size=2),
+    )
+    manifest = sealed(
+        PackageManifest,
+        "package-manifest",
+        members=members,
+    )
+    seal = sealed(
+        PackageSeal,
+        "package-seal",
+        manifest_ref=manifest.exact_ref(),
+        manifest_file_sha256="c" * 64,
+        framework_version="g2e-p1.2",
+        runtime_id="g2e-standalone",
+        runtime_version="0.1",
+    )
+    assert seal.manifest_ref == manifest.exact_ref()
+
+    with pytest.raises(ValidationError, match="self-appear"):
+        sealed(
+            PackageManifest,
+            "bad-self-manifest",
+            members=(
+                PackageMember(
+                    path="PACKAGE_MANIFEST.json",
+                    sha256="a" * 64,
+                    size=1,
+                ),
+            ),
+        )
+    with pytest.raises(ValidationError, match="path-sorted"):
+        sealed(
+            PackageManifest,
+            "bad-sort-manifest",
+            members=(
+                PackageMember(path="Z.json", sha256="a" * 64, size=1),
+                PackageMember(path="A.json", sha256="b" * 64, size=1),
+            ),
+        )
