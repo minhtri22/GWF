@@ -1926,3 +1926,82 @@ DG-P11+                   = NOT_STARTED / NOT_AUTHORIZED
 DG-W3                     = OPEN / NOT_EXECUTED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+
+## 69. DG-P10 Amendment 1 findings
+
+### F-131 — CRITICAL — RESOLVED
+- **Finding:** Reusing AUTO/HUMAN_APPROVE for document mutation could silently broaden v0.8.2 recovery AUTO authority.
+- **Resolution:** Reuse only the persisted effective mode value/snapshot. Recovery semantics remain unchanged; document mutation uses a separate decision matrix.
+- **Final status:** RESOLVED
+
+### F-132 — HIGH — RESOLVED
+- **Finding:** The initial P10 NORMATIVE+ unconditional human-approval floor conflicts the authorized model where AUTO owns phase-generated documents.
+- **Resolution:** Change class and mutation authority are orthogonal. Authority is decided by role/state + active PhaseExecution mode + ownership + stronger locks.
+- **Final status:** RESOLVED
+
+### F-133 — HIGH — RESOLVED
+- **Finding:** Exact candidate commit/blob cannot be required before GWF commits agent-generated content.
+- **Resolution:** Freeze exact base identity plus proposed path/content SHA-256/version/archive path; resolve exact resulting commit/blob post-write.
+- **Final status:** RESOLVED
+
+### F-134 — HIGH — RESOLVED
+- **Finding:** AUTO could become project-global without explicit document ownership.
+- **Resolution:** AUTO requires matching enrolled owner phase/workunit; unknown/different ownership requires human approval.
+- **Final status:** RESOLVED
+
+### F-135 — CRITICAL — RESOLVED
+- **Finding:** AUTO could bypass frozen governance.
+- **Resolution:** GOV/FROZEN always returns BLOCK_REQUIRES_EXPLICIT_USER_AUTHORIZATION regardless AUTO/HUMAN_APPROVE.
+- **Final status:** RESOLVED
+
+### F-136 — HIGH — RESOLVED
+- **Finding:** Physical archive/version files could be mistaken for canonical document identity.
+- **Resolution:** Artifact/Revision remains canonical; paths/archive are human-readable source lineage.
+- **Final status:** RESOLVED
+
+### F-137 — HIGH — RESOLVED
+- **Finding:** Implementing CREATE archive + CREATE vN+1 + DELETE old in P10 would preempt DG-P11.
+- **Resolution:** P10 computes/freeze-checks the lineage plan only; DG-P11 owns concrete DocumentChangeSet execution.
+- **Final status:** RESOLVED
+
+### F-138 — MEDIUM — RESOLVED
+- **Finding:** Existing flat-layout documents could be silently migrated into the new hierarchy.
+- **Resolution:** Legacy documents require explicit later enrollment/migration; absence of enrollment never grants AUTO.
+- **Final status:** RESOLVED
+
+### F-139 — HIGH — RESOLVED
+- **Finding:** Re-resolving mutable mode configuration during an edit could change authority mid-phase.
+- **Resolution:** The running PhaseExecution's persisted phase_execution_protocols.recovery_mode snapshot is the authoritative document-mode input.
+- **Final status:** RESOLVED
+
+### F-140 — HIGH — RESOLVED
+- **Finding:** A caller boolean could masquerade as explicit user authorization for GOV/FROZEN.
+- **Resolution:** Caller assertions cannot unlock GOV/FROZEN; future unlock requires attributable exact-subject human/user authorization.
+- **Final status:** RESOLVED
+
+### F-141 — HIGH — RESOLVED
+- **Finding:** Archive overwrite or in-place correction would rewrite historical source lineage.
+- **Resolution:** Archive paths are immutable/no-overwrite; corrections are new amendment/correction records.
+- **Final status:** RESOLVED
+
+## 70. DG-P10 Amendment 1 QA state
+
+**OPEN = 0**
+
+All findings F-01 through F-141 are resolved.
+
+```text
+DG-P9                     = FORMALLY_CLOSED
+DG-P10 original spec      = SUPERSEDED_BY_AMENDMENT_1
+DG-P10 amended spec       = FROZEN
+DG-P10 amended spec HEAD  = 54ca635bcb322902a28f4a987af19c37e14b59ae
+DG-P10 amended spec blob  = 2aeec0ff251567e784372ffb700d11c37fa9a037
+Documentation §14 blob    = c1b863784b3ca4bbada7020017818c2340fe5d3b
+DG-P10 amendment QA       = PASS
+serious unresolved impact = NONE
+DG-P10 implementation     = AUTHORIZED_BOUNDED / NOT_STARTED
+DG-P11+                   = NOT_STARTED / NOT_AUTHORIZED
+DG-W3                     = OPEN / NOT_EXECUTED
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+```

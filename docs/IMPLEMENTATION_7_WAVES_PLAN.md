@@ -444,13 +444,14 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P10 — Change classification
 
 - **Complexity:** 3
-- **Status:** **PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **Status:** **AMENDMENT-1 QUALIFIED / BOUNDED IMPLEMENTATION AUTHORIZED**
 - **HARD dependencies:** DG-P4, DG-P5, DG-P7.
 - **ORDERING / governance frontier:** DG-P9 formally closed at final HEAD `7a081bd8f1f2218859963e304230a8904f56a6eb`, final exact-head workflow `35629863163` PASS.
-- **Frozen specification:** `docs/DG_P10_CHANGE_CLASSIFICATION_SPEC.md`, commit `f5d8544758cfdaeb1867c1fa9f72dab346c387c7`, blob `56a99967ebe815c56341b1668c3acb1a1517d589`.
-- **Document QA:** `docs/DOCUMENT_QA_DG_P10_PREIMPLEMENTATION.md` — PASS.
+- **Frozen amended specification:** `docs/DG_P10_CHANGE_CLASSIFICATION_SPEC.md`, commit `54ca635bcb322902a28f4a987af19c37e14b59ae`, blob `2aeec0ff251567e784372ffb700d11c37fa9a037`.
+- **Original document QA:** `docs/DOCUMENT_QA_DG_P10_PREIMPLEMENTATION.md` — PASS, superseded where Amendment 1 changes policy.
+- **Amendment 1 QA:** `docs/DOCUMENT_QA_DG_P10_AMENDMENT_1.md` — PASS; unresolved CRITICAL/HIGH = 0.
 - **Governing document:** `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §§13–14.
-- **Persistence verdict:** no new table or schema migration; reserve `document_change_classification` as core PRIM-EVIDENCE and bind exact class/evidence ref in immutable new-revision payload metadata.
+- **Persistence verdict:** no new table/migration; reserve `document_change_classification` as core PRIM-EVIDENCE; enrolled role/state/version/owner metadata lives in immutable Revision payload; document mutation mode consumes the active PhaseExecution protocol snapshot.
 - **Pre-implementation acceptance:**
   - [x] EDITORIAL / CLARIFICATION / NORMATIVE / STRUCTURAL / SUPERSESSION frozen;
   - [x] deterministic governance rank frozen;
@@ -464,8 +465,11 @@ Every completed item must record exact dependency revisions/evidence used. A dep
   - [x] agent cannot unilaterally downgrade escalated class;
   - [x] governed human lower replacement requires Approval + new immutable Evidence;
   - [x] diff size cannot lower class;
-  - [x] NORMATIVE/STRUCTURAL/SUPERSESSION require human Approval minimum;
-  - [x] no full §14 policy-enforcement overclaim;
+  - [x] role/state × PhaseExecution mode × owner-scope authority matrix frozen;
+  - [x] AUTO does not broaden recovery semantics;
+  - [x] GOV/FROZEN blocks until exact explicit user authorization;
+  - [x] deterministic version/archive lineage plan frozen;
+  - [x] GWF-generated pre-commit candidate uses proposed path/content SHA-256, not a future commit/blob;
   - [x] STRUCTURAL/SUPERSESSION have no mutation side effects;
   - [x] multi-document aggregation remains DG-P11;
   - [x] D10-F1..D10-F20 frozen;
@@ -473,11 +477,14 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 - **Implementation acceptance remains open:**
   - [ ] reserve core `document_change_classification` Evidence type;
   - [ ] implement deterministic single-document classifier/adjudicator;
-  - [ ] implement exact candidate/base stale checks;
+  - [ ] implement exact base + proposed path/content/version/archive-plan stale checks;
   - [ ] implement attributable review and QA escalation inputs;
-  - [ ] implement Proposal/Approval path for NORMATIVE+ commit;
-  - [ ] integrate classifier before `KnowledgeKernel.create_revision()`;
-  - [ ] bind effective class + Evidence ref into new immutable Revision payload;
+  - [ ] consume persisted active PhaseExecution AUTO/HUMAN_APPROVE mode without changing recovery semantics;
+  - [ ] enforce owner-scope AUTO / HUMAN_APPROVE / GOV-FROZEN matrix;
+  - [ ] validate enrolled document role/state/version/owner metadata;
+  - [ ] compute deterministic archive/version lineage plan;
+  - [ ] persist classification Evidence; do not execute source mutation;
+  - [ ] leave concrete CREATE archive + CREATE vN+1 + DELETE vN to DG-P11;
   - [ ] preserve P5 finding lifecycle;
   - [ ] no P10 table/migration;
   - [ ] no authority/relation/lifecycle/impact/validity mutation;
@@ -1120,9 +1127,9 @@ DG-P9 — Logical-current vs pinned-revision binding
       final exact-head run 35629863163 PASS
        ↓
 DG-P10 — Change classification
-      PRE-IMPLEMENTATION SPEC FROZEN
-      DEPENDENCY / DOCUMENT QA PASS
-      IMPLEMENTATION NOT_STARTED / NOT_AUTHORIZED
+      AMENDMENT-1 SPEC FROZEN
+      AMENDMENT QA PASS / SERIOUS UNRESOLVED = 0
+      BOUNDED IMPLEMENTATION AUTHORIZED / NOT_STARTED
        ↓
 STOP
 
@@ -1131,6 +1138,6 @@ DG-P11+ = NOT_STARTED / NOT_AUTHORIZED
 
 DG-P9 is formally closed at final exact closure evidence. The explicitly authorized DG-P10 pre-implementation specification/dependency qualification has passed.
 
-DG-P10 implementation remains NOT_STARTED and requires a separate explicit bounded implementation authorization. DG-P11+ remain unopened. DG-W3 remains OPEN / NOT_EXECUTED.
+DG-P10 bounded implementation is explicitly authorized by the user's conditional instruction because Amendment 1 QA passed with no unresolved serious findings. DG-P11+ remain unopened. DG-W3 remains OPEN / NOT_EXECUTED.
 
 GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.

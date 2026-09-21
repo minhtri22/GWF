@@ -280,3 +280,13 @@ Rules:
 - Specification blob: `56a99967ebe815c56341b1668c3acb1a1517d589`.
 - Governance frontier: DG-P9 final formal-close HEAD `7a081bd8f1f2218859963e304230a8904f56a6eb`, final exact-head workflow `35629863163` PASS.
 - Outcome: one-document change classification is frozen as a pre-commit, exact-base/exact-candidate governance adjudication using immutable Evidence, monotonic QA escalation, conservative ambiguity handling and no structural/supersession execution side effects; DG-P11 retains multi-document change-set scope.
+
+
+
+## 2026-09-22 — DG-P10 document-mutation policy Amendment 1 qualified
+
+- Result: Amendment 1 QA PASS; unresolved CRITICAL/HIGH findings = 0.
+- Reconciled amended specification commit: `54ca635bcb322902a28f4a987af19c37e14b59ae`.
+- DG-P10 specification blob: `2aeec0ff251567e784372ffb700d11c37fa9a037`.
+- Documentation Integrity §14 blob: `c1b863784b3ca4bbada7020017818c2340fe5d3b`.
+- Outcome: project documentation is organized as GOV/phase-owned versioned documents with immutable sibling archives; document mutation consumes the active PhaseExecution AUTO/HUMAN_APPROVE mode as configuration without broadening recovery semantics; AUTO is owner-scoped and GOV/FROZEN remains blocked pending explicit user authorization; P10 plans lineage while DG-P11 retains source mutation.
