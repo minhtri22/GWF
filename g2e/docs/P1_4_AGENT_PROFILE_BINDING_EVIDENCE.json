@@ -1,0 +1,86 @@
+{
+  "schema": "G2E-P1.4-AGENT-PROFILE-BINDING-EVIDENCE-v1",
+  "status": "PASS",
+  "runtime_adapter_authorized": false,
+  "qualified_implementation": "d3cb0bdb5644a9f1cff382450b5476e166759d72",
+  "result_commit": "21e537c53620cff2ab37c0e7064c623367ac2f5d",
+  "result_blob": "2f282ce367a39de143c97d0f543ed7ba13776ac0",
+  "preimplementation": {
+    "baseline": "bfd7e29513ef22f569f931ab75f9d29fd5ec89f6",
+    "spec_commit": "2f20bca03bf68b2f5acb1566105d1c47a4b72fb0",
+    "candidate": "995ca7a87e2acc3bdb7980046509b0061de48a4e",
+    "workflow_run": 35590024177,
+    "job_id": 106302073904,
+    "artifact_id": 10633823851,
+    "artifact_digest": "sha256:8058dc3040ec073e4d9210846c725e3362771ccecbea4a324712b738c09fa20b",
+    "spec_blob": "4df89bf0b26ac545b09ee9add9f7be2b50340b8e",
+    "test_blob": "eeb4d3015eda0562c6f57f798fec8414e7808ee1",
+    "workflow_blob": "1716f54921af8e0e501ac29c89a2abb9c1cb6855",
+    "conclusion": "PASS"
+  },
+  "implementation_blobs": {
+    "src/g2e/schemas.py": "2ae69408704086e415e88bb977b2e3520ff981ee",
+    "src/g2e/standalone.py": "48c44050da96ecdac9061f74092b6af00cfc5694",
+    "src/g2e/gwf_adapter.py": "5ae80f28d03893848ec6e693b8c9f6197e87020a",
+    "tests/g2e/test_p1_4_agent_binding.py": "a87e094bed885198af0e95c89696bd02d28811a9",
+    "tests/g2e/test_p4_gwf_adapter.py": "13a94648df5154e769174d618604d03308f775c8",
+    ".github/workflows/g2e-p1-4-agent-binding.yml": "c428bd6a582312033cf80f4b4f54a466b67efd17",
+    ".github/workflows/g2e-p5-preimplementation-qualification.yml": "4cad25b3ddc678b77bee5a8a4adbb101840cccd9"
+  },
+  "exact_sha_workflows": {
+    "p1": {
+      "run_id": 35590544907,
+      "job_id": 106303688907,
+      "conclusion": "PASS"
+    },
+    "p2": {
+      "run_id": 35590544803,
+      "job_id": 106303689038,
+      "conclusion": "PASS"
+    },
+    "p3": {
+      "run_id": 35590544876,
+      "job_id": 106303688896,
+      "conclusion": "PASS"
+    },
+    "p4": {
+      "run_id": 35590544868,
+      "job_id": 106303689021,
+      "conclusion": "PASS"
+    },
+    "p1_4": {
+      "run_id": 35590544831,
+      "job_id": 106303688970,
+      "conclusion": "PASS",
+      "artifact_id": 10634082369,
+      "artifact_digest": "sha256:7d28b488f937dc1f5d6afb3a6159688c76b9f1dd8c40f72de54f00455e551d22"
+    }
+  },
+  "qualified_surface": {
+    "schema_kinds": [
+      "agent_capability_manifest",
+      "agent_equivalence_policy",
+      "agent_binding"
+    ],
+    "attempt_binding_ref": true,
+    "result_binding_ref": true,
+    "relation_validator": "validate_agent_binding_identity",
+    "standalone_binding_propagation": true,
+    "gwf_binding_propagation": true,
+    "provider_neutral": true
+  },
+  "p5_findings": {
+    "P5-F01": "CLOSED",
+    "P5-F02": "CLOSED"
+  },
+  "scope_exclusions": {
+    "codex_runtime": false,
+    "chatgpt_runtime": false,
+    "provider_api": false,
+    "mcp_runtime": false,
+    "arc_transport": false,
+    "profile_discovery_runtime": false,
+    "p4l_gac_ra": false
+  },
+  "next_admissible_frontier": "P5A_CODEX_ACTUAL_HARNESS_CAPABILITY_DISCOVERY_PROFILE_QUALIFICATION_PREPARATION"
+}
