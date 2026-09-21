@@ -254,3 +254,16 @@
 - **Blocking finding D2-F01:** the exact D1 Codex manifest has `max_authority_scope=()` while D2 requires bounded `READ_FROZEN_FIXTURE` + `WRITE_DESIGNATED_OUTPUT`; therefore a final execution AgentBinding cannot be frozen without violating P1.4 authority validation.
 - **Implementation boundary:** no D2 outcome/model turn, Codex runtime adapter, core/runtime mutation or ChatGPT P5B work. D2 execution remains NOT AUTHORIZED.
 - **Next:** bounded prospective D2 qualification-authority admission prerequisite; distinguish authority to attempt an unqualified capability from evidence that the capability is already available.
+
+
+### G2E-P5A-D2-QA — Qualification Authority Admission Pre-Implementation
+
+- **Status:** SPEC_PASS_IMPLEMENTATION_REQUIRED
+- **Qualified candidate:** `e771faccb8b4370e6720d34f9905c2504846f96f`
+- **Authoritative workflow:** `35603911135` / job `106346284252` — PASS
+- **Evidence artifact:** `10641056299`; digest `sha256:c3fadfc2a42f75f9d252ec13b48877bc064276b2f52ef08e9167c2f489b9e740`
+- **Result:** D2-F01 is resolved at the specification level by separating qualification authority from capability evidence. A future canonical `QualificationAuthorityGrant` is frozen as exact-proof/attempt/manifest/target-capability/AuthorityPolicy bound, single-attempt, non-operational, path-scoped, and incapable of implying capability availability.
+- **P1.4 preservation:** normal `required_capability_ids` and manifest authority ceiling semantics remain unchanged. Qualification targets are separate; authority outside the manifest ceiling is admissible only through the exact qualification grant and parent AuthorityPolicy.
+- **P5-FX-001 frozen grant scope:** role `qualification_executor`; targets `repository_read`, `repository_write`; authority `READ_FROZEN_FIXTURE`, `WRITE_DESIGNATED_OUTPUT`; reads `input.json`, `TASK.md`; write `result.json`; network/interactive approval false.
+- **Implementation boundary:** no core/runtime/script implementation, no final D2 AgentBinding, no model turn, no Codex runtime adapter, no ChatGPT P5B work.
+- **Next:** P1.5 — Qualification Attempt Authority, bounded provider-neutral schema/governance implementation followed by P1/P1.4/P2/P3/P4/P1.5 exact-SHA qualification.
