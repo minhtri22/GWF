@@ -329,14 +329,33 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P7 — Authority claims + duplicate-authority detection
 
 - **Complexity:** 3
-- **HARD dependencies:** DG-P4, DG-P6.
+- **Status:** **PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **HARD dependencies:** DG-P4, DG-P6; roadmap Wave-3 admission dependency DG-W2 is formally closed.
+- **Frozen specification:** `docs/DG_P7_AUTHORITY_CLAIMS_SPEC.md`, commit `f226eb8e01b2284381ba0e7cf5527518512c7ce7`, blob `63d2252314e753b7485f1a0249dc011468be275b`.
+- **Document QA:** `docs/DOCUMENT_QA_DG_P7_PREIMPLEMENTATION.md` — PASS.
 - **Governing document:** `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §9.
-- **Acceptance checklist:**
-  - [ ] multiple non-conflicting claims supported;
-  - [ ] duplicate active authority detected;
-  - [ ] informative summary does not acquire authority;
-  - [ ] composition policy explicit where required;
-  - [ ] QA PASS.
+- **Reuse verdict:** Artifact/Revision own document identity + exact grant provenance; PRIM-AUTHORITY governs actor permission only; Evidence/P5 records collision QA; Proposal/Approval/Audit govern claim mutation and composition contract.
+- **Persistence decision:** exactly one bounded new table `document_authority_claims`; no authority Artifact, composition table or duplicate-authority table.
+- **Pre-implementation checklist:**
+  - [x] multiple non-conflicting claims represented by semantic contract;
+  - [x] duplicate active authority semantics frozen;
+  - [x] informative summary cannot acquire implicit authority;
+  - [x] composition policy is explicit and exact through approved frozen Proposal payload;
+  - [x] `DUPLICATE_AUTHORITY` reuses P5 and remains non-waivable;
+  - [x] P6 BLOCKED integration preserved;
+  - [x] transactional collision invariant frozen;
+  - [x] D7-F1..D7-F20 frozen;
+  - [x] QA PASS.
+- **Implementation acceptance remains open:**
+  - [ ] bounded migration adds `document_authority_claims` only;
+  - [ ] actor authority policies remain semantically unchanged;
+  - [ ] grant/retire service uses Proposal/Approval/Audit + optimistic claim version;
+  - [ ] PRIMARY/COMPOSED collision adjudication implemented;
+  - [ ] authority collision QA emits existing P5 `DUPLICATE_AUTHORITY`;
+  - [ ] D7-F1..D7-F20 PASS;
+  - [ ] P4/P5/P6 and governance regressions PASS;
+  - [ ] no DG-P8+ semantics;
+  - [ ] implementation QA PASS.
 
 ### DG-P8 — Typed document relations
 
@@ -989,13 +1008,19 @@ DG-W2 — Wave 2 exit gate
        ↓
 Wave 3 — Semantic Documentation Governance
       DEPENDENCY UNLOCKED
-      DG-P7/P8 NOT_STARTED / NOT_AUTHORIZED
+       ↓
+DG-P7 — Authority claims + duplicate-authority detection
+      PRE-IMPLEMENTATION SPEC FROZEN
+      DEPENDENCY / DOCUMENT QA PASS
+      IMPLEMENTATION NOT_STARTED
        ↓
 STOP
+
+DG-P8+ = NOT_STARTED / NOT_AUTHORIZED
 ```
 
-DG-W2 is formally closed. Wave 3 dependency sequencing is now unlocked, but no DG-P7/P8 implementation or pre-implementation work is authorized by DG-W2 closure itself.
+DG-W2 is formally closed and the explicitly authorized DG-P7 pre-implementation qualification has passed.
 
-A separate explicit authorization is required before opening the next Wave-3 item.
+DG-P7 implementation remains NOT_STARTED and requires a separate explicit bounded implementation authorization. DG-P8+ remain unopened.
 
 GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.

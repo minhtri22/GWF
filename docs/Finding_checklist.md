@@ -1217,3 +1217,120 @@ DG-W2 overall             = FORMALLY_CLOSED
 DG-P7/P8                  = NOT_STARTED / NOT_AUTHORIZED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+## 49. DG-P7 pre-implementation qualification findings
+
+### F-85 — LOW — RESOLVED
+
+- **Initial finding:** The first frozen DG-P7 spec commit carried an incorrect `knowledge.py` blob identity in its dependency table.
+- **Resolution:** Re-read every dependency from exact DG-W2 formal-close lineage and corrected only the metadata identities. Canonical spec is commit `f226eb8e01b2284381ba0e7cf5527518512c7ce7`, blob `63d2252314e753b7485f1a0249dc011468be275b`.
+- **Final status:** `RESOLVED`
+
+### F-86 — HIGH — RESOLVED
+
+- **Initial finding:** Existing `PRIM-AUTHORITY` / `authority_policies` could be mistaken for document source-of-truth claim state.
+- **Resolution:** Freeze the semantic split: authority_policies govern actor/action permission only; document authority claims are a separate Documentation Governance concept.
+- **Final status:** `RESOLVED`
+
+### F-87 — HIGH — RESOLVED
+
+- **Initial finding:** Append-only Evidence could be overloaded as current authority ownership using latest-wins reconstruction.
+- **Resolution:** Evidence is reused only for authority collision QA and exact observations; it is not canonical mutable claim state.
+- **Final status:** `RESOLVED`
+
+### F-88 — HIGH — RESOLVED
+
+- **Initial finding:** Authority claims could be encoded into document logical keys, copied into every Revision, or modeled as a second authority Artifact type.
+- **Resolution:** Artifact/Revision are reused only for owner identity and exact grant provenance. No authority-claim Artifact type is introduced.
+- **Final status:** `RESOLVED`
+
+### F-89 — HIGH — RESOLVED
+
+- **Initial finding:** Existing primitives have no clean current-state representation for zero-to-many independently retireable logical-document authority claims.
+- **Resolution:** Exactly one bounded `document_authority_claims` table is justified. No additional P7 persistence table is admitted.
+- **Final status:** `RESOLVED`
+
+### F-90 — HIGH — RESOLVED
+
+- **Initial finding:** Supporting legitimate same-key composition could lead to a new composition-policy subsystem.
+- **Resolution:** Composition policy reuses an approved frozen Proposal/Approval payload + exact hash. No composition table is added.
+- **Final status:** `RESOLVED`
+
+### F-91 — HIGH — RESOLVED
+
+- **Initial finding:** A duplicate source-of-truth collision might be waived into a misleading clean state.
+- **Resolution:** P7 reuses P5 `DUPLICATE_AUTHORITY`, which is already in `NON_WAIVABLE_CLASSES`.
+- **Final status:** `RESOLVED`
+
+### F-92 — HIGH — RESOLVED
+
+- **Initial finding:** Invalidity could accidentally be interpreted as authority transfer or claim retirement.
+- **Resolution:** Ownership and validity remain separate. BLOCKED/STALE/UNVERIFIED may make the scope unusable but never silently transfer ownership.
+- **Final status:** `RESOLVED`
+
+### F-93 — HIGH — RESOLVED
+
+- **Initial finding:** Separate collision-check and claim-write operations could race and admit a clean duplicate authority state.
+- **Resolution:** P7 freezes a transactional collision-domain invariant; collision evaluation and ACTIVE claim insertion must share one serialization boundary with equivalent SQLite/PostgreSQL semantics.
+- **Final status:** `RESOLVED`
+
+### F-94 — MEDIUM — RESOLVED
+
+- **Initial finding:** Path/title/README/document-class metadata could be treated as implicit authority.
+- **Resolution:** Authority is explicit-approved-claim only. Descriptive class or summary status never creates a claim automatically.
+- **Final status:** `RESOLVED`
+
+## 50. DG-P7 pre-implementation qualification checklist
+
+- [x] exact DG-W2 formal-close HEAD `f14abb9d8d8a591558ac6d4624a498eb32164726` verified.
+- [x] final DG-W2 exact-head workflow `35603521224` PASS verified.
+- [x] final DG-W2 artifact `10641345237` verified.
+- [x] governing Documentation Integrity §9 loaded.
+- [x] BUILD boundary for source-of-truth authority loaded.
+- [x] PRIM-AUTHORITY/authority_policies inventoried.
+- [x] Artifact/Revision ownership/provenance primitives inventoried.
+- [x] Evidence semantics inventoried.
+- [x] Proposal/Approval/Audit semantics inventoried.
+- [x] P5 `DUPLICATE_AUTHORITY` + non-waivability verified.
+- [x] P6 finding-to-BLOCKED behavior preserved.
+- [x] actor authority vs document authority split frozen.
+- [x] authority Artifact type rejected.
+- [x] Evidence claim-store model rejected.
+- [x] authority_policies claim-store model rejected.
+- [x] exactly one `document_authority_claims` table justified.
+- [x] no composition table.
+- [x] no collision table.
+- [x] claim ACTIVE -> RETIRED lifecycle frozen.
+- [x] optimistic versioning frozen.
+- [x] PRIMARY semantics frozen.
+- [x] COMPOSED exact Proposal/Approval contract frozen.
+- [x] project/scope/key collision identity frozen.
+- [x] no implicit informative authority.
+- [x] ownership separated from validity.
+- [x] transactional collision invariant frozen.
+- [x] D7-F1..D7-F20 frozen.
+- [x] no DG-P8+ implementation authorized.
+- [x] no DG-W3 closure authorized.
+- [x] no GAC/RA/G2E authorized.
+- [x] implementation has not started.
+
+## 51. Current aggregate status after DG-P7 pre-implementation qualification
+
+**OPEN = 0**
+
+All findings F-01 through F-94 recorded in this checklist are resolved.
+
+```text
+DG-W2                     = FORMALLY_CLOSED
+DG-P7 authorization       = PREIMPLEMENTATION_ONLY
+DG-P7 specification       = FROZEN
+DG-P7 spec commit         = f226eb8e01b2284381ba0e7cf5527518512c7ce7
+DG-P7 spec blob           = 63d2252314e753b7485f1a0249dc011468be275b
+DG-P7 dependency qualify  = PASS
+DG-P7 document QA         = PASS
+DG-P7 implementation      = NOT_STARTED
+DG-P7 overall             = NOT_YET_PASS
+DG-P8+                    = NOT_STARTED / NOT_AUTHORIZED
+DG-W3                     = OPEN / NOT_EXECUTED
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+```
