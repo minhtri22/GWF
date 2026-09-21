@@ -147,3 +147,16 @@
 - **Result:** Exact GWF capability audit found no qualifying PASS evidence for the mandatory base P4L opening set: DG-W4, GAC-P0, GAC-P1 and GAC-P4B. Latest exact Documentation Governance evidence formally closes DG-P5 and identifies DG-P6 as next while DG-W2 remains open; GAC remains locked until DG-W4 PASS. GAC-P2A/DG-GAC-W5/RA-P1C/RA-GAC-W6/GAC-P3 remain capability-triggered and unqualified; none is silently inferred available.
 - **Implementation boundary:** P4L runtime implementation remains prohibited. The audit introduced no `src/`, `tests/` or `.github/` mutation.
 - **Next external dependency frontier:** DG-P6 on the independent GWF Documentation Governance line. A future P4L audit must re-resolve exact gate evidence; prior documentation QA cannot substitute for runtime qualification.
+
+
+### G2E-P5 — Pre-Implementation Qualification
+
+- **Status:** SPEC_PASS_RUNTIME_BLOCKED
+- **Qualified candidate:** `a799a6039498dfd4196b9874f230da48fdbb42c1`
+- **Authoritative workflow:** `35587111264` / job `106292892218` — PASS
+- **Evidence artifact:** `10632522432`
+- **Artifact digest:** `sha256:f6d0bc2dafcf3e073e9119a419f41d2ef73e0f03ff7311bca94615cf344fedcd`
+- **Evidence closure:** `6283bf4c033828b2915bf3029ed9b3e0ea9d0870`
+- **Result:** P5 dependency, separate Codex/ChatGPT discovery, authority/security, prospective independence, fail-closed behavior and outcome-blind P5-FX-001 contracts are frozen. Zero-implementation QA and P1–P4 regressions PASS with no Codex/ChatGPT runtime adapter mutation. Findings P5-F01/P5-F02 confirm that backend RuntimeCapabilityManifest cannot substitute for app capability identity and that exact canonical AgentBinding identity is still missing.
+- **Implementation boundary:** P5A/P5B runtime adapters remain NOT AUTHORIZED. Neither Codex nor ChatGPT is declared available until actual-harness discovery/qualification.
+- **Next:** P1.4 — Agent Profile / Binding Identity, schema-only prerequisite; requalify P1–P4 before opening P5A.
