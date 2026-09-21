@@ -52,6 +52,12 @@ class ValidatorExecution:
             raise ValueError("Failed/unavailable execution must use NOT_EVALUATED content status")
         if self.execution_status == "SUCCEEDED" and self.content_status == "NOT_EVALUATED":
             raise ValueError("Successful execution must evaluate content")
+        if self.content_status == "PASS" and self.findings:
+            raise ValueError("PASS content status cannot contain findings")
+        if self.content_status == "FINDINGS" and not self.findings:
+            raise ValueError("FINDINGS content status requires at least one finding")
+        if self.execution_status != "SUCCEEDED" and self.findings:
+            raise ValueError("Failed/unavailable execution cannot carry content findings")
 
     @property
     def finding_count(self) -> int:

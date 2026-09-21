@@ -1,6 +1,7 @@
 from pathlib import Path
 import hashlib
 import subprocess
+import pytest
 
 from gwr.document_validation import MarkdownlintCli2Adapter, ValidatorExecution
 
@@ -179,3 +180,31 @@ def test_help_exit_2_with_version_banner_is_accepted(tmp_path, monkeypatch):
     assert result.execution_status == "SUCCEEDED"
     assert result.content_status == "PASS"
     assert result.observed_validator_version == "0.23.3"
+
+
+def test_execution_state_findings_are_consistent():
+    finding = MarkdownlintCli2Adapter._parse_findings(
+        "a.md:1 MD041/first-line-heading First line in a file should be a top-level heading",
+        Path("a.md"),
+    )[0]
+    with pytest.raises(ValueError):
+        ValidatorExecution(
+            validator_id="x", validator_version="1", observed_validator_version="1",
+            config_sha256="c", subject_path="a.md", subject_sha256="s",
+            execution_status="SUCCEEDED", content_status="PASS", return_code=0,
+            findings=(finding,),
+        )
+    with pytest.raises(ValueError):
+        ValidatorExecution(
+            validator_id="x", validator_version="1", observed_validator_version="1",
+            config_sha256="c", subject_path="a.md", subject_sha256="s",
+            execution_status="SUCCEEDED", content_status="FINDINGS", return_code=1,
+            findings=(),
+        )
+    with pytest.raises(ValueError):
+        ValidatorExecution(
+            validator_id="x", validator_version="1", observed_validator_version="1",
+            config_sha256="c", subject_path="a.md", subject_sha256="s",
+            execution_status="TOOL_ERROR", content_status="NOT_EVALUATED", return_code=2,
+            findings=(finding,), error_code="X",
+        )
