@@ -233,20 +233,25 @@ This prevents DG-P10 from preempting DG-P11.
 
 A classification subject must be immutable and attributable before commit.
 
-Minimum subject:
+For an agent/GWF-generated next version, the future Git commit/blob does not yet exist. The frozen pre-commit subject is therefore:
 
 ```text
 project_id
 document_id
 base_revision_id
 expected_artifact_version
-candidate_source:
+base_source_identity:
   provider
   repository_id
   exact_commit_sha
-  path_locator
   exact_blob_sha
   content_sha256
+proposal:
+  proposed_active_path
+  proposed_content_sha256
+  next_document_version
+  expected_archive_path
+phase_execution_id
 classification_policy_version
 ```
 
@@ -254,10 +259,12 @@ Rules:
 
 1. `base_revision_id` must equal the document's current Revision when classification begins.
 2. `expected_artifact_version` must equal the current Artifact version.
-3. proposed source identity must be exact; mutable branch/path alone is insufficient.
-4. the candidate source must belong to the same governed document mutation context.
-5. if current Revision or Artifact version changes before commit, classification is stale and must not authorize the revision.
-6. classification of initial document registration is outside DG-P10 because no prior governed base Revision exists.
+3. the base source identity must be exact.
+4. proposed content is frozen by SHA-256 and deterministic target path before source mutation.
+5. the future commit/blob is resolved **after** the SHA-safe source mutation and bound into the new Revision.
+6. if current Revision, Artifact version, proposed content hash, target path or archive plan changes before commit, classification becomes stale.
+7. externally prepared candidates that already exist at an exact immutable commit may additionally record that exact candidate identity, but it is not required for GWF-generated pre-commit content.
+8. classification of initial document registration remains outside DG-P10 because no prior governed base Revision exists.
 
 ## 11. Pre-commit invariant
 
@@ -411,44 +418,82 @@ This is not an agent downgrade and is not an in-place rewrite.
 
 No automatic downgrade path is authorized.
 
-## 19. Minimum approval boundary
+## 19. Project-document policy context
 
-Current governed-document metadata does not persist a qualified document-level `change_policy`.
+DG-P10 adopts the amended Documentation Integrity §14 policy.
 
-P10 must not fabricate policy state or claim full §14 policy enforcement.
-
-Until a separately qualified document-level policy store exists, DG-P10 freezes a conservative core minimum:
+An enrolled document exposes authoritative policy context from its current immutable Revision payload:
 
 ```text
-effective EDITORIAL      -> classification QA required; no P10-mandated human approval
-effective CLARIFICATION  -> classification QA required; no P10-mandated human approval
-effective NORMATIVE      -> human approval required before Revision commit
-effective STRUCTURAL     -> human approval required before Revision commit
-effective SUPERSESSION   -> human approval required before Revision commit
+document_role = GOV | PHASE
+governance_state = MUTABLE | FROZEN
+owner_phase_id_or_workunit_type
+document_version
+previous_revision_id
+previous_archive_path
 ```
 
-This minimum may be strengthened by later explicit policy. Missing policy metadata must never be used to relax NORMATIVE+ governance.
+The current source locator must agree with its role/version metadata.
 
-## 20. §14 change-policy boundary
+A caller-supplied weaker role/state cannot override the current governed Revision.
 
-DG-P10 does not make the following policies fully executable:
+Missing/ambiguous enrollment metadata fails closed to human approval rather than AUTO.
+
+Legacy unenrolled documents remain readable but are not silently granted AUTO mutation authority.
+
+## 20. Workflow-mode inheritance and mutation decision
+
+DG-P10 does not reinterpret v0.8.2 recovery semantics.
+
+It consumes the effective `AUTO | HUMAN_APPROVE` value already frozen in the active `phase_execution_protocols` record as a **document mutation mode input**.
+
+The document decision matrix is:
+
+| Role/state | Mode | Ownership | Decision |
+| --- | --- | --- | --- |
+| PHASE/MUTABLE | AUTO | current phase owner | ALLOW_AUTO |
+| PHASE/MUTABLE | AUTO | different/unknown | REQUIRE_HUMAN_APPROVAL |
+| PHASE/MUTABLE | HUMAN_APPROVE | any | REQUIRE_HUMAN_APPROVAL |
+| PHASE/FROZEN | any | any | REQUIRE_HUMAN_APPROVAL_OR_LOCK_RELEASE |
+| GOV/MUTABLE | AUTO | current authorized owner | ALLOW_AUTO |
+| GOV/MUTABLE | AUTO | different/unknown | REQUIRE_HUMAN_APPROVAL |
+| GOV/MUTABLE | HUMAN_APPROVE | any | REQUIRE_HUMAN_APPROVAL |
+| GOV/FROZEN | any | any | BLOCK_REQUIRES_EXPLICIT_USER_AUTHORIZATION |
+| archive copy | any | any | BLOCK_IMMUTABLE_ARCHIVE |
+
+Consequences:
+
+- change class and mutation authority are orthogonal;
+- NORMATIVE+ no longer implies unconditional human approval;
+- AUTO authority is bounded to the document's owner phase/workflow scope;
+- GOV/FROZEN is stronger than AUTO and HUMAN_APPROVE;
+- explicit user authorization for GOV/FROZEN must bind the exact document/base/change; a boolean caller flag is insufficient;
+- P10 records the decision but does not itself execute the source mutation.
+
+### 20.1 Revision/archive lineage plan
+
+For a compliant active document:
 
 ```text
-MUTABLE_WITH_QA
-NORMATIVE_WITH_APPROVAL
-APPEND_ONLY
-GENERATED_ONLY
-IMMUTABLE_ARCHIVE
+docs/<scope>/<name>.vN.md
+        ↓
+docs/<scope>/archive/<name>.vN.md
+docs/<scope>/<name>.vN+1.md
 ```
 
-Boundary:
+P10 computes/freeze-checks:
 
-- P10 classifies the semantic change;
-- P10 can state whether its conservative NORMATIVE+ approval minimum applies;
-- P15 owns append-only and supersession execution semantics;
-- P16 owns generated-document provenance/enforcement;
-- lifecycle/archive mutation remains governed by the qualified lifecycle program and later explicit policy work;
-- no caller-provided ungoverned `change_policy` may be trusted as authoritative merely to loosen requirements.
+- current active path;
+- current version N;
+- exact expected archive path;
+- next active path/version N+1;
+- previous Revision ID;
+- previous archive link to embed in the new document;
+- proposed content hash.
+
+The archive must preserve exact prior bytes and cannot be overwritten.
+
+Concrete CREATE/CREATE/DELETE repository changes remain DG-P11 DocumentChangeSet execution.
 
 ## 21. Persistence reuse verdict
 
@@ -497,7 +542,12 @@ project_id
 document_id
 base_revision_id
 expected_artifact_version
-candidate_source_identity
+base_source_identity
+proposed_active_path
+proposed_content_sha256
+next_document_version
+expected_archive_path
+phase_execution_id
 declared_change_class
 declared_triggers[]
 qa_review_refs[]
@@ -506,7 +556,11 @@ adjudication_status
 ambiguity_status
 effective_change_class
 governance_rank
-approval_required
+workflow_mutation_mode
+mutation_authority_decision
+owner_scope_ref
+previous_revision_id
+previous_archive_path
 classification_policy_version
 adjudicated_by
 adjudicated_at
@@ -515,29 +569,36 @@ supersedes_classification_evidence_ref  # optional governed human replacement on
 
 The payload contains no raw document body or credentials.
 
-## 23. Revision binding after successful classification
+## 23. Revision binding after successful source mutation
 
-The conceptual `DocumentRevision.change_class` field from the foundation is not currently a database column.
+The conceptual `DocumentRevision.change_class` field remains payload metadata rather than a database column.
 
-DG-P10 must not add a parallel table merely to reproduce that conceptual field.
-
-A future implementation may extend the immutable governed-document Revision payload for **new revisions only** with:
+After a future DG-P11 SHA-safe source mutation succeeds, the new immutable governed-document Revision may bind:
 
 ```text
 governance:
+  document_role
+  governance_state
+  owner_phase_id_or_workunit_type
+  document_version
+  previous_revision_id
+  previous_archive_path
   effective_change_class
   classification_evidence_ref
+  workflow_mutation_mode
+  mutation_authority_decision
 ```
 
 Rules:
 
-- no database schema migration is required for this payload extension;
+- no database schema migration is required;
 - historical P4 revisions are not backfilled;
-- classification Evidence must bind the same exact candidate source identity stored by the new Revision;
-- the new Revision must not be committed if the classification subject is stale;
-- the Evidence reference makes the classification reconstructable without mutating Evidence.
+- resulting exact commit/blob/content hash must correspond to the proposed content/path frozen in classification evidence;
+- version increments exactly by one;
+- the archived old file is physical lineage, while the old GWF Revision remains canonical immutable history;
+- the Evidence reference makes the authority/classification decision reconstructable without mutating Evidence.
 
-The exact payload-versioning mechanism is an implementation detail, but silent semantic reinterpretation of old revisions is forbidden.
+Actual repository mutation remains outside DG-P10 and is executed through DG-P11.
 
 ## 24. P5 finding integration
 
@@ -591,19 +652,23 @@ Diff size may be displayed as diagnostic metadata but must not lower governance 
 
 ## 28. Staleness and concurrency
 
-A classification authorizes only its exact subject.
+A classification authorizes only its exact pre-commit subject.
 
-Before revision commit, implementation must recheck:
+Before DG-P11 source mutation, consumers must recheck:
 
 - document ID unchanged;
 - Artifact current Revision == `base_revision_id`;
 - Artifact version == `expected_artifact_version`;
-- exact candidate source identity matches classification Evidence;
-- any required Approval binds the exact classification Evidence/payload.
+- base exact source identity still matches current Revision;
+- proposed active path/content SHA-256/version/archive path match classification Evidence;
+- active PhaseExecution/protocol still matches the frozen workflow mutation mode;
+- any required human/user authorization binds the exact classification subject.
 
 Mismatch fails closed.
 
-Classification Evidence remains historical but cannot authorize a different candidate or later base revision.
+After source mutation, the resulting commit/blob/content hash must resolve to the frozen proposed active path/content hash before the new GWF Revision can be admitted.
+
+Classification Evidence remains historical but cannot authorize a different candidate, later base revision or different archive path.
 
 ## 29. No later-wave side effects
 
@@ -617,7 +682,7 @@ DG-P10 classification/adjudication must not create or mutate:
 - validity;
 - lifecycle;
 - authority claims;
-- source files;
+- source files (DG-P10 computes the lineage plan only; DG-P11 executes it);
 - GAC state;
 - Reference Acquisition state;
 - G2E state.
@@ -631,11 +696,14 @@ new P10 table                         NO
 schema migration                      NO
 reserve core Evidence type            YES
 classification Evidence               YES
-new Revision payload governance refs  ALLOWED FOR NEW REVISIONS
+new Revision payload governance refs  ALLOWED AFTER DG-P11 SOURCE MUTATION
 historical backfill                   NO
+document role/state/version metadata  PAYLOAD / NO NEW TABLE
+workflow mode source                   EXISTING PHASE PROTOCOL SNAPSHOT
+archive/version lineage plan          YES / P10 PLAN ONLY
 P5 finding lifecycle reuse            YES
-Proposal/Approval reuse               YES
-DocumentChangeSet                     NO / DG-P11
+Proposal/Approval reuse               YES WHERE REQUIRED
+DocumentChangeSet execution            NO / DG-P11
 ```
 
 ## 31. Frozen fixture matrix
@@ -692,25 +760,25 @@ Any lower replacement after escalation requires explicit human Approval, exact s
 
 Classification fails if base Revision is not current or expected Artifact version is stale.
 
-### D10-F14 — exact candidate source required
+### D10-F14 — exact pre-commit candidate digest required
 
-Mutable ref/path without exact immutable source identity cannot be classified as commit-authorizing Evidence.
+A GWF-generated candidate must freeze proposed active path/content SHA-256/version/archive path; it must not require a future commit/blob before that commit exists.
 
 ### D10-F15 — pre-commit failure / NOT_EVALUATED has zero revision side effect
 
 Classification failure, approval failure or required semantic QA `NOT_EVALUATED` leaves Artifact current Revision and version unchanged.
 
-### D10-F16 — NORMATIVE+ approval minimum
+### D10-F16 — workflow-mode authority is orthogonal to class
 
-NORMATIVE, STRUCTURAL and SUPERSESSION require human Approval before Revision commit under the P10 conservative core minimum.
+NORMATIVE/STRUCTURAL/SUPERSESSION may be ALLOW_AUTO for an owned MUTABLE document under an active AUTO phase, while HUMAN_APPROVE requires approval and GOV/FROZEN remains blocked pending explicit user authorization.
 
 ### D10-F17 — Evidence reuse / no table
 
 Classification persists as reserved core `document_change_classification` Evidence and no P10 table is created.
 
-### D10-F18 — exact Revision binding
+### D10-F18 — deterministic version/archive lineage
 
-A successfully committed new Revision binds the same effective class and classification Evidence ref for the exact classified candidate without backfilling history.
+P10 computes exactly one next version, one sibling archive path and one previous-version link; archive overwrite/in-place mutation is rejected. Concrete repository mutation is deferred to DG-P11.
 
 ### D10-F19 — no structural/supersession execution side effect
 
@@ -742,11 +810,15 @@ DG-P10 pre-implementation qualification may PASS only if all are true:
 - agent unilateral downgrade is forbidden;
 - governed human replacement semantics are bounded and immutable;
 - diff-size downgrade heuristics are forbidden;
-- NORMATIVE+ minimum approval rule is frozen;
-- §14 executable-policy overclaim is rejected;
+- document role/state/workflow-mode decision matrix is frozen;
+- AUTO authority is owner-scope bounded;
+- GOV/FROZEN explicit-user-authorization override is frozen;
+- recovery-mode semantics are not broadened;
+- deterministic version/archive lineage plan is frozen;
+- pre-commit candidate digest is used instead of impossible future commit/blob identity;
 - P10 classification persistence reuses PRIM-EVIDENCE;
 - no new P10 table/migration is justified;
-- revision payload binding is limited to new revisions and no historical backfill;
+- revision payload binding is limited to post-DG-P11 new revisions and no historical backfill;
 - P5 finding lifecycle remains canonical;
 - STRUCTURAL/SUPERSESSION have zero mutation side effects;
 - multi-document aggregation remains DG-P11;
@@ -773,4 +845,4 @@ DG-W3                     = OPEN / NOT_EXECUTED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
 
-A separate explicit bounded implementation authorization is required before core Evidence registration, classifier/adjudicator runtime, DocumentFacade pre-commit integration, tests or workflow are created.
+A separate explicit bounded implementation authorization is required before core Evidence registration, classifier/policy runtime, enrolled-document metadata validation, tests or workflow are created. DG-P10 implementation may compute lineage plans but may not execute repository source mutation; that remains DG-P11.

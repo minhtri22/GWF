@@ -448,21 +448,222 @@ Classification policy:
 - uncertainty between `CLARIFICATION` and `NORMATIVE` resolves conservatively to `NORMATIVE` until reviewed;
 - diff size is not evidence that a change is editorial.
 
-## 14. Change policies
+## 14. Project document layout, mutation authority and revision policy
 
-A document may declare a mutation policy such as:
+Documentation governed by GWF belongs to the project that owns it. The default physical repository layout is:
 
-- `MUTABLE_WITH_QA`
-- `NORMATIVE_WITH_APPROVAL`
-- `APPEND_ONLY`
-- `GENERATED_ONLY`
-- `IMMUTABLE_ARCHIVE`
+```text
+/docs/
+  gov/
+    <governance-document>.vN.md
+    archive/
+      <governance-document>.vN-1.md
 
-### Append-only semantics
+  <phase-id>/
+    <phase-document>.vN.md
+    archive/
+      <phase-document>.vN-1.md
+```
 
-For `APPEND_ONLY` content, previously authoritative historical content must remain byte-equivalent or semantically immutable according to the declared append policy. Corrections to prior history must be represented as new appended correction/amendment records rather than silent rewrite.
+The physical layout is a human-readable representation of governed document state. It does **not** replace stable GWF Artifact/Revision identity.
 
-Exact byte-prefix checking is one possible validator but is an implementation choice, not the semantic definition.
+### 14.1 Document role
+
+Every document enrolled in this policy has one authoritative role:
+
+- `GOV` — governance/specification/control material under `/docs/gov/`;
+- `PHASE` — work-product documentation under one phase folder `/docs/<phase-id>/`.
+
+A file under any `archive/` directory is a historical copy, not the active document.
+
+Role must agree with repository path. A caller may not relabel a `/docs/gov/` file as `PHASE` to obtain weaker authority.
+
+### 14.2 Governance state
+
+An active governed document has one governance state:
+
+- `MUTABLE`;
+- `FROZEN`.
+
+Archive copies are immutable historical material and are never active mutation targets.
+
+`FROZEN` is a stronger boundary than workflow automation mode.
+
+For `GOV/FROZEN`, mutation is blocked unless an explicit human/user authorization is recorded for that exact document/base revision and intended change. `AUTO` never bypasses this rule.
+
+A phase document may also be frozen by an applicable project/study/software lock. Such a lock may strengthen the decision to human approval or block; workflow mode may not weaken it.
+
+### 14.3 Workflow document-mutation mode
+
+Document mutation reuses the **effective mode already frozen for the running PhaseExecution**:
+
+```text
+AUTO
+HUMAN_APPROVE
+```
+
+The source of the value is the existing Agent Execution Protocol hierarchy and its persisted `phase_execution_protocols.recovery_mode` snapshot.
+
+This is **configuration inheritance only**. It does not redefine recovery semantics.
+
+In particular, existing AUTO recovery remains limited by the v0.8.2 recovery contract. Using the same effective mode for document mutation does not grant broader retry/recovery powers.
+
+For document mutation:
+
+- `AUTO` means the agent may mutate documents owned by its authorized phase/workflow scope without per-edit human approval, subject to all stronger locks;
+- `HUMAN_APPROVE` means the edit requires human approval before source mutation;
+- a document outside the current phase/workflow ownership scope cannot be made AUTO merely because the running protocol is AUTO.
+
+### 14.4 Mutation authority decision matrix
+
+The minimum decision matrix is:
+
+| Document role/state | Effective workflow mode | Ownership/scope | Decision |
+| --- | --- | --- | --- |
+| PHASE / MUTABLE | AUTO | current phase owns document | `ALLOW_AUTO` |
+| PHASE / MUTABLE | AUTO | different/unknown owner | `REQUIRE_HUMAN_APPROVAL` |
+| PHASE / MUTABLE | HUMAN_APPROVE | any | `REQUIRE_HUMAN_APPROVAL` |
+| PHASE / FROZEN | any | any | `REQUIRE_HUMAN_APPROVAL_OR_LOCK_RELEASE` |
+| GOV / MUTABLE | AUTO | current authorized governance phase owns document | `ALLOW_AUTO` |
+| GOV / MUTABLE | AUTO | different/unknown owner | `REQUIRE_HUMAN_APPROVAL` |
+| GOV / MUTABLE | HUMAN_APPROVE | any | `REQUIRE_HUMAN_APPROVAL` |
+| GOV / FROZEN | AUTO or HUMAN_APPROVE | any | `BLOCK_REQUIRES_EXPLICIT_USER_AUTHORIZATION` |
+| archive copy | any | any | `BLOCK_IMMUTABLE_ARCHIVE` |
+
+The matrix decides **who may mutate**, not what the semantic change class is.
+
+`EDITORIAL / CLARIFICATION / NORMATIVE / STRUCTURAL / SUPERSESSION` remain independent classification evidence.
+
+A NORMATIVE change in an owned PHASE document may therefore proceed under `AUTO` when no stronger lock applies. Conversely, an EDITORIAL change to `GOV/FROZEN` remains blocked without explicit user authorization.
+
+### 14.5 Workflow ownership
+
+AUTO authority is scoped, not global.
+
+A document enrolled for automatic phase mutation must carry attributable ownership metadata sufficient to bind it to the phase/workflow scope that generated it.
+
+Minimum conceptual metadata:
+
+```text
+document_role
+governance_state
+owner_phase_id_or_workunit_type
+document_version
+previous_revision_id
+previous_archive_path
+```
+
+The active document path and metadata must agree.
+
+Missing/ambiguous ownership cannot silently become AUTO; it falls back to human approval.
+
+### 14.6 Revision and archive lineage
+
+A governed document revision preserves both canonical and physical lineage.
+
+Canonical lineage remains:
+
+```text
+stable Document / Artifact
+        ↓
+immutable Revision N
+        ↓
+immutable Revision N+1
+```
+
+Physical repository lineage for an enrolled project document is:
+
+```text
+/docs/<scope>/<name>.vN.md
+        ↓ revise
+/docs/<scope>/archive/<name>.vN.md   # exact old bytes
+/docs/<scope>/<name>.vN+1.md         # new active version
+```
+
+For governance documents, `<scope>` is `gov`.
+
+Rules:
+
+1. exactly one active file represents the current version of one logical document;
+2. version numbers increase monotonically by one;
+3. the archive path is directly under the active document's containing scope folder;
+4. the archived copy preserves the exact bytes of the prior active source;
+5. an archive path may never be overwritten;
+6. an archive copy may never be revised in place;
+7. the new active document must contain a human-readable link to the immediately previous archived version;
+8. the new GWF Revision records the prior Revision ID and archive path;
+9. the old GWF Revision remains independently attributable by its original exact commit/blob/content hash even if the active source path is later deleted;
+10. path/version changes do not change stable `document_id`.
+
+Corrections to an archive are new correction/amendment records; history is not silently rewritten.
+
+### 14.7 Pre-commit candidate identity
+
+When GWF/agent itself is generating the next document version, the new Git commit/blob does not exist yet.
+
+Therefore pre-commit governance freezes:
+
+```text
+exact base Revision
+exact base Artifact version
+exact base source commit/blob/hash
+proposed active path
+proposed content SHA-256
+next document version
+expected archive path
+classification evidence
+effective workflow mutation mode
+mutation-authority decision
+```
+
+After the repository write, exact commit/blob/source SHA-256 are resolved and bound into the new immutable GWF Revision.
+
+A system must not require a future commit/blob identity before that commit exists.
+
+### 14.8 Source mutation boundary
+
+The archive/version operation is a multi-path source mutation:
+
+```text
+CREATE archive exact old bytes
+CREATE new active vN+1
+DELETE old active vN
+```
+
+It must be one SHA-safe governed repository change set with an exact expected branch head and exact old-file blob identity.
+
+DG-P10 owns classification and mutation-authority adjudication for one document plus the deterministic lineage plan.
+
+DG-P11 owns freezing/executing the concrete `DocumentChangeSet` paths/content hashes and scope.
+
+This preserves the no-silent-cascade rule.
+
+### 14.9 Specialized enforcement remains separate
+
+This section establishes the common project-document mutation policy.
+
+Later specialized controls remain responsible for their own semantics:
+
+- append-only semantic validation and authority supersession execution remain DG-P15;
+- generated-document provenance/reproducibility enforcement remains DG-P16;
+- dependency/impact propagation remains DG-P12+.
+
+Those later programs may strengthen this policy but may not weaken GOV/FROZEN protection, archive immutability, exact revision identity or workflow-scope authority.
+
+### 14.10 Legacy-layout transition
+
+Existing repositories/documents that predate the `/docs/gov` + `/docs/<phase>/archive` contract are not silently moved or renamed.
+
+They remain governed by their existing exact identities until a separately authorized migration/enrollment operation establishes:
+
+- stable role;
+- ownership scope;
+- governance state;
+- starting document version;
+- compliant active/archive path.
+
+Absence of migration is never interpreted as permission to mutate legacy governance material automatically.
+
 
 ## 15. Agent documentation mutation protocol
 
