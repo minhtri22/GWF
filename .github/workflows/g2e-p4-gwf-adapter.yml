@@ -1,0 +1,72 @@
+name: G2E P4 Base GWF Adapter Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - "src/g2e/**"
+      - "src/gwr/**"
+      - "tests/g2e/**"
+      - ".github/workflows/g2e-p4-gwf-adapter.yml"
+      - "g2e/docs/P4_*"
+
+permissions:
+  contents: read
+
+jobs:
+  p4-base-gwf-adapter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install GWF/G2E test dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+      - name: Compile G2E and GWF
+        run: python -m compileall -q src/g2e src/gwr
+      - name: Run P1 schema regression
+        run: pytest -q tests/g2e/test_p1_core_schemas.py
+      - name: Run P2 deterministic core regression
+        run: pytest -q tests/g2e/test_p2_deterministic_core.py
+      - name: Run P3 standalone runtime regression
+        run: pytest -q tests/g2e/test_p3_standalone_runtime.py
+      - name: Run P4 GWF adapter qualification fixtures
+        run: pytest -q tests/g2e/test_p4_gwf_adapter.py
+      - name: Assert standalone runtime remains GWF-independent
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/g2e/standalone.py').read_text(encoding='utf-8')
+          forbidden=('from gwr','import gwr','src.gwr','mcp__','github.com')
+          hits=[x for x in forbidden if x in p]
+          assert not hits, hits
+          PY
+      - name: Assert P4 does not open P4L GAC or Reference Acquisition
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import ast
+          paths=[Path('src/g2e/gwf_adapter.py'), Path('src/g2e/gwf_domain.py')]
+          forbidden=('gac','catalog','reference_acquisition','referenceacquisition')
+          hits=[]
+          for path in paths:
+              tree=ast.parse(path.read_text(encoding='utf-8'))
+              for node in ast.walk(tree):
+                  if isinstance(node,ast.Import):
+                      names=[a.name.lower() for a in node.names]
+                  elif isinstance(node,ast.ImportFrom):
+                      names=[(node.module or '').lower()]
+                  else:
+                      continue
+                  for name in names:
+                      if any(token in name for token in forbidden):
+                          hits.append((str(path),name))
+          assert not hits, hits
+          PY
