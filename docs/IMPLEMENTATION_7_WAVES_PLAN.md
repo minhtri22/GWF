@@ -151,11 +151,12 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P3 — Git/blob revision evidence resolver
 
 - **Complexity:** 2
-- **Status:** **AUTHORIZED / PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **Status:** **IMPLEMENTATION QUALIFIED / HANDOFF + EXACT-HEAD QA PENDING**
 - **Frozen specification:** `docs/DG_P3_GIT_BLOB_RESOLVER_SPEC.md`, commit `f8d18e55d17344f10c0eb45c9d8beb3df6eea279`, blob `e005776db28d57ce1276b07475b9a7f7a5b6be97`.
 - **Document QA:** `docs/DOCUMENT_QA_DG_P3_PREIMPLEMENTATION.md` — PASS.
 - **Reuse verdict:** existing Artifact/Revision, ObjectRef, generic Evidence, PluginConnection/RepositoryBinding and v0.8.4 GitHub read/SHA primitives are sufficient; no schema migration/new canonical store.
-- **Bounded implementation delta:** provider repository-ID read + read-only resolver façade + least-privilege REPO_READ/CONTENT_WRITE separation + F1–F13 fixtures.
+- **Implementation evidence:** head `9b4426f4c0d3dd6f39b2e2b2750473fd309b779b`; workflow `35577009823` PASS; artifact `10627989044` digest `sha256:ca9f74f9e6b7db30b2f11b81e80604b3dc2aff1c95d0d46f590beb3cabbd82c9`.
+- **Bounded implementation delivered:** provider repository-ID read + read-only resolver façade + least-privilege REPO_READ/CONTENT_WRITE separation + F1–F13 fixtures.
 - **HARD dependencies:** DG-P0 contract only; sequential P1/P2 governance is already closed.
 - **Governing documents:**
   - `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §§8, 20, 30.
@@ -171,17 +172,18 @@ Every completed item must record exact dependency revisions/evidence used. A dep
   - [x] security/credential boundary frozen;
   - [x] document QA PASS;
   - [x] Finding checklist OPEN = 0.
-- **Implementation acceptance remains open:**
-  - [ ] exact repository/commit/blob identity captured in runtime;
-  - [ ] path is not treated as identity in runtime;
-  - [ ] stale expected identity fails closed in runtime;
-  - [ ] no credential material persisted;
-  - [ ] bounded regression PASS;
-  - [ ] implementation QA PASS.
+- **Implementation acceptance:**
+  - [x] exact repository/commit/blob identity captured in runtime;
+  - [x] path is not treated as identity in runtime;
+  - [x] stale expected identity fails closed in runtime;
+  - [x] no credential material persisted;
+  - [x] bounded regression 54/54 PASS;
+  - [x] implementation QA PASS;
+  - [ ] handoff commit exact-head workflow PASS.
 
 ### Wave 1 exit gate — DG-W1
 
-Wave 1 remains open. DG-P3 is explicitly authorized and pre-implementation-qualified, but implementation has not started and DG-P3 has not passed.
+Wave 1 remains open. DG-P3 implementation has qualified, but formal close still requires the committed handoff package to pass its exact-head workflow.
 
 - [x] DG-P0 PASS
 - [x] DG-P1 PASS
