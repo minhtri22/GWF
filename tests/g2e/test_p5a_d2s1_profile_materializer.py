@@ -62,6 +62,7 @@ def test_config_toml_is_exact_restricted_profile():
     raw = module.build_config_toml()
     parsed = tomllib.loads(raw.decode("utf-8"))
     assert parsed["default_permissions"] == module.PROFILE_ID
+    assert parsed["windows"]["sandbox"] == "elevated"
     profile = parsed["permissions"][module.PROFILE_ID]
     assert "extends" not in profile
     assert profile["network"]["enabled"] is False
@@ -110,6 +111,10 @@ def test_execution_config_covers_profile_and_zero_retry():
     assert cfg["experimental_api"] is True
     assert cfg["permission_profile_id"] == module.PROFILE_ID
     assert cfg["default_permission_profile_id"] == module.PROFILE_ID
+    assert cfg["windows_sandbox_mode"] == "elevated"
+    assert cfg["windows_sandbox_setup_required"] is True
+    assert cfg["windows_sandbox_setup_cwd"] == module.CANONICAL_WINDOWS_WORKSPACE
+    assert cfg["windows_sandbox_readiness_required"] == "ready"
     assert cfg["network_allowed"] is False
     assert cfg["interactive_approval_allowed"] is False
     assert cfg["mcp_count_required"] == 0
@@ -132,6 +137,14 @@ def test_execution_config_covers_profile_and_zero_retry():
         (
             lambda p: p["execution_config"].__setitem__("default_permission_profile_id", ":workspace"),
             "default permission selection drift",
+        ),
+        (
+            lambda p: p["execution_config"].__setitem__("windows_sandbox_mode", "unelevated"),
+            "windows sandbox mode drift",
+        ),
+        (
+            lambda p: p["execution_config"].__setitem__("windows_sandbox_setup_required", False),
+            "windows sandbox setup requirement drift",
         ),
         (
             lambda p: p["execution_config"].__setitem__("max_invalid_replacement_attempts", 1),
