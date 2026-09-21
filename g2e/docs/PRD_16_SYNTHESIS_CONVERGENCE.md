@@ -81,12 +81,19 @@ Required fields:
 
 Universe must be reproducible.
 
-It binds one or more:
+It binds one or more source observations:
 
-- exact GWF catalog snapshot/query execution IDs;
+- exact direct PRD-17 GWF catalog snapshot/query execution IDs;
 - exact standalone library manifest/hash;
+- exact Reference Acquisition retrieval sessions, including GWF_CATALOG observations when used;
 - exact external Reference Acquisition retrieval sessions;
 - explicit manual capsule list with authority/provenance.
+
+Every observation records a `discovery_channel` such as `G2E_LIBRARY_ADAPTER | REFERENCE_ACQUISITION_GWF_CATALOG | REFERENCE_ACQUISITION_EXTERNAL | MANUAL`.
+
+Candidate identity and observation identity are separate.
+
+If the same exact capsule/subject is observed through multiple queries/channels, it becomes **one candidate subject** with multiple observation/provenance records. Multiple observations may improve coverage/provenance but MUST NOT count as multiple studies/results.
 
 All candidates and exclusion reasons are retained.
 
@@ -239,6 +246,7 @@ A normative change creates a new synthesis lineage.
 9. Inclusion/quality criteria cannot select by favorable result direction unless a prospective outcome stratum is explicitly part of the question.
 10. Coverage/publication-bias limitations are explicit and constrain conclusion scope/strength.
 11. Synthesis output can be packaged/published without rewriting source results.
+12. One exact subject observed through multiple GAC/Reference Acquisition routes is counted once as a candidate/result.
 
 ## Dependencies
 
@@ -251,4 +259,5 @@ A normative change creates a new synthesis lineage.
 
 - [PRD-12 Goal Result Package](PRD_12_RESULT_PACKAGE.md)
 - [PRD-13 Reference Acquisition](PRD_13_REFERENCE_ACQUISITION.md)
-- [GWF Governed Artifact Catalog pack](https://github.com/minhtri22/GWF/tree/docs/governed-artifact-catalog-pack/docs)
+- [GWF Library Integration Mapping](GWF_LIBRARY_INTEGRATION_MAPPING.md)
+- [Reconciled GWF GAC/Shared Library docs](https://github.com/minhtri22/GWF/tree/be7d606c64a97d9525d1f72d744fe5b7a336ff0c/docs)

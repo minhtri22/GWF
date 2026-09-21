@@ -51,3 +51,10 @@ See [PHASE_PLAN.md](PHASE_PLAN.md). P1 includes the original core schemas plus C
 - [GWF Research Domain](../../domains/research.workflow.yaml)
 
 Exact baseline commits are recorded in [REFERENCE_BASELINE.md](REFERENCE_BASELINE.md).
+
+
+## GWF Shared Library integration mapping
+
+Cross-system ownership, terminology, routing and exact readiness gates are frozen in [GWF_LIBRARY_INTEGRATION_MAPPING.md](GWF_LIBRARY_INTEGRATION_MAPPING.md).
+
+G2E P1/P2 are not HARD-dependent on GWF GAC implementation. The GWF-backed Evidence Library path is a later conditional integration gated by the capabilities actually requested.

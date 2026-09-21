@@ -2,7 +2,9 @@
 
 ## Status
 
-**SEMANTIC QA: PASS**
+**SEMANTIC QA: PASS — historical integration scope**
+
+This QA remains authoritative for the P0.2 semantics it tested. Its GWF pack integration baseline was later superseded by GWF reconciliation commit `be7d606c64a97d9525d1f72d744fe5b7a336ff0c`; current cross-system alignment is governed by [P0.3 reconciliation QA](P0_3_GWF_LIBRARY_RECONCILIATION_QA.md).
 
 Candidate commit:
 
@@ -22,7 +24,7 @@ Remediation commit under final QA:
 
 **Resolution:** EvidenceCapsule is generated after source package sealing and stored/published as a sibling derivative outside the sealed source package. It binds the source package seal but is not hashed into the source manifest.
 
-**Proof:** PRD-12, PRD-15, Core Semantics §15.
+**Proof:** PRD-12, PRD-15, Core Semantics §16.
 
 - [x] RESOLVED
 
@@ -38,7 +40,7 @@ Remediation commit under final QA:
 
 **Resolution:** inclusion/exclusion and quality rules are outcome-direction blind by default. Outcome direction may be a stratum only when prospectively declared by the synthesis question and cannot be used to drop inconvenient results inside that stratum.
 
-**Proof:** PRD-16 §§3,5; Core Semantics §17.
+**Proof:** PRD-16 §§3,5; Core Semantics §18.
 
 - [x] RESOLVED
 

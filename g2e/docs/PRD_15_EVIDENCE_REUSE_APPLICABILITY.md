@@ -203,5 +203,6 @@ Capsule publication state is handled by [PRD-17 Library Adapter](PRD_17_EVIDENCE
 
 - [G2E README](../README.md)
 - [PRD-13 Reference Acquisition](PRD_13_REFERENCE_ACQUISITION.md)
-- [GWF GAC spec pack](https://github.com/minhtri22/GWF/blob/docs/governed-artifact-catalog-pack/docs/GOVERNED_ARTIFACT_CATALOG_SPEC.md)
-- [GWF GAC packing QA](https://github.com/minhtri22/GWF/blob/docs/governed-artifact-catalog-pack/docs/GOVERNED_ARTIFACT_CATALOG_QA.md)
+- [GWF Library Integration Mapping](GWF_LIBRARY_INTEGRATION_MAPPING.md)
+- [Reconciled GWF GAC specification](https://github.com/minhtri22/GWF/blob/be7d606c64a97d9525d1f72d744fe5b7a336ff0c/docs/GOVERNED_ARTIFACT_CATALOG_SPEC.md)
+- [GWF reconciliation QA](https://github.com/minhtri22/GWF/blob/be7d606c64a97d9525d1f72d744fe5b7a336ff0c/docs/DOCUMENT_QA_GAC_7_WAVES_RECONCILIATION.md)

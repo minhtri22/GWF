@@ -57,7 +57,7 @@ flowchart TD
     GV --> RP[Goal Result Package]
     RP --> EC[Evidence Capsule]
     EC --> LA[Evidence Library Adapter]
-    LA --> LIB[(GWF GAC default / standalone catalog)]
+    LA --> LIB[(Shared Library: GWF GAC substrate / standalone catalog)]
     LIB --> CAND[Prior evidence candidates]
     CAND --> APP[Applicability Assessment]
     APP --> PP
@@ -147,6 +147,9 @@ The framework must **not** hard-code MindForge phases such as M0/M1/M2. Those ph
 | Agent app execution | Adapter abstraction | GWF interop layer by default |
 | Adjudication semantics | Owns | Persists/enforces record |
 | Final goal closure | Owns | Persists governed result/history |
+| Evidence Library semantics | **Owns** EvidenceCapsule/applicability/reuse/synthesis | GAC provides default Shared Library publication/discovery substrate |
+| Shared Library physical catalog | Consumes through PRD-17 | **GAC owns** publication/query/access/cross-project discovery |
+| Research prior-art curation | PRD-13 semantic use | Reference Acquisition owns research-side curation; may query GAC |
 
 G2E remains runnable without GWF, but standalone mode may not silently weaken mandatory proof invariants.
 
@@ -211,6 +214,8 @@ Component PRDs:
 14. Prior results never directly set a current Claim PASS; qualified reuse is a governed ProofObligation.
 15. Cross-study synthesis freezes universe/inclusion/independence/aggregation rules before formal outcome selection.
 16. Shared provenance is clustered before treating multiple results as independent confirmation.
+17. “Shared Library” means the consumer-facing capability built on GAC; G2E Evidence Library is its semantic view, not a second physical database.
+18. Direct G2E reuse/synthesis discovery uses PRD-17; research prior-art/novelty discovery uses PRD-13/Reference Acquisition even when both query the same GAC.
 
 ## 9. Lineage
 
@@ -224,4 +229,4 @@ MindForge M0–M4 is empirical method evidence, not a G2E phase template. Exact 
 
 Implementation authorization is controlled by [QA_doc.md](docs/QA_doc.md) and [PHASE_PLAN.md](docs/PHASE_PLAN.md).
 
-P0.2 — Evidence Reuse & Convergence Specification is now part of the pre-P1 foundation. P1 MUST NOT start until [P0.2 QA](docs/P0_2_LIBRARY_SYNTHESIS_QA.md) is PASS with no open findings.
+P0.2 — Evidence Reuse & Convergence Specification is PASS. P0.3 reconciles that contract with the newer GWF Shared Library/GAC 7-wave documentation. P1 MUST NOT start while [P0.3 reconciliation QA](docs/P0_3_GWF_LIBRARY_RECONCILIATION_QA.md) has open findings.

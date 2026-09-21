@@ -57,3 +57,42 @@ References:
 - [GAC Packing QA](https://github.com/minhtri22/GWF/blob/docs/governed-artifact-catalog-pack/docs/GOVERNED_ARTIFACT_CATALOG_QA.md)
 
 This is a **packing-only contract**, not an implemented GWF service. G2E must not assume GAC runtime availability until separately qualified.
+
+
+## GWF Shared Library / GAC reconciliation baseline
+
+The original GAC packing baseline above remains design lineage. The **current G2E↔GWF integration authority** is the reconciled documentation state:
+
+- GWF reconciliation commit: `be7d606c64a97d9525d1f72d744fe5b7a336ff0c`
+- reconciliation finding commit: `4ccdecaea6bf3520d2c58552ae1fc4bea548db22`
+- DG-P0 implementation/handoff evidence consulted by GWF: `ef322ff0618b83fbfaef40b096cb43f5193d8db0`
+- DG-P0 exact-head workflow: `35560831581` — PASS
+- GWF reconciliation QA: `PASS / OPEN=0`
+
+Exact reconciled Git blobs recorded by GWF QA:
+
+- GAC Specification: `831a4f9260ff6a1f74d531d9d24a91cdb6feff7e`
+- GAC Integration Boundaries: `2fef77627127bf58c6376202f96de681d5b3050a`
+- Documentation Governance Specification: `e50d0f17433c6f0ec57f987278a0d24a7bbd4610`
+- Reference Acquisition Specification: `110dae0b492b56492c52eec2dfc64a8d2070d966`
+- revised 7-Wave Plan: `229decfb067ead7ef38d51012b06abf69cc12fc0`
+- GWF reconciliation Findings: `e314098f3a10c2bc15fffe8f3323e8832a91419a`
+- reconciled GAC Handoff: `cb5f0c1ef33122a6e997dcaeb29ac588b1f045c9`
+- reconciled GAC QA: `624bc36f9012af92711f80b2ee1d6157b358f570`
+
+Pinned references:
+
+- [Reconciled GAC Specification](https://github.com/minhtri22/GWF/blob/be7d606c64a97d9525d1f72d744fe5b7a336ff0c/docs/GOVERNED_ARTIFACT_CATALOG_SPEC.md)
+- [Reconciled GAC Integration Boundaries](https://github.com/minhtri22/GWF/blob/be7d606c64a97d9525d1f72d744fe5b7a336ff0c/docs/GOVERNED_ARTIFACT_CATALOG_INTEGRATION_BOUNDARIES.md)
+- [Reconciled Reference Acquisition](https://github.com/minhtri22/GWF/blob/be7d606c64a97d9525d1f72d744fe5b7a336ff0c/docs/V0.8.6_REFERENCE_ACQUISITION_SPEC.md)
+- [Revised 7-Wave Plan](https://github.com/minhtri22/GWF/blob/be7d606c64a97d9525d1f72d744fe5b7a336ff0c/docs/IMPLEMENTATION_7_WAVES_PLAN.md)
+- [Reconciliation QA](https://github.com/minhtri22/GWF/blob/be7d606c64a97d9525d1f72d744fe5b7a336ff0c/docs/DOCUMENT_QA_GAC_7_WAVES_RECONCILIATION.md)
+
+Current integration facts:
+
+1. Shared Library is a consumer-facing capability built on GAC, not another canonical store.
+2. GAC owns publication/catalog/query/cross-project discovery; G2E owns applicability/reuse/synthesis semantics.
+3. Reference Acquisition may query GAC as an internal research discovery channel and preserves exact CatalogQueryExecution/snapshot/CatalogEntry provenance.
+4. GAC runtime remains unimplemented at this documentation frontier. Earliest GAC-P0/P1 hard gate is DG-W4 PASS.
+5. GAC-P3 optional search is not required for minimum Shared Library readiness.
+6. GAC-P4B is the G2E-specific consumer qualification fixture and is non-blocking for GAC core.

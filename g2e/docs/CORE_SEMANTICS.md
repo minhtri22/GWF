@@ -346,7 +346,7 @@ This avoids self-referential hashing.
 The exact specification/evidence baselines used to derive these semantics are recorded in [REFERENCE_BASELINE.md](REFERENCE_BASELINE.md).
 
 
-## 15. Prior governed evidence and EvidenceCapsules
+## 16. Prior governed evidence and EvidenceCapsules
 
 A prior governed result intended for reuse/library publication is represented by an immutable `EvidenceCapsule` generated after sealing an exact source package such as a terminal ClaimResultPackage, Goal Result Package, or sealed synthesis source package.
 
@@ -360,7 +360,7 @@ The capsule is a post-seal sibling derivative and MUST NOT be included as author
 
 Library retrieval creates candidate prior evidence only; it does not admit evidence or resolve a Claim.
 
-## 16. Applicability and qualified reuse
+## 17. Applicability and qualified reuse
 
 Prior evidence reuse is prospective and policy-driven.
 
@@ -379,7 +379,7 @@ An `ApplicabilityAssessment` binds exact source capsule, exact target Goal/Claim
 
 Reuse evidence still passes EvidenceAdmissionPolicy. Shared ancestry MUST be represented so dependent capsules cannot be counted as independent confirmations merely because they have different capsule IDs.
 
-## 17. Synthesis and convergence
+## 18. Synthesis and convergence
 
 Cross-study synthesis is a normal G2E Goal/proof specialization, not an alternate verdict engine.
 

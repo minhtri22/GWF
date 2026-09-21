@@ -8,11 +8,35 @@ Acquire prior art/specifications/repository capability evidence without contamin
 
 In GWF mode, reuse the GWF Reference Acquisition capability. G2E adds Claim/Proof relation semantics and EvidenceAdmissionPolicy.
 
-Reference Acquisition and Evidence Library are distinct:
+Reference Acquisition and the G2E Evidence Library are distinct semantic consumers over potentially shared GWF infrastructure:
 
-- Reference Acquisition discovers external/current prior art, specifications and capability sources.
-- PRD-17 retrieves previously governed G2E/GWF result artifacts such as EvidenceCapsules.
-- Either may inform planning, but neither bypasses Applicability/EvidenceAdmission.
+- Reference Acquisition owns research-side prior-art/novelty curation across external providers and the internal `GWF_CATALOG` channel.
+- PRD-17 owns direct G2E discovery/publication of governed semantic results such as EvidenceCapsules/SynthesisResults.
+- Both may query the same GAC substrate, but they produce different governed observation records and neither bypasses Applicability/EvidenceAdmission.
+
+## GWF Shared Library channel
+
+When GWF Reference Acquisition enables source channel `GWF_CATALOG`, G2E MUST preserve the GWF retrieval provenance:
+
+- retrieval channel = `GWF_CATALOG`;
+- exact `CatalogQueryExecution` reference;
+- authoritative catalog snapshot/revision;
+- exact CatalogEntry IDs observed;
+- exact selected catalog subject revision/hash;
+- query execution status/completeness;
+- Reference Acquisition disposition/curation result.
+
+A GAC backend failure or partial result is not a valid “zero relevant references” observation.
+
+### Routing rule
+
+Use PRD-13/Reference Acquisition when the purpose is research **prior-art, novelty, method/source curation, or literature/reference coverage**.
+
+Use PRD-17 directly when the purpose is G2E **EvidenceCapsule reuse, applicability, proof reuse, or synthesis input discovery**.
+
+The same exact GAC subject may be observed through both routes. Subject identity is deduplicated by exact immutable subject identity/hash; the two query/retrieval observations remain distinct provenance records.
+
+A G2E EvidenceCapsule discovered through Reference Acquisition does not become an admitted G2E reuse candidate merely because RA retained it. PRD-15/17 still govern applicability/reuse.
 
 ## Temporal modes
 
@@ -65,6 +89,9 @@ External tool/framework capability claims must be revalidated and pinned at impl
 6. GWF mode reuses GWF registry/log primitives.
 7. Standalone exports equivalent records.
 8. External reference retrieval and governed result-library retrieval remain distinguishable provenance classes.
+9. GWF_CATALOG retrieval preserves CatalogQueryExecution/snapshot/CatalogEntry/subject identities.
+10. Direct PRD-17 reuse discovery and PRD-13 research curation cannot be silently conflated.
+11. Duplicate observations of one exact catalog subject do not create duplicate source identity.
 
 ## Dependencies
 
@@ -75,4 +102,5 @@ External tool/framework capability claims must be revalidated and pinned at impl
 ## References
 
 - [GWF Reference Acquisition Specification](../../docs/V0.8.6_REFERENCE_ACQUISITION_SPEC.md)
+- [GWF Library Integration Mapping](GWF_LIBRARY_INTEGRATION_MAPPING.md)
 - [Reference Baseline](REFERENCE_BASELINE.md)

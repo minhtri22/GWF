@@ -69,3 +69,16 @@
 **Decision:** cross-study synthesis freezes its evidence universe, inclusion/exclusion, applicability, independence, aggregation and conflict policies before formal selection. ConvergenceClassification is descriptive and separate from core verdict namespaces.
 
 **Reason:** prevents cherry-picking, vote-counting and post-hoc convergence stories.
+
+
+## ADR-014 — Shared Library is GAC infrastructure plus consumer semantics
+
+**Decision:** “Shared Library” is the consumer-facing GWF capability built on GAC. G2E Evidence Library is the G2E semantic view over that substrate and is not a second canonical store.
+
+## ADR-015 — Direct reuse and research curation are separate GAC consumers
+
+**Decision:** PRD-17 queries GAC directly for G2E EvidenceCapsule reuse/synthesis. PRD-13 uses Reference Acquisition for prior-art/novelty curation, including its GWF_CATALOG channel. One exact subject may have multiple observation records but one canonical subject identity.
+
+## ADR-016 — GWF Library integration is capability-gated, not phase-assumed
+
+**Decision:** G2E core schemas/engines and standalone Library may progress independently. Actual GWF-backed Library integration opens only when the exact requested GAC/Reference Acquisition capability gates are qualified and recorded in LibraryCapabilityManifest.

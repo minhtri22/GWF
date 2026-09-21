@@ -38,6 +38,22 @@ Exit:
 - GWF-vs-G2E library ownership boundary explicit;
 - P0.2 QA PASS with OPEN=0.
 
+## P0.3 — GWF Shared Library Reconciliation
+
+Scope:
+- reconcile G2E P0.2 with GWF reconciliation commit `be7d606c...`;
+- freeze Shared Library terminology and ownership;
+- freeze direct PRD-17 vs PRD-13/Reference Acquisition routing;
+- map GWF GAC/RA readiness gates into LibraryCapabilityManifest;
+- correct cross-system terminology and exact dependency baseline;
+- semantic QA only.
+
+Exit:
+- P0.3 QA PASS with OPEN=0;
+- no duplicated catalog/reference authority;
+- no GWF runtime availability assumed;
+- P1 may proceed independently of GWF GAC runtime implementation.
+
 ## P1 — Core Schemas
 
 Implement canonical schemas for:
@@ -109,13 +125,17 @@ Implement:
 - attempt ledger;
 - protected-resource ledger;
 - local executor facade;
-- Result Package manifest/seal.
+- Result Package manifest/seal;
+- qualified standalone Evidence Library Adapter;
+- LibraryCapabilityManifest for standalone publish/query/snapshot/provenance capabilities.
 
 Exit:
 - restart/recovery;
 - terminality preserved;
 - protected exposure fail-closed;
-- exportable/verifiable result package.
+- exportable/verifiable result package;
+- standalone capsule publish/query/replay fixture PASS;
+- query failure cannot masquerade as zero results.
 
 ## P4 — GWF Adapter
 
@@ -129,6 +149,34 @@ Exit:
 - parity fixture against standalone;
 - canonical G2E IDs/hashes unchanged across export/import;
 - no semantic reinterpretation.
+
+## P4L — GWF Shared Library Integration (conditional)
+
+This phase is separate from the base P4 GWF Adapter and does **not** block G2E core/standalone progress.
+
+Open only when the requested GWF capabilities are qualified under [GWF Library Integration Mapping](GWF_LIBRARY_INTEGRATION_MAPPING.md).
+
+Minimum for the normal G2E GWF-backed Evidence Library path:
+
+- GAC-P4B G2E consumer fixture PASS;
+- GAC-P0/P1 evidence resolvable;
+- DG-W4 prerequisite lineage resolvable;
+- additional GAC-P2A/P3/P4A or RA-P1C/RA-GAC-W6 only when the requested operation requires those capabilities.
+
+Implement:
+- PRD-17 GWF backend binding;
+- LibraryCapabilityManifest from exact GWF gate evidence;
+- G2E `g2e.*` metadata mapping;
+- direct capsule publish/query;
+- identity parity against standalone;
+- explicit failure/partial semantics.
+
+Exit:
+- GWF and standalone return the same canonical capsule/result IDs/hashes;
+- GAC CatalogQueryExecution/snapshot/CatalogEntry provenance retained;
+- unavailable capabilities fail closed;
+- direct G2E query is not conflated with RA-curated query;
+- no G2E semantic logic moves into GAC.
 
 ## P5 — Codex and ChatGPT App Profiles
 
