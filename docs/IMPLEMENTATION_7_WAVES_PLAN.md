@@ -270,16 +270,33 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P6 — Lifecycle + validity mapping
 
 - **Complexity:** 3
-- **HARD dependencies:** DG-P4, DG-P5.
+- **Status:** **AUTHORIZED / PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **HARD dependencies:** DG-P4, DG-P5; both satisfied.
+- **Frozen specification:** `docs/DG_P6_LIFECYCLE_VALIDITY_MAPPING_SPEC.md`, commit `29d3f987f4d23a752563c1e61c5df4e9dd964979`, blob `155a0c81c291568dbf7d2ba942a9386484f2dd14`.
+- **Document QA:** `docs/DOCUMENT_QA_DG_P6_PREIMPLEMENTATION.md` — PASS.
 - **Governing document:** `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §§11–12.
-- **Special design question:** map documentation `BLOCKED` semantics onto existing GWF revision/gate states without prematurely adding a conflicting global validity state.
-- **Acceptance checklist:**
-  - [ ] lifecycle and validity separate;
-  - [ ] new revision begins unverified;
-  - [ ] prior VALID does not transfer automatically;
-  - [ ] BLOCKED operational meaning explicitly mapped;
-  - [ ] existing KnowledgeKernel semantics remain compatible;
-  - [ ] QA PASS.
+- **Mapping verdict:** lifecycle reuses `Artifact.lifecycle_status`; persisted validity reuses `Revision.validity_state`; documentation `BLOCKED` is a derived effective state and is not added to global `KnowledgeKernel.VALIDITY`.
+- **Schema decision:** zero tables, zero columns, zero migration.
+- **Pre-implementation checklist:**
+  - [x] lifecycle and validity separate;
+  - [x] new revision begins UNVERIFIED;
+  - [x] prior VALID does not transfer automatically;
+  - [x] BLOCKED operational meaning mapped to derived effective state + kernel non-VALID compatibility;
+  - [x] STALE/DIRTY/FAILED compatibility frozen;
+  - [x] lifecycle transition subset frozen;
+  - [x] archive/logical supersession dependency-gated;
+  - [x] D6-F1..D6-F20 frozen;
+  - [x] existing KnowledgeKernel semantics remain compatible;
+  - [x] document QA PASS.
+- **Implementation acceptance remains open:**
+  - [ ] no schema migration;
+  - [ ] global VALIDITY unchanged;
+  - [ ] lifecycle transition service uses Artifact.version + Audit;
+  - [ ] validity reconciliation is evidence-derived, not arbitrary setter;
+  - [ ] D6-F1..D6-F20 PASS;
+  - [ ] Knowledge/Execution/Decision/P4/P5 regressions PASS;
+  - [ ] no DG-P7/P8 semantics;
+  - [ ] implementation QA PASS.
 
 ### Wave 2 exit gate — DG-W2
 
@@ -942,24 +959,22 @@ No item may be marked complete with unresolved required handoff fields.
 At this implementation state:
 
 ```text
-DG-P4
-      PASS / FORMALLY CLOSED
-      final closure HEAD a11d9ad205272c4c16c49eddb398dee4c8a0ff05
-      final exact-head run 35582578994 PASS
-       ↓
 DG-P5 — QA run + finding persistence
       PASS / FORMALLY CLOSED
-      handoff HEAD dc4e9d721bf9ee7f8bca16142f239c9fbc8364f9
-      exact-head run 35585124780 PASS
+      final closure HEAD 58a4cf5f0ca33ca8e15513eb07234dc575b097bc
+      final exact-head run 35585295768 PASS
        ↓
 DG-P6 — Lifecycle + validity mapping
-      NEXT / NOT_STARTED
+      AUTHORIZED
+      PRE-IMPLEMENTATION SPEC FROZEN
+      DEPENDENCY / DOCUMENT QA PASS
+      IMPLEMENTATION NOT_STARTED
        ↓
 STOP
 ```
 
-DG-P5 is the active frontier. Implementation may reuse PRIM-EVIDENCE for QA/execution records, add only the qualified `document_findings` current-state table, and make only the bounded Evidence transactional extension required for atomic QA persistence.
+DG-P6 is the active frontier. Its bounded implementation may reuse existing Artifact/Revision/P5/Audit state only; it may not add a schema migration or add `BLOCKED` to global `KnowledgeKernel.VALIDITY`.
 
-DG-P6/P11 and later-wave semantics are not opened by this qualification.
+DG-P7/P8, DG-W2 closure and later-wave semantics are not opened by this qualification.
 
 GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.

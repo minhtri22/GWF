@@ -983,3 +983,118 @@ DG-P6                     = NEXT / NOT_STARTED
 DG-W2                     = OPEN
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+## 40. DG-P6 pre-implementation qualification findings
+
+### F-73 — HIGH — RESOLVED
+
+- **Initial finding:** Adding documentation `BLOCKED` directly to the kernel-wide `VALIDITY` enum would silently change shared WorkUnit/Gate/impact/recovery semantics for every artifact type.
+- **Resolution:** documentation `BLOCKED` is a derived effective validity state. Kernel persisted validity remains in the existing vocabulary and must be non-VALID whenever the document is effectively BLOCKED.
+- **Final status:** `RESOLVED`
+
+### F-74 — HIGH — RESOLVED
+
+- **Initial finding:** Lifecycle and validity could be collapsed into one state axis even though the governing specification explicitly separates them.
+- **Resolution:** lifecycle reuses `Artifact.lifecycle_status`; persisted revision validity reuses `Revision.validity_state`; document-effective validity is a projection over revision + exact QA/finding state.
+- **Final status:** `RESOLVED`
+
+### F-75 — HIGH — RESOLVED
+
+- **Initial finding:** Existing `set_validity_system()` can assign kernel validity but is not an evidence-based document adjudicator and does not itself establish why a document is clean.
+- **Resolution:** P6 public semantics use `reconcile_document_validity()`, not arbitrary target-state assignment. VALID may be derived only from exact PASS QA with no blockers; later implementation must audit derived mutations.
+- **Final status:** `RESOLVED`
+
+### F-76 — HIGH — RESOLVED
+
+- **Initial finding:** A clean QA run could accidentally erase existing STALE/DIRTY/FAILED kernel facts.
+- **Resolution:** QA reconciliation may promote only `UNVERIFIED -> VALID`. STALE/DIRTY/FAILED cannot be cleared by QA alone.
+- **Final status:** `RESOLVED`
+
+### F-77 — HIGH — RESOLVED
+
+- **Initial finding:** An effective finding waiver could be mistaken for an automatic clean QA PASS even though the governing policy says waiver-to-PASS is gate-policy-dependent.
+- **Resolution:** immutable QA `FAIL` remains effective BLOCKED by default even when findings are effectively waived. A future explicit gate policy is required to authorize otherwise.
+- **Final status:** `RESOLVED`
+
+### F-78 — HIGH — RESOLVED
+
+- **Initial finding:** P6 cannot prove safe logical supersession or archival before document authority and typed dependency semantics exist.
+- **Resolution:** `SUPERSEDED` and `ARCHIVED` are recognized lifecycle values but public transitions into them are fail-closed/deferred until later governance dependencies can prove authority/dependency retirement.
+- **Final status:** `RESOLVED`
+
+### F-79 — HIGH — RESOLVED
+
+- **Initial finding:** Existing old-revision `status='SUPERSEDED'` can be confused with logical document lifecycle `SUPERSEDED`.
+- **Resolution:** revision supersession remains immutable revision lineage only; it never automatically changes `Artifact.lifecycle_status`.
+- **Final status:** `RESOLVED`
+
+### F-80 — MEDIUM — RESOLVED
+
+- **Initial finding:** `Artifact.lifecycle_status` exists but has no bounded governed transition contract, creating stale-write/history risk if mutated ad hoc.
+- **Resolution:** P6 lifecycle transitions must use exact `artifact.version`, increment version, preserve current revision/content and append Audit. No lifecycle event table is added.
+- **Final status:** `RESOLVED`
+
+### F-81 — MEDIUM — RESOLVED
+
+- **Initial finding:** P4 creates governed documents as `ACTIVE` while their new revision is `UNVERIFIED`; forcing a DRAFT-first migration would break P4 compatibility and conflate lifecycle with validity.
+- **Resolution:** `ACTIVE + UNVERIFIED` is explicitly valid. Existing documents are not bulk rewritten; any future optional initial lifecycle keeps ACTIVE as compatibility default.
+- **Final status:** `RESOLVED`
+
+### F-82 — MEDIUM — RESOLVED
+
+- **Initial finding:** the roadmap frontier described DG-P5 as formally closed but still cited its handoff HEAD/run rather than the later final formal-close HEAD `58a4cf5f0ca33ca8e15513eb07234dc575b097bc` and exact-head run `35585295768`.
+- **Resolution:** DG-P6 qualification updates the roadmap frontier to the exact DG-P5 formal-close evidence before advancing dependency state.
+- **Final status:** `RESOLVED`
+
+## 41. DG-P6 pre-implementation qualification checklist
+
+- [x] exact DG-P5 formal-close HEAD `58a4cf5f0ca33ca8e15513eb07234dc575b097bc` verified.
+- [x] DG-P5 final exact-head workflow `35585295768` PASS verified.
+- [x] final DG-P5 evidence artifact `10632085985` verified.
+- [x] governing Documentation Integrity §§11–12 loaded.
+- [x] `Artifact.lifecycle_status` inventoried.
+- [x] `Artifact.version` concurrency primitive inventoried.
+- [x] `Revision.validity_state` and global VALIDITY inventoried.
+- [x] WorkUnit readiness semantics inventoried.
+- [x] Gate PASS/FAIL/BLOCKED semantics inventoried.
+- [x] P5 exact QA/finding evidence inventoried.
+- [x] lifecycle -> Artifact reuse proof PASS.
+- [x] revision validity -> existing kernel reuse proof PASS.
+- [x] new lifecycle table rejected.
+- [x] new validity table rejected.
+- [x] global BLOCKED enum extension rejected.
+- [x] document-effective validity precedence frozen.
+- [x] BLOCKED-to-non-VALID kernel compatibility frozen.
+- [x] exact PASS promotion limited to UNVERIFIED -> VALID.
+- [x] STALE/DIRTY/FAILED preservation frozen.
+- [x] waiver-to-clean-PASS default rejected.
+- [x] lifecycle transition subset frozen.
+- [x] archive/logical-supersession transitions dependency-gated.
+- [x] revision supersession/logical supersession distinction frozen.
+- [x] exact-revision QA invalidation reuse frozen.
+- [x] zero-migration decision frozen.
+- [x] D6-F1..D6-F20 frozen.
+- [x] no DG-P7/P8 implementation authorized.
+- [x] no DG-W2 closure authorized by this document QA alone.
+- [x] no GAC/RA/G2E authorized.
+- [x] implementation has not started.
+
+## 42. Current aggregate status after DG-P6 pre-implementation qualification
+
+**OPEN = 0**
+
+All findings F-01 through F-82 recorded in this checklist are resolved.
+
+```text
+DG-P5                     = FORMALLY_CLOSED
+DG-P5 final closure HEAD  = 58a4cf5f0ca33ca8e15513eb07234dc575b097bc
+DG-P5 final exact run     = 35585295768 PASS
+DG-P6 authorization       = PASS
+DG-P6 specification       = FROZEN
+DG-P6 dependency qualify  = PASS
+DG-P6 document QA         = PASS
+DG-P6 implementation      = NOT_STARTED
+DG-P6 overall             = NOT_YET_PASS
+DG-W2                     = OPEN
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+```
