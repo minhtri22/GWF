@@ -45,9 +45,9 @@ jobs:
       - name: Evidence Gate Failure regressions
         run: >-
           python -m pytest -q
+          tests/test_execution_decision.py
           tests/test_knowledge.py
-          tests/test_recovery.py
-          tests/test_e2e_research.py
+          tests/test_persistence.py
           tests/test_dg_p4_document_facade.py
 
       - name: Full regression
