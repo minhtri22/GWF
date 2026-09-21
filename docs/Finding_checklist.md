@@ -761,3 +761,62 @@ DG-P4 overall             = NOT_YET_PASS
 DG-W2                     = OPEN
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+## 31. DG-P4 implementation findings
+
+### F-63 — HIGH — RESOLVED
+
+- **Initial finding:** The first DG-P4 fixture run showed that `PluginConnectionService.attach_runtime_adapter()` required `commit_files` for every GitHub adapter, including `REPO_READ`-only connections. This left the adapter interface more privileged than the capability boundary established by DG-P3.
+- **Resolution:** Adapter validation is now capability-specific. Read-only GitHub connections require only read methods; `commit_files` remains mandatory for `CONTENT_WRITE` / `WORKFLOW_WRITE` connections. SHA-safe write execution and capability values were not changed.
+- **Negative evidence preserved:** workflow `35582000925` on implementation head `438bed30ef7ed7f05790a063fdd28d36b7eec47f` failed before real-provider execution.
+- **Repair evidence:** commits `a992d0906eebc12bf880a16fcef8f0da46466b12` and `633e36eda823adb0cf8cdd9d6d1877c7c4e41300`; final qualification workflow `35582178488` PASS.
+- **Final status:** `RESOLVED`
+
+## 32. DG-P4 implementation qualification checklist
+
+- [x] implementation started from exact pre-implementation qualification HEAD `a6d17ceb85006d539025225a2376ff1dc32911b8`.
+- [x] frozen specification blob remained `b0034171454d06dbdeec2145ab73d5fb0cee2982`.
+- [x] `document_id = artifact_id`.
+- [x] document revision ID = underlying `revision_id`.
+- [x] reserved core type `governed_document` admitted without domain duplication.
+- [x] reserved core-type collision fails closed.
+- [x] arbitrary unknown artifact type remains rejected.
+- [x] no DocumentRecord / DocumentRevision table added.
+- [x] schema/migration changes = NONE.
+- [x] stable logical key remains path-independent.
+- [x] DG-P3 exact repository/commit/blob identity reused.
+- [x] payload hash, Git blob SHA and source SHA-256 remain distinct.
+- [x] no raw document content duplicated into facade metadata.
+- [x] no silent Markdown migration.
+- [x] existing authorization/audit path preserved.
+- [x] read-only GitHub adapter does not require write method.
+- [x] write-capable GitHub adapter still requires `commit_files`.
+- [x] D4-F1..D4-F15 PASS.
+- [x] real GitHub document-facade smoke PASS.
+- [x] current revision begins `UNVERIFIED`.
+- [x] no relation, QA Evidence or Gate created by P4 registration.
+- [x] full regression 163/163 PASS.
+- [x] compile PASS.
+- [x] evidence artifact `10630782224` recorded.
+- [x] GAC remains locked.
+- [x] DG-P5/P6 have not been implemented.
+
+## 33. Current aggregate status after DG-P4 implementation qualification
+
+**OPEN = 0**
+
+All findings F-01 through F-63 recorded in this checklist are resolved.
+
+```text
+DG-W1                     = FORMALLY_CLOSED
+DG-P4 specification       = FROZEN
+DG-P4 implementation      = QUALIFIED_PASS
+DG-P4 implementation SHA  = 633e36eda823adb0cf8cdd9d6d1877c7c4e41300
+DG-P4 workflow            = 35582178488 PASS
+DG-P4 artifact            = 10630782224
+DG-P4 handoff             = PENDING_COMMIT
+DG-P4 exact-head QA       = PENDING
+DG-P5                     = NOT_STARTED
+DG-W2                     = OPEN
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+```

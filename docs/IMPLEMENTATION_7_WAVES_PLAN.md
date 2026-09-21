@@ -207,7 +207,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P4 — Document facade / identity mapping
 
 - **Complexity:** 3
-- **Status:** **AUTHORIZED / PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **Status:** **IMPLEMENTATION QUALIFIED / HANDOFF + EXACT-HEAD QA PENDING**
 - **HARD dependencies:** DG-P3; DG-W1 is formally closed.
 - **Frozen specification:** `docs/DG_P4_DOCUMENT_FACADE_SPEC.md`, commit `149b8f7d12010fc86bda16bb9f22fcda039a2402`, blob `b0034171454d06dbdeec2145ab73d5fb0cee2982`.
 - **Document QA:** `docs/DOCUMENT_QA_DG_P4_PREIMPLEMENTATION.md` — PASS.
@@ -224,12 +224,16 @@ Every completed item must record exact dependency revisions/evidence used. A dep
   - [x] current GWF artifact semantics preservation contract frozen;
   - [x] D4-F1..D4-F15 fixtures frozen;
   - [x] pre-implementation QA PASS.
-- **Implementation acceptance remains open:**
-  - [ ] facade/core-type implementation PASS;
-  - [ ] all D4 fixtures PASS;
-  - [ ] existing domain artifact regression PASS;
-  - [ ] no schema migration;
-  - [ ] implementation QA PASS.
+- **Implementation evidence:** head `633e36eda823adb0cf8cdd9d6d1877c7c4e41300`; workflow `35582178488` PASS; artifact `10630782224` digest `sha256:f050ee29f3bc7b68e3b0c44657436708f9de4b657b1cee6d6794bb719b36290f`.
+- **Implementation acceptance:**
+  - [x] facade/core-type implementation PASS;
+  - [x] D4-F1..D4-F15 PASS;
+  - [x] real GitHub facade smoke PASS;
+  - [x] existing domain artifact regression PASS;
+  - [x] full regression 163/163 PASS;
+  - [x] no schema migration;
+  - [x] implementation QA PASS;
+  - [ ] handoff exact-head workflow PASS.
 
 ### DG-P5 — QA run + finding persistence
 
