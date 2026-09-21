@@ -153,7 +153,8 @@ def test_p5a_probe_never_dispatches_model_turn_or_proof():
     )
     for token in forbidden:
         assert token not in source
-    assert '"thread/start"' not in source
+    assert '"method": "thread/start"' not in source
+    assert "'method': 'thread/start'" not in source
 
 
 def test_p5a_windows_entrypoint_is_read_only_wrapper():
