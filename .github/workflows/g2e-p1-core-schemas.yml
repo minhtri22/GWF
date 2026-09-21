@@ -1,0 +1,35 @@
+name: G2E P1 Core Schemas Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - "src/g2e/**"
+      - "tests/g2e/**"
+      - ".github/workflows/g2e-p1-core-schemas.yml"
+      - "g2e/docs/P1_*"
+      - "g2e/LINEAGE.md"
+
+permissions:
+  contents: read
+
+jobs:
+  p1-core-schemas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install GWF/G2E test dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+      - name: Compile G2E schema package
+        run: python -m compileall -q src/g2e
+      - name: Run P1 core schema gate
+        run: pytest -q tests/g2e/test_p1_core_schemas.py
