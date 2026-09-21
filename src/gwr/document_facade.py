@@ -13,9 +13,10 @@ DOCUMENT_REVISION_SCHEMA = "DG-P4-DOCUMENT-REVISION-v1"
 class DocumentFacadeService:
     """Identity/provenance facade over the existing Artifact/Revision kernel."""
 
-    def __init__(self, knowledge, github):
+    def __init__(self, knowledge, github, document_state=None):
         self.knowledge = knowledge
         self.github = github
+        self.document_state = document_state
 
     @staticmethod
     def _document_key(value: str) -> str:
@@ -222,7 +223,7 @@ class DocumentFacadeService:
             raise ValidationError("Artifact is not a governed document")
         revision = self.knowledge.get_current_revision(document_id)
         payload = revision["structured_payload"]
-        return {
+        result = {
             "document_id": artifact["artifact_id"],
             "document_key": self._key_from_artifact(artifact),
             "artifact_version": artifact["version"],
@@ -230,4 +231,17 @@ class DocumentFacadeService:
             "title": payload["title"],
             "storage_locator": dict(payload["storage_locator"]),
             "source_identity": dict(payload["source_identity"]),
+            "lifecycle_state": artifact["lifecycle_status"],
+            "kernel_validity_state": revision["validity_state"],
         }
+        if self.document_state is not None:
+            state = self.document_state.inspect_document_state(document_id)
+            result.update(
+                {
+                    "effective_validity_state": state["effective_validity_state"],
+                    "qa_record_id": state["qa_record_id"],
+                    "blocker_codes": list(state["blocker_codes"]),
+                    "reconciliation_reason": state["reconciliation_reason"],
+                }
+            )
+        return result
