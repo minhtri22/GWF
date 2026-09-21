@@ -975,9 +975,11 @@ DG-P5 implementation      = QUALIFIED_PASS
 DG-P5 implementation SHA  = fda9f7b3c5486f629e47f13652a758de158f7d22
 DG-P5 workflow            = 35584865418 PASS
 DG-P5 artifact            = 10631014201
-DG-P5 handoff             = PENDING_COMMIT
-DG-P5 exact-head QA       = PENDING
-DG-P6                     = NOT_STARTED
+DG-P5 handoff HEAD        = dc4e9d721bf9ee7f8bca16142f239c9fbc8364f9
+DG-P5 exact-head workflow = 35585124780 PASS
+DG-P5 exact-head artifact = 10631794399
+DG-P5 overall             = FORMALLY_CLOSED
+DG-P6                     = NEXT / NOT_STARTED
 DG-W2                     = OPEN
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```

@@ -215,3 +215,19 @@ Formal close requires:
 4. preserve exact run/artifact identities.
 
 DG-P6 remains NOT_STARTED until DG-P5 formal close.
+
+
+## 14. Formal-close evidence
+
+The committed DG-P5 handoff HEAD `dc4e9d721bf9ee7f8bca16142f239c9fbc8364f9` was requalified on its exact HEAD.
+
+- exact-head workflow: `35585124780`
+- conclusion: **PASS**
+- evidence artifact: `10631794399`
+- artifact digest: `sha256:a468ca9ee878606653c2f7a46b6ff015f50f67832c8ea5f149a6d73b05ef1703`
+
+D5-F1..D5-F20, bounded schema/primitive smoke, targeted Evidence/Gate/Failure regressions, full repository regression and compile all passed again.
+
+**DG-P5 status: FORMALLY CLOSED.**
+
+DG-P6 is the next roadmap item but remains NOT_STARTED in this closure. DG-W2 remains open. GAC remains locked until DG-W4 PASS.

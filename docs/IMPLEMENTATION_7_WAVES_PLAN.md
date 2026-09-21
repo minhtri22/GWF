@@ -238,7 +238,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P5 — QA run + finding persistence
 
 - **Complexity:** 3
-- **Status:** **IMPLEMENTATION QUALIFIED / HANDOFF + EXACT-HEAD QA PENDING**
+- **Status:** **COMPLETED / PASS / FORMALLY CLOSED**
 - **HARD dependencies:** DG-P0, DG-P4; both satisfied.
 - **Frozen specification:** `docs/DG_P5_QA_FINDING_PERSISTENCE_SPEC.md`, commit `9e846621faf7b1a81c605ad624f4abbc6c354470`, blob `29ca1c85f665468aade7fc555b634a134af9a46a`.
 - **Document QA:** `docs/DOCUMENT_QA_DG_P5_PREIMPLEMENTATION.md` — PASS.
@@ -265,7 +265,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
   - [x] full repository regression PASS;
   - [x] no DG-P6/P11+ semantics;
   - [x] implementation QA PASS;
-  - [ ] handoff exact-head workflow PASS.
+  - [x] handoff exact-head workflow PASS — run `35585124780` on `dc4e9d721bf9ee7f8bca16142f239c9fbc8364f9`, artifact `10631794399`.
 
 ### DG-P6 — Lifecycle + validity mapping
 
@@ -284,7 +284,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### Wave 2 exit gate — DG-W2
 
 - [x] DG-P4 PASS
-- [ ] DG-P5 PASS
+- [x] DG-P5 PASS
 - [ ] DG-P6 PASS
 - [ ] exact-revision QA invalidation demonstrated
 - [ ] no duplicate knowledge subsystem created without justification
@@ -948,10 +948,12 @@ DG-P4
       final exact-head run 35582578994 PASS
        ↓
 DG-P5 — QA run + finding persistence
-      AUTHORIZED
-      PRE-IMPLEMENTATION SPEC FROZEN
-      DEPENDENCY / DOCUMENT QA PASS
-      IMPLEMENTATION NOT_STARTED
+      PASS / FORMALLY CLOSED
+      handoff HEAD dc4e9d721bf9ee7f8bca16142f239c9fbc8364f9
+      exact-head run 35585124780 PASS
+       ↓
+DG-P6 — Lifecycle + validity mapping
+      NEXT / NOT_STARTED
        ↓
 STOP
 ```

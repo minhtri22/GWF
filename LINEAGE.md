@@ -122,3 +122,13 @@ Rules:
 - Evidence artifact: `10631014201`.
 - Evidence artifact digest: `sha256:feb5203fafaac98640569a1d0816b6626fe7279214dfed2d41488f819f2c852e`.
 - Outcome: exact-revision document QA now reuses PRIM-EVIDENCE; governed finding lifecycle persists in one dedicated current-state table with atomic QA creation and Proposal/Approval-backed waiver.
+
+
+## 2026-09-21 — DG-P5 formally closed
+
+- Result: DG-P5 PASS / formally closed.
+- Handoff HEAD: `dc4e9d721bf9ee7f8bca16142f239c9fbc8364f9`.
+- Exact-head workflow: `35585124780` PASS.
+- Evidence artifact: `10631794399`.
+- Evidence artifact digest: `sha256:a468ca9ee878606653c2f7a46b6ff015f50f67832c8ea5f149a6d73b05ef1703`.
+- Outcome: exact-revision QA and governed finding lifecycle are qualified with PRIM-EVIDENCE reuse, one bounded finding-state table, atomic persistence and approval-backed waiver.
