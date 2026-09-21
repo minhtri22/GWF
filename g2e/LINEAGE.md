@@ -107,3 +107,12 @@
 - **Evidence closure:** `b7a00ece1673663b2c8fde2331a20b7beb241490`
 - **Result:** Standalone SQLite/filesystem runtime, fail-closed restart recovery, protected-resource ledger, local executor facade, independently re-verifiable sealed Goal Result packages and qualified local Evidence Library operations passed 29 P1 + 43 P2 + 25 P3 fixtures. Exact DecisionRule identity remains preserved through restart, adjudication, package export and semantic replay.
 - **Next:** P4 — Base GWF Adapter; P4L remains conditional and closed.
+
+
+### G2E-P3 — Post-Close Integrity Verification
+
+- **Status:** PASS
+- **Qualified implementation:** `b9345f3cbeba564a0bf666d388d3873d9ffd1191`
+- **Verified workflows:** P1 `35581467359`, P2 `35581467348`, P3 `35581467424` — all PASS on the exact qualified SHA.
+- **Result:** 8/8 qualified implementation/test/workflow blobs match P3 qualification evidence; the post-qualification path through evidence closure and lineage contains no `src/`, `tests/` or `.github/` mutation. The earlier DecisionRule debt remains closed through restart, adjudication, package export and independent semantic replay.
+- **Next:** P4 — Base GWF Adapter; P4L remains conditional and closed.
