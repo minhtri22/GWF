@@ -173,3 +173,15 @@
 - **Result:** Canonical AgentCapabilityManifest, AgentEquivalencePolicy and AgentBinding identities are now qualified; ExecutionAttemptEnvelope/ExecutionResult carry exact binding refs; deterministic relation validation fails closed on capability, identity, attempt, authority and result mismatch; standalone and GWF propagate binding identity without acquiring scientific authority. P5-F01/P5-F02 are closed.
 - **Implementation boundary:** provider-neutral schema/propagation only. No Codex/ChatGPT driver, provider API, MCP/ARC runtime, profile discovery runtime, P4L/GAC or Reference Acquisition implementation was opened.
 - **Next:** P5A Codex actual-harness capability discovery/profile qualification preparation. ChatGPT remains a separate independently discoverable P5B profile.
+
+
+### G2E-P5A — Codex Discovery Preparation
+
+- **Status:** PREPARATION_PASS_ACTUAL_HARNESS_PENDING
+- **Qualified candidate:** `d53ef2d246b099a1f0c654906b1ca35ab61ad9a3`
+- **Authoritative workflow:** `35591574804` / job `106306922854` — PASS
+- **Evidence artifact:** `10634153745`; digest `sha256:ba379edcd7e60ba50641bdc8cd6a4405dcdb326758482cf9164dce485c5518f7`
+- **Evidence closure:** `8a1866f798ac44f7434404f64d4a5cead9e65a2c`
+- **Result:** P5A now has a qualified read-only discovery instrument for exact Codex harness evidence. D0 official documentation/source is explicitly separated from D1 actual-harness structural evidence and D2 bounded functional qualification. The probe captures exact executable/version/schema fingerprints plus app-server initialize handshake without model turn, ProofObligation dispatch, repository mutation, credentials or side effects. P1/P1.4/P2/P3/P4 regressions PASS.
+- **Implementation boundary:** Codex profile remains unavailable until D1 actual-harness evidence passes. No Codex runtime adapter, ChatGPT runtime, MCP/ARC execution path, or D2 functional task is authorized.
+- **Next:** execute the qualified P5A discovery probe on the exact target Codex harness, freeze `P5A_CODEX_DISCOVERY.json`, and adjudicate D1 before constructing the Codex AgentCapabilityManifest.
