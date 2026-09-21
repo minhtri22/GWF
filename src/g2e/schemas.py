@@ -570,10 +570,18 @@ class PackageMember(StrictModel):
     size: int = Field(ge=0)
 
 
+class PackageExternalReference(StrictModel):
+    ref_id: str = Field(min_length=1)
+    immutable_locator: str = Field(min_length=1)
+    expected_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    required_online_resolution: bool = False
+
+
 class PackageManifest(CanonicalModel):
     schema_kind = "package_manifest"
     members: tuple[PackageMember, ...]
     external_reference_policy: ExternalReferencePolicy = ExternalReferencePolicy.OFFLINE_ONLY
+    external_references: tuple[PackageExternalReference, ...] = ()
     non_authoritative_paths: tuple[str, ...] = ()
 
     @model_validator(mode="after")
@@ -589,6 +597,9 @@ class PackageManifest(CanonicalModel):
                 raise ValueError("manifest/seal must not self-appear in package members")
             if path.startswith("/") or ".." in path.split("/"):
                 raise ValueError("package manifest paths must be safe relative paths")
+        ref_ids = [ref.ref_id for ref in self.external_references]
+        if len(ref_ids) != len(set(ref_ids)):
+            raise ValueError("package external reference IDs must be unique")
         return self
 
 

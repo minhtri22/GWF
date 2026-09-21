@@ -35,6 +35,7 @@ from g2e import (
     LibraryQueryContract,
     LibraryQueryExecution,
     MetricPredicate,
+    PackageExternalReference,
     PackageManifest,
     PackageMember,
     PackageSeal,
@@ -770,5 +771,43 @@ def test_package_manifest_and_seal_are_non_circular_and_safe():
             members=(
                 PackageMember(path="Z.json", sha256="a" * 64, size=1),
                 PackageMember(path="A.json", sha256="b" * 64, size=1),
+            ),
+        )
+
+
+
+def test_package_manifest_external_reference_inventory_is_explicit():
+    manifest = sealed(
+        PackageManifest,
+        "package-manifest-external",
+        members=(
+            PackageMember(path="A.json", sha256="a" * 64, size=1),
+        ),
+        external_reference_policy="REQUIRE_RESOLUTION",
+        external_references=(
+            PackageExternalReference(
+                ref_id="model",
+                immutable_locator="sha256://artifact/model",
+                expected_sha256="b" * 64,
+                required_online_resolution=True,
+            ),
+        ),
+    )
+    assert manifest.external_references[0].ref_id == "model"
+
+    with pytest.raises(ValidationError, match="reference IDs must be unique"):
+        sealed(
+            PackageManifest,
+            "package-manifest-external-bad",
+            members=(),
+            external_references=(
+                PackageExternalReference(
+                    ref_id="dup",
+                    immutable_locator="sha256://one",
+                ),
+                PackageExternalReference(
+                    ref_id="dup",
+                    immutable_locator="sha256://two",
+                ),
             ),
         )
