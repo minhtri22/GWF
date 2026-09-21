@@ -281,8 +281,9 @@ def test_d6_f13_generic_gate_remains_blocked(configured):
     )
     result = rt.document_state.reconcile_document_validity(document_id)
     assert result["effective_validity_state"] == "BLOCKED"
-    gate = rt.decision.evaluate_gate(project, "plan_ready", {"document_id": document_id}, [r1])
+    gate = rt.decision.evaluate_gate(project, "prior_art_ready", {"document_id": document_id}, [r1])
     assert gate["result"] == "BLOCKED"
+    assert "INPUT_UNVERIFIED" in gate["violations"]
 
 
 def test_d6_f14_legal_lifecycle_transition_uses_version_and_audit(configured):
