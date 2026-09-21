@@ -15,12 +15,13 @@ from pathlib import Path
 EXPECTED_HARNESS_SHA256 = "a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8"
 EXPECTED_INPUT_SHA256 = "a176454229feef1ce8bd7eab1ea79fbfeff07c229c88123edf862fea9160eef6"
 EXPECTED_TASK_SHA256 = "4c4aba6a82d540440dfef725b2568afdef4be3b26c3e4e84e2b34c54e6dd460e"
-EXPECTED_CONFIG_TOML_SHA256 = "8877cc89ccf5dd6e3cf6c45016ca7e62d93746c8f56db8bb38956eb6ff6e172d"
-EXPECTED_EXECUTION_CONFIG_HASH = "d03e6f6f2c20b757685188e30f4cabd44102b61b74cdacc585bab328647b0367"
+EXPECTED_CONFIG_TOML_SHA256 = "a21289d995d75416ade0f4483bb93f0c54cf1808f0c2ae289c29fe89a9050cd4"
+EXPECTED_EXECUTION_CONFIG_HASH = "72874872ea241efecbdd537e0a7fbf0718fd036cf4abd564b27b0bcd03dd81ce"
 
 PROFILE_ID = "g2e_p5a_d2s1"
 ATTEMPT_ID = "p5a-d2s1-p5-fx-001-attempt-001"
 STARTUP_TIMEOUT_S = 12.0
+WINDOWS_SANDBOX_SETUP_TIMEOUT_S = 180.0
 
 ISOLATION_OVERRIDES = (
     "mcp_servers={}",
@@ -90,6 +91,7 @@ class RpcClient:
         self.protocol_path = evidence_dir / "P5A_D2S1_PREFLIGHT_PROTOCOL_SANITIZED.jsonl"
         self.stderr_path = evidence_dir / "P5A_D2S1_PREFLIGHT_STDERR_HASHES.jsonl"
         self.unexpected_server_requests: list[dict] = []
+        self.pending_notifications: list[dict] = []
         self._reader(proc.stdout, "stdout")
         self._reader(proc.stderr, "stderr")
 
