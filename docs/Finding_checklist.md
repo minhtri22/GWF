@@ -509,3 +509,82 @@ All findings F-01 through F-47 recorded in this checklist are resolved. DG-P2 re
 **OPEN = 0**
 
 All findings F-01 through F-50 recorded in this checklist are resolved. DG-P3 remains unauthorized.
+
+## 20. DG-P3 pre-implementation qualification findings
+
+### F-51 — HIGH — RESOLVED
+
+- **Initial finding:** Repository full name and file path are locators that can change. Treating either as immutable identity would make Git evidence ambiguous.
+- **Resolution:** DG-P3 successful evidence must bind provider repository ID + exact commit SHA + exact blob SHA. `repository_full_name_at_resolution` and `path_locator` remain attributable locators only.
+- **Evidence:** frozen spec commit `f8d18e55d17344f10c0eb45c9d8beb3df6eea279`, blob `e005776db28d57ce1276b07475b9a7f7a5b6be97`.
+- **Final status:** `RESOLVED`
+
+### F-52 — HIGH — RESOLVED
+
+- **Initial finding:** v0.8.4 `bind_repository()` requires both `REPO_READ` and `CONTENT_WRITE`, which over-privileges a read-only resolver if reused unchanged.
+- **Resolution:** DG-P3 implementation must permit repository binding with `REPO_READ` alone and enforce `CONTENT_WRITE` explicitly at write preparation/execution boundaries. Existing `WORKFLOW_WRITE` and SHA-safe write protections remain unchanged.
+- **Evidence:** exact `github_plugin.py` blob `19d3f8ce0baf38675bd0ca7938d781ff1521bca3`; frozen DG-P3 spec §6.
+- **Final status:** `RESOLVED`
+
+### F-53 — MEDIUM — RESOLVED
+
+- **Initial finding:** A new Git-evidence store could duplicate Artifact/Revision, ObjectRef or generic Evidence ownership.
+- **Resolution:** reuse existing canonical stores; DG-P3 core returns a normalized evidence value and creates no automatic Artifact/Revision/ObjectRef. No new persistence table or migration is justified.
+- **Evidence:** `knowledge.py` blob `4f848c2be53451df01b9b91d2705ae3c59aa7bf7`; `object_store.py` blob `d9d8f2ca42ce747b43463f4ca037aae234037d6e`; `execution.py` blob `87dfa05789acc71c7681c3ca1e6e3bd9895025d3`.
+- **Final status:** `RESOLVED`
+
+### F-54 — HIGH — RESOLVED
+
+- **Initial finding:** A resolver that silently refreshes expected repository/commit/blob identity after drift would destroy exact-revision provenance.
+- **Resolution:** expected repository ID, commit SHA and blob SHA are exact expectations; mismatch fails closed with stale semantics. No automatic refresh, fallback ref or retry-to-PASS is allowed.
+- **Evidence:** existing GitHub SHA QA Standard blob `b3e2528c551bd137a0ca6ee063db508f45dab1cf`; frozen DG-P3 spec §§10–12.
+- **Final status:** `RESOLVED`
+
+### F-55 — HIGH — RESOLVED
+
+- **Initial finding:** GitHub file/provider responses may include source content while runtime credential resolution contains reusable secrets.
+- **Resolution:** normalized DG-P3 evidence excludes raw content and provider response bodies; credential resolution stays runtime-only; audit/error output may contain identity/digest fields but no credential material.
+- **Evidence:** `plugins.py` blob `4b1caf00f83250018c07af43541906b245996d7d`; frozen DG-P3 spec §13.
+- **Final status:** `RESOLVED`
+
+## 21. DG-P3 pre-implementation qualification checklist
+
+- [x] human explicit authorization gate passed before specification work.
+- [x] DG-P2 formal-close base verified.
+- [x] exact Documentation Governance revision loaded.
+- [x] exact v0.8.4 SHA QA standard/design loaded.
+- [x] existing GitHub plugin and REST adapter inspected.
+- [x] Artifact/Revision primitives inventoried.
+- [x] ObjectRef primitives inventoried.
+- [x] generic Evidence persistence inventoried.
+- [x] no new canonical store required.
+- [x] provider repository-ID gap identified and bounded.
+- [x] read-only least-privilege gap identified and bounded.
+- [x] resolver request/result contract frozen.
+- [x] path explicitly not identity.
+- [x] stale repository/commit/blob expectations fail closed.
+- [x] F1–F13 fixture matrix frozen.
+- [x] raw content excluded from normalized evidence.
+- [x] credentials remain runtime-only.
+- [x] no schema/migration authorized.
+- [x] no document registry/graph/validity runtime authorized.
+- [x] no GAC/G2E Library/Reference Acquisition authorized.
+- [x] document QA bound to exact DG-P3 spec blob.
+- [x] implementation has not started.
+
+## 22. Current aggregate status after DG-P3 pre-implementation qualification
+
+**OPEN = 0**
+
+All findings F-01 through F-55 recorded in this checklist are resolved.
+
+```text
+DG-P3 authorization       = PASS
+DG-P3 specification       = FROZEN
+DG-P3 dependency qualify  = PASS
+DG-P3 document QA         = PASS
+DG-P3 implementation      = NOT_STARTED
+DG-P3 overall             = NOT_YET_PASS
+DG-W1                     = OPEN
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+```

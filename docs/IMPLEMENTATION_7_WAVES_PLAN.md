@@ -14,7 +14,7 @@ DG-P1 has formal-closed on implementation head `385016bf6d0c3df512bae6fa8776cca3
 
 DG-P2 implementation has qualified on head `eb71f30916cca08e7df418e1ffbc2e91eca91a13`; workflow `35564566332` passed after preserving failed qualification run `35564490278`.
 
-This document does not automatically authorize the next implementation item. **DG-P3 is now the next planned item**, but implementation requires a later explicit authorization.
+DG-P3 received explicit human authorization after DG-P2 formal-close. Its pre-implementation specification is frozen at commit `f8d18e55d17344f10c0eb45c9d8beb3df6eea279`, exact blob `e005776db28d57ce1276b07475b9a7f7a5b6be97`, and the bound document QA passes. **DG-P3 implementation remains NOT_STARTED in this revision.**
 
 ## 2. Governing documents
 
@@ -151,20 +151,37 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P3 — Git/blob revision evidence resolver
 
 - **Complexity:** 2
-- **HARD dependencies:** DG-P0 contract only; may execute before P1/P2.
+- **Status:** **AUTHORIZED / PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **Frozen specification:** `docs/DG_P3_GIT_BLOB_RESOLVER_SPEC.md`, commit `f8d18e55d17344f10c0eb45c9d8beb3df6eea279`, blob `e005776db28d57ce1276b07475b9a7f7a5b6be97`.
+- **Document QA:** `docs/DOCUMENT_QA_DG_P3_PREIMPLEMENTATION.md` — PASS.
+- **Reuse verdict:** existing Artifact/Revision, ObjectRef, generic Evidence, PluginConnection/RepositoryBinding and v0.8.4 GitHub read/SHA primitives are sufficient; no schema migration/new canonical store.
+- **Bounded implementation delta:** provider repository-ID read + read-only resolver façade + least-privilege REPO_READ/CONTENT_WRITE separation + F1–F13 fixtures.
+- **HARD dependencies:** DG-P0 contract only; sequential P1/P2 governance is already closed.
 - **Governing documents:**
   - `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §§8, 20, 30.
+  - `docs/GITHUB_SHA_QA_STANDARD.md`.
   - existing GitHub SHA QA behavior in GWF v0.8.4.
-- **Acceptance checklist:**
-  - [ ] exact repository/commit/blob identity can be captured;
-  - [ ] path is not treated as identity;
-  - [ ] stale expected SHA fails closed;
+- **Pre-implementation qualification checklist:**
+  - [x] exact governing revisions loaded;
+  - [x] v0.8.4 GitHub SHA QA inspected;
+  - [x] Artifact/Revision/ObjectRef/Evidence primitives inventoried;
+  - [x] reuse vs new primitive requirement adjudicated;
+  - [x] resolver contract frozen;
+  - [x] stale-SHA/repository/blob fixtures frozen;
+  - [x] security/credential boundary frozen;
+  - [x] document QA PASS;
+  - [x] Finding checklist OPEN = 0.
+- **Implementation acceptance remains open:**
+  - [ ] exact repository/commit/blob identity captured in runtime;
+  - [ ] path is not treated as identity in runtime;
+  - [ ] stale expected identity fails closed in runtime;
   - [ ] no credential material persisted;
-  - [ ] QA PASS.
+  - [ ] bounded regression PASS;
+  - [ ] implementation QA PASS.
 
 ### Wave 1 exit gate — DG-W1
 
-Wave 1 remains open after DG-P2. Completion of DG-P2 does not authorize DG-P3 automatically.
+Wave 1 remains open. DG-P3 is explicitly authorized and pre-implementation-qualified, but implementation has not started and DG-P3 has not passed.
 
 - [x] DG-P0 PASS
 - [x] DG-P1 PASS
