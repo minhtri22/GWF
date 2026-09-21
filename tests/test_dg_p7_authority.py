@@ -384,18 +384,33 @@ def test_d7_f19_new_revision_does_not_duplicate_claim(configured):
 def test_d7_f20_no_later_wave_side_effects(configured):
     rt, project, owner, lead, d1, _ = configured
     trace_before = rt.db.one("SELECT COUNT(*) n FROM trace_links WHERE project_id=?", (project,))["n"]
+    tables_before = set(rt.db.list_tables())
+    relation_rows_before = (
+        rt.db.one("SELECT COUNT(*) n FROM document_relations WHERE project_id=?", (project,))["n"]
+        if "document_relations" in tables_before
+        else None
+    )
+
     _primary(rt, d1, "research.protocol", "alpha", lead, owner)
     no_collision = rt.document_authority.scan_authority_key(project, "research.protocol", "alpha", lead)
+
     assert no_collision["collision"] is False
     assert no_collision["qa_records"] == []
     assert rt.db.one("SELECT COUNT(*) n FROM trace_links WHERE project_id=?", (project,))["n"] == trace_before
-    tables = set(rt.db.list_tables())
-    assert "document_authority_claims" in tables
+
+    tables_after = set(rt.db.list_tables())
+    assert "document_authority_claims" in tables_after
+    if relation_rows_before is not None:
+        assert rt.db.one(
+            "SELECT COUNT(*) n FROM document_relations WHERE project_id=?",
+            (project,),
+        )["n"] == relation_rows_before
+
     for forbidden in {
-        "document_relations",
+        "document_relation_bindings",
         "document_change_sets",
         "catalog_entries",
         "document_authority_composition",
         "duplicate_authority",
     }:
-        assert forbidden not in tables
+        assert forbidden not in tables_after
