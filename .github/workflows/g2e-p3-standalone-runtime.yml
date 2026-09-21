@@ -1,0 +1,48 @@
+name: G2E P3 Standalone Runtime Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - "src/g2e/**"
+      - "tests/g2e/**"
+      - ".github/workflows/g2e-p3-standalone-runtime.yml"
+      - "g2e/docs/P3_*"
+      - "g2e/LINEAGE.md"
+
+permissions:
+  contents: read
+
+jobs:
+  p3-standalone-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install GWF/G2E test dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+      - name: Compile G2E package
+        run: python -m compileall -q src/g2e
+      - name: Run P1 schema regression
+        run: pytest -q tests/g2e/test_p1_core_schemas.py
+      - name: Run P2 deterministic core regression
+        run: pytest -q tests/g2e/test_p2_deterministic_core.py
+      - name: Run P3 standalone runtime gate
+        run: pytest -q tests/g2e/test_p3_standalone_runtime.py
+      - name: Assert standalone does not import GWF runtime
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/g2e/standalone.py').read_text(encoding='utf-8')
+          forbidden=('from gwr','import gwr','src.gwr','mcp__','github.com')
+          hits=[x for x in forbidden if x in p]
+          assert not hits, hits
+          PY

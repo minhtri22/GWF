@@ -1,0 +1,785 @@
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+
+import pytest
+
+from g2e import (
+    Adjudication,
+    AdjudicationVerdict,
+    AmendmentPolicy,
+    ApplicabilityPolicy,
+    AttemptState,
+    BackendQualificationStatus,
+    Claim,
+    ClaimGraph,
+    ClaimLifecycle,
+    ClaimResolution,
+    ClaimResolutionPolicy,
+    ClaimSignature,
+    DecisionExpression,
+    DecisionRule,
+    EvidenceAdmissionPolicy,
+    EvidenceCapsule,
+    EvidenceLifecycle,
+    EvidenceRecord,
+    ExecutionAttemptEnvelope,
+    ExternalReferencePolicy,
+    FreshnessState,
+    GoalClosureContract,
+    GoalContract,
+    GoalContractLifecycle,
+    GoalExpression,
+    GoalRequirement,
+    GoalVerdict,
+    IndependencePolicy,
+    LibraryPublicationContract,
+    LibraryQueryContract,
+    MetricPredicate,
+    PackageExternalReference,
+    ProofLifecycle,
+    ProofObligation,
+    ProofRetryPolicy,
+    ProtectedResource,
+    Provenance,
+    RuntimeMode,
+    canonical_hash,
+)
+from g2e.engine import (
+    ProofOutcome,
+    adjudicate_attempt,
+    close_proof,
+    evaluate_evidence_admission,
+    evaluate_goal,
+    materialize_evidence_admission,
+    resolve_claim,
+)
+from g2e.standalone import (
+    CandidateEvidenceSpec,
+    LocalExecutionOutcome,
+    ObjectConflictError,
+    PackageVerificationError,
+    StandaloneRuntime,
+    StandaloneRuntimeError,
+    UnsupportedCapabilityError,
+    export_goal_result_package,
+    verify_goal_result_package,
+)
+
+P = Provenance(created_by="p3-fixture", created_at="2026-09-21T08:30:00Z")
+
+
+def sealed(cls, object_id: str, **kwargs):
+    return cls.sealed(
+        object_id=object_id,
+        revision_id="r1",
+        provenance=P,
+        **kwargs,
+    )
+
+
+def build_program(*, proof_id: str = "proof-1"):
+    pass_expr = DecisionExpression(
+        op="PREDICATE",
+        predicate=MetricPredicate(
+            metric_id="score",
+            operator="GE",
+            threshold_key="pass",
+        ),
+    )
+    fail_expr = DecisionExpression(
+        op="PREDICATE",
+        predicate=MetricPredicate(
+            metric_id="score",
+            operator="LT",
+            threshold_key="fail",
+        ),
+    )
+    decision_rule = sealed(
+        DecisionRule,
+        "decision-rule",
+        pass_expression=pass_expr,
+        fail_expression=fail_expr,
+        missing_metric_behavior="INVALID",
+    )
+    admission = sealed(
+        EvidenceAdmissionPolicy,
+        "admission-policy",
+        accepted_source_classes=("LOCAL", "CAPSULE"),
+        require_integrity_hash=True,
+        require_attempt_linkage=True,
+        allowed_derivation_depth=1,
+    )
+    retry = sealed(
+        ProofRetryPolicy,
+        "retry-policy",
+        max_invalid_replacement_attempts=1,
+    )
+    amendment = sealed(AmendmentPolicy, "amendment-policy")
+    independence = sealed(IndependencePolicy, "independence-policy")
+    resolution_policy = sealed(
+        ClaimResolutionPolicy,
+        "claim-resolution-policy",
+        mode="ALL_REQUIRED",
+        proof_ids=(proof_id,),
+    )
+    requirement = sealed(
+        GoalRequirement,
+        "req-1",
+        statement="fixture score passes frozen threshold",
+        hard_constraint=True,
+    )
+    goal = sealed(
+        GoalContract,
+        "goal-1",
+        lifecycle=GoalContractLifecycle.FROZEN,
+        goal_statement="prove standalone bounded fixture",
+        requirements=(requirement,),
+    )
+    claim = sealed(
+        Claim,
+        "claim-1",
+        proposition="fixture score satisfies threshold",
+        claim_class="technical",
+        resolution_policy_ref=resolution_policy.exact_ref(),
+        goal_requirement_ids=(requirement.object_id,),
+        lifecycle=ClaimLifecycle.READY,
+        resolution=ClaimResolution.UNKNOWN,
+    )
+    graph = sealed(
+        ClaimGraph,
+        "claim-graph",
+        goal_contract_ref=goal.exact_ref(),
+        claims=(claim,),
+        coverage_statement="fixture requirement covered",
+    )
+    closure = sealed(
+        GoalClosureContract,
+        "goal-closure",
+        goal_contract_ref=goal.exact_ref(),
+        claim_graph_ref=graph.exact_ref(),
+        requirement_claim_map={requirement.object_id: (claim.object_id,)},
+        success_expression=GoalExpression(
+            op="CLAIM",
+            claim_id=claim.object_id,
+            expected_resolution=ClaimResolution.PASS,
+        ),
+        falsification_expression=GoalExpression(
+            op="CLAIM",
+            claim_id=claim.object_id,
+            expected_resolution=ClaimResolution.FAIL,
+        ),
+        terminal_claim_ids=(claim.object_id,),
+    )
+    proof = sealed(
+        ProofObligation,
+        proof_id,
+        lifecycle=ProofLifecycle.FROZEN,
+        target_claim_id=claim.object_id,
+        proposition=claim.proposition,
+        metric_ids=("score",),
+        decision_thresholds={"pass": "0.80", "fail": "0.70"},
+        decision_rule_ref=decision_rule.exact_ref(),
+        evidence_admission_policy_ref=admission.exact_ref(),
+        retry_policy_ref=retry.exact_ref(),
+        amendment_policy_ref=amendment.exact_ref(),
+        independence_policy_ref=independence.exact_ref(),
+    )
+    attempt = sealed(
+        ExecutionAttemptEnvelope,
+        "attempt-envelope",
+        attempt_id="attempt-1",
+        proof_ref=proof.exact_ref(),
+        state=AttemptState.CREATED,
+        implementation_ref="fixture@sha",
+        config_hash="a" * 64,
+        retry_policy_ref=retry.exact_ref(),
+    )
+    return {
+        "decision_rule": decision_rule,
+        "admission": admission,
+        "retry": retry,
+        "amendment": amendment,
+        "independence": independence,
+        "resolution_policy": resolution_policy,
+        "requirement": requirement,
+        "goal": goal,
+        "claim": claim,
+        "graph": graph,
+        "closure": closure,
+        "proof": proof,
+        "attempt": attempt,
+    }
+
+
+def revise_attempt(attempt, state: AttemptState, revision: str):
+    data = attempt.model_dump(mode="python", exclude={"content_hash"})
+    data.update({"revision_id": revision, "state": state, "provenance": P})
+    return ExecutionAttemptEnvelope.sealed(**data)
+
+
+def execute_and_adjudicate(runtime: StandaloneRuntime, program, score="0.90"):
+    report = runtime.executor.execute(
+        program["attempt"],
+        lambda: LocalExecutionOutcome(
+            action_summary="emit deterministic fixture metric",
+            evidence=(
+                CandidateEvidenceSpec(
+                    source_class="LOCAL",
+                    payload={"metrics": {"score": score}},
+                    object_id="fixture-evidence",
+                ),
+            ),
+        ),
+        provenance=P,
+    )
+    candidate = report.candidate_evidence[0]
+    decision = evaluate_evidence_admission(candidate, program["admission"])
+    admitted = materialize_evidence_admission(
+        candidate,
+        program["admission"],
+        decision,
+        revision_id="admitted-r1",
+        provenance=P,
+    )
+    runtime.store.put(admitted)
+    runtime.store.put_evidence_payload(
+        admitted, report.evidence_payloads[candidate.object_id]
+    )
+    payload = runtime.store.load_evidence_payload(admitted)
+    adjudication = adjudicate_attempt(
+        program["proof"],
+        program["decision_rule"],
+        program["admission"],
+        report.final_attempt,
+        (admitted,),
+        {admitted.object_id: payload},
+        object_id="adjudication-1",
+        revision_id="r1",
+        provenance=P,
+        independence_satisfied=True,
+    )
+    runtime.store.record_adjudication(adjudication)
+    return report, admitted, adjudication
+
+
+def make_capsule(*, object_id="capsule-1", resolution=ClaimResolution.FAIL, ancestors=()):
+    signature = sealed(
+        ClaimSignature,
+        f"signature-{object_id}",
+        proposition_family="fixture",
+        subject_population="standalone",
+        outcome_metric="score",
+    )
+    source_goal = sealed(
+        GoalContract,
+        f"source-goal-{object_id}",
+        lifecycle=GoalContractLifecycle.FROZEN,
+        goal_statement="source fixture",
+    )
+    policy = sealed(
+        ClaimResolutionPolicy,
+        f"source-policy-{object_id}",
+        mode="ALL_REQUIRED",
+        proof_ids=(f"source-proof-{object_id}",),
+    )
+    source_claim = sealed(
+        Claim,
+        f"source-claim-{object_id}",
+        proposition="source result",
+        claim_class="technical",
+        resolution_policy_ref=policy.exact_ref(),
+        lifecycle=ClaimLifecycle.CLOSED,
+        resolution=resolution,
+    )
+    capsule = sealed(
+        EvidenceCapsule,
+        object_id,
+        source_package_type="CLAIM_RESULT",
+        source_package_ref=f"package-{object_id}",
+        source_package_seal_hash="b" * 64,
+        source_goal_ref=source_goal.exact_ref(),
+        source_claim_ref=source_claim.exact_ref(),
+        source_claim_resolution=resolution,
+        claim_signature_ref=signature.exact_ref(),
+        provenance_ancestor_refs=tuple(ancestors),
+        capsule_policy_version="1",
+    )
+    contract = sealed(
+        LibraryPublicationContract,
+        f"publication-{object_id}",
+        subject_ref=capsule.exact_ref(),
+        source_package_type="CLAIM_RESULT",
+        source_package_seal_hash=capsule.source_package_seal_hash,
+        publication_scope="PROJECT",
+        metadata_namespace="g2e.fixture",
+        metadata_schema_version="1",
+    )
+    return capsule, contract
+
+
+def test_canonical_object_round_trip_survives_restart(tmp_path):
+    runtime = StandaloneRuntime(tmp_path)
+    program = build_program()
+    runtime.store.put(program["proof"])
+
+    reopened = StandaloneRuntime(tmp_path)
+    loaded = reopened.store.load_ref(program["proof"].exact_ref())
+    assert loaded == program["proof"]
+    assert loaded.decision_rule_ref == program["decision_rule"].exact_ref()
+
+
+def test_atomic_put_many_rolls_back_on_conflict(tmp_path):
+    runtime = StandaloneRuntime(tmp_path)
+    g1 = sealed(
+        GoalContract,
+        "same-goal",
+        lifecycle=GoalContractLifecycle.FROZEN,
+        goal_statement="one",
+    )
+    g2 = GoalContract.sealed(
+        object_id="same-goal",
+        revision_id="r1",
+        provenance=P,
+        lifecycle=GoalContractLifecycle.FROZEN,
+        goal_statement="two",
+    )
+    with pytest.raises(ObjectConflictError):
+        runtime.store.put_many((g1, g2))
+    assert runtime.store.object_count() == 0
+
+
+def test_attempt_ledger_rejects_illegal_transition_and_assignment_mutation(tmp_path):
+    runtime = StandaloneRuntime(tmp_path)
+    program = build_program()
+    runtime.store.persist_attempt(program["attempt"])
+
+    running = revise_attempt(program["attempt"], AttemptState.RUNNING, "r2")
+    with pytest.raises(StandaloneRuntimeError, match="illegal attempt transition"):
+        runtime.store.persist_attempt(running)
+
+    mutated = ExecutionAttemptEnvelope.sealed(
+        **{
+            **program["attempt"].model_dump(mode="python", exclude={"content_hash"}),
+            "revision_id": "r3",
+            "state": AttemptState.PREFLIGHT,
+            "implementation_ref": "different@sha",
+        }
+    )
+    with pytest.raises(StandaloneRuntimeError, match="assignment changed"):
+        runtime.store.persist_attempt(mutated)
+
+
+def test_local_executor_success_produces_attempt_bound_candidate(tmp_path):
+    runtime = StandaloneRuntime(tmp_path)
+    program = build_program()
+    report = runtime.executor.execute(
+        program["attempt"],
+        lambda: LocalExecutionOutcome(
+            action_summary="fixture",
+            evidence=(
+                CandidateEvidenceSpec(
+                    source_class="LOCAL",
+                    payload={"metrics": {"score": "0.90"}},
+                ),
+            ),
+        ),
+        provenance=P,
+    )
+    assert report.final_attempt.state == AttemptState.COMPLETED
+    assert report.execution_result.executor_state == AttemptState.COMPLETED
+    assert len(report.candidate_evidence) == 1
+    candidate = report.candidate_evidence[0]
+    assert candidate.producer_attempt_ref == report.final_attempt.exact_ref()
+    assert runtime.store.load_evidence_payload(candidate) == {
+        "metrics": {"score": "0.90"}
+    }
+
+
+def test_local_executor_failure_is_executor_state_not_scientific_fail(tmp_path):
+    runtime = StandaloneRuntime(tmp_path)
+    program = build_program()
+
+    def boom():
+        raise RuntimeError("fixture infrastructure failure")
+
+    report = runtime.executor.execute(program["attempt"], boom, provenance=P)
+    assert report.final_attempt.state == AttemptState.EXECUTOR_FAILED
+    assert report.execution_result.executor_state == AttemptState.EXECUTOR_FAILED
+    assert report.execution_result.technical_error_class == "RuntimeError"
+    assert report.candidate_evidence == ()
+
+
+def test_protected_resource_recovery_fails_closed_and_preempts_attempt(tmp_path):
+    runtime = StandaloneRuntime(tmp_path)
+    program = build_program()
+    resource = sealed(
+        ProtectedResource,
+        "protected-1",
+        resource_type="confirmatory-cohort",
+        identity_ref="cohort:42",
+        freshness_state=FreshnessState.FRESH,
+        reuse_allowed=False,
+    )
+    runtime.store.persist_protected_resource(resource)
+    runtime.store.persist_attempt(program["attempt"])
+    preflight = revise_attempt(program["attempt"], AttemptState.PREFLIGHT, "r2")
+    locked = revise_attempt(preflight, AttemptState.LOCKED, "r3")
+    running = revise_attempt(locked, AttemptState.RUNNING, "r4")
+    runtime.store.persist_attempt(preflight)
+    runtime.store.persist_attempt(locked)
+    runtime.store.reserve_resource_for_attempt(
+        resource.object_id,
+        locked.attempt_id,
+        provenance=P,
+        revision_id="reserved-r1",
+    )
+    runtime.store.persist_attempt(running)
+
+    reopened = StandaloneRuntime(tmp_path)
+    report = reopened.recover(provenance=P)
+    assert report.exposed_resources == ("protected-1",)
+    assert report.preempted_attempts == ("attempt-1",)
+    assert (
+        reopened.store.current_protected_resource("protected-1").freshness_state
+        == FreshnessState.EXPOSED
+    )
+    assert reopened.store.current_attempt("attempt-1").state == AttemptState.PREEMPTED
+
+
+def test_terminal_adjudication_is_immutable_across_restart(tmp_path):
+    runtime = StandaloneRuntime(tmp_path)
+    program = build_program()
+    report, admitted, adjudication = execute_and_adjudicate(runtime, program)
+
+    reopened = StandaloneRuntime(tmp_path)
+    loaded = reopened.store.load_adjudication(report.final_attempt.attempt_id)
+    assert loaded == adjudication
+
+    replacement = Adjudication.sealed(
+        object_id="adjudication-rewrite",
+        revision_id="r1",
+        provenance=P,
+        proof_ref=program["proof"].exact_ref(),
+        attempt_ref=report.final_attempt.exact_ref(),
+        admitted_evidence_refs=(admitted.exact_ref(),),
+        decision_rule_hash=program["decision_rule"].content_hash,
+        adjudicator_version="malicious-rewrite",
+        verdict=AdjudicationVerdict.FAIL,
+        reason_codes=("REWRITE",),
+    )
+    with pytest.raises(StandaloneRuntimeError, match="terminal adjudication"):
+        reopened.store.record_adjudication(replacement)
+
+
+def test_runtime_capability_manifest_fails_closed_for_missing_governance(tmp_path):
+    runtime = StandaloneRuntime(tmp_path)
+    manifest = runtime.capability_manifest(
+        provenance=P, qualification_refs=("fixture:p3",)
+    )
+    assert manifest.runtime_mode == RuntimeMode.STANDALONE
+    runtime.require_capabilities(manifest, ("atomic_persistence", "result_package"))
+    with pytest.raises(UnsupportedCapabilityError, match="separation_of_duty"):
+        runtime.require_capabilities(manifest, ("separation_of_duty",))
+
+
+def test_library_publishes_negative_results_and_queries_exactly(tmp_path):
+    runtime = StandaloneRuntime(tmp_path)
+    capsule, contract = make_capsule(resolution=ClaimResolution.FAIL)
+    publication_id = runtime.library.publish_capsule(
+        capsule, contract, {"domain": "fixture", "result": "negative"}
+    )
+    assert runtime.library.resolve_subject(publication_id) == capsule
+    assert runtime.library.verify_subject_integrity(capsule.exact_ref())
+
+    query = sealed(
+        LibraryQueryContract,
+        "query-negative",
+        query_payload={
+            "subject_type": "evidence_capsule",
+            "source_claim_resolution": "FAIL",
+            "metadata": {"domain": "fixture"},
+        },
+        required_capability_ids=("query",),
+        access_scope=("PROJECT",),
+    )
+    execution = runtime.library.query_candidates(query, provenance=P)
+    assert execution.status.value == "SUCCEEDED"
+    assert execution.complete
+    assert execution.result_subject_refs == (capsule.exact_ref(),)
+
+
+def test_library_zero_results_is_distinct_from_query_failure(tmp_path):
+    runtime = StandaloneRuntime(tmp_path)
+    capsule, contract = make_capsule(resolution=ClaimResolution.FAIL)
+    runtime.library.publish_capsule(capsule, contract, {"domain": "fixture"})
+
+    zero_query = sealed(
+        LibraryQueryContract,
+        "query-zero",
+        query_payload={"source_claim_resolution": "PASS"},
+        required_capability_ids=("query",),
+        access_scope=("PROJECT",),
+    )
+    zero = runtime.library.query_candidates(zero_query, provenance=P)
+    assert zero.status.value == "SUCCEEDED"
+    assert zero.complete is True
+    assert zero.result_subject_refs == ()
+
+    bad_query = sealed(
+        LibraryQueryContract,
+        "query-bad",
+        query_payload={"unsupported_filter": "x"},
+        required_capability_ids=("query",),
+        access_scope=("PROJECT",),
+    )
+    failed = runtime.library.query_candidates(bad_query, provenance=P)
+    assert failed.status.value == "FAILED"
+    assert failed.complete is False
+    assert failed.result_subject_refs == ()
+    assert failed.reason.startswith("QUERY_FAILED:")
+
+
+def test_library_snapshot_replay_survives_withdrawal(tmp_path):
+    runtime = StandaloneRuntime(tmp_path)
+    capsule, contract = make_capsule()
+    publication_id = runtime.library.publish_capsule(
+        capsule, contract, {"domain": "fixture"}
+    )
+    query = sealed(
+        LibraryQueryContract,
+        "query-replay",
+        query_payload={"object_id": capsule.object_id},
+        required_capability_ids=("query", "snapshot"),
+        access_scope=("PROJECT",),
+    )
+    first = runtime.library.query_candidates(query, provenance=P)
+    assert first.result_subject_refs == (capsule.exact_ref(),)
+
+    runtime.library.withdraw_publication(publication_id, "fixture withdrawal")
+    current = runtime.library.query_candidates(
+        query,
+        provenance=P,
+        execution_id="query-current",
+    )
+    assert current.result_subject_refs == ()
+
+    replay = runtime.library.replay_query(first, query, provenance=P)
+    assert replay.status.value == "SUCCEEDED"
+    assert replay.complete
+    assert replay.snapshot_ref == first.snapshot_ref
+    assert replay.result_subject_refs == first.result_subject_refs
+
+
+def test_library_provenance_and_capability_qualification(tmp_path):
+    runtime = StandaloneRuntime(tmp_path)
+    ancestor = sealed(
+        EvidenceRecord,
+        "ancestor",
+        source_class="LOCAL",
+        lifecycle=EvidenceLifecycle.ADMITTED,
+        payload_digest="a" * 64,
+    ).exact_ref()
+    capsule, contract = make_capsule(ancestors=(ancestor,))
+    runtime.library.publish_capsule(capsule, contract, {})
+    assert runtime.library.get_provenance_ancestors(capsule.exact_ref()) == (ancestor,)
+
+    unqualified = runtime.library.capability_manifest(provenance=P)
+    with pytest.raises(UnsupportedCapabilityError):
+        runtime.library.require_capability(unqualified, "query")
+    qualified = runtime.library.capability_manifest(
+        provenance=P,
+        qualification_status=BackendQualificationStatus.QUALIFIED,
+        evidence_refs=("fixture:p3",),
+    )
+    runtime.library.require_capability(qualified, "query")
+    assert qualified.silent_fallback_allowed is False
+
+
+def test_result_package_seal_detects_mutation_and_unclassified_files(tmp_path):
+    runtime = StandaloneRuntime(tmp_path / "runtime")
+    program = build_program()
+    report, admitted, adjudication = execute_and_adjudicate(runtime, program)
+    proof_closure = close_proof(
+        adjudication, program["retry"], invalid_attempts_including_current=0
+    )
+    claim_resolution = resolve_claim(
+        program["resolution_policy"], {program["proof"].object_id: proof_closure.outcome}
+    )
+    assert claim_resolution == ClaimResolution.PASS
+
+    package_dir = tmp_path / "goal-result"
+    verification = export_goal_result_package(
+        package_dir,
+        goal=program["goal"],
+        goal_closure=program["closure"],
+        claim_graph=program["graph"],
+        proofs=(program["proof"],),
+        proof_dependencies=(
+            program["decision_rule"],
+            program["admission"],
+            program["retry"],
+            program["amendment"],
+            program["independence"],
+        ),
+        evidence=(admitted,),
+        adjudications=(adjudication,),
+        claim_resolutions={program["claim"].object_id: claim_resolution},
+        reproducibility_manifest={
+            "decision_rule_ref": program["decision_rule"].exact_ref().model_dump(mode="json"),
+            "proof_ref": program["proof"].exact_ref().model_dump(mode="json"),
+        },
+        package_lineage=runtime.store.events(),
+        provenance=P,
+    )
+    assert verification.member_count > 5
+    assert (
+        json.loads((package_dir / "FINAL_VERDICT.json").read_text())["verdict"]
+        == GoalVerdict.ACHIEVED.value
+    )
+    proof_graph = json.loads((package_dir / "PROOF_GRAPH.json").read_text())
+    dependencies = {
+        item["object_id"]: item for item in proof_graph["dependencies"]
+    }
+    assert dependencies[program["decision_rule"].object_id]["content_hash"] == program[
+        "decision_rule"
+    ].content_hash
+
+    (package_dir / "GOAL.json").write_text("{}", encoding="utf-8")
+    with pytest.raises(PackageVerificationError, match="hash mismatch"):
+        verify_goal_result_package(package_dir)
+
+
+def test_result_package_rejects_unclassified_extra_file(tmp_path):
+    runtime = StandaloneRuntime(tmp_path / "runtime")
+    program = build_program()
+    report, admitted, adjudication = execute_and_adjudicate(runtime, program)
+    package_dir = tmp_path / "goal-result"
+    export_goal_result_package(
+        package_dir,
+        goal=program["goal"],
+        goal_closure=program["closure"],
+        claim_graph=program["graph"],
+        proofs=(program["proof"],),
+        proof_dependencies=(program["decision_rule"],),
+        evidence=(admitted,),
+        adjudications=(adjudication,),
+        claim_resolutions={program["claim"].object_id: ClaimResolution.PASS},
+        reproducibility_manifest={},
+        package_lineage=(),
+        provenance=P,
+    )
+    (package_dir / "UNCLASSIFIED.txt").write_text("unexpected", encoding="utf-8")
+    with pytest.raises(PackageVerificationError, match="unclassified"):
+        verify_goal_result_package(package_dir)
+
+
+def test_external_reference_resolution_policy_is_enforced(tmp_path):
+    runtime = StandaloneRuntime(tmp_path / "runtime")
+    program = build_program()
+    report, admitted, adjudication = execute_and_adjudicate(runtime, program)
+    external_bytes = b"immutable external artifact"
+    external = PackageExternalReference(
+        ref_id="artifact",
+        immutable_locator="fixture://artifact",
+        expected_sha256=hashlib.sha256(external_bytes).hexdigest(),
+        required_online_resolution=True,
+    )
+    package_dir = tmp_path / "goal-result"
+    export_goal_result_package(
+        package_dir,
+        goal=program["goal"],
+        goal_closure=program["closure"],
+        claim_graph=program["graph"],
+        proofs=(program["proof"],),
+        proof_dependencies=(program["decision_rule"],),
+        evidence=(admitted,),
+        adjudications=(adjudication,),
+        claim_resolutions={program["claim"].object_id: ClaimResolution.PASS},
+        reproducibility_manifest={},
+        package_lineage=(),
+        provenance=P,
+        external_reference_policy=ExternalReferencePolicy.REQUIRE_RESOLUTION,
+        external_references=(external,),
+        external_resolver=lambda ref: external_bytes,
+    )
+    with pytest.raises(PackageVerificationError, match="resolver required"):
+        verify_goal_result_package(package_dir)
+    assert verify_goal_result_package(
+        package_dir, external_resolver=lambda ref: external_bytes
+    ).seal.runtime_id == "g2e-standalone"
+    with pytest.raises(PackageVerificationError, match="hash mismatch"):
+        verify_goal_result_package(
+            package_dir, external_resolver=lambda ref: b"tampered"
+        )
+
+
+def test_complete_bounded_program_runs_without_gwf_and_preserves_decision_rule(tmp_path):
+    runtime = StandaloneRuntime(tmp_path / "runtime")
+    program = build_program()
+
+    runtime.store.put_many(
+        (
+            program["decision_rule"],
+            program["admission"],
+            program["retry"],
+            program["amendment"],
+            program["independence"],
+            program["goal"],
+            program["claim"],
+            program["graph"],
+            program["closure"],
+            program["proof"],
+        )
+    )
+    report, admitted, adjudication = execute_and_adjudicate(runtime, program)
+    closure = close_proof(
+        adjudication, program["retry"], invalid_attempts_including_current=0
+    )
+    assert closure.outcome == ProofOutcome.PASS
+    claim_resolution = resolve_claim(
+        program["resolution_policy"],
+        {program["proof"].object_id: closure.outcome},
+    )
+    goal_verdict = evaluate_goal(
+        program["closure"],
+        {program["claim"].object_id: claim_resolution},
+        can_progress=False,
+    )
+    assert goal_verdict == GoalVerdict.ACHIEVED
+
+    reopened = StandaloneRuntime(tmp_path / "runtime")
+    loaded_proof = reopened.store.load_ref(program["proof"].exact_ref())
+    loaded_rule = reopened.store.load_ref(program["decision_rule"].exact_ref())
+    loaded_adj = reopened.store.load_adjudication(report.final_attempt.attempt_id)
+    assert loaded_proof.decision_rule_ref == loaded_rule.exact_ref()
+    assert loaded_adj.decision_rule_hash == loaded_rule.content_hash
+
+    package_dir = tmp_path / "sealed-result"
+    export_goal_result_package(
+        package_dir,
+        goal=program["goal"],
+        goal_closure=program["closure"],
+        claim_graph=program["graph"],
+        proofs=(loaded_proof,),
+        proof_dependencies=(
+            loaded_rule,
+            program["admission"],
+            program["retry"],
+            program["amendment"],
+            program["independence"],
+        ),
+        evidence=(admitted,),
+        adjudications=(loaded_adj,),
+        claim_resolutions={program["claim"].object_id: claim_resolution},
+        reproducibility_manifest={
+            "decision_rule_hash": loaded_rule.content_hash,
+            "qualified_core": "c2fc03a7470b835904252246421e1b8d9a1ec5ef",
+        },
+        package_lineage=reopened.store.events(),
+        provenance=P,
+    )
+    verified = verify_goal_result_package(package_dir)
+    assert verified.seal.manifest_ref == verified.manifest.exact_ref()

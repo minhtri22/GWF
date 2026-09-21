@@ -11,3 +11,5 @@ from .schema_registry import schema_catalog, schema_model, validate_authoritativ
 from .schemas import *  # noqa: F401,F403
 
 from .engine import *  # noqa: F401,F403
+
+from .standalone import *  # noqa: F401,F403
