@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 30
     env:
       PYTHONPATH: src
-      BASELINE_SHA: "3014692ef75a5ccd707907e1b28a14f273d45dfa"
+      BASELINE_SHA: "183326a7f1fac182ae65dca9693e3e597809e380"
 
     steps:
       - uses: actions/checkout@v4
@@ -102,7 +102,7 @@ jobs:
           report = {
               "schema": "G2E-P5A-D2S1-LOCAL-PRETURN-IMPLEMENTATION-QUALIFICATION-v1",
               "candidate_sha": git("rev-parse", "HEAD"),
-              "baseline_sha": "3014692ef75a5ccd707907e1b28a14f273d45dfa",
+              "baseline_sha": "183326a7f1fac182ae65dca9693e3e597809e380",
               "script_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s1_local_preflight.py"),
               "test_blob": git("rev-parse", "HEAD:tests/g2e/test_p5a_d2s1_local_preflight.py"),
               "workflow_blob": git("rev-parse", "HEAD:.github/workflows/g2e-p5a-d2s1-local-preturn.yml"),
