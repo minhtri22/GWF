@@ -1,0 +1,74 @@
+{
+  "schema": "G2E-P2-QUALIFICATION-v1",
+  "status": "PASS",
+  "qualified_implementation_sha": "c2fc03a7470b835904252246421e1b8d9a1ec5ef",
+  "p1_1_dependency": {
+    "finding": "P2-F01",
+    "qualified_schema_sha": "0002790f0ea3da1c6e03b69124e3bfd38741b3b5",
+    "evidence_commit": "16ae28f5279825b87379e56e7c36d3fa297423c7",
+    "workflow_run": 35572749902,
+    "workflow_job": 106247706920,
+    "status": "PASS"
+  },
+  "workflows": {
+    "p2": {
+      "run_id": 35573628326,
+      "job_id": 106250444186,
+      "conclusion": "success",
+      "head_sha": "c2fc03a7470b835904252246421e1b8d9a1ec5ef"
+    },
+    "p1_regression": {
+      "run_id": 35573628248,
+      "job_id": 106250444424,
+      "conclusion": "success",
+      "head_sha": "c2fc03a7470b835904252246421e1b8d9a1ec5ef"
+    }
+  },
+  "tests": {
+    "p1_passed": 23,
+    "p2_passed": 41,
+    "failed": 0,
+    "compileall": true,
+    "forbidden_runtime_dependencies_absent": true
+  },
+  "qa_findings": {
+    "P2-F02": "RESOLVED",
+    "P2-F03": "RESOLVED",
+    "P2-F04": "RESOLVED"
+  },
+  "gates": {
+    "claim_goal_validation": true,
+    "proof_admissibility": true,
+    "evidence_admission": true,
+    "evidence_relations": true,
+    "freshness_monotonic": true,
+    "deterministic_adjudication": true,
+    "one_shot": true,
+    "bounded_invalid_retry": true,
+    "claim_resolution": true,
+    "goal_evaluation": true,
+    "deterministic_selection": true,
+    "no_rescue": true,
+    "applicability_reuse": true,
+    "prior_pass_no_direct_claim_flip": true,
+    "independence_clustering": true,
+    "synthesis_dedup": true,
+    "synthesis_outcome_blind": true,
+    "synthesis_coverage_constraint": true,
+    "synthesis_boundary_detection": true,
+    "synthesis_transitive_ancestry": true
+  },
+  "forbidden_scope": {
+    "agent": false,
+    "database": false,
+    "persistence": false,
+    "standalone_runtime": false,
+    "gwf_adapter": false,
+    "gac_p4l": false
+  },
+  "downstream_authorization": {
+    "p3_standalone_runtime": true,
+    "p4_gwf_adapter": false,
+    "p4l_shared_library": false
+  }
+}
