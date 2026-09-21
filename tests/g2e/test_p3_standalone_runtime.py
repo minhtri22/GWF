@@ -53,6 +53,7 @@ from g2e import (
     RuntimeCapabilityManifest,
     RuntimeMode,
     canonical_hash,
+    canonical_json,
 )
 from g2e.engine import (
     ProofOutcome,
