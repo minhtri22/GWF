@@ -18,6 +18,8 @@ from g2e import (
     ClaimResolution,
     ClaimResolutionPolicy,
     ClaimResultPackage,
+    DecisionExpression,
+    DecisionRule,
     EvidenceAdmissionPolicy,
     EvidenceLifecycle,
     EvidenceRecord,
@@ -31,6 +33,7 @@ from g2e import (
     LibraryExecutionStatus,
     LibraryQueryContract,
     LibraryQueryExecution,
+    MetricPredicate,
     ProofLifecycle,
     ProofObligation,
     ProofRetryPolicy,
@@ -54,6 +57,32 @@ def sealed(cls, object_id: str, **kwargs):
         revision_id="r1",
         provenance=P,
         **kwargs,
+    )
+
+
+def base_decision_rule():
+    predicate = DecisionExpression(
+        op="PREDICATE",
+        predicate=MetricPredicate(
+            metric_id="accuracy",
+            operator="GE",
+            threshold_key="accuracy",
+        ),
+    )
+    fail_predicate = DecisionExpression(
+        op="PREDICATE",
+        predicate=MetricPredicate(
+            metric_id="accuracy",
+            operator="LT",
+            threshold_key="accuracy",
+        ),
+    )
+    return sealed(
+        DecisionRule,
+        "decision-rule-1",
+        pass_expression=predicate,
+        fail_expression=fail_predicate,
+        missing_metric_behavior="INVALID",
     )
 
 
@@ -92,6 +121,7 @@ def test_schema_registry_covers_p1_surface():
         "claim_resolution_policy",
         "proof_obligation",
         "proof_retry_policy",
+        "decision_rule",
         "execution_attempt_envelope",
         "evidence_record",
         "evidence_relation",
@@ -273,6 +303,7 @@ def test_proof_thresholds_are_decimal_strings():
         proposition="p",
         decision_thresholds={"accuracy": "0.80"},
         evidence_admission_policy_ref=admission.exact_ref(),
+        decision_rule_ref=base_decision_rule().exact_ref(),
         retry_policy_ref=retry.exact_ref(),
         amendment_policy_ref=amendment.exact_ref(),
         independence_policy_ref=independence.exact_ref(),
@@ -301,6 +332,7 @@ def test_execution_state_is_not_adjudication_verdict():
         target_claim_id="claim-1",
         proposition="p",
         evidence_admission_policy_ref=admission.exact_ref(),
+        decision_rule_ref=base_decision_rule().exact_ref(),
         retry_policy_ref=retry.exact_ref(),
         amendment_policy_ref=amendment.exact_ref(),
     )
@@ -567,3 +599,30 @@ def test_library_manifest_rejects_unknown_schema_major():
             capabilities=(cap,),
             security_access_model="single-user",
         )
+
+
+
+def test_decision_rule_expression_shape_is_fail_closed():
+    with pytest.raises(ValidationError):
+        DecisionExpression(op="PREDICATE")
+    with pytest.raises(ValidationError):
+        DecisionExpression(op="ALL", children=())
+
+
+def test_proof_binds_exact_decision_rule():
+    _, admission, retry, amendment, _ = base_policies()
+    rule = base_decision_rule()
+    proof = sealed(
+        ProofObligation,
+        "proof-rule-bound",
+        lifecycle=ProofLifecycle.FROZEN,
+        target_claim_id="claim-1",
+        proposition="p",
+        metric_ids=("accuracy",),
+        decision_thresholds={"accuracy": "0.80"},
+        decision_rule_ref=rule.exact_ref(),
+        evidence_admission_policy_ref=admission.exact_ref(),
+        retry_policy_ref=retry.exact_ref(),
+        amendment_policy_ref=amendment.exact_ref(),
+    )
+    assert proof.decision_rule_ref == rule.exact_ref()

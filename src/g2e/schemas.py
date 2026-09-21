@@ -274,6 +274,36 @@ class ProofRetryPolicy(CanonicalModel):
     allowed_technical_reason_codes: tuple[str, ...] = ()
 
 
+class MetricPredicate(StrictModel):
+    metric_id: str = Field(min_length=1)
+    operator: Literal["GE", "GT", "LE", "LT", "EQ", "NE"]
+    threshold_key: str = Field(min_length=1)
+
+
+class DecisionExpression(StrictModel):
+    op: Literal["PREDICATE", "ALL", "ANY"]
+    predicate: MetricPredicate | None = None
+    children: tuple["DecisionExpression", ...] = ()
+
+    @model_validator(mode="after")
+    def _shape(self):
+        if self.op == "PREDICATE":
+            if self.predicate is None or self.children:
+                raise ValueError("PREDICATE requires predicate and no children")
+        else:
+            if self.predicate is not None or not self.children:
+                raise ValueError("ALL/ANY decision expression requires children only")
+        return self
+
+
+class DecisionRule(CanonicalModel):
+    schema_kind = "decision_rule"
+    pass_expression: DecisionExpression
+    fail_expression: DecisionExpression
+    missing_metric_behavior: Literal["INVALID", "UNRESOLVED"] = "INVALID"
+    metric_conflict_behavior: Literal["INVALID"] = "INVALID"
+
+
 class EvidenceAdmissionPolicy(CanonicalModel):
     schema_kind = "evidence_admission_policy"
     accepted_source_classes: tuple[str, ...]
@@ -331,6 +361,7 @@ class ProofObligation(CanonicalModel):
     fixture_or_population_ref: str | None = None
     metric_ids: tuple[str, ...] = ()
     decision_thresholds: dict[str, DecimalString] = Field(default_factory=dict)
+    decision_rule_ref: ExactRef
     baseline_refs: tuple[str, ...] = ()
     evidence_admission_policy_ref: ExactRef
     retry_policy_ref: ExactRef
@@ -719,6 +750,7 @@ SCHEMA_MODELS = (
     Claim,
     ClaimGraph,
     ProofRetryPolicy,
+    DecisionRule,
     EvidenceAdmissionPolicy,
     IndependencePolicy,
     AmendmentPolicy,
