@@ -198,3 +198,16 @@
 - **No-rescue boundary:** after first D1 evidence, required tokens/verdict rules may not be changed, D0 documentation may not substitute for D1, and rerun-until-PASS/version-switch rescue is prohibited.
 - **Implementation boundary:** Codex profile is still not AVAILABLE; D2 and Codex runtime adapter remain NOT AUTHORIZED; ChatGPT P5B remains untouched.
 - **Next:** one exact target-harness P5A discovery run, freeze `P5A_CODEX_DISCOVERY.json`, then apply the frozen adjudicator once.
+
+
+### G2E-P5A.1R — Codex D1 Inventory Ordering Invalidity Repair
+
+- **Status:** PASS / BOUNDED INVALIDITY REPAIR
+- **Qualified candidate:** `4e447ef19a843aa3dd1337c57a9c70b4c1a00de1`
+- **Authoritative workflow:** `35597985704` / job `106327133946` — PASS
+- **Evidence artifact:** `10637389197`; digest `sha256:09a599886c44d3d3d2544d6ff61a93205f47c137d8807598caadda97ea6c2130`
+- **Evidence closure:** `68cdd2e450da266064f41977b09c73314ce59d82`
+- **Original immutable discovery:** SHA-256 `ba098a56be39e996488e5a543af8c373199f8b4cc66f922be6d7bc6386c6e860`; original verdict `INVALID` solely for `INVENTORY_PATHS_NOT_SORTED`.
+- **Result:** invalidity mechanism attributed to cross-platform path-order semantics: Windows probe emits deterministic WindowsPath ordering while the parent adjudicator checked case-sensitive string ordering. Repair mirrors the qualified probe host semantics with PureWindowsPath/PurePosixPath while preserving inventory digest, token, handshake, secret, PASS/FAIL/INVALID and authorization rules.
+- **No-rescue boundary:** no fresh Codex recollection, version switch, token relaxation, discovery-probe mutation, D2 or runtime-adapter opening is authorized.
+- **Next:** pull the qualified repaired adjudicator and re-adjudicate the original discovery JSON exactly once; retain both original INVALID and repaired adjudication.
