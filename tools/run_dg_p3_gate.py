@@ -105,7 +105,7 @@ def main():
         ]
         deterministic = all(first[k] == second[k] for k in stable_keys)
         serialized = json.dumps({"first": first, "second": second}, sort_keys=True)
-        secret_absent = token not in serialized and "Authorization" not in serialized and "content":" not in serialized
+        secret_absent = token not in serialized and "Authorization" not in serialized and '"content":' not in serialized
 
         checks = {
             "provider_repository_identity": str(first["repository_id"]) == str(args.expected_repository_id),
