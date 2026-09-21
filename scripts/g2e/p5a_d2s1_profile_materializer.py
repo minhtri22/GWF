@@ -62,6 +62,9 @@ def build_config_toml(workspace_root: str = CANONICAL_WINDOWS_WORKSPACE) -> byte
     lines = [
         f"default_permissions = {_toml_quote(PROFILE_ID)}",
         "",
+        "[windows]",
+        "sandbox = \"elevated\"",
+        "",
         f"[permissions.{PROFILE_ID}]",
         _toml_quote("description") + " = " + _toml_quote(
             "G2E P5A D2-S1 exact fixture/result authority"
@@ -82,6 +85,8 @@ def build_config_toml(workspace_root: str = CANONICAL_WINDOWS_WORKSPACE) -> byte
     parsed = tomllib.loads(raw.decode("utf-8"))
     if parsed.get("default_permissions") != PROFILE_ID:
         raise ValueError("default_permissions selection drift")
+    if parsed.get("windows", {}).get("sandbox") != "elevated":
+        raise ValueError("windows sandbox mode drift")
     profile = parsed["permissions"][PROFILE_ID]
     if profile.get("extends") is not None:
         raise ValueError("successor profile must not inherit")
@@ -130,6 +135,10 @@ def build_contract(workspace_root: str = CANONICAL_WINDOWS_WORKSPACE) -> dict:
         "experimental_api": True,
         "permission_profile_id": PROFILE_ID,
         "default_permission_profile_id": PROFILE_ID,
+        "windows_sandbox_mode": "elevated",
+        "windows_sandbox_setup_required": True,
+        "windows_sandbox_setup_cwd": root,
+        "windows_sandbox_readiness_required": "ready",
         "config_toml_sha256": config_sha256,
         "task_read_paths": ["input.json", "TASK.md"],
         "task_write_paths": ["result.json"],
@@ -162,6 +171,7 @@ def build_contract(workspace_root: str = CANONICAL_WINDOWS_WORKSPACE) -> dict:
         "attempt_id": ATTEMPT_ID,
         "profile_id": PROFILE_ID,
         "default_permissions": PROFILE_ID,
+        "windows_sandbox_mode": "elevated",
         "predecessor_closure_sha": PREDECESSOR_CLOSURE_SHA,
         "spec_qa_baseline_sha": BASELINE_SHA,
         "model_turn_executed": False,
@@ -213,6 +223,12 @@ def verify_contract(contract: dict) -> None:
         raise ValueError("profile selection drift")
     if cfg.get("default_permission_profile_id") != PROFILE_ID:
         raise ValueError("default permission selection drift")
+    if cfg.get("windows_sandbox_mode") != "elevated":
+        raise ValueError("windows sandbox mode drift")
+    if cfg.get("windows_sandbox_setup_required") is not True:
+        raise ValueError("windows sandbox setup requirement drift")
+    if cfg.get("windows_sandbox_readiness_required") != "ready":
+        raise ValueError("windows sandbox readiness drift")
     if cfg.get("network_allowed") is not False:
         raise ValueError("network authority drift")
     if cfg.get("interactive_approval_allowed") is not False:
