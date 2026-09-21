@@ -402,7 +402,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P9 — Logical-current vs pinned-revision binding
 
 - **Complexity:** 3
-- **Status:** **IMPLEMENTATION QUALIFIED / HANDOFF + EXACT-HEAD QA PENDING**
+- **Status:** **COMPLETED / PASS / FORMALLY CLOSED**
 - **HARD dependencies:** DG-P8 — formally closed at final HEAD `4a93e564adf52ae0dfdffabefaef32d431bbef6d`.
 - **Frozen specification:** `docs/DG_P9_RELATION_TARGET_BINDING_SPEC.md`, commit `1a9f8737e36392c8a8db49b93c9371ceee16085f`, blob `73e1d7c8c01ea954af2a65e1df1942b4f95738f3`.
 - **Document QA:** `docs/DOCUMENT_QA_DG_P9_PREIMPLEMENTATION.md` — PASS.
@@ -439,7 +439,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
   - [x] compile PASS;
   - [x] no DG-P10+ semantics;
   - [x] implementation QA PASS;
-  - [ ] handoff exact-head workflow PASS.
+  - [x] handoff exact-head workflow PASS — run `35629583197` on `5f6ecece5bbb15c36b00a35c7a4dbb6b340e0e4e`; SQLite artifact `10653762329`; PostgreSQL artifact `10653647093`.
 
 ### DG-P10 — Change classification
 
@@ -1081,10 +1081,9 @@ DG-P8 — Typed document relations
       final exact-head run 35622798852 PASS
        ↓
 DG-P9 — Logical-current vs pinned-revision binding
-      IMPLEMENTATION QUALIFIED
-      HEAD 9ffd64a1e9b98ea307ed8f9682b88e26570dc208
-      workflow 35628998000 PASS
-      HANDOFF EXACT-HEAD QA PENDING
+      PASS / FORMALLY CLOSED
+      handoff HEAD 5f6ecece5bbb15c36b00a35c7a4dbb6b340e0e4e
+      exact-head run 35629583197 PASS
        ↓
 STOP
 

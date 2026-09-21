@@ -259,3 +259,14 @@ Rules:
 - SQLite evidence artifact: `10653386409`, digest `sha256:651c9a59f77d83176cbc452d39a9beebf17c27e2390ef83a96aee85ed29ea160`.
 - PostgreSQL evidence artifact: `10653461137`, digest `sha256:aff7462c949ce6645bd0edc4ea130cbce884ac424a72234fc79ad8b9dc7b8ae4`.
 - Outcome: canonical DocumentRelation target binding now distinguishes logical-current from exact pinned Revision identity, preserves one-time legacy binding and exact historical pins, and remains side-effect-free with no TraceLink projection or relation-aware impact execution.
+
+
+
+## 2026-09-21 — DG-P9 formally closed
+
+- Result: DG-P9 PASS / formally closed.
+- Handoff HEAD: `5f6ecece5bbb15c36b00a35c7a4dbb6b340e0e4e`.
+- Exact-head workflow: `35629583197` PASS.
+- SQLite evidence artifact: `10653762329`, digest `sha256:b5151006d5a04a2b925e8a678f36b93e944f760d233a1ab05ebd5ebd60d5a593`.
+- PostgreSQL evidence artifact: `10653647093`, digest `sha256:61d498e21dcf0ba3297aec5aa878e0e79a8a1ec9aa9ebe7f54fd54728197d996`.
+- Outcome: relation target binding is formally closed with explicit current-vs-pinned semantics, immutable exact historical binding, qualified native DOCUMENT resolution, external fail-closed behavior and zero TraceLink/impact/validity side effects.

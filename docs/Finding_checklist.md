@@ -1750,7 +1750,7 @@ GAC                       = LOCKED_UNTIL_DG-W4_PASS
 - [x] DG-P10+ remain NOT_STARTED / NOT_AUTHORIZED.
 - [x] DG-W3 remains OPEN / NOT_EXECUTED.
 - [x] GAC remains locked until DG-W4 PASS.
-- [ ] committed handoff exact-head requalification PASS.
+- [x] committed handoff exact-head requalification PASS — run `35629583197` on `5f6ecece5bbb15c36b00a35c7a4dbb6b340e0e4e`; SQLite artifact `10653762329`; PostgreSQL artifact `10653647093`.
 
 ## 65. Current aggregate state during DG-P9 handoff
 
@@ -1766,9 +1766,11 @@ DG-P9 implementation SHA  = 9ffd64a1e9b98ea307ed8f9682b88e26570dc208
 DG-P9 workflow            = 35628998000 PASS
 DG-P9 SQLite artifact     = 10653386409
 DG-P9 PostgreSQL artifact = 10653461137
-DG-P9 handoff             = PENDING_COMMIT
-DG-P9 exact-head QA       = PENDING
-DG-P9 overall             = NOT_YET_FORMALLY_CLOSED
+DG-P9 handoff HEAD        = 5f6ecece5bbb15c36b00a35c7a4dbb6b340e0e4e
+DG-P9 exact-head workflow = 35629583197 PASS
+DG-P9 SQLite artifact     = 10653762329
+DG-P9 PostgreSQL artifact = 10653647093
+DG-P9 overall             = FORMALLY_CLOSED
 DG-P10+                   = NOT_STARTED / NOT_AUTHORIZED
 DG-W3                     = OPEN / NOT_EXECUTED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
