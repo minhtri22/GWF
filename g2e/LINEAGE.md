@@ -280,3 +280,20 @@
 - **Qualification semantics:** already-qualified prerequisites remain in `required_capability_ids`; unavailable capabilities under test live only in `qualification_target_capability_ids`; exact bounded attempt authority is supplied only by `qualification_authority_ref` under the exact AuthorityPolicy.
 - **Implementation boundary:** provider-neutral only; no D2 outcome/model turn, Codex runtime adapter or ChatGPT P5B work.
 - **Next:** materialize exact P5-FX-001 AuthorityPolicy + QualificationAuthorityGrant + final D2 AgentBinding + pre-dispatch attempt identity, then run a final zero-fresh admission qualification before any model turn.
+
+
+### G2E-P5A-D2 — Final Zero-Fresh Admission
+
+- **Status:** FINAL_ADMISSION_PASS
+- **Qualified candidate:** `75e10b5a68616c2f48bf1b091a850daa8b0da60d`
+- **Authoritative workflow:** `35608071469` / job `106359996540` — PASS
+- **Evidence artifact:** `10642813459`; digest `sha256:f2bdebc1f5f272c9465bf9961375bbbd2086b1ab23304a480fa87a95c6ff26f3`
+- **Exact AuthorityPolicy:** `p5a-d2-p5-fx-001-authority-policy@p5-fx-001-v1#8bf59660f19437120d2b26169b0bf7dc7670a5e075e0252ac951c8ad0aa20971`
+- **Exact QualificationAuthorityGrant:** `p5a-d2-p5-fx-001-qualification-grant@p5-fx-001-v1#656cb4c2e06518ecf7d2da668b03d4f6084ebd2ed2bc03cd3289d3639efdafab`
+- **FINAL D2 AgentBinding:** `p5a-d2-final-agent-binding@p5-fx-001-v1#472eb3a0573c093a8b7cb63b1dc320b4292f1c30b6d6dfd493f29014472999e1`
+- **Pre-dispatch attempt:** `p5a-d2-predispatch-attempt-envelope@p5-fx-001-v1#34369e7eacd0ad03a3ca4433c2ad0d643de9a1057ed7bcbc1729d10e33511ea3`; attempt ID `p5a-d2-p5-fx-001-attempt-001`; state `LOCKED`.
+- **Execution config hash:** `740d5303d29b757e47571bc50b6367770296f7186a5528cef25adbb806669c3a`
+- **Result:** the entire prospective P5-FX-001 authority/identity graph materialized deterministically and independently re-verified under P1.5. P1/P1.4/P1.5/P2/P3/P4 regressions PASS; no fresh D2 outcome or model turn existed before the lock.
+- **Capability boundary:** `repository_read` and `repository_write` remain unavailable before D2. Grant/binding admission does not mutate the D1 manifest.
+- **Authorization boundary:** exactly one scientific D2 attempt is now authorized under the exact frozen attempt/configuration. Retry, prompt/config drift, broader authority, alternate harness and Codex runtime adapter remain unauthorized.
+- **Next:** execute exactly one frozen P5-FX-001 D2 attempt, then freeze resulting evidence before any adjudication or manifest revision.
