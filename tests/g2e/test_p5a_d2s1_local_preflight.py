@@ -23,8 +23,8 @@ def test_preflight_constants_are_frozen():
     assert module.ATTEMPT_ID == "p5a-d2s1-p5-fx-001-attempt-001"
     assert module.PROFILE_ID == "g2e_p5a_d2s1"
     assert module.EXPECTED_HARNESS_SHA256 == "a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8"
-    assert module.EXPECTED_CONFIG_TOML_SHA256 == "8877cc89ccf5dd6e3cf6c45016ca7e62d93746c8f56db8bb38956eb6ff6e172d"
-    assert module.EXPECTED_EXECUTION_CONFIG_HASH == "d03e6f6f2c20b757685188e30f4cabd44102b61b74cdacc585bab328647b0367"
+    assert module.EXPECTED_CONFIG_TOML_SHA256 == "a21289d995d75416ade0f4483bb93f0c54cf1808f0c2ae289c29fe89a9050cd4"
+    assert module.EXPECTED_EXECUTION_CONFIG_HASH == "72874872ea241efecbdd537e0a7fbf0718fd036cf4abd564b27b0bcd03dd81ce"
 
 
 def test_profile_lookup_is_exact_and_requires_allowed():
@@ -61,6 +61,11 @@ def test_script_is_strictly_no_turn():
     assert '"permissionProfile/list"' in source
     assert '"permissions": PROFILE_ID' in source
     assert '"thread/start"' in source
+    assert '"windowsSandbox/readiness"' in source
+    assert '"windowsSandbox/setupStart"' in source
+    assert '"mode": "elevated"' in source
+    assert '"windowsSandbox/setupCompleted"' in source
+    assert "WINDOWS_SANDBOX_SETUP_TIMEOUT_S = 180.0" in source
 
     # Scientific dispatch must not exist anywhere in this preflight implementation.
     assert '"turn/start"' not in source
@@ -72,6 +77,15 @@ def test_script_does_not_use_legacy_sandbox_fields():
     assert '"sandboxPolicy"' not in source
     assert '"readOnlyAccess"' not in source
     assert '"permissionProfile":' not in source
+
+
+def test_windows_setup_gate_fails_closed_and_requires_ready():
+    source = SCRIPT.read_text(encoding="utf-8")
+    assert 'readiness_before_status == "updateRequired"' in source
+    assert 'setup_params.get("mode") == "elevated"' in source
+    assert 'setup_params.get("success") is True' in source
+    assert 'readiness_after_status != "ready"' in source
+    assert "CONFIG_TOML_MUTATED_BY_WINDOWS_SANDBOX_SETUP" in source
 
 
 def test_preflight_uses_only_local_mutable_paths():
