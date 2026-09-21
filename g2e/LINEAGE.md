@@ -45,3 +45,13 @@
 - **QA:** `edb11324a0490454f7c56e11e62a93ae0ccad98d`
 - **Result:** G2E now matches GWF reconciliation `be7d606c...`: Shared Library ownership, direct-vs-Reference-Acquisition routing, exact GAC/RA readiness gates, same-subject dedup, terminology mapping and conditional P4L integration are frozen without introducing a second catalog/store.
 - **Next:** P1 — Core Schemas; GWF-backed Library integration remains conditional P4L.
+
+
+### G2E-P1 — Core Schemas
+
+- **Status:** PASS
+- **Qualified implementation:** `2fc077f8bc84f8dbdb42c180b3edc7af9418a6c1`
+- **Authoritative workflow:** `35564563403` / job `106223715948` — PASS
+- **Evidence closure:** `edfc8e805d3b061111f3012fdce0891177dcabd8`
+- **Result:** 35 authoritative G2E schema models are canonically hashable/versioned and pass fail-closed structural qualification; 21/21 P1 tests and compile gate pass. No executor, standalone runtime, GWF adapter or GAC/P4L implementation was opened.
+- **Next:** P2 — Deterministic Core Engine.
