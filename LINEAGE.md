@@ -74,3 +74,12 @@ Rules:
 - Evidence artifact: `10629413613`.
 - Evidence artifact digest: `sha256:54b8e518ef51553b6e5be1f428d346551a1c4f7b9b53fe0936c61e592a1cafe2`.
 - Outcome: Documentation Validator Foundation is complete; DG-P4 is the next roadmap item.
+
+
+## 2026-09-21 — DG-P4 pre-implementation qualification completed
+
+- Result: DG-P4 reuse/specification qualification PASS.
+- Specification commit: `149b8f7d12010fc86bda16bb9f22fcda039a2402`.
+- Specification blob: `b0034171454d06dbdeec2145ab73d5fb0cee2982`.
+- Dependency: DG-W1 final closure head `2a0bb00367859166230d11d12ea482c253138dc7`, exact-head workflow `35580754186` PASS.
+- Outcome: existing Artifact/Revision storage selected for document identity; parallel document/revision storage rejected; bounded core artifact-type admission and identity-only document facade frozen for implementation.

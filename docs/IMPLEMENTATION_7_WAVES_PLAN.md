@@ -207,15 +207,29 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P4 — Document facade / identity mapping
 
 - **Complexity:** 3
-- **HARD dependencies:** DG-P3.
+- **Status:** **AUTHORIZED / PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **HARD dependencies:** DG-P3; DG-W1 is formally closed.
+- **Frozen specification:** `docs/DG_P4_DOCUMENT_FACADE_SPEC.md`, commit `149b8f7d12010fc86bda16bb9f22fcda039a2402`, blob `b0034171454d06dbdeec2145ab73d5fb0cee2982`.
+- **Document QA:** `docs/DOCUMENT_QA_DG_P4_PREIMPLEMENTATION.md` — PASS.
+- **Reuse verdict:** existing `artifacts/revisions` are sufficient; no parallel tables or schema migration. A bounded reserved core artifact type `governed_document` is required because current artifact admission is domain-only.
 - **Governing document:** `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §§6–8, 33.
-- **Design constraint:** first evaluate specialization/facade over existing `artifacts/revisions`; creating parallel document/revision tables requires explicit evidence that reuse is insufficient.
-- **Acceptance checklist:**
-  - [ ] stable `document_id` independent of path;
-  - [ ] exact revision identity;
-  - [ ] no silent migration of existing Markdown;
-  - [ ] current GWF artifact semantics preserved;
-  - [ ] QA PASS.
+- **Design constraint:** specialization/facade over existing `artifacts/revisions`; direct DB writes and parallel document/revision tables are forbidden.
+- **Pre-implementation checklist:**
+  - [x] stable `document_id` mapped to `artifact_id`;
+  - [x] exact revision identity mapped to `revision_id`;
+  - [x] stable document key is independent of path;
+  - [x] exact source identity reuses DG-P3;
+  - [x] cross-domain artifact admission gap bounded;
+  - [x] no silent migration of existing Markdown;
+  - [x] current GWF artifact semantics preservation contract frozen;
+  - [x] D4-F1..D4-F15 fixtures frozen;
+  - [x] pre-implementation QA PASS.
+- **Implementation acceptance remains open:**
+  - [ ] facade/core-type implementation PASS;
+  - [ ] all D4 fixtures PASS;
+  - [ ] existing domain artifact regression PASS;
+  - [ ] no schema migration;
+  - [ ] implementation QA PASS.
 
 ### DG-P5 — QA run + finding persistence
 
@@ -905,24 +919,20 @@ No item may be marked complete with unresolved required handoff fields.
 At this implementation state:
 
 ```text
-7-WAVE PLAN QA
-      PASS
+DG-W1
+      PASS / FORMALLY CLOSED
+      final closure HEAD 2a0bb00367859166230d11d12ea482c253138dc7
+      final exact-head run 35580754186 PASS
        ↓
-DG-P0
-      PASS / formal-close
-       ↓
-GAC/G2E Library documentation reconciliation
-      PASS
-       ↓
-DG-P1 — Vale terminology/prose adapter
-      PASS / formal-close
-       ↓
-DG-P2 — Lychee link adapter
-      NEXT PLANNED
+DG-P4 — Document facade / identity mapping
+      AUTHORIZED
+      PRE-IMPLEMENTATION SPEC FROZEN
+      REUSE / DOCUMENT QA PASS
+      IMPLEMENTATION NOT_STARTED
        ↓
 STOP
 ```
 
-DG-P2 is the next planned item because Wave 1 remains incomplete and it is the next complexity-2 item in the preregistered Wave 1 order. **This plan revision does not itself authorize DG-P2 implementation.**
+DG-P4 is the active frontier. Its implementation must reuse existing Artifact/Revision storage and may add only the bounded core-artifact admission + facade described by the frozen DG-P4 specification. It must not open DG-P5/P6 or later-wave semantics automatically.
 
-GAC implementation is still blocked until **DG-W4 PASS**, as specified in Wave 5.
+GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.

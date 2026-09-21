@@ -681,3 +681,83 @@ DG-W1 committed handoff HEAD `84383fe2978eff8ab795c7607df6f19360a5ca1f` passed t
 **OPEN = 0**
 
 DG-W1 is formally closed. Wave 2 may begin with DG-P4 reuse/spec qualification. GAC remains locked until DG-W4 PASS.
+
+## 28. DG-P4 pre-implementation qualification findings
+
+### F-57 — HIGH — RESOLVED
+
+- **Initial finding:** The plan's bottom `Current authorization frontier` still described DG-P2 as the next item even though the same plan had already formal-closed DG-W1.
+- **Resolution:** Update the current frontier to the exact DG-W1 closure and DG-P4 pre-implementation state. Historical completion sections remain unchanged.
+- **Final status:** `RESOLVED`
+
+### F-58 — HIGH — RESOLVED
+
+- **Initial finding:** Existing Artifact/Revision storage is reusable, but `KnowledgeKernel.create_artifact()` admits only artifact types declared by the active domain package. A cross-domain document facade therefore cannot use existing storage unchanged.
+- **Resolution:** Freeze one reserved core artifact type `governed_document`, admitted through the KnowledgeKernel artifact-config path while reusing the same `artifacts/revisions` tables. No direct DB insert and no parallel registry are permitted. Domain collision with the reserved type fails closed.
+- **Evidence:** `knowledge.py` blob `4f848c2be53451df01b9b91d2705ae3c59aa7bf7`; `domain.py` blob `b257a675fbd8ba2da34a3009489e09ad9accc0af`; frozen DG-P4 spec.
+- **Final status:** `RESOLVED`
+
+### F-59 — HIGH — RESOLVED
+
+- **Initial finding:** Path or path-derived logical key would make document identity unstable under rename.
+- **Resolution:** `document_id = artifact_id`; `logical_key = gwr:document:<explicit stable document_key>`; repository/path remain revision locators only.
+- **Final status:** `RESOLVED`
+
+### F-60 — HIGH — RESOLVED
+
+- **Initial finding:** Existing `Revision.content_hash` hashes the structured GWF payload and is not the same identity as the source document bytes or Git blob.
+- **Resolution:** Preserve three distinct identities: Revision payload hash, Git blob SHA, and source content SHA-256. DG-P4 revisions must bind the latter two through DG-P3 evidence.
+- **Final status:** `RESOLVED`
+
+### F-61 — MEDIUM — RESOLVED
+
+- **Initial finding:** A broad DocumentRecord facade could accidentally pre-implement lifecycle, validity, authority or graph semantics owned by later items.
+- **Resolution:** DG-P4 is identity/provenance only. DG-P6 owns lifecycle/validity; DG-P7 owns authority; DG-P8+ own relations/graph semantics.
+- **Final status:** `RESOLVED`
+
+### F-62 — HIGH — RESOLVED
+
+- **Initial finding:** Automatically discovering repository Markdown and assigning governed identity at P4 would violate the explicit migration boundary and could silently assign authority.
+- **Resolution:** Registration is explicit and one-at-a-time; startup/repository scan creates no governed documents. Bulk migration remains DG-P20.
+- **Final status:** `RESOLVED`
+
+## 29. DG-P4 pre-implementation qualification checklist
+
+- [x] DG-W1 final exact-head PASS verified.
+- [x] exact KnowledgeKernel/Domain/Governance revisions inspected.
+- [x] Artifact storage reuse qualified.
+- [x] Revision storage reuse qualified.
+- [x] parallel document/revision tables rejected.
+- [x] no schema migration justified.
+- [x] cross-domain artifact admission gap identified and bounded.
+- [x] stable document ID mapped to Artifact ID.
+- [x] stable document key is path-independent.
+- [x] exact source evidence reuses DG-P3.
+- [x] source digest and revision payload hash kept separate.
+- [x] existing authority/audit path preserved.
+- [x] no direct DB persistence authorized.
+- [x] no silent migration authorized.
+- [x] lifecycle/validity deferred to DG-P6.
+- [x] authority deferred to DG-P7.
+- [x] relations/graph deferred to DG-P8+.
+- [x] D4-F1..D4-F15 fixture matrix frozen.
+- [x] document QA bound to exact DG-P4 spec blob.
+- [x] implementation has not started.
+
+## 30. Current aggregate status after DG-P4 pre-implementation qualification
+
+**OPEN = 0**
+
+All findings F-01 through F-62 recorded in this checklist are resolved.
+
+```text
+DG-W1                     = FORMALLY_CLOSED
+DG-P4 authorization       = PASS
+DG-P4 specification       = FROZEN
+DG-P4 reuse qualification = PASS
+DG-P4 document QA         = PASS
+DG-P4 implementation      = NOT_STARTED
+DG-P4 overall             = NOT_YET_PASS
+DG-W2                     = OPEN
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+```
