@@ -492,8 +492,8 @@ class GWFAdapter:
         self.load_exact("proof_obligation", initial_attempt.proof_ref)
         self.load_exact("proof_retry_policy", initial_attempt.retry_policy_ref)
 
-        supplied = {r.exact_ref() for r in protected_resources}
-        expected = set(initial_attempt.protected_resource_refs)
+        supplied = {_ref_token(r.exact_ref()) for r in protected_resources}
+        expected = {_ref_token(ref) for ref in initial_attempt.protected_resource_refs}
         if supplied != expected:
             raise GWFMappingConflictError(
                 "protected-resource set does not match frozen ExecutionAttempt"
@@ -592,8 +592,9 @@ class GWFAdapter:
                 run_id,
                 "FAILED",
                 {
-                    "failure_class": technical_error_class or "EXECUTOR_FAILED",
+                    "failure_class": "g2e_executor_failure",
                     "reason": technical_error_reason or "executor failed",
+                    "technical_error_class": technical_error_class or "EXECUTOR_FAILED",
                 },
             )
         gwf_run = self.runtime.db.one("SELECT * FROM runs WHERE run_id=?", (run_id,))
