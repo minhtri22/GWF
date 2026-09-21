@@ -162,3 +162,33 @@ Formal close requires:
 6. rerun the same workflow on the final closure HEAD.
 
 DG-P8+ and DG-W3 remain unopened throughout this close.
+
+
+## 14. Exact-handoff qualification
+
+The committed DG-P7 handoff HEAD `30170e2f0b94f0cde6994c5b9b3ee7c920379688` was requalified with the same two-backend workflow.
+
+Workflow:
+- `35611325233` PASS
+
+SQLite:
+- artifact `10643909615`
+- digest `sha256:0480597ac095ba5f67c70cca7204173bdc3b988373e90b520bdfa98faf613825`
+
+PostgreSQL 17:
+- artifact `10643409931`
+- digest `sha256:d90b98a201b3b28849135e84775af8f9a3f99a37057c46503713c7669c5a84af`
+
+The exact committed handoff HEAD again passed:
+
+- D7-F1..D7-F20 on SQLite;
+- bounded SQLite authority gate;
+- P4/P5/P6 + governance/persistence regressions;
+- full repository regression;
+- compile;
+- D7-F1..D7-F20 on PostgreSQL 17;
+- bounded PostgreSQL authority gate.
+
+**DG-P7 status: FORMALLY CLOSED.**
+
+DG-P8+ remain NOT_STARTED / NOT_AUTHORIZED. DG-W3 remains OPEN / NOT_EXECUTED. GAC remains locked until DG-W4 PASS.
