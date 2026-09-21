@@ -273,3 +273,18 @@ def test_d4_f15_registration_does_not_create_later_wave_state(configured):
     assert rt.db.one("SELECT COUNT(*) n FROM trace_links WHERE project_id=?", (project,))["n"] == 0
     assert rt.db.one("SELECT COUNT(*) n FROM evidence WHERE project_id=?", (project,))["n"] == 0
     assert rt.db.one("SELECT COUNT(*) n FROM gates WHERE project_id=?", (project,))["n"] == 0
+
+
+def test_readonly_adapter_interface_does_not_require_commit_but_write_adapter_does(configured):
+    rt, project, human, _, _, adapter = configured
+    assert not callable(getattr(adapter, "commit_files", None))
+
+    write_connection = rt.plugins.create_connection(
+        project,
+        "github",
+        "github-write-missing-commit",
+        ["REPO_READ", "CONTENT_WRITE"],
+        human,
+    )
+    with pytest.raises(ValidationError):
+        rt.plugins.attach_runtime_adapter(write_connection, adapter)
