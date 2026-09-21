@@ -58,7 +58,7 @@ DG-P10 therefore freezes these hard dependencies:
 - final evidence artifact: `10630264812`
 - digest: `sha256:8dda51c10fceb3b4dfefc119346196c62432bd557b818c1748fa49c5b5c4732b`
 
-DG-P4 supplies stable document identity, exact base Revision identity and exact proposed source identity.
+DG-P4 supplies stable document identity, exact base Revision identity and exact base source identity. The amended P10 pre-commit candidate is frozen by proposed path/content hash because a GWF-generated future commit/blob does not yet exist.
 
 ### DG-P5 — QA / finding semantics
 
@@ -127,7 +127,7 @@ It also requires:
 - ambiguity between CLARIFICATION and NORMATIVE resolves to NORMATIVE until reviewed;
 - diff size is not evidence of editorial status.
 
-Documentation Integrity §14 lists change policies but does not itself assign persistence or executable enforcement to DG-P10.
+Documentation Integrity §14 now freezes project document layout, workflow-derived mutation authority, GOV/FROZEN protection and deterministic version/archive lineage while keeping concrete multi-path source mutation in DG-P11.
 
 ## 6. Central semantic question
 
@@ -140,7 +140,9 @@ The answer frozen here is:
 ```text
 exact current base Revision
         +
-exact proposed source identity
+exact base source identity
+        +
+proposed path + content SHA-256 + version/archive plan
         +
 proposer declaration
         +
@@ -283,13 +285,13 @@ is insufficient once P10 is implemented.
 Future bounded implementation must introduce:
 
 ```text
-resolve exact candidate
+freeze proposed path/content hash/version/archive plan
         ↓
-classify / adjudicate / required governance
+classify + mutation-authority adjudication
         ↓
-verify base + Artifact version still exact
+verify base + Artifact version + active PhaseExecution mode still exact
         ↓
-create Revision
+STOP at qualified lineage plan; DG-P11 performs source mutation and only then may a new Revision be admitted
 ```
 
 If classification or governance fails, no new Revision is created and current document state remains unchanged.
@@ -406,7 +408,7 @@ The §13 prohibition is specifically against unilateral agent downgrade.
 
 A future implementation may permit a human-authorized lower replacement adjudication only when all are true:
 
-- exact same document/base/candidate source;
+- exact same document/base/proposed path+content hash+version/archive plan;
 - prior classification Evidence is referenced;
 - explicit downgrade reason is frozen;
 - required Approval is present;
@@ -521,7 +523,9 @@ Evidence.evidence_type
 Evidence.subject_refs
     = exact document ID
       + exact base Revision ID
-      + exact proposed source identity
+      + exact base source identity
+      + proposed active path/content SHA-256/version/archive path
+      + exact PhaseExecution/protocol mode snapshot
 
 Evidence.structured_payload
     = immutable classification adjudication
