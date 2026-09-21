@@ -88,7 +88,6 @@ jobs:
         run: |
           python - <<'PY'
           from g2e import AgentBinding
-          from g2e.schemas import QualificationAuthorityGrant if False else AgentBinding
           assert "qualification_authority_ref" not in AgentBinding.model_fields
           assert "qualification_target_capability_ids" not in AgentBinding.model_fields
           print("P1.5 schema not implemented; specification-only boundary preserved")
