@@ -1,0 +1,30 @@
+{
+  "schema": "G2E-P1.2-P3-PREREQUISITE-SCHEMAS-v1",
+  "status": "PASS",
+  "qualified_schema_sha": "fe02721b436e94fc7cd34a68f136d6088ca4b411",
+  "findings": {
+    "P3-F01": "RESOLVED",
+    "P3-F02": "RESOLVED",
+    "P3-F03": "RESOLVED"
+  },
+  "workflows": {
+    "p1": {
+      "run_id": 35577307904,
+      "job_id": 106261951175,
+      "conclusion": "success",
+      "tests_passed": 26
+    },
+    "p2_regression": {
+      "run_id": 35577307899,
+      "job_id": 106261951530,
+      "conclusion": "success",
+      "tests_passed": 41
+    }
+  },
+  "decision_rule_debt": {
+    "p1_1_qualified_sha": "0002790f0ea3da1c6e03b69124e3bfd38741b3b5",
+    "p2_qualified_sha": "c2fc03a7470b835904252246421e1b8d9a1ec5ef",
+    "status": "CLOSED_AND_REGRESSION_QUALIFIED"
+  },
+  "p3_authorized": true
+}

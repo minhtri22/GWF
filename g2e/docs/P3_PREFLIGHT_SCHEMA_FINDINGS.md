@@ -27,7 +27,7 @@ PRD-11 requires a RuntimeCapabilityManifest and fail-closed handling of unsuppor
 
 **Required:** add canonical RuntimeCapability / RuntimeCapabilityManifest schemas before P3 runtime selection/execution.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
 ## P3-F02 — HIGH — OPEN — Provider-neutral ExecutionResult missing from canonical schema surface
 
@@ -35,7 +35,7 @@ PRD-07 defines a normalized ExecutionResult distinct from ExecutionAttempt state
 
 **Required:** add canonical ExecutionResult schema bound to exact attempt identity, terminal executor state, artifacts/candidate-evidence refs, technical failure and redaction metadata.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
 ## P3-F03 — HIGH — OPEN — Result-package manifest/seal integrity objects are not schema-bound
 
@@ -48,10 +48,10 @@ Core Semantics §14 and PRD-12 require PACKAGE_MANIFEST and PACKAGE_SEAL with no
 - bind framework/runtime identity;
 - preserve explicit external-reference verification policy.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
 ## Verdict
 
-`OPEN = 3`
+`OPEN = 0`
 
-**P3 runtime code remains blocked until these schema dependencies requalify P1.**
+**PASS — P3 schema dependencies are qualified; Standalone Runtime implementation may open.**
