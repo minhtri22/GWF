@@ -9,3 +9,5 @@ from .canonical import (
 )
 from .schema_registry import schema_catalog, schema_model, validate_authoritative
 from .schemas import *  # noqa: F401,F403
+
+from .engine import *  # noqa: F401,F403
