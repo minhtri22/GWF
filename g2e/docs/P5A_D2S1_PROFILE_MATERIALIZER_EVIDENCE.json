@@ -1,0 +1,36 @@
+{
+  "schema": "G2E-P5A-D2S1-PROFILE-MATERIALIZER-EVIDENCE-v1",
+  "status": "IMPLEMENTATION_PASS_LOCAL_PREFLIGHT_REQUIRED",
+  "baseline_sha": "dfc8e438b8b4d91582a97809bc402862a07d29f7",
+  "candidate_sha": "71671f66bcb3618b5960f702643441167a5ae32d",
+  "workflow_run_id": 35630639385,
+  "workflow_job_id": 106435710956,
+  "artifact_id": 10653818548,
+  "artifact_digest": "sha256:6d9f781026070a194518fd9909ebc21498b6dd20d74a69109c34de275b9c1f7a",
+  "blobs": {
+    "spec": "7764ede707b632a18346a650adeb4d1fb23f7f54",
+    "zero_fresh_qa": "31ae7e0a5355e53e6da01cfc7818a8758be57384",
+    "materializer": "708f1289031c87e681149329e610056f38268327",
+    "tests": "47f3ef7088201c162fae298f71df1f3ee68679da",
+    "workflow": "15bdf1e725ab7554d364c5321b83ebff865db16d"
+  },
+  "study_id": "p5a-d2s1-permission-profile-successor",
+  "attempt_id": "p5a-d2s1-p5-fx-001-attempt-001",
+  "profile_id": "g2e_p5a_d2s1",
+  "config_toml_sha256": "449bb9238cb2e3760a4fc16d417ea88e2773e98421bac756f383b8e07ed203fc",
+  "contract_file_sha256": "32366aaf4d47101730c5a5021bb7c7a5c08a387354019cbb19ddbefbd77eae74",
+  "execution_config_hash": "08aba89c742da6a6fa08203e9ff4b5542685c05e9a4215673bc509af72af1811",
+  "regressions": {
+    "p1": "PASS",
+    "p1_4": "PASS",
+    "p1_5": "PASS",
+    "p2": "PASS",
+    "p3": "PASS",
+    "p4": "PASS"
+  },
+  "fresh_outcome_consumed": false,
+  "model_turn_executed": false,
+  "scientific_attempt_authorized": false,
+  "runtime_adapter_authorized": false,
+  "next_gate": "LOCAL_NO_TURN_PROFILE_SELECTION_PREFLIGHT"
+}
