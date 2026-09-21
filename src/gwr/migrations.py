@@ -515,6 +515,36 @@ CREATE INDEX IF NOT EXISTS idx_document_authority_owner
 """.strip(),
     ),
 
+    Migration(
+        "0010_v086_dg_p8_document_relations",
+        """
+CREATE TABLE IF NOT EXISTS document_relations(
+  relation_id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  source_document_id TEXT NOT NULL,
+  relation_type TEXT NOT NULL,
+  target_kind TEXT NOT NULL,
+  target_ref TEXT NOT NULL,
+  invalidation_policy TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_revision_id TEXT NOT NULL,
+  create_proposal_id TEXT NOT NULL,
+  retired_revision_id TEXT,
+  retired_by_proposal_id TEXT,
+  version INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  retired_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_document_relations_source
+  ON document_relations(project_id, source_document_id, status);
+CREATE INDEX IF NOT EXISTS idx_document_relations_target
+  ON document_relations(project_id, target_kind, target_ref, status);
+CREATE INDEX IF NOT EXISTS idx_document_relations_type
+  ON document_relations(project_id, relation_type, status);
+""".strip(),
+    ),
+
 ]
 
 
