@@ -1,0 +1,34 @@
+{
+  "schema": "G2E-P5A-D2S1-WINDOWS-ELEVATED-SANDBOX-MATERIALIZER-EVIDENCE-v1",
+  "status": "IMPLEMENTATION_PASS_LOCAL_PREFLIGHT_REQUIRED",
+  "amendment_qa_baseline_sha": "abb39d0092c8d5cf5b85e07e2d10a637cbe8eb68",
+  "candidate_sha": "db74aeb24af375e0be2df234a2866be32002aa49",
+  "workflow_run_id": 35644589058,
+  "workflow_job_id": 106481827370,
+  "artifact_id": 10660085814,
+  "artifact_digest": "sha256:8d1a40fb1884eb8216ddea0f0c00984d8d971a63994ecb8ce603d32c11536f4e",
+  "blobs": {
+    "materializer": "63a9cce5e53e779da3de82ace36f18b5dd27788e",
+    "tests": "ec4c596d5be7fbd9d660ff21df6b6e08f6cb84bb",
+    "workflow": "9e9b3dffb8453130e0551c59ea08135595679e9b"
+  },
+  "profile_id": "g2e_p5a_d2s1",
+  "default_permissions": "g2e_p5a_d2s1",
+  "windows_sandbox_mode": "elevated",
+  "config_toml_sha256": "a21289d995d75416ade0f4483bb93f0c54cf1808f0c2ae289c29fe89a9050cd4",
+  "contract_file_sha256": "fda500aca0707b96833e05c9a401d2fc3d00d1428a35f7db6a5f8ce28ac1f027",
+  "execution_config_hash": "72874872ea241efecbdd537e0a7fbf0718fd036cf4abd564b27b0bcd03dd81ce",
+  "regressions": {
+    "p1": "PASS",
+    "p1_4": "PASS",
+    "p1_5": "PASS",
+    "p2": "PASS",
+    "p3": "PASS",
+    "p4": "PASS"
+  },
+  "model_turn_executed": false,
+  "fresh_outcome_consumed": false,
+  "scientific_attempt_authorized": false,
+  "runtime_adapter_authorized": false,
+  "next_gate": "REBIND_AND_QUALIFY_LOCAL_ELEVATED_NO_TURN_PREFLIGHT"
+}
