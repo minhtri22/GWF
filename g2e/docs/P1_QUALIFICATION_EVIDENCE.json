@@ -1,0 +1,58 @@
+{
+  "schema": "G2E-P1-QUALIFICATION-v1",
+  "status": "PASS",
+  "qualified_implementation_sha": "2fc077f8bc84f8dbdb42c180b3edc7af9418a6c1",
+  "parent_p03_lineage_sha": "dac3a130a157936fc6f43d6e7c1cd88cb87a7cf5",
+  "workflow": {
+    "name": "G2E P1 Core Schemas Gate",
+    "run_id": 35564563403,
+    "job_id": 106223715948,
+    "conclusion": "success",
+    "run_attempt": 1,
+    "head_sha": "2fc077f8bc84f8dbdb42c180b3edc7af9418a6c1"
+  },
+  "environment": {
+    "runner": "ubuntu-latest",
+    "python": "3.12.14",
+    "pydantic": "2.13.5",
+    "pytest": "9.1.1"
+  },
+  "counts": {
+    "schema_models": 35,
+    "tests_passed": 21,
+    "tests_failed": 0
+  },
+  "gates": {
+    "compileall": true,
+    "schema_validation": true,
+    "canonical_identity": true,
+    "hash_tamper_rejection": true,
+    "schema_major_fail_closed": true,
+    "hard_dependency_dag": true,
+    "unknown_dependency_fail_closed": true,
+    "state_verdict_separation": true,
+    "claim_result_terminality": true,
+    "finite_decimal_thresholds": true,
+    "authority_no_escalation": true,
+    "frozen_goal_no_blocking_ambiguity": true,
+    "nfc_key_collision_fail_closed": true,
+    "explicit_reuse_proof_metadata": true,
+    "library_failure_semantics": true,
+    "no_silent_fallback": true,
+    "execution_backend_absent": true
+  },
+  "files": {
+    "src/g2e/__init__.py": "251b7fc76b2c640cd9410dc7e214d66dffc40aa0",
+    "src/g2e/canonical.py": "964cf296b18d081862d822f8039104d454e68154",
+    "src/g2e/schema_registry.py": "79075f162673cd1c8e0b8cbd26569b02799b9461",
+    "src/g2e/schemas.py": "03f1f3f40f8ef13525f6904eb5050045acb2f0f7",
+    "tests/g2e/test_p1_core_schemas.py": "6ed33fedf20a570f7e589f09dd3f4c662c24ff4b",
+    ".github/workflows/g2e-p1-core-schemas.yml": "64bdfb3d81c1fbe6a8b9ca56fd78aebc52723797"
+  },
+  "downstream_authorization": {
+    "p2_deterministic_core": true,
+    "p3_standalone_runtime": false,
+    "p4_gwf_adapter": false,
+    "p4l_gwf_shared_library": false
+  }
+}
