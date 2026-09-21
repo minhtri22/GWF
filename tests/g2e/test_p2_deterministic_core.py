@@ -33,6 +33,7 @@ from g2e import (
     MetricPredicate,
     ProofLifecycle,
     ProofObligation,
+    ProofResolution,
     ProofRetryPolicy,
     ProtectedResource,
     Provenance,
@@ -61,6 +62,7 @@ from g2e.engine import (
     enforce_amendment_boundary,
     evaluate_evidence_admission,
     materialize_evidence_admission,
+    materialize_proof_result,
     evaluate_goal,
     ref_key,
     resolve_claim,
@@ -1428,3 +1430,63 @@ def test_direct_admissibility_rejects_wrong_retry_policy_ref():
     )
     assert not result.admissible
     assert "RETRY_POLICY_REF_MISMATCH" in result.reasons
+
+
+
+def test_terminal_proof_result_materializes_from_exact_adjudication():
+    _, _, claim, _, _, _, admission, retry, amendment, independence = goal_claim_fixture()
+    proof, dr = proof_fixture(claim, admission, retry, amendment, independence)
+    attempt = attempt_for(proof, retry)
+    record, payload = evidence_for(attempt, "0.90", admission)
+    adj = adjudicate_attempt(
+        proof,
+        dr,
+        admission,
+        attempt,
+        (record,),
+        {record.object_id: payload},
+        object_id="adj-proof-result",
+        revision_id="r1",
+        provenance=P,
+        independence_satisfied=True,
+    )
+    result = materialize_proof_result(
+        proof,
+        retry,
+        (adj,),
+        invalid_attempt_count=0,
+        object_id="proof-result-pass",
+        revision_id="r1",
+        provenance=P,
+    )
+    assert result.outcome == ProofResolution.PASS
+    assert result.proof_ref == proof.exact_ref()
+    assert result.adjudication_refs == (adj.exact_ref(),)
+
+
+def test_nonterminal_invalid_attempt_cannot_materialize_proof_result():
+    _, _, claim, _, _, _, admission, retry, amendment, independence = goal_claim_fixture()
+    proof, dr = proof_fixture(claim, admission, retry, amendment, independence)
+    attempt = attempt_for(proof, retry, state=AttemptState.EXECUTOR_FAILED)
+    adj = adjudicate_attempt(
+        proof,
+        dr,
+        admission,
+        attempt,
+        (),
+        {},
+        object_id="adj-proof-result-invalid",
+        revision_id="r1",
+        provenance=P,
+        independence_satisfied=True,
+    )
+    with pytest.raises(CoreInvariantError, match="not terminal"):
+        materialize_proof_result(
+            proof,
+            retry,
+            (adj,),
+            invalid_attempt_count=1,
+            object_id="proof-result-invalid",
+            revision_id="r1",
+            provenance=P,
+        )

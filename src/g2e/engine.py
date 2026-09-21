@@ -37,6 +37,8 @@ from .schemas import (
     IndependencePolicy,
     ProofLifecycle,
     ProofObligation,
+    ProofResolution,
+    ProofResult,
     ProofRetryPolicy,
     ProtectedResource,
     ReuseDisposition,
@@ -649,6 +651,49 @@ def close_proof(
         True,
         False,
         ("INVALID_RETRY_BUDGET_EXHAUSTED",),
+    )
+
+
+def materialize_proof_result(
+    proof: ProofObligation,
+    retry_policy: ProofRetryPolicy,
+    adjudications: Sequence[Adjudication],
+    *,
+    invalid_attempt_count: int,
+    object_id: str,
+    revision_id: str,
+    provenance: Provenance,
+) -> ProofResult:
+    if retry_policy.exact_ref() != proof.retry_policy_ref:
+        raise CoreInvariantError("retry policy does not match frozen proof identity")
+    if not adjudications:
+        raise CoreInvariantError("ProofResult requires adjudication history")
+    for adjudication in adjudications:
+        if adjudication.proof_ref != proof.exact_ref():
+            raise CoreInvariantError("ProofResult adjudication does not bind exact proof")
+    closure = close_proof(
+        adjudications[-1],
+        retry_policy,
+        invalid_attempts_including_current=invalid_attempt_count,
+    )
+    if not closure.terminal:
+        raise CoreInvariantError("proof is not terminal and cannot materialize ProofResult")
+    if closure.outcome not in {
+        ProofOutcome.PASS,
+        ProofOutcome.FAIL,
+        ProofOutcome.UNRESOLVED,
+    }:
+        raise CoreInvariantError("terminal proof closure has unsupported outcome")
+    return ProofResult.sealed(
+        object_id=object_id,
+        revision_id=revision_id,
+        provenance=provenance,
+        proof_ref=proof.exact_ref(),
+        adjudication_refs=tuple(a.exact_ref() for a in adjudications),
+        outcome=ProofResolution(closure.outcome.value),
+        retry_policy_ref=retry_policy.exact_ref(),
+        invalid_attempt_count=invalid_attempt_count,
+        reason_codes=closure.reasons,
     )
 
 

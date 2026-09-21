@@ -73,6 +73,12 @@ class AdjudicationVerdict(StrEnum):
     UNRESOLVED = "UNRESOLVED"
 
 
+class ProofResolution(StrEnum):
+    PASS = "PASS"
+    FAIL = "FAIL"
+    UNRESOLVED = "UNRESOLVED"
+
+
 class EvidenceLifecycle(StrEnum):
     CANDIDATE = "CANDIDATE"
     ADMITTED = "ADMITTED"
@@ -535,6 +541,23 @@ class Adjudication(CanonicalModel):
     reason_codes: tuple[str, ...] = ()
 
 
+class ProofResult(CanonicalModel):
+    schema_kind = "proof_result"
+    proof_ref: ExactRef
+    adjudication_refs: tuple[ExactRef, ...]
+    outcome: ProofResolution
+    retry_policy_ref: ExactRef
+    invalid_attempt_count: int = Field(default=0, ge=0)
+    reason_codes: tuple[str, ...] = ()
+
+    @field_validator("adjudication_refs")
+    @classmethod
+    def _adjudications_nonempty(cls, value):
+        if not value:
+            raise ValueError("ProofResult requires adjudication history")
+        return value
+
+
 class SelectionRankField(StrictModel):
     field_name: str = Field(min_length=1)
     direction: Literal["ASC", "DESC"]
@@ -605,6 +628,7 @@ class PackageManifest(CanonicalModel):
 
 class PackageSeal(CanonicalModel):
     schema_kind = "package_seal"
+    package_type: Literal["GOAL_RESULT", "CLAIM_RESULT", "SYNTHESIS_RESULT"]
     manifest_ref: ExactRef
     manifest_file_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     framework_version: str = Field(min_length=1)
@@ -808,6 +832,7 @@ class LibraryQueryExecution(CanonicalModel):
     snapshot_ref: str = Field(min_length=1)
     status: LibraryExecutionStatus
     complete: bool
+    result_publication_ids: tuple[str, ...] = ()
     result_subject_refs: tuple[ExactRef, ...] = ()
     ranking_backend_version: str | None = None
     reason: str | None = None
@@ -816,6 +841,8 @@ class LibraryQueryExecution(CanonicalModel):
     def _status_completeness(self):
         if self.status != LibraryExecutionStatus.SUCCEEDED and self.complete:
             raise ValueError("non-success library execution cannot claim complete=true")
+        if len(self.result_publication_ids) != len(self.result_subject_refs):
+            raise ValueError("publication IDs must align with result subject refs")
         return self
 
 
@@ -834,7 +861,14 @@ class LibrarySnapshot(CanonicalModel):
     backend_id: str = Field(min_length=1)
     backend_version: str = Field(min_length=1)
     snapshot_ref: str = Field(min_length=1)
+    publication_ids: tuple[str, ...]
     subject_refs: tuple[ExactRef, ...]
+
+    @model_validator(mode="after")
+    def _snapshot_alignment(self):
+        if len(self.publication_ids) != len(self.subject_refs):
+            raise ValueError("snapshot publication IDs must align with subject refs")
+        return self
 
 
 class LibraryCapability(StrictModel):
@@ -888,6 +922,7 @@ SCHEMA_MODELS = (
     EvidenceRecord,
     EvidenceRelation,
     Adjudication,
+    ProofResult,
     SelectionPolicy,
     SelectionDecision,
     GovernanceDisposition,

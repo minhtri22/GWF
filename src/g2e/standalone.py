@@ -12,13 +12,14 @@ from typing import Any, Callable, Mapping, Sequence
 from urllib.parse import quote
 
 from .canonical import CanonicalModel, ExactRef, Provenance, canonical_hash, canonical_json
-from .engine import evaluate_goal, transition_protected_resource
+from .engine import ProofOutcome, evaluate_goal, resolve_claim, transition_protected_resource
 from .schema_registry import schema_model
 from .schemas import (
     Adjudication,
     AttemptState,
     BackendQualificationStatus,
     ClaimResolution,
+    ClaimResolutionPolicy,
     EvidenceCapsule,
     EvidenceLifecycle,
     EvidenceRecord,
@@ -40,6 +41,8 @@ from .schemas import (
     PackageManifest,
     PackageMember,
     PackageSeal,
+    ProofResolution,
+    ProofResult,
     ProtectedResource,
     RuntimeCapability,
     RuntimeCapabilityManifest,
@@ -1187,7 +1190,19 @@ class StandaloneEvidenceLibrary:
         capsule: EvidenceCapsule,
         contract: LibraryPublicationContract,
         metadata: Mapping[str, Any],
+        *,
+        capability_manifest: LibraryCapabilityManifest,
+        source_package_dir: str | Path,
+        external_resolver: Callable[[PackageExternalReference], bytes | None] | None = None,
     ) -> str:
+        self.require_capability(capability_manifest, "publish")
+        verified_source = verify_result_package(
+            source_package_dir, external_resolver=external_resolver
+        )
+        if verified_source.seal.package_type != capsule.source_package_type:
+            raise StandaloneRuntimeError("verified source package type mismatch")
+        if verified_source.seal.content_hash != capsule.source_package_seal_hash:
+            raise StandaloneRuntimeError("verified source package seal mismatch")
         if contract.subject_ref != capsule.exact_ref():
             raise StandaloneRuntimeError("publication contract subject mismatch")
         if contract.source_package_type != capsule.source_package_type:
@@ -1271,7 +1286,14 @@ class StandaloneEvidenceLibrary:
         finally:
             conn.close()
 
-    def withdraw_publication(self, publication_id: str, reason: str) -> None:
+    def withdraw_publication(
+        self,
+        publication_id: str,
+        reason: str,
+        *,
+        capability_manifest: LibraryCapabilityManifest,
+    ) -> None:
+        self.require_capability(capability_manifest, "withdraw")
         with self.store._connect() as conn:
             row = conn.execute(
                 "SELECT publication_id FROM library_publications WHERE publication_id=?",
@@ -1309,7 +1331,13 @@ class StandaloneEvidenceLibrary:
                 for row in rows
             ]
 
-    def get_catalog_snapshot(self, *, provenance: Provenance) -> LibrarySnapshot:
+    def get_catalog_snapshot(
+        self,
+        *,
+        provenance: Provenance,
+        capability_manifest: LibraryCapabilityManifest,
+    ) -> LibrarySnapshot:
+        self.require_capability(capability_manifest, "snapshot")
         rows = self._snapshot_rows()
         snapshot_ref = canonical_hash(rows)
         with self.store._connect() as conn:
@@ -1327,6 +1355,7 @@ class StandaloneEvidenceLibrary:
             backend_id="g2e-standalone-library",
             backend_version="0.1",
             snapshot_ref=snapshot_ref,
+            publication_ids=tuple(row["publication_id"] for row in rows),
             subject_refs=tuple(
                 ExactRef(
                     object_id=row["subject_object_id"],
@@ -1382,13 +1411,18 @@ class StandaloneEvidenceLibrary:
         provenance: Provenance,
         snapshot_ref: str | None = None,
         execution_id: str | None = None,
+        capability_manifest: LibraryCapabilityManifest,
     ) -> LibraryQueryExecution:
+        required = set(contract.required_capability_ids) | {"query", "snapshot"}
+        for capability_id in sorted(required):
+            self.require_capability(capability_manifest, capability_id)
         self.store.put(contract)
         resolved_snapshot = snapshot_ref
         try:
             if resolved_snapshot is None:
                 resolved_snapshot = self.get_catalog_snapshot(
-                    provenance=provenance
+                    provenance=provenance,
+                    capability_manifest=capability_manifest,
                 ).snapshot_ref
             rows = self._load_snapshot_rows(resolved_snapshot)
             matched = [
@@ -1396,6 +1430,7 @@ class StandaloneEvidenceLibrary:
                 for row in rows
                 if self._matches(row, contract.query_payload)
             ]
+            publication_ids = tuple(row["publication_id"] for row in matched)
             refs = tuple(
                 ExactRef(
                     object_id=row["subject_object_id"],
@@ -1408,6 +1443,7 @@ class StandaloneEvidenceLibrary:
             complete = True
             reason = None
         except Exception as exc:
+            publication_ids = ()
             refs = ()
             status = LibraryExecutionStatus.FAILED
             complete = False
@@ -1428,6 +1464,7 @@ class StandaloneEvidenceLibrary:
             snapshot_ref=resolved_snapshot,
             status=status,
             complete=complete,
+            result_publication_ids=publication_ids,
             result_subject_refs=refs,
             ranking_backend_version=None,
             reason=reason,
@@ -1441,15 +1478,23 @@ class StandaloneEvidenceLibrary:
         contract: LibraryQueryContract,
         *,
         provenance: Provenance,
+        capability_manifest: LibraryCapabilityManifest,
     ) -> LibraryQueryExecution:
         return self.query_candidates(
             contract,
             provenance=provenance,
             snapshot_ref=prior_execution.snapshot_ref,
             execution_id=f"{prior_execution.object_id}-replay",
+            capability_manifest=capability_manifest,
         )
 
-    def resolve_subject(self, publication_id: str) -> CanonicalModel:
+    def resolve_subject(
+        self,
+        publication_id: str,
+        *,
+        capability_manifest: LibraryCapabilityManifest,
+    ) -> CanonicalModel:
+        self.require_capability(capability_manifest, "query")
         with self.store._connect() as conn:
             row = conn.execute(
                 "SELECT * FROM library_publications WHERE publication_id=?",
@@ -1466,7 +1511,13 @@ class StandaloneEvidenceLibrary:
                 ),
             )
 
-    def get_provenance_ancestors(self, subject_ref: ExactRef) -> tuple[ExactRef, ...]:
+    def get_provenance_ancestors(
+        self,
+        subject_ref: ExactRef,
+        *,
+        capability_manifest: LibraryCapabilityManifest,
+    ) -> tuple[ExactRef, ...]:
+        self.require_capability(capability_manifest, "provenance")
         subject = self.store.load_ref(subject_ref)
         if isinstance(subject, EvidenceCapsule):
             return tuple(subject.provenance_ancestor_refs)
@@ -1474,7 +1525,13 @@ class StandaloneEvidenceLibrary:
             return tuple(subject.source_provenance_closure)
         return ()
 
-    def verify_subject_integrity(self, subject_ref: ExactRef) -> bool:
+    def verify_subject_integrity(
+        self,
+        subject_ref: ExactRef,
+        *,
+        capability_manifest: LibraryCapabilityManifest,
+    ) -> bool:
+        self.require_capability(capability_manifest, "integrity")
         self.store.load_ref(subject_ref)
         return True
 
@@ -1507,10 +1564,10 @@ def export_goal_result_package(
     goal_closure: GoalClosureContract,
     claim_graph: CanonicalModel,
     proofs: Sequence[CanonicalModel],
+    proof_results: Sequence[ProofResult],
     proof_dependencies: Sequence[CanonicalModel],
     evidence: Sequence[EvidenceRecord],
     adjudications: Sequence[Adjudication],
-    claim_resolutions: Mapping[str, ClaimResolution],
     reproducibility_manifest: Mapping[str, Any],
     package_lineage: Sequence[Mapping[str, Any]],
     provenance: Provenance,
@@ -1528,9 +1585,46 @@ def export_goal_result_package(
         raise StandaloneRuntimeError("GoalClosureContract does not bind exact Goal")
     if goal_closure.claim_graph_ref != claim_graph.exact_ref():
         raise StandaloneRuntimeError("GoalClosureContract does not bind exact ClaimGraph")
+    proof_by_id = {proof.object_id: proof for proof in proofs}
+    result_by_proof_id: dict[str, ProofResult] = {}
+    proof_outcomes: dict[str, ProofOutcome] = {}
+    for result in proof_results:
+        proof = proof_by_id.get(result.proof_ref.object_id)
+        if proof is None or proof.exact_ref() != result.proof_ref:
+            raise StandaloneRuntimeError("ProofResult does not bind packaged exact Proof")
+        result_by_proof_id[proof.object_id] = result
+        proof_outcomes[proof.object_id] = ProofOutcome(result.outcome.value)
+
+    claim_resolution_policies = tuple(
+        dependency
+        for dependency in proof_dependencies
+        if isinstance(dependency, ClaimResolutionPolicy)
+    )
+    policy_by_ref = {
+        (
+            policy.object_id,
+            policy.revision_id,
+            policy.content_hash,
+        ): policy
+        for policy in claim_resolution_policies
+    }
+    claim_resolutions: dict[str, ClaimResolution] = {}
+    for claim in claim_graph.claims:
+        key = (
+            claim.resolution_policy_ref.object_id,
+            claim.resolution_policy_ref.revision_id,
+            claim.resolution_policy_ref.content_hash,
+        )
+        policy = policy_by_ref.get(key)
+        if policy is None:
+            raise StandaloneRuntimeError(
+                f"ClaimResolutionPolicy missing for claim: {claim.object_id}"
+            )
+        resolution = resolve_claim(policy, proof_outcomes)
+        claim_resolutions[claim.object_id] = resolution
+
     for claim_id in goal_closure.terminal_claim_ids:
-        resolution = claim_resolutions.get(claim_id, ClaimResolution.UNKNOWN)
-        if resolution == ClaimResolution.UNKNOWN:
+        if claim_resolutions.get(claim_id, ClaimResolution.UNKNOWN) == ClaimResolution.UNKNOWN:
             raise StandaloneRuntimeError(
                 f"terminal Claim lacks terminal resolution: {claim_id}"
             )
@@ -1558,6 +1652,13 @@ def export_goal_result_package(
                 "proofs": [
                     p.model_dump(mode="json")
                     for p in sorted(proofs, key=lambda x: x.object_id)
+                ],
+                "results": [
+                    result.model_dump(mode="json")
+                    for result in sorted(
+                        proof_results,
+                        key=lambda x: x.proof_ref.object_id,
+                    )
                 ],
                 "dependencies": [
                     p.model_dump(mode="json")
@@ -1634,6 +1735,7 @@ def export_goal_result_package(
         object_id=f"package-seal-{goal.object_id}",
         revision_id="r1",
         provenance=provenance,
+        package_type="GOAL_RESULT",
         manifest_ref=manifest.exact_ref(),
         manifest_file_sha256=_sha256_bytes(manifest_bytes),
         framework_version=framework_version,
@@ -1651,7 +1753,7 @@ def export_goal_result_package(
     return verification
 
 
-def verify_goal_result_package(
+def verify_result_package(
     package_dir: str | Path,
     *,
     external_resolver: Callable[[PackageExternalReference], bytes | None] | None = None,
@@ -1672,6 +1774,38 @@ def verify_goal_result_package(
 
     if seal.manifest_ref != manifest.exact_ref():
         raise PackageVerificationError("seal does not bind exact manifest")
+    required_by_type = {
+        "GOAL_RESULT": {
+            "GOAL.json",
+            "GOAL_CLOSURE.json",
+            "CLAIM_GRAPH.json",
+            "PROOF_GRAPH.json",
+            "EVIDENCE_GRAPH.json",
+            "DECISION_LEDGER.json",
+            "PACKAGE_LINEAGE.json",
+            "FINAL_VERDICT.json",
+            "REPRODUCIBILITY_MANIFEST.json",
+        },
+        "CLAIM_RESULT": {
+            "CLAIM.json",
+            "CLAIM_RESOLUTION.json",
+            "PROOF_RESULTS.json",
+            "EVIDENCE_REFS.json",
+            "PROVENANCE.json",
+            "LIMITATIONS.json",
+        },
+        "SYNTHESIS_RESULT": {
+            "SYNTHESIS_RESULT.json",
+            "PROVENANCE.json",
+        },
+    }
+    required = required_by_type[seal.package_type]
+    present = {member.path for member in manifest.members}
+    missing_required = sorted(required - present)
+    if missing_required:
+        raise PackageVerificationError(
+            "required package content missing: " + ",".join(missing_required)
+        )
     if seal.manifest_file_sha256 != _sha256_bytes(manifest_bytes):
         raise PackageVerificationError("manifest file SHA-256 mismatch")
 
@@ -1734,6 +1868,19 @@ def verify_goal_result_package(
             )
 
     return PackageVerificationResult(manifest, seal, len(manifest.members))
+
+
+def verify_goal_result_package(
+    package_dir: str | Path,
+    *,
+    external_resolver: Callable[[PackageExternalReference], bytes | None] | None = None,
+) -> PackageVerificationResult:
+    result = verify_result_package(
+        package_dir, external_resolver=external_resolver
+    )
+    if result.seal.package_type != "GOAL_RESULT":
+        raise PackageVerificationError("package is not GOAL_RESULT")
+    return result
 
 
 class StandaloneRuntime:

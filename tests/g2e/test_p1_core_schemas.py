@@ -41,6 +41,8 @@ from g2e import (
     PackageSeal,
     ProofLifecycle,
     ProofObligation,
+    ProofResolution,
+    ProofResult,
     ProofRetryPolicy,
     Provenance,
     ReuseProofMetadata,
@@ -138,6 +140,7 @@ def test_schema_registry_covers_p1_surface():
         "evidence_admission_policy",
         "protected_resource",
         "adjudication",
+        "proof_result",
         "selection_policy",
         "selection_decision",
         "amendment_policy",
@@ -746,6 +749,7 @@ def test_package_manifest_and_seal_are_non_circular_and_safe():
         "package-seal",
         manifest_ref=manifest.exact_ref(),
         manifest_file_sha256="c" * 64,
+        package_type="GOAL_RESULT",
         framework_version="g2e-p1.2",
         runtime_id="g2e-standalone",
         runtime_version="0.1",
@@ -810,4 +814,118 @@ def test_package_manifest_external_reference_inventory_is_explicit():
                     immutable_locator="sha256://two",
                 ),
             ),
+        )
+
+
+
+def test_proof_result_is_terminal_and_binds_adjudication_history():
+    retry = sealed(
+        ProofRetryPolicy,
+        "proof-result-retry",
+        max_invalid_replacement_attempts=0,
+    )
+    rule = base_decision_rule()
+    _, admission, _, amendment, _ = base_policies()
+    proof = sealed(
+        ProofObligation,
+        "proof-result-proof",
+        lifecycle=ProofLifecycle.FROZEN,
+        target_claim_id="claim-1",
+        proposition="p",
+        metric_ids=("accuracy",),
+        decision_thresholds={"accuracy": "0.8"},
+        decision_rule_ref=rule.exact_ref(),
+        evidence_admission_policy_ref=admission.exact_ref(),
+        retry_policy_ref=retry.exact_ref(),
+        amendment_policy_ref=amendment.exact_ref(),
+    )
+    attempt = sealed(
+        ExecutionAttemptEnvelope,
+        "proof-result-attempt",
+        attempt_id="proof-result-attempt",
+        proof_ref=proof.exact_ref(),
+        state=AttemptState.COMPLETED,
+        implementation_ref="fixture@sha",
+        config_hash="a" * 64,
+        retry_policy_ref=retry.exact_ref(),
+    )
+    adj = sealed(
+        Adjudication,
+        "proof-result-adj",
+        proof_ref=proof.exact_ref(),
+        attempt_ref=attempt.exact_ref(),
+        admitted_evidence_refs=(),
+        decision_rule_hash=rule.content_hash,
+        adjudicator_version="fixture",
+        verdict=AdjudicationVerdict.PASS,
+    )
+    result = sealed(
+        ProofResult,
+        "proof-result",
+        proof_ref=proof.exact_ref(),
+        adjudication_refs=(adj.exact_ref(),),
+        outcome=ProofResolution.PASS,
+        retry_policy_ref=retry.exact_ref(),
+    )
+    assert result.outcome == ProofResolution.PASS
+    with pytest.raises(ValidationError, match="adjudication history"):
+        sealed(
+            ProofResult,
+            "proof-result-empty",
+            proof_ref=proof.exact_ref(),
+            adjudication_refs=(),
+            outcome=ProofResolution.UNRESOLVED,
+            retry_policy_ref=retry.exact_ref(),
+        )
+
+
+def test_library_snapshot_and_query_bind_publication_ids_to_subjects():
+    goal = sealed(
+        GoalContract,
+        "lib-id-goal",
+        lifecycle=GoalContractLifecycle.FROZEN,
+        goal_statement="library identity fixture",
+    )
+    query = sealed(
+        LibraryQueryContract,
+        "lib-id-query",
+        query_payload={},
+        required_capability_ids=("query",),
+        access_scope=("PROJECT",),
+    )
+    snapshot = sealed(
+        LibrarySnapshot,
+        "lib-id-snapshot",
+        backend_id="standalone",
+        backend_version="1",
+        snapshot_ref="snapshot-1",
+        publication_ids=("pub-1",),
+        subject_refs=(goal.exact_ref(),),
+    )
+    assert snapshot.publication_ids == ("pub-1",)
+    execution = sealed(
+        LibraryQueryExecution,
+        "lib-id-exec",
+        query_ref=query.exact_ref(),
+        backend_id="standalone",
+        backend_version="1",
+        snapshot_ref=snapshot.snapshot_ref,
+        status=LibraryExecutionStatus.SUCCEEDED,
+        complete=True,
+        result_publication_ids=("pub-1",),
+        result_subject_refs=(goal.exact_ref(),),
+    )
+    assert execution.result_publication_ids == ("pub-1",)
+    with pytest.raises(ValidationError, match="align"):
+        sealed(
+            LibraryQueryExecution,
+            "lib-id-exec-bad",
+            query_ref=query.exact_ref(),
+            backend_id="standalone",
+            backend_version="1",
+            snapshot_ref=snapshot.snapshot_ref,
+            status=LibraryExecutionStatus.SUCCEEDED,
+            complete=True,
+            result_publication_ids=(),
+            result_subject_refs=(goal.exact_ref(),),
         )

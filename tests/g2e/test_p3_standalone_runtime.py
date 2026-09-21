@@ -54,6 +54,7 @@ from g2e.engine import (
     evaluate_evidence_admission,
     evaluate_goal,
     materialize_evidence_admission,
+    materialize_proof_result,
     resolve_claim,
 )
 from g2e.standalone import (
@@ -262,10 +263,74 @@ def execute_and_adjudicate(runtime: StandaloneRuntime, program, score="0.90"):
         independence_satisfied=True,
     )
     runtime.store.record_adjudication(adjudication)
-    return report, admitted, adjudication
+    proof_result = materialize_proof_result(
+        program["proof"],
+        program["retry"],
+        (adjudication,),
+        invalid_attempt_count=0,
+        object_id=f"proof-result-{program['proof'].object_id}",
+        revision_id="r1",
+        provenance=P,
+    )
+    runtime.store.put(proof_result)
+    return report, admitted, adjudication, proof_result
 
 
-def make_capsule(*, object_id="capsule-1", resolution=ClaimResolution.FAIL, ancestors=()):
+def qualified_library_manifest(runtime: StandaloneRuntime):
+    return runtime.library.capability_manifest(
+        provenance=P,
+        qualification_status=BackendQualificationStatus.QUALIFIED,
+        evidence_refs=("fixture:p3",),
+    )
+
+
+def build_source_package(
+    runtime: StandaloneRuntime,
+    tmp_path: Path,
+    *,
+    resolution: ClaimResolution,
+    suffix: str,
+):
+    program = build_program(proof_id=f"proof-{suffix}")
+    score = "0.90" if resolution == ClaimResolution.PASS else "0.60"
+    report, admitted, adjudication, proof_result = execute_and_adjudicate(
+        runtime, program, score=score
+    )
+    package_dir = tmp_path / f"source-package-{suffix}"
+    verification = export_goal_result_package(
+        package_dir,
+        goal=program["goal"],
+        goal_closure=program["closure"],
+        claim_graph=program["graph"],
+        proofs=(program["proof"],),
+        proof_results=(proof_result,),
+        proof_dependencies=(
+            program["decision_rule"],
+            program["admission"],
+            program["retry"],
+            program["amendment"],
+            program["independence"],
+            program["resolution_policy"],
+        ),
+        evidence=(admitted,),
+        adjudications=(adjudication,),
+        reproducibility_manifest={
+            "decision_rule_hash": program["decision_rule"].content_hash,
+        },
+        package_lineage=runtime.store.events(),
+        provenance=P,
+    )
+    return program, package_dir, verification
+
+
+def make_capsule(
+    program,
+    verification,
+    *,
+    object_id="capsule-1",
+    resolution=ClaimResolution.FAIL,
+    ancestors=(),
+):
     signature = sealed(
         ClaimSignature,
         f"signature-{object_id}",
@@ -273,35 +338,14 @@ def make_capsule(*, object_id="capsule-1", resolution=ClaimResolution.FAIL, ance
         subject_population="standalone",
         outcome_metric="score",
     )
-    source_goal = sealed(
-        GoalContract,
-        f"source-goal-{object_id}",
-        lifecycle=GoalContractLifecycle.FROZEN,
-        goal_statement="source fixture",
-    )
-    policy = sealed(
-        ClaimResolutionPolicy,
-        f"source-policy-{object_id}",
-        mode="ALL_REQUIRED",
-        proof_ids=(f"source-proof-{object_id}",),
-    )
-    source_claim = sealed(
-        Claim,
-        f"source-claim-{object_id}",
-        proposition="source result",
-        claim_class="technical",
-        resolution_policy_ref=policy.exact_ref(),
-        lifecycle=ClaimLifecycle.CLOSED,
-        resolution=resolution,
-    )
     capsule = sealed(
         EvidenceCapsule,
         object_id,
-        source_package_type="CLAIM_RESULT",
-        source_package_ref=f"package-{object_id}",
-        source_package_seal_hash="b" * 64,
-        source_goal_ref=source_goal.exact_ref(),
-        source_claim_ref=source_claim.exact_ref(),
+        source_package_type="GOAL_RESULT",
+        source_package_ref=verification.seal.object_id,
+        source_package_seal_hash=verification.seal.content_hash,
+        source_goal_ref=program["goal"].exact_ref(),
+        source_claim_ref=program["claim"].exact_ref(),
         source_claim_resolution=resolution,
         claim_signature_ref=signature.exact_ref(),
         provenance_ancestor_refs=tuple(ancestors),
@@ -311,14 +355,13 @@ def make_capsule(*, object_id="capsule-1", resolution=ClaimResolution.FAIL, ance
         LibraryPublicationContract,
         f"publication-{object_id}",
         subject_ref=capsule.exact_ref(),
-        source_package_type="CLAIM_RESULT",
+        source_package_type="GOAL_RESULT",
         source_package_seal_hash=capsule.source_package_seal_hash,
         publication_scope="PROJECT",
         metadata_namespace="g2e.fixture",
         metadata_schema_version="1",
     )
     return capsule, contract
-
 
 def test_canonical_object_round_trip_survives_restart(tmp_path):
     runtime = StandaloneRuntime(tmp_path)
@@ -452,7 +495,7 @@ def test_protected_resource_recovery_fails_closed_and_preempts_attempt(tmp_path)
 def test_terminal_adjudication_is_immutable_across_restart(tmp_path):
     runtime = StandaloneRuntime(tmp_path)
     program = build_program()
-    report, admitted, adjudication = execute_and_adjudicate(runtime, program)
+    report, admitted, adjudication, proof_result = execute_and_adjudicate(runtime, program)
 
     reopened = StandaloneRuntime(tmp_path)
     loaded = reopened.store.load_adjudication(report.final_attempt.attempt_id)
@@ -487,12 +530,26 @@ def test_runtime_capability_manifest_fails_closed_for_missing_governance(tmp_pat
 
 def test_library_publishes_negative_results_and_queries_exactly(tmp_path):
     runtime = StandaloneRuntime(tmp_path)
-    capsule, contract = make_capsule(resolution=ClaimResolution.FAIL)
-    publication_id = runtime.library.publish_capsule(
-        capsule, contract, {"domain": "fixture", "result": "negative"}
+    program, package_dir, verification = build_source_package(
+        runtime, tmp_path, resolution=ClaimResolution.FAIL, suffix="negative"
     )
-    assert runtime.library.resolve_subject(publication_id) == capsule
-    assert runtime.library.verify_subject_integrity(capsule.exact_ref())
+    capsule, contract = make_capsule(
+        program, verification, resolution=ClaimResolution.FAIL
+    )
+    manifest = qualified_library_manifest(runtime)
+    publication_id = runtime.library.publish_capsule(
+        capsule,
+        contract,
+        {"domain": "fixture", "result": "negative"},
+        capability_manifest=manifest,
+        source_package_dir=package_dir,
+    )
+    assert runtime.library.resolve_subject(
+        publication_id, capability_manifest=manifest
+    ) == capsule
+    assert runtime.library.verify_subject_integrity(
+        capsule.exact_ref(), capability_manifest=manifest
+    )
 
     query = sealed(
         LibraryQueryContract,
@@ -505,16 +562,31 @@ def test_library_publishes_negative_results_and_queries_exactly(tmp_path):
         required_capability_ids=("query",),
         access_scope=("PROJECT",),
     )
-    execution = runtime.library.query_candidates(query, provenance=P)
+    execution = runtime.library.query_candidates(
+        query, provenance=P, capability_manifest=manifest
+    )
     assert execution.status.value == "SUCCEEDED"
     assert execution.complete
+    assert execution.result_publication_ids == (publication_id,)
     assert execution.result_subject_refs == (capsule.exact_ref(),)
 
 
 def test_library_zero_results_is_distinct_from_query_failure(tmp_path):
     runtime = StandaloneRuntime(tmp_path)
-    capsule, contract = make_capsule(resolution=ClaimResolution.FAIL)
-    runtime.library.publish_capsule(capsule, contract, {"domain": "fixture"})
+    program, package_dir, verification = build_source_package(
+        runtime, tmp_path, resolution=ClaimResolution.FAIL, suffix="zero"
+    )
+    capsule, contract = make_capsule(
+        program, verification, resolution=ClaimResolution.FAIL
+    )
+    manifest = qualified_library_manifest(runtime)
+    runtime.library.publish_capsule(
+        capsule,
+        contract,
+        {"domain": "fixture"},
+        capability_manifest=manifest,
+        source_package_dir=package_dir,
+    )
 
     zero_query = sealed(
         LibraryQueryContract,
@@ -523,7 +595,9 @@ def test_library_zero_results_is_distinct_from_query_failure(tmp_path):
         required_capability_ids=("query",),
         access_scope=("PROJECT",),
     )
-    zero = runtime.library.query_candidates(zero_query, provenance=P)
+    zero = runtime.library.query_candidates(
+        zero_query, provenance=P, capability_manifest=manifest
+    )
     assert zero.status.value == "SUCCEEDED"
     assert zero.complete is True
     assert zero.result_subject_refs == ()
@@ -535,7 +609,9 @@ def test_library_zero_results_is_distinct_from_query_failure(tmp_path):
         required_capability_ids=("query",),
         access_scope=("PROJECT",),
     )
-    failed = runtime.library.query_candidates(bad_query, provenance=P)
+    failed = runtime.library.query_candidates(
+        bad_query, provenance=P, capability_manifest=manifest
+    )
     assert failed.status.value == "FAILED"
     assert failed.complete is False
     assert failed.result_subject_refs == ()
@@ -544,9 +620,19 @@ def test_library_zero_results_is_distinct_from_query_failure(tmp_path):
 
 def test_library_snapshot_replay_survives_withdrawal(tmp_path):
     runtime = StandaloneRuntime(tmp_path)
-    capsule, contract = make_capsule()
+    program, package_dir, verification = build_source_package(
+        runtime, tmp_path, resolution=ClaimResolution.FAIL, suffix="replay"
+    )
+    capsule, contract = make_capsule(
+        program, verification, resolution=ClaimResolution.FAIL
+    )
+    manifest = qualified_library_manifest(runtime)
     publication_id = runtime.library.publish_capsule(
-        capsule, contract, {"domain": "fixture"}
+        capsule,
+        contract,
+        {"domain": "fixture"},
+        capability_manifest=manifest,
+        source_package_dir=package_dir,
     )
     query = sealed(
         LibraryQueryContract,
@@ -555,18 +641,27 @@ def test_library_snapshot_replay_survives_withdrawal(tmp_path):
         required_capability_ids=("query", "snapshot"),
         access_scope=("PROJECT",),
     )
-    first = runtime.library.query_candidates(query, provenance=P)
+    first = runtime.library.query_candidates(
+        query, provenance=P, capability_manifest=manifest
+    )
     assert first.result_subject_refs == (capsule.exact_ref(),)
 
-    runtime.library.withdraw_publication(publication_id, "fixture withdrawal")
+    runtime.library.withdraw_publication(
+        publication_id,
+        "fixture withdrawal",
+        capability_manifest=manifest,
+    )
     current = runtime.library.query_candidates(
         query,
         provenance=P,
         execution_id="query-current",
+        capability_manifest=manifest,
     )
     assert current.result_subject_refs == ()
 
-    replay = runtime.library.replay_query(first, query, provenance=P)
+    replay = runtime.library.replay_query(
+        first, query, provenance=P, capability_manifest=manifest
+    )
     assert replay.status.value == "SUCCEEDED"
     assert replay.complete
     assert replay.snapshot_ref == first.snapshot_ref
@@ -582,9 +677,26 @@ def test_library_provenance_and_capability_qualification(tmp_path):
         lifecycle=EvidenceLifecycle.ADMITTED,
         payload_digest="a" * 64,
     ).exact_ref()
-    capsule, contract = make_capsule(ancestors=(ancestor,))
-    runtime.library.publish_capsule(capsule, contract, {})
-    assert runtime.library.get_provenance_ancestors(capsule.exact_ref()) == (ancestor,)
+    program, package_dir, verification = build_source_package(
+        runtime, tmp_path, resolution=ClaimResolution.FAIL, suffix="provenance"
+    )
+    capsule, contract = make_capsule(
+        program,
+        verification,
+        resolution=ClaimResolution.FAIL,
+        ancestors=(ancestor,),
+    )
+    manifest = qualified_library_manifest(runtime)
+    runtime.library.publish_capsule(
+        capsule,
+        contract,
+        {},
+        capability_manifest=manifest,
+        source_package_dir=package_dir,
+    )
+    assert runtime.library.get_provenance_ancestors(
+        capsule.exact_ref(), capability_manifest=manifest
+    ) == (ancestor,)
 
     unqualified = runtime.library.capability_manifest(provenance=P)
     with pytest.raises(UnsupportedCapabilityError):
@@ -601,7 +713,7 @@ def test_library_provenance_and_capability_qualification(tmp_path):
 def test_result_package_seal_detects_mutation_and_unclassified_files(tmp_path):
     runtime = StandaloneRuntime(tmp_path / "runtime")
     program = build_program()
-    report, admitted, adjudication = execute_and_adjudicate(runtime, program)
+    report, admitted, adjudication, proof_result = execute_and_adjudicate(runtime, program)
     proof_closure = close_proof(
         adjudication, program["retry"], invalid_attempts_including_current=0
     )
@@ -617,16 +729,17 @@ def test_result_package_seal_detects_mutation_and_unclassified_files(tmp_path):
         goal_closure=program["closure"],
         claim_graph=program["graph"],
         proofs=(program["proof"],),
+        proof_results=(proof_result,),
         proof_dependencies=(
             program["decision_rule"],
             program["admission"],
             program["retry"],
             program["amendment"],
             program["independence"],
+            program["resolution_policy"],
         ),
         evidence=(admitted,),
         adjudications=(adjudication,),
-        claim_resolutions={program["claim"].object_id: claim_resolution},
         reproducibility_manifest={
             "decision_rule_ref": program["decision_rule"].exact_ref().model_dump(mode="json"),
             "proof_ref": program["proof"].exact_ref().model_dump(mode="json"),
@@ -655,7 +768,7 @@ def test_result_package_seal_detects_mutation_and_unclassified_files(tmp_path):
 def test_result_package_rejects_unclassified_extra_file(tmp_path):
     runtime = StandaloneRuntime(tmp_path / "runtime")
     program = build_program()
-    report, admitted, adjudication = execute_and_adjudicate(runtime, program)
+    report, admitted, adjudication, proof_result = execute_and_adjudicate(runtime, program)
     package_dir = tmp_path / "goal-result"
     export_goal_result_package(
         package_dir,
@@ -663,10 +776,10 @@ def test_result_package_rejects_unclassified_extra_file(tmp_path):
         goal_closure=program["closure"],
         claim_graph=program["graph"],
         proofs=(program["proof"],),
-        proof_dependencies=(program["decision_rule"],),
+        proof_results=(proof_result,),
+        proof_dependencies=(program["decision_rule"], program["resolution_policy"]),
         evidence=(admitted,),
         adjudications=(adjudication,),
-        claim_resolutions={program["claim"].object_id: ClaimResolution.PASS},
         reproducibility_manifest={},
         package_lineage=(),
         provenance=P,
@@ -679,7 +792,7 @@ def test_result_package_rejects_unclassified_extra_file(tmp_path):
 def test_external_reference_resolution_policy_is_enforced(tmp_path):
     runtime = StandaloneRuntime(tmp_path / "runtime")
     program = build_program()
-    report, admitted, adjudication = execute_and_adjudicate(runtime, program)
+    report, admitted, adjudication, proof_result = execute_and_adjudicate(runtime, program)
     external_bytes = b"immutable external artifact"
     external = PackageExternalReference(
         ref_id="artifact",
@@ -694,10 +807,10 @@ def test_external_reference_resolution_policy_is_enforced(tmp_path):
         goal_closure=program["closure"],
         claim_graph=program["graph"],
         proofs=(program["proof"],),
-        proof_dependencies=(program["decision_rule"],),
+        proof_results=(proof_result,),
+        proof_dependencies=(program["decision_rule"], program["resolution_policy"]),
         evidence=(admitted,),
         adjudications=(adjudication,),
-        claim_resolutions={program["claim"].object_id: ClaimResolution.PASS},
         reproducibility_manifest={},
         package_lineage=(),
         provenance=P,
@@ -734,7 +847,7 @@ def test_complete_bounded_program_runs_without_gwf_and_preserves_decision_rule(t
             program["proof"],
         )
     )
-    report, admitted, adjudication = execute_and_adjudicate(runtime, program)
+    report, admitted, adjudication, proof_result = execute_and_adjudicate(runtime, program)
     closure = close_proof(
         adjudication, program["retry"], invalid_attempts_including_current=0
     )
@@ -764,16 +877,17 @@ def test_complete_bounded_program_runs_without_gwf_and_preserves_decision_rule(t
         goal_closure=program["closure"],
         claim_graph=program["graph"],
         proofs=(loaded_proof,),
+        proof_results=(proof_result,),
         proof_dependencies=(
             loaded_rule,
             program["admission"],
             program["retry"],
             program["amendment"],
             program["independence"],
+            program["resolution_policy"],
         ),
         evidence=(admitted,),
         adjudications=(loaded_adj,),
-        claim_resolutions={program["claim"].object_id: claim_resolution},
         reproducibility_manifest={
             "decision_rule_hash": loaded_rule.content_hash,
             "qualified_core": "c2fc03a7470b835904252246421e1b8d9a1ec5ef",
@@ -783,3 +897,85 @@ def test_complete_bounded_program_runs_without_gwf_and_preserves_decision_rule(t
     )
     verified = verify_goal_result_package(package_dir)
     assert verified.seal.manifest_ref == verified.manifest.exact_ref()
+
+
+
+def test_library_publish_requires_qualified_capability_and_verified_source(tmp_path):
+    runtime = StandaloneRuntime(tmp_path / "runtime")
+    program, package_dir, verification = build_source_package(
+        runtime, tmp_path, resolution=ClaimResolution.FAIL, suffix="verify-source"
+    )
+    capsule, contract = make_capsule(
+        program, verification, resolution=ClaimResolution.FAIL
+    )
+    unqualified = runtime.library.capability_manifest(provenance=P)
+    with pytest.raises(UnsupportedCapabilityError):
+        runtime.library.publish_capsule(
+            capsule,
+            contract,
+            {},
+            capability_manifest=unqualified,
+            source_package_dir=package_dir,
+        )
+
+    qualified = qualified_library_manifest(runtime)
+    forged = EvidenceCapsule.sealed(
+        **{
+            **capsule.model_dump(mode="python", exclude={"content_hash"}),
+            "revision_id": "forged",
+            "source_package_seal_hash": "f" * 64,
+        }
+    )
+    forged_contract = LibraryPublicationContract.sealed(
+        **{
+            **contract.model_dump(mode="python", exclude={"content_hash"}),
+            "revision_id": "forged",
+            "subject_ref": forged.exact_ref(),
+            "source_package_seal_hash": forged.source_package_seal_hash,
+        }
+    )
+    with pytest.raises(StandaloneRuntimeError, match="verified source package seal"):
+        runtime.library.publish_capsule(
+            forged,
+            forged_contract,
+            {},
+            capability_manifest=qualified,
+            source_package_dir=package_dir,
+        )
+
+
+def test_result_package_derives_fail_from_proof_result_not_caller_claim(tmp_path):
+    runtime = StandaloneRuntime(tmp_path / "runtime")
+    program = build_program()
+    report, admitted, adjudication, proof_result = execute_and_adjudicate(
+        runtime, program, score="0.60"
+    )
+    assert proof_result.outcome.value == "FAIL"
+    package_dir = tmp_path / "derived-fail"
+    export_goal_result_package(
+        package_dir,
+        goal=program["goal"],
+        goal_closure=program["closure"],
+        claim_graph=program["graph"],
+        proofs=(program["proof"],),
+        proof_results=(proof_result,),
+        proof_dependencies=(
+            program["decision_rule"],
+            program["admission"],
+            program["retry"],
+            program["amendment"],
+            program["independence"],
+            program["resolution_policy"],
+        ),
+        evidence=(admitted,),
+        adjudications=(adjudication,),
+        reproducibility_manifest={},
+        package_lineage=runtime.store.events(),
+        provenance=P,
+    )
+    final = json.loads((package_dir / "FINAL_VERDICT.json").read_text())
+    assert final["verdict"] == GoalVerdict.FALSIFIED.value
+    claim_resolution = json.loads(
+        (package_dir / "claims" / "claim-1" / "RESOLUTION.json").read_text()
+    )
+    assert claim_resolution["resolution"] == ClaimResolution.FAIL.value
