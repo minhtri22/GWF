@@ -61,6 +61,7 @@ def test_config_toml_is_exact_restricted_profile():
     module = _load()
     raw = module.build_config_toml()
     parsed = tomllib.loads(raw.decode("utf-8"))
+    assert parsed["default_permissions"] == module.PROFILE_ID
     profile = parsed["permissions"][module.PROFILE_ID]
     assert "extends" not in profile
     assert profile["network"]["enabled"] is False
@@ -108,6 +109,7 @@ def test_execution_config_covers_profile_and_zero_retry():
     cfg = pack["execution_config"]
     assert cfg["experimental_api"] is True
     assert cfg["permission_profile_id"] == module.PROFILE_ID
+    assert cfg["default_permission_profile_id"] == module.PROFILE_ID
     assert cfg["network_allowed"] is False
     assert cfg["interactive_approval_allowed"] is False
     assert cfg["mcp_count_required"] == 0
@@ -126,6 +128,10 @@ def test_execution_config_covers_profile_and_zero_retry():
         (
             lambda p: p["execution_config"].__setitem__("network_allowed", True),
             "network authority drift",
+        ),
+        (
+            lambda p: p["execution_config"].__setitem__("default_permission_profile_id", ":workspace"),
+            "default permission selection drift",
         ),
         (
             lambda p: p["execution_config"].__setitem__("max_invalid_replacement_attempts", 1),
