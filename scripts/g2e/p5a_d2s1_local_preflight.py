@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import queue
+import re
 import subprocess
 import threading
 import time
@@ -46,6 +47,34 @@ def sha256_file(path: Path) -> str:
 
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def redact_setup_error(value: str) -> str:
+    redacted = value
+    candidates = [
+        ("<userprofile>", os.environ.get("USERPROFILE")),
+        ("<userprofile>", str(Path.home()) if str(Path.home()) else None),
+        ("<user>", os.environ.get("USERNAME")),
+    ]
+    seen = set()
+    for replacement, candidate in sorted(
+        candidates,
+        key=lambda item: len(item[1] or ""),
+        reverse=True,
+    ):
+        if not candidate:
+            continue
+        key = candidate.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        redacted = re.sub(
+            re.escape(candidate),
+            replacement,
+            redacted,
+            flags=re.IGNORECASE,
+        )
+    return redacted[:4096]
 
 
 def require_under(path: Path, root: Path, label: str) -> Path:
@@ -292,6 +321,10 @@ def main() -> int:
         "windows_sandbox_setup_started": False,
         "windows_sandbox_setup_completed": False,
         "windows_sandbox_setup_success": None,
+        "windows_sandbox_setup_mode": None,
+        "windows_sandbox_setup_error_code": None,
+        "windows_sandbox_setup_error_redacted": None,
+        "windows_sandbox_setup_error_sha256": None,
         "windows_sandbox_readiness_after": None,
         "config_toml_sha256_post_setup": None,
         "configured_mcp_count": None,
@@ -392,6 +425,19 @@ def main() -> int:
             )
             setup_params = setup_notification.get("params") or {}
             evidence["windows_sandbox_setup_completed"] = True
+            evidence["windows_sandbox_setup_mode"] = setup_params.get("mode")
+            setup_error = setup_params.get("error")
+            if isinstance(setup_error, str) and setup_error:
+                evidence["windows_sandbox_setup_error_sha256"] = sha256_bytes(
+                    setup_error.encode("utf-8")
+                )
+                evidence["windows_sandbox_setup_error_redacted"] = (
+                    redact_setup_error(setup_error)
+                )
+                prefix = setup_error.split(":", 1)[0].strip()
+                if re.fullmatch(r"[a-z0-9_]+", prefix):
+                    evidence["windows_sandbox_setup_error_code"] = prefix
+
             evidence["windows_sandbox_setup_success"] = (
                 setup_params.get("mode") == "elevated"
                 and setup_params.get("success") is True
@@ -574,6 +620,10 @@ def main() -> int:
             "windows_sandbox_setup_started": evidence["windows_sandbox_setup_started"],
             "windows_sandbox_setup_completed": evidence["windows_sandbox_setup_completed"],
             "windows_sandbox_setup_success": evidence["windows_sandbox_setup_success"],
+            "windows_sandbox_setup_mode": evidence["windows_sandbox_setup_mode"],
+            "windows_sandbox_setup_error_code": evidence["windows_sandbox_setup_error_code"],
+            "windows_sandbox_setup_error_redacted": evidence["windows_sandbox_setup_error_redacted"],
+            "windows_sandbox_setup_error_sha256": evidence["windows_sandbox_setup_error_sha256"],
             "windows_sandbox_readiness_after": evidence["windows_sandbox_readiness_after"],
             "config_toml_sha256_post_setup": evidence["config_toml_sha256_post_setup"],
             "configured_mcp_count": evidence["configured_mcp_count"],
