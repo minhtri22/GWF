@@ -238,15 +238,31 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P5 — QA run + finding persistence
 
 - **Complexity:** 3
-- **HARD dependencies:** DG-P0, DG-P4.
+- **Status:** **AUTHORIZED / PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **HARD dependencies:** DG-P0, DG-P4; both satisfied.
+- **Frozen specification:** `docs/DG_P5_QA_FINDING_PERSISTENCE_SPEC.md`, commit `9e846621faf7b1a81c605ad624f4abbc6c354470`, blob `29ca1c85f665468aade7fc555b634a134af9a46a`.
+- **Document QA:** `docs/DOCUMENT_QA_DG_P5_PREIMPLEMENTATION.md` — PASS.
+- **Reuse verdict:** `DocumentQARecord` and persisted ValidatorExecution reuse PRIM-EVIDENCE. Existing primitives are insufficient for mutable DocumentFinding lifecycle, so exactly one `document_findings` current-state table is justified. Waivers reuse Proposal/Approval; transition history reuses Audit.
+- **Schema decision:** no QA-record table, no validator-execution table, no waiver table; one finding table only.
 - **Governing document:** `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §§8.5–8.6, 17–18.
-- **Acceptance checklist:**
-  - [ ] one `DocumentQARecord` represents one exact QA run;
-  - [ ] zero-to-many `DocumentFinding` records;
-  - [ ] finding status lifecycle enforced;
-  - [ ] QA bound to exact revision/change set;
-  - [ ] prior QA cannot validate a new revision;
-  - [ ] QA PASS.
+- **Pre-implementation checklist:**
+  - [x] one `DocumentQARecord` maps to one exact PRIM-EVIDENCE record;
+  - [x] zero-to-many finding relation frozen;
+  - [x] finding lifecycle transitions frozen;
+  - [x] exact revision freshness invariant frozen;
+  - [x] prior QA cannot validate a new revision;
+  - [x] waiver/approval reuse frozen;
+  - [x] Evidence transactional extension bounded;
+  - [x] D5-F1..D5-F20 frozen;
+  - [x] document QA PASS.
+- **Implementation acceptance remains open:**
+  - [ ] migration adds only `document_findings`;
+  - [ ] Evidence writer transactional extension preserves existing callers;
+  - [ ] QA/finding service implementation PASS;
+  - [ ] D5-F1..D5-F20 PASS;
+  - [ ] existing Evidence/Gate/Failure regressions PASS;
+  - [ ] no DG-P6/P11+ semantics;
+  - [ ] implementation QA PASS.
 
 ### DG-P6 — Lifecycle + validity mapping
 
@@ -923,22 +939,22 @@ No item may be marked complete with unresolved required handoff fields.
 At this implementation state:
 
 ```text
-DG-W1
+DG-P4
       PASS / FORMALLY CLOSED
-      final closure HEAD 2a0bb00367859166230d11d12ea482c253138dc7
-      final exact-head run 35580754186 PASS
-       ↓
-DG-P4 — Document facade / identity mapping
-      PASS / FORMALLY CLOSED
-      handoff HEAD 06e477b83f503c0a2eb0cdff16c33a8687545f1b
-      exact-head run 35582417034 PASS
+      final closure HEAD a11d9ad205272c4c16c49eddb398dee4c8a0ff05
+      final exact-head run 35582578994 PASS
        ↓
 DG-P5 — QA run + finding persistence
-      NEXT / NOT_STARTED
+      AUTHORIZED
+      PRE-IMPLEMENTATION SPEC FROZEN
+      DEPENDENCY / DOCUMENT QA PASS
+      IMPLEMENTATION NOT_STARTED
        ↓
 STOP
 ```
 
-DG-P4 is the active frontier. Its implementation must reuse existing Artifact/Revision storage and may add only the bounded core-artifact admission + facade described by the frozen DG-P4 specification. It must not open DG-P5/P6 or later-wave semantics automatically.
+DG-P5 is the active frontier. Implementation may reuse PRIM-EVIDENCE for QA/execution records, add only the qualified `document_findings` current-state table, and make only the bounded Evidence transactional extension required for atomic QA persistence.
+
+DG-P6/P11 and later-wave semantics are not opened by this qualification.
 
 GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.

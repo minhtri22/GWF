@@ -822,3 +822,102 @@ DG-P5                     = NEXT / NOT_STARTED
 DG-W2                     = OPEN
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+## 34. DG-P5 pre-implementation qualification findings
+
+### F-64 — HIGH — RESOLVED
+
+- **Initial finding:** Creating a dedicated `document_qa_records` table would duplicate PRIM-EVIDENCE identity, subject binding, payload hashing, producer attribution, timestamps and audit semantics.
+- **Resolution:** `DocumentQARecord.qa_record_id = Evidence.evidence_id` with reserved evidence type `document_qa_record`.
+- **Final status:** `RESOLVED`
+
+### F-65 — HIGH — RESOLVED
+
+- **Initial finding:** None of Evidence, FailureRecord, Gate or Artifact/Revision can represent the required mutable DocumentFinding lifecycle without semantic distortion.
+- **Resolution:** exactly one dedicated `document_findings` current-state table is justified. It remains linked to the originating QA Evidence row; transition history uses append-only Audit.
+- **Final status:** `RESOLVED`
+
+### F-66 — HIGH — RESOLVED
+
+- **Initial finding:** current `ExecutionKernel.add_evidence()` commits internally, so QA Evidence + finding rows cannot be created atomically by composition.
+- **Resolution:** implementation must make a bounded transactional extension to the existing Evidence writer while preserving existing `add_evidence()` behavior for all current callers. A duplicate Evidence writer/store is forbidden.
+- **Evidence:** `execution.py` blob `87dfa05789acc71c7681c3ca1e6e3bd9895025d3`.
+- **Final status:** `RESOLVED`
+
+### F-67 — HIGH — RESOLVED
+
+- **Initial finding:** prior QA PASS could be misread as validating a newly created document revision.
+- **Resolution:** QA is current only when its exact subject revision equals the document's current revision. Historical QA is never rewritten or transferred.
+- **Final status:** `RESOLVED`
+
+### F-68 — MEDIUM — RESOLVED
+
+- **Initial finding:** the governing specification requires finding severity but does not enumerate severity values.
+- **Resolution:** DG-P5 freezes `INFO / LOW / MEDIUM / HIGH / CRITICAL`; unknown values fail closed.
+- **Final status:** `RESOLVED`
+
+### F-69 — HIGH — RESOLVED
+
+- **Initial finding:** implementing a standalone finding-waiver store would duplicate approval/authority semantics and risk treating WAIVED as equivalent to verified resolution.
+- **Resolution:** reuse existing Proposal/Approval; `waiver_ref` points to approved authority evidence. SECURITY_LEAK, RESEARCH_LOCK_VIOLATION and DUPLICATE_AUTHORITY are non-waivable at minimum. WAIVED remains distinct from VERIFIED_RESOLVED.
+- **Final status:** `RESOLVED`
+
+### F-70 — MEDIUM — RESOLVED
+
+- **Initial finding:** cross-domain QA Evidence type names could collide with domain-declared evidence semantics.
+- **Resolution:** reserve `document_validator_execution` and `document_qa_record` as core evidence IDs and fail closed on incompatible domain collision.
+- **Final status:** `RESOLVED`
+
+### F-71 — HIGH — RESOLVED
+
+- **Initial finding:** the conceptual QA subject contract includes DocumentChangeSet, but DG-P11 has not implemented that object yet.
+- **Resolution:** P5 may reserve `DOCUMENT_CHANGE_SET` as a subject kind but must reject unresolved/dangling change-set refs. P5 must not create a parallel placeholder change-set subsystem.
+- **Final status:** `RESOLVED`
+
+## 35. DG-P5 pre-implementation qualification checklist
+
+- [x] DG-P4 final formal-close HEAD verified.
+- [x] DG-P4 final exact-head workflow `35582578994` PASS verified.
+- [x] governing §§8.5–8.6, 17–18 loaded.
+- [x] PRIM-EVIDENCE inventoried.
+- [x] PRIM-GATE inventoried.
+- [x] PRIM-FAILURE inventoried.
+- [x] Artifact/Revision fit evaluated.
+- [x] Proposal/Approval fit evaluated.
+- [x] append-only Audit fit evaluated.
+- [x] DocumentQARecord reuse proof PASS.
+- [x] ValidatorExecution Evidence reuse proof PASS.
+- [x] dedicated QA table rejected.
+- [x] dedicated validator-execution table rejected.
+- [x] DocumentFinding existing-primitive reuse rejected with semantic reason.
+- [x] exactly one new finding state table justified.
+- [x] waiver subsystem reuse frozen.
+- [x] exact-revision freshness invariant frozen.
+- [x] finding lifecycle and legal transitions frozen.
+- [x] finding fingerprint requirement frozen.
+- [x] Evidence atomic-composition gap bounded.
+- [x] D5-F1..D5-F20 frozen.
+- [x] no DG-P6 lifecycle/validity mutation authorized.
+- [x] no DG-P11 placeholder implementation authorized.
+- [x] no GAC/RA/G2E authorized.
+- [x] exact document QA bound to DG-P5 spec blob.
+- [x] implementation has not started.
+
+## 36. Current aggregate status after DG-P5 pre-implementation qualification
+
+**OPEN = 0**
+
+All findings F-01 through F-71 recorded in this checklist are resolved.
+
+```text
+DG-P4                     = FORMALLY_CLOSED
+DG-P5 authorization       = PASS
+DG-P5 specification       = FROZEN
+DG-P5 dependency qualify  = PASS
+DG-P5 document QA         = PASS
+DG-P5 implementation      = NOT_STARTED
+DG-P5 overall             = NOT_YET_PASS
+DG-P6                     = NOT_STARTED
+DG-W2                     = OPEN
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+```
