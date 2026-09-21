@@ -178,10 +178,34 @@ class RpcClient:
                     "method": msg.get("method"),
                 })
                 continue
+            if "method" in msg and "id" not in msg:
+                self.pending_notifications.append(msg)
+                continue
             if msg.get("id") == req_id:
                 if "error" in msg:
                     raise RuntimeError(f"RPC_ERROR id={req_id}:{msg['error']}")
                 return msg.get("result")
+
+    def wait_for_notification(self, method: str, deadline: float):
+        for idx, msg in enumerate(self.pending_notifications):
+            if msg.get("method") == method:
+                return self.pending_notifications.pop(idx)
+
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError(f"timeout waiting for notification={method}")
+            msg = self.next_message(remaining)
+            if "method" in msg and "id" in msg:
+                self.unexpected_server_requests.append({
+                    "id": msg.get("id"),
+                    "method": msg.get("method"),
+                })
+                continue
+            if msg.get("method") == method and "id" not in msg:
+                return msg
+            if "method" in msg and "id" not in msg:
+                self.pending_notifications.append(msg)
 
 
 def main() -> int:
@@ -263,6 +287,13 @@ def main() -> int:
         "harness_sha256": EXPECTED_HARNESS_SHA256,
         "config_toml_sha256": EXPECTED_CONFIG_TOML_SHA256,
         "execution_config_hash": EXPECTED_EXECUTION_CONFIG_HASH,
+        "windows_sandbox_readiness_before": None,
+        "windows_sandbox_setup_requested": False,
+        "windows_sandbox_setup_started": False,
+        "windows_sandbox_setup_completed": False,
+        "windows_sandbox_setup_success": None,
+        "windows_sandbox_readiness_after": None,
+        "config_toml_sha256_post_setup": None,
         "configured_mcp_count": None,
         "installed_app_count": None,
         "callable_or_enabled_app_count": None,
@@ -318,6 +349,90 @@ def main() -> int:
         })
         client.wait_for_id(1, deadline)
         client.send({"method": "initialized", "params": {}})
+
+        client.send({
+            "method": "windowsSandbox/readiness",
+            "id": 20,
+            "params": None,
+        })
+        readiness_before = client.wait_for_id(20, deadline)
+        readiness_before_status = (
+            readiness_before.get("status")
+            if isinstance(readiness_before, dict)
+            else None
+        )
+        evidence["windows_sandbox_readiness_before"] = readiness_before_status
+
+        if readiness_before_status == "updateRequired":
+            evidence["windows_sandbox_setup_requested"] = True
+            client.send({
+                "method": "windowsSandbox/setupStart",
+                "id": 21,
+                "params": {
+                    "mode": "elevated",
+                    "cwd": str(exec_dir),
+                },
+            })
+            setup_response = client.wait_for_id(
+                21,
+                time.monotonic() + STARTUP_TIMEOUT_S,
+            )
+            evidence["windows_sandbox_setup_started"] = (
+                isinstance(setup_response, dict)
+                and setup_response.get("started") is True
+            )
+            if evidence["windows_sandbox_setup_started"] is not True:
+                raise RuntimeError(
+                    "PRETURN_BLOCKED_WINDOWS_SANDBOX_SETUP_NOT_STARTED"
+                )
+
+            setup_notification = client.wait_for_notification(
+                "windowsSandbox/setupCompleted",
+                time.monotonic() + WINDOWS_SANDBOX_SETUP_TIMEOUT_S,
+            )
+            setup_params = setup_notification.get("params") or {}
+            evidence["windows_sandbox_setup_completed"] = True
+            evidence["windows_sandbox_setup_success"] = (
+                setup_params.get("mode") == "elevated"
+                and setup_params.get("success") is True
+            )
+            if evidence["windows_sandbox_setup_success"] is not True:
+                raise RuntimeError(
+                    "PRETURN_BLOCKED_WINDOWS_SANDBOX_SETUP_FAILED"
+                )
+
+        elif readiness_before_status != "ready":
+            raise RuntimeError(
+                f"PRETURN_BLOCKED_WINDOWS_SANDBOX_READINESS:{readiness_before_status}"
+            )
+
+        client.send({
+            "method": "windowsSandbox/readiness",
+            "id": 22,
+            "params": None,
+        })
+        readiness_after = client.wait_for_id(
+            22,
+            time.monotonic() + STARTUP_TIMEOUT_S,
+        )
+        readiness_after_status = (
+            readiness_after.get("status")
+            if isinstance(readiness_after, dict)
+            else None
+        )
+        evidence["windows_sandbox_readiness_after"] = readiness_after_status
+        if readiness_after_status != "ready":
+            raise RuntimeError(
+                f"PRETURN_BLOCKED_WINDOWS_SANDBOX_NOT_READY:{readiness_after_status}"
+            )
+
+        evidence["config_toml_sha256_post_setup"] = sha256_file(
+            codex_home / "config.toml"
+        )
+        if evidence["config_toml_sha256_post_setup"] != EXPECTED_CONFIG_TOML_SHA256:
+            raise RuntimeError(
+                "CONFIG_TOML_MUTATED_BY_WINDOWS_SANDBOX_SETUP"
+            )
 
         client.send({
             "method": "mcpServerStatus/list",
@@ -454,6 +569,13 @@ def main() -> int:
         print(json.dumps({
             "attempt_id": ATTEMPT_ID,
             "preturn_gate_pass": evidence.get("preturn_gate_pass", False),
+            "windows_sandbox_readiness_before": evidence["windows_sandbox_readiness_before"],
+            "windows_sandbox_setup_requested": evidence["windows_sandbox_setup_requested"],
+            "windows_sandbox_setup_started": evidence["windows_sandbox_setup_started"],
+            "windows_sandbox_setup_completed": evidence["windows_sandbox_setup_completed"],
+            "windows_sandbox_setup_success": evidence["windows_sandbox_setup_success"],
+            "windows_sandbox_readiness_after": evidence["windows_sandbox_readiness_after"],
+            "config_toml_sha256_post_setup": evidence["config_toml_sha256_post_setup"],
             "configured_mcp_count": evidence["configured_mcp_count"],
             "installed_app_count": evidence["installed_app_count"],
             "callable_or_enabled_app_count": evidence["callable_or_enabled_app_count"],
