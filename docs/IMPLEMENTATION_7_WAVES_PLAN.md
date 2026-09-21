@@ -12,7 +12,9 @@ DG-P0 has formal-closed on implementation head `ef322ff0618b83fbfaef40b096cb43f5
 
 DG-P1 has formal-closed on implementation head `385016bf6d0c3df512bae6fa8776cca32eac83ee`; exact implementation workflow `35563206375` passed.
 
-This document does not automatically authorize the next implementation item. **DG-P2 is now the next planned item**, but implementation requires a later explicit authorization.
+DG-P2 implementation has qualified on head `eb71f30916cca08e7df418e1ffbc2e91eca91a13`; workflow `35564566332` passed after preserving failed qualification run `35564490278`.
+
+This document does not automatically authorize the next implementation item. **DG-P3 is now the next planned item**, but implementation requires a later explicit authorization.
 
 ## 2. Governing documents
 
@@ -130,15 +132,21 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P2 — Lychee link adapter
 
 - **Complexity:** 2
+- **Status:** **COMPLETED / PASS**
+- **Completion evidence:** implementation head `eb71f30916cca08e7df418e1ffbc2e91eca91a13`; workflow `35564566332` PASS; evidence artifact `10623705600`.
+- **Negative evidence preserved:** initial qualification run `35564490278` FAIL before tests because the release archive executable path was assumed incorrectly; repaired without changing Lychee version, config semantics or acceptance gates.
 - **HARD dependencies:** DG-P0.
 - **EXTERNAL dependency:** Lychee capability/version/config revalidation.
 - **Governing document:** `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §§18–21.
 - **Acceptance checklist:**
-  - [ ] adapter uses normalized contract;
-  - [ ] internal/external link results distinguishable;
-  - [ ] network/tool failure distinguished from broken-link finding;
-  - [ ] deterministic local fixture PASS/FAIL evidence;
-  - [ ] QA PASS.
+  - [x] adapter uses normalized contract;
+  - [x] internal/external link results distinguishable;
+  - [x] network/tool failure distinguished from broken-link finding;
+  - [x] deterministic local fixture PASS/FAIL evidence;
+  - [x] exact Lychee 0.24.2 release/config identity attributable;
+  - [x] source non-mutation verified;
+  - [x] no auto-fix/link repair mutation;
+  - [x] QA PASS.
 
 ### DG-P3 — Git/blob revision evidence resolver
 
@@ -156,15 +164,15 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 
 ### Wave 1 exit gate — DG-W1
 
-Wave 1 remains open after DG-P1. Completion of DG-P1 does not authorize DG-P2/P3 automatically.
+Wave 1 remains open after DG-P2. Completion of DG-P2 does not authorize DG-P3 automatically.
 
 - [x] DG-P0 PASS
 - [x] DG-P1 PASS
-- [ ] DG-P2 PASS
+- [x] DG-P2 PASS
 - [ ] DG-P3 PASS
-- [x] markdownlint and Vale outputs normalize through the shared validator contract
-- [ ] no authoritative document-state runtime added yet
-- [ ] handoff package records exact tool versions/config fingerprints
+- [x] markdownlint, Vale and Lychee outputs normalize through the shared validator contract
+- [x] no authoritative document-state runtime added yet
+- [ ] Wave-1 handoff package records exact tool versions/config fingerprints
 
 ---
 

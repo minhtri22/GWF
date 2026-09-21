@@ -452,3 +452,60 @@ All findings F-01 through F-44 recorded in this checklist are resolved. DG-P1 re
 **OPEN = 0**
 
 All findings F-01 through F-47 recorded in this checklist are resolved. DG-P2 remains unauthorized.
+
+## 17. DG-P2 implementation findings
+
+### F-48 — MEDIUM — RESOLVED
+
+- **Initial finding:** The first real-tool workflow `35564490278` at implementation commit `1df9341a4b8c6e5daab792c6d3801c9b0ea19006` verified the exact Lychee 0.24.2 archive checksum successfully, but the install step assumed the executable was at the archive root. The upstream release archive actually wraps files in `lychee-x86_64-unknown-linux-gnu/`, so qualification stopped before tests.
+- **Remediation:** The workflow now resolves the exact packaged path `lychee-x86_64-unknown-linux-gnu/lychee` and asserts `test -x` before execution.
+- **Evidence:** failed run `35564490278` preserved; repair commit `eb71f30916cca08e7df418e1ffbc2e91eca91a13`; repair workflow `35564566332` PASS.
+- **Final status:** `RESOLVED`
+
+### F-49 — HIGH — RESOLVED
+
+- **Initial finding:** Lychee exit code 2 represents both ordinary broken links and transport-level failures. Treating exit code 2 alone as a document finding would conflate content invalidity with network/tool uncertainty.
+- **Remediation:** `LycheeAdapter` parses the pinned JSON schema. Internal missing-file errors and external HTTP responses with an explicit status code normalize as link findings; external errors without an HTTP code and all timeout-map entries fail closed as `TOOL_ERROR/NOT_EVALUATED` with `NETWORK_FAILURE`.
+- **Evidence:** unit fixtures cover internal broken, external HTTP broken, network failure and timeout semantics; real gate `35564566332` verifies `network_failure_not_content_failure=true`.
+- **Final status:** `RESOLVED`
+
+### F-50 — HIGH — RESOLVED
+
+- **Initial finding:** Lychee JSON includes complete checked URLs, which may contain sensitive query strings or other source-derived material. Persisting raw URLs in normalized findings would violate the minimum-evidence/privacy boundary.
+- **Remediation:** normalized findings persist only rule class, generic message, status code and source location; raw URLs are not copied into finding messages and raw Lychee JSON is not part of `ValidatorExecution`.
+- **Evidence:** unit regression uses a secret-like query string; real gate `35564566332` verifies `raw_urls_not_persisted=true`.
+- **Final status:** `RESOLVED`
+
+## 18. DG-P2 completion checklist
+
+- [x] DG-P0 hard dependency PASS.
+- [x] DG-P1 sequential governance closure verified before advancement.
+- [x] Lychee upstream capability/release revalidated.
+- [x] exact Lychee version pinned to 0.24.2.
+- [x] upstream release tag and commit pinned.
+- [x] exact Linux release asset checksum verified.
+- [x] Lychee config identity/hash recorded.
+- [x] adapter reuses `ValidatorExecution` / `ValidatorFinding`.
+- [x] internal and external broken-link findings are distinguishable.
+- [x] network/tool failure is distinct from broken-link content findings.
+- [x] missing Lychee executable is `UNAVAILABLE/NOT_EVALUATED`.
+- [x] version mismatch fails closed.
+- [x] malformed JSON fails closed.
+- [x] source mutation is detected.
+- [x] raw checked URLs are not persisted in normalized findings.
+- [x] P2 unit tests 10/10 PASS.
+- [x] real pinned Lychee smoke PASS.
+- [x] bounded regression 44/44 PASS.
+- [x] compile PASS.
+- [x] first failed real-tool run preserved.
+- [x] schema/migration changes = NONE.
+- [x] no document registry/graph/validity runtime implemented.
+- [x] no GAC, G2E Library or Reference Acquisition runtime implemented.
+- [x] no auto-repair link mutation implemented.
+- [x] current authorization frontier stops before DG-P3.
+
+## 19. Current aggregate status after DG-P2
+
+**OPEN = 0**
+
+All findings F-01 through F-50 recorded in this checklist are resolved. DG-P3 remains unauthorized.
