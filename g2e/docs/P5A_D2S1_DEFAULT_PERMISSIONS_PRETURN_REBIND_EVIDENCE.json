@@ -1,0 +1,30 @@
+{
+  "schema": "G2E-P5A-D2S1-DEFAULT-PERMISSIONS-PRETURN-REBIND-EVIDENCE-v1",
+  "status": "IMPLEMENTATION_PASS_LOCAL_EXECUTION_REQUIRED",
+  "materializer_closure_baseline_sha": "183326a7f1fac182ae65dca9693e3e597809e380",
+  "candidate_sha": "3d66054c6205a4f948a2c47bf2c1205abd41e103",
+  "workflow_run_id": 35643475732,
+  "workflow_job_id": 106478182525,
+  "artifact_id": 10659113659,
+  "artifact_digest": "sha256:4d4fd2716dd4b8e93c2276938bd0c80f8ac637a24a2dcfd40517a8c729768fcc",
+  "blobs": {
+    "preflight_script": "f31687db775aaa613bd851bf050855a14dc0800f",
+    "tests": "17af97b6772f911874b7528586349ae5a8451533",
+    "workflow": "42044854bb7622a9f6a1d570a6418ddda62b4a3e"
+  },
+  "config_toml_sha256": "8877cc89ccf5dd6e3cf6c45016ca7e62d93746c8f56db8bb38956eb6ff6e172d",
+  "execution_config_hash": "d03e6f6f2c20b757685188e30f4cabd44102b61b74cdacc585bab328647b0367",
+  "regressions": {
+    "p1": "PASS",
+    "p1_4": "PASS",
+    "p1_5": "PASS",
+    "p2": "PASS",
+    "p3": "PASS",
+    "p4": "PASS"
+  },
+  "no_turn_dispatch_token": true,
+  "model_turn_executed": false,
+  "scientific_attempt_authorized": false,
+  "runtime_adapter_authorized": false,
+  "next_gate": "FRESH_LOCAL_NO_TURN_PROFILE_SELECTION_PREFLIGHT"
+}
