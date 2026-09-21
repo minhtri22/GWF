@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from hashlib import sha256
 from pathlib import Path
+import json
 import re
 import subprocess
 from typing import Protocol
@@ -287,6 +288,295 @@ class MarkdownlintCli2Adapter:
             subject_hash,
             "SUCCEEDED",
             "PASS" if p.returncode == 0 else "FINDINGS",
+            findings,
+            None,
+        )
+
+
+
+class ValeAdapter:
+    validator_id = "vale"
+
+    def __init__(
+        self,
+        *,
+        executable: str = "vale",
+        expected_version: str,
+        config_path: str | Path,
+        styles_path: str | Path,
+        timeout_seconds: int = 30,
+    ) -> None:
+        self.executable = executable
+        self.expected_version = expected_version
+        self.config_path = Path(config_path)
+        self.styles_path = Path(styles_path)
+        self.timeout_seconds = timeout_seconds
+
+    def _config_hash(self) -> str:
+        root = self.config_path.parent
+        entries: list[Path] = [self.config_path]
+        entries.extend(sorted(p for p in self.styles_path.rglob("*") if p.is_file()))
+        digest = sha256(b"DG-P1-VALE-CONFIG-v1\0")
+        for path in entries:
+            rel = path.relative_to(root).as_posix()
+            content_hash = sha256(path.read_bytes()).hexdigest()
+            digest.update(rel.encode("utf-8"))
+            digest.update(b"\0")
+            digest.update(content_hash.encode("ascii"))
+            digest.update(b"\n")
+        return digest.hexdigest()
+
+    def _version(self) -> tuple[str | None, str | None]:
+        try:
+            p = subprocess.run(
+                [self.executable, "--version"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=self.timeout_seconds,
+                check=False,
+            )
+        except FileNotFoundError:
+            return None, "EXECUTABLE_NOT_FOUND"
+        except (OSError, subprocess.TimeoutExpired):
+            return None, "VERSION_PROBE_FAILED"
+
+        match = re.search(
+            r"^vale version (?P<v>\d+\.\d+\.\d+)\s*$",
+            p.stdout.strip(),
+            re.IGNORECASE,
+        )
+        if p.returncode != 0 or not match:
+            return None, "VERSION_PROBE_FAILED"
+        return match.group("v"), None
+
+    @staticmethod
+    def _sanitize_message(message: str, matched_text: str) -> str:
+        cleaned = message.strip()
+        if matched_text:
+            cleaned = cleaned.replace(matched_text, "<redacted-match>")
+        return cleaned
+
+    @staticmethod
+    def _parse_findings(output: str) -> tuple[ValidatorFinding, ...] | None:
+        try:
+            payload = json.loads(output)
+        except json.JSONDecodeError:
+            return None
+        if not isinstance(payload, dict):
+            return None
+
+        findings: list[ValidatorFinding] = []
+        for alerts in payload.values():
+            if alerts is None:
+                continue
+            if not isinstance(alerts, list):
+                return None
+            for alert in alerts:
+                if not isinstance(alert, dict):
+                    return None
+                rule_id = alert.get("Check")
+                message = alert.get("Message")
+                severity = alert.get("Severity")
+                line = alert.get("Line")
+                span = alert.get("Span")
+                matched_text = alert.get("Match", "")
+
+                if (
+                    not isinstance(rule_id, str)
+                    or not rule_id.strip()
+                    or not isinstance(message, str)
+                    or not isinstance(severity, str)
+                    or severity.lower() not in {"suggestion", "warning", "error"}
+                    or not isinstance(line, int)
+                    or line < 1
+                    or not isinstance(span, list)
+                    or not span
+                    or not isinstance(span[0], int)
+                    or span[0] < 1
+                    or not isinstance(matched_text, str)
+                ):
+                    return None
+
+                findings.append(
+                    ValidatorFinding(
+                        rule_id=rule_id.strip(),
+                        message=ValeAdapter._sanitize_message(message, matched_text),
+                        line=line,
+                        column=span[0],
+                        severity=severity.upper(),
+                    )
+                )
+
+        findings.sort(
+            key=lambda f: (
+                f.line if f.line is not None else 0,
+                f.column if f.column is not None else 0,
+                f.rule_id,
+                f.message,
+            )
+        )
+        return tuple(findings)
+
+    def validate(self, subject: str | Path) -> ValidatorExecution:
+        subject_path = Path(subject)
+        before = subject_path.read_bytes()
+        subject_hash = sha256(before).hexdigest()
+
+        try:
+            config_hash = self._config_hash()
+        except OSError:
+            return ValidatorExecution(
+                self.validator_id,
+                None,
+                None,
+                str(subject_path),
+                subject_hash,
+                "TOOL_ERROR",
+                "NOT_EVALUATED",
+                tuple(),
+                "CONFIG_UNREADABLE",
+            )
+
+        version, version_error = self._version()
+        if version_error:
+            return ValidatorExecution(
+                self.validator_id,
+                version,
+                config_hash,
+                str(subject_path),
+                subject_hash,
+                "UNAVAILABLE" if version_error == "EXECUTABLE_NOT_FOUND" else "TOOL_ERROR",
+                "NOT_EVALUATED",
+                tuple(),
+                version_error,
+            )
+        if version != self.expected_version:
+            return ValidatorExecution(
+                self.validator_id,
+                version,
+                config_hash,
+                str(subject_path),
+                subject_hash,
+                "TOOL_ERROR",
+                "NOT_EVALUATED",
+                tuple(),
+                "VERSION_MISMATCH",
+            )
+
+        try:
+            p = subprocess.run(
+                [
+                    self.executable,
+                    "--config",
+                    str(self.config_path.resolve()),
+                    "--output=JSON",
+                    str(subject_path.resolve()),
+                ],
+                cwd=str(self.config_path.parent),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=self.timeout_seconds,
+                check=False,
+            )
+        except FileNotFoundError:
+            return ValidatorExecution(
+                self.validator_id,
+                version,
+                config_hash,
+                str(subject_path),
+                subject_hash,
+                "UNAVAILABLE",
+                "NOT_EVALUATED",
+                tuple(),
+                "EXECUTABLE_NOT_FOUND",
+            )
+        except subprocess.TimeoutExpired:
+            return ValidatorExecution(
+                self.validator_id,
+                version,
+                config_hash,
+                str(subject_path),
+                subject_hash,
+                "TOOL_ERROR",
+                "NOT_EVALUATED",
+                tuple(),
+                "TIMEOUT",
+            )
+        except OSError:
+            return ValidatorExecution(
+                self.validator_id,
+                version,
+                config_hash,
+                str(subject_path),
+                subject_hash,
+                "TOOL_ERROR",
+                "NOT_EVALUATED",
+                tuple(),
+                "EXECUTION_FAILED",
+            )
+
+        if subject_path.read_bytes() != before:
+            return ValidatorExecution(
+                self.validator_id,
+                version,
+                config_hash,
+                str(subject_path),
+                subject_hash,
+                "TOOL_ERROR",
+                "NOT_EVALUATED",
+                tuple(),
+                "SOURCE_MUTATED",
+            )
+
+        if p.returncode not in {0, 1}:
+            return ValidatorExecution(
+                self.validator_id,
+                version,
+                config_hash,
+                str(subject_path),
+                subject_hash,
+                "TOOL_ERROR",
+                "NOT_EVALUATED",
+                tuple(),
+                f"EXIT_{p.returncode}",
+            )
+
+        findings = self._parse_findings(p.stdout)
+        if findings is None:
+            return ValidatorExecution(
+                self.validator_id,
+                version,
+                config_hash,
+                str(subject_path),
+                subject_hash,
+                "TOOL_ERROR",
+                "NOT_EVALUATED",
+                tuple(),
+                "OUTPUT_PARSE_ERROR",
+            )
+        if p.returncode == 1 and not findings:
+            return ValidatorExecution(
+                self.validator_id,
+                version,
+                config_hash,
+                str(subject_path),
+                subject_hash,
+                "TOOL_ERROR",
+                "NOT_EVALUATED",
+                tuple(),
+                "FINDINGS_MISSING",
+            )
+
+        return ValidatorExecution(
+            self.validator_id,
+            version,
+            config_hash,
+            str(subject_path),
+            subject_hash,
+            "SUCCEEDED",
+            "FINDINGS" if findings else "PASS",
             findings,
             None,
         )
