@@ -1,0 +1,105 @@
+{
+  "schema": "G2E-P4-QUALIFICATION-v1",
+  "status": "PASS",
+  "qualified_implementation_sha": "1f6d49957c0c0dffa7b83c11caebed4ab2b90e0b",
+  "baseline_sha": "d2e79ae004414d43cfbf8c58020ee501f482c363",
+  "preimplementation_mapping_commit": "9d22109e0a2e2ca865d11018aa05c97dc8d70c24",
+  "workflows": {
+    "p1": {
+      "run_id": 35584223713,
+      "job_id": 106283704496,
+      "conclusion": "success",
+      "tests_passed": 29
+    },
+    "p2": {
+      "run_id": 35584223744,
+      "job_id": 106283704804,
+      "conclusion": "success",
+      "p1_tests_passed": 29,
+      "p2_tests_passed": 43
+    },
+    "p3": {
+      "run_id": 35584223806,
+      "job_id": 106283705392,
+      "conclusion": "success",
+      "p1_tests_passed": 29,
+      "p2_tests_passed": 43,
+      "p3_tests_passed": 25
+    },
+    "p4": {
+      "run_id": 35584223810,
+      "job_id": 106283705280,
+      "conclusion": "success",
+      "p1_tests_passed": 29,
+      "p2_tests_passed": 43,
+      "p3_tests_passed": 25,
+      "p4_tests_passed": 17
+    }
+  },
+  "p4_files": {
+    "g2e/docs/P4_PREIMPLEMENTATION_MAPPING.md": "2099a0e28d6a65851f48455542d04a18e1103237",
+    "src/g2e/gwf_adapter.py": "4a75bb0b41e2e854f0c8e2ade9e4691eae2c6c4d",
+    "src/g2e/gwf_domain.py": "f82766aea584e86ea9cbed714a2c1ba2c28222c1",
+    "tests/g2e/test_p4_gwf_adapter.py": "8fa0ac942dc0d49f5581d627a77851dac56bc187",
+    ".github/workflows/g2e-p4-gwf-adapter.yml": "454676a3e1339f77ffc6fb40666945af80e16fa6"
+  },
+  "gwf_dependency_blobs": {
+    "src/gwr/runtime.py": "86e3305fc7981babbe9ea1640b2800f47210b8bc",
+    "src/gwr/domain.py": "b257a675fbd8ba2da34a3009489e09ad9accc0af",
+    "src/gwr/knowledge.py": "4f848c2be53451df01b9b91d2705ae3c59aa7bf7",
+    "src/gwr/execution.py": "87dfa05789acc71c7681c3ca1e6e3bd9895025d3",
+    "src/gwr/governance.py": "0eb8f3eeb7a6ee01512bc778241fa2ee0b42f6a6",
+    "src/gwr/object_store.py": "d9d8f2ca42ce747b43463f4ca037aae234037d6e",
+    "src/gwr/agent_protocol.py": "0e29c07ac2de131dc3d9645c3f9ecc8495abd916",
+    "src/gwr/db.py": "b9825998757423822ab7ffb22bd37dd202f3e30d",
+    "src/gwr/utils.py": "d63f80389e88904d1643393158d95ea17f16d847"
+  },
+  "p3_integrity_recheck": {
+    "matched_blobs": 8,
+    "total_blobs": 8,
+    "all_match": true
+  },
+  "semantic_findings": {
+    "P4-F01": "RESOLVED",
+    "P4-F02": "RESOLVED",
+    "P4-F03": "RESOLVED",
+    "P4-F04": "RESOLVED",
+    "P4-F05": "RESOLVED"
+  },
+  "gates": {
+    "canonical_g2e_identity_preserved": true,
+    "gwf_ids_are_mappings_only": true,
+    "gwf_hash_not_substituted_for_g2e_hash": true,
+    "unsupported_mapping_version_fails_closed": true,
+    "gwf_runtime_success_not_scientific_pass": true,
+    "generic_execution_facade_provider_neutral": true,
+    "gwf_runtime_retry_expansion_disabled": true,
+    "g2e_retry_policy_remains_authoritative": true,
+    "evidence_payload_digest_verified": true,
+    "decision_rule_mismatch_rejected": true,
+    "evidence_admission_policy_mismatch_rejected": true,
+    "retry_policy_mismatch_rejected": true,
+    "protected_resource_parity": true,
+    "uncertain_recovery_exposes_resource_fail_closed": true,
+    "protected_resource_backward_transition_rejected": true,
+    "authority_escalation_rejected": true,
+    "terminal_adjudication_rewrite_rejected": true,
+    "checkpoint_exact_refs_preserved": true,
+    "fresh_runtime_restart_reconstruction": true,
+    "standalone_gwf_execution_attempt_parity": true,
+    "standalone_gwf_execution_result_semantic_parity": true,
+    "standalone_gwf_evidence_parity": true,
+    "standalone_gwf_adjudication_parity": true,
+    "standalone_gwf_claim_resolution_parity": true,
+    "standalone_gwf_goal_verdict_parity": true,
+    "standalone_gwf_result_package_semantic_manifest_parity": true,
+    "resealed_false_result_package_rejected_by_p3_regression": true,
+    "standalone_no_gwf_import": true,
+    "p4_no_p4l_gac_reference_acquisition_import": true
+  },
+  "downstream_authorization": {
+    "p4_complete": true,
+    "p4l_shared_library_implementation": false,
+    "p4l_capability_dependency_audit_only": true
+  }
+}
