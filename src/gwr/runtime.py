@@ -19,6 +19,7 @@ from .agent_protocol import AgentExecutionProtocolService
 from .plugins import PluginConnectionService
 from .github_plugin import GitHubPluginService
 from .document_facade import DocumentFacadeService
+from .document_qa import DocumentQAService
 
 class GovernedWorkflowRuntime:
     def __init__(self, domain: str|DomainPackage, db_path=":memory:", *, auth_secret=None, object_store_root=None, observer=None, observability_path=None):
@@ -52,6 +53,14 @@ class GovernedWorkflowRuntime:
         self.plugins=PluginConnectionService(self.db,self.governance,self.tenancy,self.project_governance)
         self.github=GitHubPluginService(self.db,self.governance,self.tenancy,self.project_governance,self.plugins)
         self.documents=DocumentFacadeService(self.knowledge,self.github)
+        self.document_qa=DocumentQAService(
+            self.db,
+            self.domain,
+            self.knowledge,
+            self.execution,
+            self.governance,
+            self.project_governance,
+        )
         self.process=ProcessInspectorService(self)
         self.object_store=None; self.objects=None
         if object_store_root:

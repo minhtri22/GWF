@@ -459,6 +459,33 @@ CREATE TABLE IF NOT EXISTS github_sha_checks(
 """.strip(),
     ),
 
+
+    Migration(
+        "0008_v086_dg_p5_document_findings",
+        """
+CREATE TABLE IF NOT EXISTS document_findings(
+  finding_id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  qa_record_id TEXT NOT NULL,
+  subject_revision_id TEXT NOT NULL,
+  finding_class TEXT NOT NULL,
+  severity TEXT NOT NULL,
+  rule_id TEXT NOT NULL,
+  location_json TEXT NOT NULL,
+  description TEXT NOT NULL,
+  evidence_refs_json TEXT NOT NULL,
+  fingerprint TEXT NOT NULL,
+  status TEXT NOT NULL,
+  required_fix TEXT NOT NULL,
+  resolution_revision_ref TEXT,
+  waiver_ref TEXT,
+  version INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+""".strip(),
+    ),
+
 ]
 
 
