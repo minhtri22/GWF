@@ -34,6 +34,7 @@ from g2e import (
     LibraryExecutionStatus,
     LibraryQueryContract,
     LibraryQueryExecution,
+    LibrarySnapshot,
     MetricPredicate,
     PackageExternalReference,
     PackageManifest,
