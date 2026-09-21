@@ -8,9 +8,11 @@
 
 This plan converts the approved specification set into an ordered implementation roadmap optimized for **lower complexity first without violating hard dependencies**.
 
-DG-P0 has already formal-closed on implementation head `ef322ff0618b83fbfaef40b096cb43f5193d8db0`; exact-head workflow `35560831581` passed.
+DG-P0 has formal-closed on implementation head `ef322ff0618b83fbfaef40b096cb43f5193d8db0`; exact-head workflow `35560831581` passed.
 
-This document does not automatically authorize the next implementation item. After this reconciliation, **DG-P1 is the next planned item**, but implementation requires a later explicit authorization.
+DG-P1 has formal-closed on implementation head `385016bf6d0c3df512bae6fa8776cca32eac83ee`; exact implementation workflow `35563206375` passed.
+
+This document does not automatically authorize the next implementation item. **DG-P2 is now the next planned item**, but implementation requires a later explicit authorization.
 
 ## 2. Governing documents
 
@@ -112,16 +114,18 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P1 — Vale terminology/prose adapter
 
 - **Complexity:** 2
+- **Status:** **COMPLETED / PASS**
+- **Completion evidence:** implementation head `385016bf6d0c3df512bae6fa8776cca32eac83ee`; workflow `35563206375` PASS; evidence artifact `10622049755`.
 - **HARD dependencies:** DG-P0.
 - **EXTERNAL dependency:** Vale capability/version/config revalidation.
 - **Governing document:** `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §§18–21.
 - **Acceptance checklist:**
-  - [ ] adapter uses DG-P0 normalized contract;
-  - [ ] project vocabulary/config hash attributable;
-  - [ ] terminology drift fixture detected;
-  - [ ] tool unavailable distinguished from content failure;
-  - [ ] no auto-fix mutation;
-  - [ ] QA PASS.
+  - [x] adapter uses DG-P0 normalized contract;
+  - [x] project vocabulary/config hash attributable;
+  - [x] terminology drift fixture detected;
+  - [x] tool unavailable distinguished from content failure;
+  - [x] no auto-fix mutation;
+  - [x] QA PASS.
 
 ### DG-P2 — Lychee link adapter
 
@@ -152,13 +156,13 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 
 ### Wave 1 exit gate — DG-W1
 
-Wave 1 remains open after DG-P0. Completion of DG-P0 does not authorize DG-P1/P2/P3 automatically.
+Wave 1 remains open after DG-P1. Completion of DG-P1 does not authorize DG-P2/P3 automatically.
 
 - [x] DG-P0 PASS
-- [ ] DG-P1 PASS
+- [x] DG-P1 PASS
 - [ ] DG-P2 PASS
 - [ ] DG-P3 PASS
-- [ ] external validator outputs normalized through one contract
+- [x] markdownlint and Vale outputs normalize through the shared validator contract
 - [ ] no authoritative document-state runtime added yet
 - [ ] handoff package records exact tool versions/config fingerprints
 
@@ -866,7 +870,7 @@ No item may be marked complete with unresolved required handoff fields.
 
 # 9. Current authorization frontier
 
-At this reconciled planning state:
+At this implementation state:
 
 ```text
 7-WAVE PLAN QA
@@ -876,14 +880,17 @@ DG-P0
       PASS / formal-close
        ↓
 GAC/G2E Library documentation reconciliation
-      PASS required before resuming implementation
+      PASS
        ↓
 DG-P1 — Vale terminology/prose adapter
+      PASS / formal-close
+       ↓
+DG-P2 — Lychee link adapter
       NEXT PLANNED
        ↓
 STOP
 ```
 
-DG-P1 is the next planned item because Wave 1 remains incomplete and DG-P1/P2/P3 are the lowest-complexity eligible items after DG-P0. **This revised plan does not itself authorize DG-P1 implementation.**
+DG-P2 is the next planned item because Wave 1 remains incomplete and it is the next complexity-2 item in the preregistered Wave 1 order. **This plan revision does not itself authorize DG-P2 implementation.**
 
-GAC implementation is not the next step. Its earliest active gate is after **DG-W4 PASS**, as specified in Wave 5.
+GAC implementation is still blocked until **DG-W4 PASS**, as specified in Wave 5.

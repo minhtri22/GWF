@@ -394,3 +394,61 @@ All findings F-01 through F-42 recorded in this checklist are resolved.
 **OPEN = 0**
 
 All findings F-01 through F-44 recorded in this checklist are resolved. DG-P1 remains unauthorized.
+
+## 14. DG-P1 implementation findings
+
+### F-45 — MEDIUM — RESOLVED
+
+- **Initial finding:** Vale exit semantics differ from markdownlint: warning/suggestion findings can exist with process exit code 0, so reusing the P0 assumption “exit 0 means no findings” would silently misclassify prose drift as PASS.
+- **Remediation:** `ValeAdapter` derives `content_status` from parsed findings, while process status remains separate; exit 0 with findings is represented as `SUCCEEDED/FINDINGS`.
+- **Evidence:** unit fixture `test_vale_warning_findings_can_exit_zero`; real gate contract at workflow `35563206375`.
+- **Final status:** `RESOLVED`
+
+### F-46 — HIGH — RESOLVED
+
+- **Initial finding:** Vale JSON includes the raw `Match` source span. Persisting it, or persisting a message that echoes it, could leak document content or reusable secret-like text into normalized evidence.
+- **Remediation:** normalized findings never persist `Match`; any exact matched text echoed by `Message` is replaced with `<redacted-match>`. A regression uses `SECRET_TOKEN=abc` to prove generic redaction.
+- **Evidence:** `test_vale_secret_like_match_is_redacted`; final implementation head `385016bf6d0c3df512bae6fa8776cca32eac83ee`.
+- **Final status:** `RESOLVED`
+
+### F-47 — MEDIUM — RESOLVED
+
+- **Initial finding:** Hashing only `.vale.ini` would not identify the actual prose policy because Vale rule YAML files materially define terminology behavior.
+- **Remediation:** DG-P1 records per-file SHA-256 for `.vale.ini` and `styles/GWF/Terminology.yml`, plus a deterministic aggregate configuration-bundle hash.
+- **Evidence:** aggregate hash `270b05bb9d8930556595d3d5a805f8dc72145345545250110d3bda2b65bc55d3`; gate checks all identities.
+- **Final status:** `RESOLVED`
+
+## 15. DG-P1 completion checklist
+
+- [x] DG-P0 hard dependency PASS.
+- [x] reconciled 7-wave/GAC documentation baseline carried into the implementation branch.
+- [x] Vale upstream capability revalidated.
+- [x] Vale exact version pinned to 3.22.0.
+- [x] official release checksum verified in CI.
+- [x] adapter reuses `ValidatorExecution` / `ValidatorFinding`.
+- [x] exact subject hash recorded.
+- [x] exact vocabulary/config identities recorded.
+- [x] clean fixture returns `SUCCEEDED/PASS`.
+- [x] terminology drift fixture returns `SUCCEEDED/FINDINGS`.
+- [x] finding rule/severity/line/column normalized.
+- [x] warning/suggestion findings are not lost when Vale exits 0.
+- [x] missing Vale executable is `UNAVAILABLE/NOT_EVALUATED`, not document FAIL.
+- [x] version mismatch fails closed.
+- [x] malformed JSON fails closed.
+- [x] source mutation is detected.
+- [x] raw `Match` text is not persisted.
+- [x] secret-like matched text regression PASS.
+- [x] no auto-fix invocation exists.
+- [x] P1 unit tests 10/10 PASS.
+- [x] real pinned Vale smoke PASS.
+- [x] bounded regression 34/34 PASS.
+- [x] compile PASS.
+- [x] schema/migration changes = NONE.
+- [x] no GAC runtime implemented.
+- [x] current authorization frontier stops before DG-P2.
+
+## 16. Current aggregate status after DG-P1
+
+**OPEN = 0**
+
+All findings F-01 through F-47 recorded in this checklist are resolved. DG-P2 remains unauthorized.
