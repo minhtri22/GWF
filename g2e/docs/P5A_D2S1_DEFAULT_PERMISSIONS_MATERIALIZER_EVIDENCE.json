@@ -1,0 +1,33 @@
+{
+  "schema": "G2E-P5A-D2S1-DEFAULT-PERMISSIONS-MATERIALIZER-EVIDENCE-v1",
+  "status": "IMPLEMENTATION_PASS_LOCAL_PREFLIGHT_REQUIRED",
+  "amendment_qa_baseline_sha": "3738205c16b460710e357461c29607ccd59beaea",
+  "candidate_sha": "cd6875d6b454c6dbab929c183e844a1298af7419",
+  "workflow_run_id": 35643275525,
+  "workflow_job_id": 106477516245,
+  "artifact_id": 10657909914,
+  "artifact_digest": "sha256:375cceb615770a7c32dc409c2ae9375840ee60c928b7cfb4718a96b29ee4ebb4",
+  "blobs": {
+    "materializer": "450a2827a949d936103c138f2d062b04513ac201",
+    "tests": "b308ff1e6a108da808bdda8cf75dda9ee82911ea",
+    "workflow": "d4d12da950859518ba4401306b82035fe2403caf"
+  },
+  "profile_id": "g2e_p5a_d2s1",
+  "default_permissions": "g2e_p5a_d2s1",
+  "config_toml_sha256": "8877cc89ccf5dd6e3cf6c45016ca7e62d93746c8f56db8bb38956eb6ff6e172d",
+  "contract_file_sha256": "005b19f3ce40b244b7bbde8bde7e65ae938910eb3a01e6049a3b3185b0eb2ced",
+  "execution_config_hash": "d03e6f6f2c20b757685188e30f4cabd44102b61b74cdacc585bab328647b0367",
+  "regressions": {
+    "p1": "PASS",
+    "p1_4": "PASS",
+    "p1_5": "PASS",
+    "p2": "PASS",
+    "p3": "PASS",
+    "p4": "PASS"
+  },
+  "model_turn_executed": false,
+  "fresh_outcome_consumed": false,
+  "scientific_attempt_authorized": false,
+  "runtime_adapter_authorized": false,
+  "next_gate": "REBIND_AND_RUN_LOCAL_NO_TURN_PROFILE_SELECTION_PREFLIGHT"
+}
