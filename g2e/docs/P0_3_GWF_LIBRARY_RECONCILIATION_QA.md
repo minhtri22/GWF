@@ -1,127 +1,185 @@
-# G2E P0.3 — GWF Shared Library Reconciliation Findings
+# G2E P0.3 — GWF Shared Library Reconciliation QA
 
 ## Status
 
-**FINDINGS OPEN — remediation required before current G2E↔GWF Library handoff can be considered aligned.**
+**SEMANTIC / INTEGRATION QA: PASS**
 
-## Audit identities
+## Lineage
 
-G2E branch audited:
+- G2E pre-audit head: `d6b798f489a396ea13e48b5c7e31027b320fc09b`
+- findings-only commit: `610e05dd0fa6561df2b60e17e93f921392abc5f2`
+- main reconciliation patch: `550c257b57f31e046080ff7eefbc3c5771906a55`
+- pinned-reference / P4B clarification patch: `ce490c4609105a17f644d4473a86c27f45ad7ecf`
+- exact QA-blob identity correction: `1c918693814bd0a346842a6a99ce54ebefbbfb84`
 
-- branch: `feature/g2e-framework`
-- pre-audit head: `d6b798f489a396ea13e48b5c7e31027b320fc09b`
-
-GWF reconciliation audited:
+GWF authority baseline:
 
 - branch: `docs/governed-artifact-catalog-pack`
-- final reconciliation commit: `be7d606c64a97d9525d1f72d744fe5b7a336ff0c`
-- findings: `FD-01..FD-15 = RESOLVED`
-- reconciliation QA: `PASS / OPEN=0`
+- final reconciliation head: `be7d606c64a97d9525d1f72d744fe5b7a336ff0c`
+- branch head re-verified at final G2E QA: exact match.
 
-This audit is documentation-only. No G2E/GWF/GAC/Reference Acquisition runtime implementation is authorized.
+This QA is documentation-only. No G2E/GWF/GAC/Reference Acquisition runtime implementation is authorized.
 
-## Findings
+## Findings and resolution
 
-### P03-F01 — HIGH — OPEN — G2E pins the pre-reconciliation GAC baseline
+### P03-F01 — HIGH — RESOLVED — G2E pinned pre-reconciliation GAC baseline
 
-`REFERENCE_BASELINE.md` still treats `194c66c...` as the GAC QA closure and links floating branch documents. GWF has since reconciled ownership, Reference Acquisition, readiness gates and the 7-wave plan at `be7d606c...`.
+**Resolution:** `REFERENCE_BASELINE.md` now preserves the original pack as historical lineage and pins the reconciled GWF commit plus exact relevant blobs.
 
-**Required:** append the exact reconciled commit/blob identities and mark the original pack as historical design lineage rather than the current integration authority.
+Verified exact GWF blobs:
 
-- [ ] RESOLVED
+- GAC spec: `831a4f9260ff6a1f74d531d9d24a91cdb6feff7e`
+- GAC boundaries: `2fef77627127bf58c6376202f96de681d5b3050a`
+- Reference Acquisition: `110dae0b492b56492c52eec2dfc64a8d2070d966`
+- revised 7-wave plan: `229decfb067ead7ef38d51012b06abf69cc12fc0`
+- reconciled GAC QA: `624bc36f9012af92711f80b2ee1d6157b358f570`
+- cross-document reconciliation QA: `fe5e076c34f7665bb0d6cd354ae779b83e18a29a`
 
-### P03-F02 — HIGH — OPEN — Shared Library terminology is not mirrored in G2E
+- [x] RESOLVED
 
-GWF now defines **Shared Library** as consumer-facing capability built on GAC; G2E Evidence Library is a semantic consumer/view, not a second physical store.
+### P03-F02 — HIGH — RESOLVED — Shared Library terminology drift
 
-G2E still uses “Evidence Library” in places without explicitly mapping it to this Shared Library boundary.
+**Resolution:** G2E now mirrors GWF terminology:
 
-**Required:** freeze the same terminology in G2E README/PRD-17/integration mapping.
+- Shared Library = consumer-facing capability built on GAC;
+- G2E Evidence Library = G2E semantic consumer/view;
+- Artifact/Revision/ObjectRef remain canonical payload storage;
+- no second Library database/store.
 
-- [ ] RESOLVED
+**Proof:** README; `GWF_LIBRARY_INTEGRATION_MAPPING.md`; PRD-17.
 
-### P03-F03 — HIGH — OPEN — PRD-13 omits the new internal `GWF_CATALOG` Reference Acquisition channel
+- [x] RESOLVED
 
-GWF Reference Acquisition now supports an internal governed Library/GAC channel with `CatalogQueryExecution`, catalog snapshot and exact CatalogEntry provenance.
+### P03-F03 — HIGH — RESOLVED — PRD-13 omitted internal GWF_CATALOG channel
 
-G2E PRD-13 currently describes Reference Acquisition primarily as external/current prior-art discovery and PRD-17 as governed-result retrieval.
+**Resolution:** PRD-13 now preserves `GWF_CATALOG` retrieval channel, CatalogQueryExecution, catalog snapshot, CatalogEntry IDs, exact subject identity and query completeness/status.
 
-**Required:** add the internal GAC research channel and its required provenance without conflating it with direct G2E reuse.
+Backend failure/partial execution cannot become a valid zero-match observation.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-### P03-F04 — HIGH — OPEN — Direct G2E Library query vs RA-curated GAC query lacks a routing rule
+### P03-F04 — HIGH — RESOLVED — Direct G2E vs RA-curated query routing ambiguous
 
-Both PRD-17 and GWF Reference Acquisition may query the same GAC substrate for different purposes. Without an explicit route, implementations could duplicate discovery logic or force every G2E reuse query through research prior-art curation.
+**Resolution:** two routes are frozen:
 
-**Required:** define:
-- direct PRD-17 route for G2E EvidenceCapsule reuse/synthesis;
-- PRD-13/RA route for research prior-art/novelty curation;
-- same GAC subject observed via both routes remains one subject identity with multiple observation/provenance records.
+1. PRD-17 direct route for EvidenceCapsule reuse/applicability/synthesis.
+2. PRD-13 / Reference Acquisition route for prior-art/novelty/source curation.
 
-- [ ] RESOLVED
+One exact subject retains one canonical subject identity even when observed through both routes; observation provenance remains separate.
 
-### P03-F05 — HIGH — OPEN — `LibraryCapabilityManifest` readiness is too vague for reconciled GWF gates
+- [x] RESOLVED
 
-PRD-17 says GWF GAC must be “implemented and qualified”, but GWF now exposes exact staged gates:
-- `DG-W4` before GAC;
-- `GAC-P0/P1/P2A/P4A` / `DG-GAC-W5` for minimum Shared Library;
-- `GAC-P4B` for G2E consumer qualification;
-- `RA-P1C` / `RA-GAC-W6` for the research-curated channel.
+### P03-F05 — HIGH — RESOLVED — LibraryCapabilityManifest readiness too vague
 
-**Required:** map capability levels/gates into `LibraryCapabilityManifest` and fail closed by requested operation.
+**Resolution:** capability-specific GWF readiness mapping now covers:
 
-- [ ] RESOLVED
+- GAC-P0/P1;
+- GAC-P2A;
+- DG-GAC-W5;
+- GAC-P4B;
+- optional GAC-P3;
+- RA-P1C;
+- RA-GAC-W6;
+- GAC-P2B.
 
-### P03-F06 — HIGH — OPEN — G2E phase plan has no explicit conditional GWF Shared Library integration gate
+GAC-P0/P1 cannot be treated as open before DG-W4 PASS.
 
-P1/P2 core semantics can proceed independently, but the plan does not clearly separate:
-- G2E schema/engine implementation;
-- standalone Library qualification;
-- actual GWF GAC consumer integration.
+A phase label without exact evidence identity is insufficient for a qualified manifest.
 
-This can be misread as P1 authorization implying GWF Library readiness.
+- [x] RESOLVED
 
-**Required:** add an explicit conditional GWF Library integration phase/subgate that depends on qualified GWF GAC capabilities while leaving G2E P1/P2 unblocked.
+### P03-F06 — HIGH — RESOLVED — G2E phase plan lacked conditional GWF Library integration
 
-- [ ] RESOLVED
+**Resolution:** `P4L — GWF Shared Library Integration` is now explicit and conditional.
 
-### P03-F07 — MEDIUM — OPEN — PRD-17 publication eligibility omitted `ClaimResultPackage`
+G2E P1/P2/P3 may proceed independently through schemas, deterministic core and qualified standalone Library. P4L opens only when the requested GWF capabilities have exact qualified evidence.
 
-P0.2 added ClaimResultPackage specifically so terminal Claims can be reused before whole-Goal closure, but PRD-17 still says default publication requires a Goal Result Package or SynthesisResult.
+This removes any false dependency between GWF's current DG-P1 roadmap and G2E P1 schema work.
 
-**Required:** include sealed ClaimResultPackage in publication eligibility and preserve package-type identity.
+- [x] RESOLVED
 
-- [ ] RESOLVED
+### P03-F07 — MEDIUM — RESOLVED — ClaimResultPackage missing from PRD-17 publication
 
-### P03-F08 — HIGH — OPEN — Synthesis can double-observe the same GAC subject through two discovery channels
+**Resolution:** PRD-17 now accepts a sealed ClaimResultPackage, Goal Result Package, or sealed synthesis source package and records exact source package type/seal identity.
 
-PRD-16 accepts both GWF catalog query IDs and Reference Acquisition retrieval sessions, but does not explicitly normalize the same exact capsule/subject observed through both into one synthesis candidate identity.
+- [x] RESOLVED
 
-**Required:** separate candidate subject identity from observation/retrieval identity; duplicate observations improve provenance/coverage but never count as multiple studies/results.
+### P03-F08 — HIGH — RESOLVED — Same GAC subject could be double-counted through two discovery channels
 
-- [ ] RESOLVED
+**Resolution:** PRD-16 separates candidate-subject identity from observation identity. Multiple direct/RA observations of the same exact subject become one candidate subject with multiple provenance observations and never multiple studies/results.
 
-### P03-F09 — MEDIUM — OPEN — Core Semantics section numbering is ambiguous
+- [x] RESOLVED
 
-`CORE_SEMANTICS.md` contains both `## 15. Reference baseline` and `## 15. Prior governed evidence...`. Cross-document citations to §15/§16/§17 are therefore ambiguous.
+### P03-F09 — MEDIUM — RESOLVED — Core Semantics duplicate section numbering
 
-**Required:** renumber the extension sections and update affected references.
+**Resolution:** sections are now unambiguous:
 
-- [ ] RESOLVED
+- §15 Reference baseline
+- §16 Prior governed evidence / EvidenceCapsules
+- §17 Applicability / qualified reuse
+- §18 Synthesis / convergence
 
-### P03-F10 — MEDIUM — OPEN — Cross-system shorthand conflicts with G2E canonical type names
+Affected P0.2 QA references were corrected.
 
-GWF reconciliation prose refers to G2E-owned concepts as `ReuseDecision` and `SynthesisVerdict`. G2E normative schemas use `ReuseDisposition` and `ConvergenceClassification`; G2E deliberately does not create a separate synthesis verdict namespace.
+- [x] RESOLVED
 
-**Required:** publish an explicit terminology mapping:
+### P03-F10 — MEDIUM — RESOLVED — Cross-system terminology shorthand conflicts
+
+**Resolution:** integration mapping explicitly defines:
+
 - GWF prose `ReuseDecision` → G2E canonical `ReuseDisposition`;
-- GWF prose `SynthesisVerdict` → non-normative shorthand only; canonical G2E object is `ConvergenceClassification`, while formal conclusions still use Adjudication/Claim/Goal verdicts.
+- GWF prose `SynthesisVerdict` → non-normative shorthand only; G2E canonical output is `ConvergenceClassification`, while formal result semantics remain Adjudication/Claim/Goal verdicts.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-## Pre-remediation verdict
+## Cross-system handshake QA
 
-`OPEN = 10`
+### Ownership
 
-**FAIL — G2E P0.2 remains historically valid for its audited GWF pack, but current G2E↔GWF Shared Library integration is not yet reconciled to GWF commit `be7d606c...`.**
+- [x] GAC owns publication/access/query/cross-project discovery.
+- [x] G2E owns applicability/reuse/synthesis semantics.
+- [x] Reference Acquisition owns research-side curation.
+- [x] Documentation Governance remains owner of document identity/validity/QA/dependency semantics.
+- [x] No second canonical Library store is introduced.
+
+### Routing
+
+- [x] Direct PRD-17 path is defined.
+- [x] PRD-13 GWF_CATALOG path is defined.
+- [x] Same-subject dedup is defined.
+- [x] RA retention is not G2E evidence admission.
+- [x] GAC result is candidate discovery only.
+
+### Readiness / implementation ordering
+
+- [x] DG-W4 dependency for GAC is reflected.
+- [x] DG-GAC-W5 minimum cross-project Shared Library gate is reflected.
+- [x] GAC-P4B G2E consumer fixture is reflected.
+- [x] GAC-P4B may qualify against the frozen PRD-17 contract fixture and does not require completed P4L runtime first.
+- [x] GAC-P3 optional search does not block core Library.
+- [x] RA-P1C and RA-GAC-W6 are required only for corresponding research-curated capabilities.
+- [x] G2E P1/P2 are not blocked by GWF GAC implementation.
+
+## Structural QA evidence
+
+- 17/17 component PRDs contain Purpose, Dependencies, References and Acceptance Criteria.
+- HARD dependency graph: **DAG / PASS**.
+- G2E reconciliation diff outside `g2e/`: **0 files**.
+- required new integration mapping exists.
+- all exact GWF blob identities above verified against commit `be7d606c...`.
+- pinned integration-sensitive links use exact reconciled GWF commit rather than floating branch/current local copies.
+
+## Verdict
+
+`OPEN = 0`
+
+**G2E P0.3 — GWF SHARED LIBRARY RECONCILIATION: PASS**
+
+### Authorization frontier
+
+- G2E P1 — Core Schemas: **AUTHORIZED by documentation QA**.
+- G2E P2/P3: remain gated by normal G2E phase exits.
+- G2E P4L — GWF Shared Library Integration: **NOT AUTHORIZED BY THIS QA**; it is conditional on exact GWF capability evidence.
+- GWF current roadmap remains independent: DG-P1 is next planned, not automatically authorized by G2E.
+
+No runtime/code implementation was performed.

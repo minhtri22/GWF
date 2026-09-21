@@ -269,3 +269,21 @@ Checks:
 P0.2 subsequently added Evidence Reuse, Library and Synthesis/Convergence semantics. [P0.2 Library/Synthesis QA](P0_2_LIBRARY_SYNTHESIS_QA.md) is now **PASS / OPEN=0**.
 
 **Current handoff status:** P1 — Core Schemas is authorized under the combined P0 + P0.1 + P0.2 specification. No implementation has been executed.
+
+
+---
+
+## 6. P0.3 — Current GWF Shared Library reconciliation handoff
+
+Authoritative current cross-system QA:
+
+- [P0.3 GWF Shared Library Reconciliation QA](P0_3_GWF_LIBRARY_RECONCILIATION_QA.md)
+- GWF reconciliation baseline: `be7d606c64a97d9525d1f72d744fe5b7a336ff0c`
+- P0.3 remediation under final QA: `1c918693814bd0a346842a6a99ce54ebefbbfb84`
+- P0.3 status: **PASS / OPEN=0**
+
+Current authorization:
+
+- **P1 Core Schemas: AUTHORIZED**
+- P4L GWF Shared Library integration: conditional / not opened
+- no runtime implementation performed by P0.3

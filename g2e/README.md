@@ -229,4 +229,4 @@ MindForge M0–M4 is empirical method evidence, not a G2E phase template. Exact 
 
 Implementation authorization is controlled by [QA_doc.md](docs/QA_doc.md) and [PHASE_PLAN.md](docs/PHASE_PLAN.md).
 
-P0.2 — Evidence Reuse & Convergence Specification is PASS. P0.3 reconciles that contract with the newer GWF Shared Library/GAC 7-wave documentation. P1 MUST NOT start while [P0.3 reconciliation QA](docs/P0_3_GWF_LIBRARY_RECONCILIATION_QA.md) has open findings.
+P0.2 — Evidence Reuse & Convergence and P0.3 — GWF Shared Library Reconciliation are PASS. P1 — Core Schemas is authorized by documentation QA. GWF-backed Library integration remains a later conditional P4L capability and must not assume GAC runtime readiness.
