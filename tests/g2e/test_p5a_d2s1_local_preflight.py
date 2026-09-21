@@ -23,8 +23,8 @@ def test_preflight_constants_are_frozen():
     assert module.ATTEMPT_ID == "p5a-d2s1-p5-fx-001-attempt-001"
     assert module.PROFILE_ID == "g2e_p5a_d2s1"
     assert module.EXPECTED_HARNESS_SHA256 == "a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8"
-    assert module.EXPECTED_CONFIG_TOML_SHA256 == "449bb9238cb2e3760a4fc16d417ea88e2773e98421bac756f383b8e07ed203fc"
-    assert module.EXPECTED_EXECUTION_CONFIG_HASH == "08aba89c742da6a6fa08203e9ff4b5542685c05e9a4215673bc509af72af1811"
+    assert module.EXPECTED_CONFIG_TOML_SHA256 == "8877cc89ccf5dd6e3cf6c45016ca7e62d93746c8f56db8bb38956eb6ff6e172d"
+    assert module.EXPECTED_EXECUTION_CONFIG_HASH == "d03e6f6f2c20b757685188e30f4cabd44102b61b74cdacc585bab328647b0367"
 
 
 def test_profile_lookup_is_exact_and_requires_allowed():
