@@ -4,317 +4,266 @@
 
 Audit branch: `feature/g2e-framework`.
 
-Audit baseline:
+Initial audit baseline:
 
 `64e0fc9280bdaf4a078bc063a6f2c855581f47ce`
 
-This is a **semantic/logic handoff audit**, deeper than the earlier structural P0 document QA. It reviews ambiguity, conflicting definitions, insufficiently frozen contracts, missing state transitions, dependency inconsistencies, evidence/adjudication logic, authority boundaries, runtime portability, and future implementation interpretability.
+Findings-only audit commit:
+
+`2fab50299800e9ac437f92aec796b3b104c46cc1`
+
+Remediation commit under final QA:
+
+`ed88ec721342456bbb90006b41e2308bdc043fcd`
+
+This is the authoritative **semantic/logic handoff QA** for the G2E specification. The older `P0_DOCUMENT_QA.md` is retained as historical structural QA only.
 
 Reviewed:
 
 - `g2e/README.md`
-- `g2e/LINEAGE.md`
+- `g2e/docs/CORE_SEMANTICS.md`
+- `g2e/docs/REFERENCE_BASELINE.md`
 - `g2e/docs/ARCHITECTURE_DECISIONS.md`
-- `g2e/docs/P0_DOCUMENT_QA.md`
 - `g2e/docs/PHASE_PLAN.md`
 - `g2e/docs/PRD_INDEX.md`
 - `g2e/docs/PRD_01_*.md` through `PRD_14_*.md`
-
-Finding statuses in this initial audit are `OPEN`. A finding may only be marked `RESOLVED` after the remediation is committed and the final QA can point to the exact governing section/file.
+- GWF dependency documents pinned by `REFERENCE_BASELINE.md`
+- MindForge M2/M3/M4 reference evidence at pinned commit
 
 ---
 
-## 2. Findings
+## 2. Findings and resolution proof
 
-### F-01 — HIGH — OPEN — Claim state conflates workflow lifecycle with epistemic verdict
+### F-01 — HIGH — RESOLVED — Claim state conflated workflow lifecycle with epistemic verdict
 
-**Problem:** PRD-02 puts `UNKNOWN/BLOCKED/READY/RUNNING/PASS/FAIL/INVALID/UNRESOLVED/SUPERSEDED` in one state set. This mixes orchestration state with proof outcome. `INVALID` is fundamentally an attempt/adjudication result, while `BLOCKED/READY/RUNNING` are lifecycle states.
+**Resolution:** separated normative state namespaces for GoalContract lifecycle, Goal verdict, Claim lifecycle, Claim resolution, ProofObligation lifecycle, ExecutionAttempt state and Adjudication verdict.
 
-**Risk:** retry logic, Next-Step selection, and claim closure can disagree about whether an invalid execution invalidates the claim itself.
+**Proof:** `CORE_SEMANTICS.md §§2–3`; PRD-02; PRD-05; PRD-07.
 
-**Affected:** PRD-02, PRD-05, PRD-06, PRD-07.
+- [x] RESOLVED
 
-**Required remediation:** define separate normative state namespaces for Claim lifecycle/resolution, Proof lifecycle, ExecutionAttempt state, Adjudication verdict, and Goal verdict.
+### F-02 — HIGH — RESOLVED — No normative multi-proof Claim resolution rule
 
-- [ ] RESOLVED
+**Resolution:** introduced frozen `ClaimResolutionPolicy` with v0.x `ALL_REQUIRED` and `ANY_SUFFICIENT`; last-write-wins/cherry-pick resolution prohibited.
 
-### F-02 — HIGH — OPEN — No normative rule for multiple proofs/evidence resolving one claim
+**Proof:** `CORE_SEMANTICS.md §4`; PRD-02; PRD-04.
 
-**Problem:** documents allow multiple proof obligations and conflicting evidence but do not define how a claim becomes PASS/FAIL/UNRESOLVED when more than one proof exists.
+- [x] RESOLVED
 
-**Risk:** an agent/runtime could cherry-pick one favorable proof or last-write-wins evidence.
+### F-03 — HIGH — RESOLVED — Goal closure was not formalized
 
-**Affected:** PRD-02, PRD-04, PRD-05, PRD-12.
+**Resolution:** GoalContract now freezes stable Goal requirements without premature Claim IDs. Claim compilation creates a separate `GoalClosureContract` bound to exact GoalContract + ClaimGraph revisions and success/falsification expressions.
 
-**Required remediation:** introduce frozen `ClaimResolutionPolicy` with required proof sets/aggregation semantics; prohibit implicit last-write-wins.
+**Proof:** `CORE_SEMANTICS.md §5`; PRD-01; PRD-02; PRD-12.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-### F-03 — HIGH — OPEN — Goal closure expression is not formalized
+### F-04 — HIGH — RESOLVED — ProofObligation / ExecutionAttempt / retry identity unclear
 
-**Problem:** Goal Contract says “acceptable terminal outcomes”; Claim Graph says claims map to goal; Result Package says achieved/falsified/unresolved/stopped. No machine-readable expression defines which claim combinations establish achievement or falsification.
+**Resolution:** immutable ProofObligation semantic identity and unique attempt identity are separate. Adjudication is one-shot per attempt. PASS/FAIL/UNRESOLVED close the obligation; INVALID can retry only under frozen RetryPolicy and unchanged proof semantics; exhausted INVALID attempts close UNRESOLVED.
 
-**Risk:** final goal verdict can become narrative/agent judgment.
+**Proof:** `CORE_SEMANTICS.md §3`; PRD-03; PRD-05; PRD-07.
 
-**Affected:** README, PRD-01, PRD-02, PRD-12.
+- [x] RESOLVED
 
-**Required remediation:** define `GoalSatisfactionExpression`/terminal claim mapping and normative Goal verdict semantics.
+### F-05 — HIGH — RESOLVED — Dependency graph conflict/cycle
 
-- [ ] RESOLVED
+**Resolution:** dependency classes are now HARD / CONDITIONAL / CROSS_CUTTING / INTEGRATION / ORDERING. PRD-08 no longer hard-depends on PRD-09/10; producer/evaluator integration no longer creates PRD-04/05↔07 hard cycles.
 
-### F-04 — HIGH — OPEN — Proof Obligation, ExecutionAttempt, and retry identity are underspecified
+**Proof:** `CORE_SEMANTICS.md §6`; `PRD_INDEX.md`; PRD-08/09/10.
 
-**Problem:** “one-shot” is tied to a vague “proof-obligation execution identity”. INVALID repair may preserve the obligation or create a new one, but closure rules are not exact.
+**QA evidence:** HARD dependency graph cycle check = PASS / DAG.
 
-**Risk:** retry-until-PASS can hide behind new attempts, or technical INVALID can incorrectly close a scientific claim.
+- [x] RESOLVED
 
-**Affected:** PRD-03, PRD-05, PRD-07.
+### F-06 — HIGH — RESOLVED — Lock/outcome exposure boundary unclear
 
-**Required remediation:** define immutable ProofObligation identity, unique ExecutionAttempt identity, adjudication-per-attempt, retry budget, and closure rules for PASS/FAIL/INVALID/UNRESOLVED.
+**Resolution:** canonical event model added: GOAL_FROZEN → CLAIM_GRAPH/GOAL_CLOSURE_FROZEN → PROOF_FROZEN → PROOF_AUTHORIZED → ATTEMPT_LOCKED → resource reservation → OUTCOME_EXPOSED → adjudication/closure.
 
-- [ ] RESOLVED
+**Proof:** `CORE_SEMANTICS.md §7`; PRD-03; PRD-13.
 
-### F-05 — HIGH — OPEN — Dependency graph conflicts between PRD Index and adapter PRDs
+- [x] RESOLVED
 
-**Problem:** PRD Index says PRD-08 hard-depends only on PRD-07. PRD-08 itself lists PRD-09 and PRD-10 as dependencies, while PRD-09/10 link back to PRD-08 for default integration.
+### F-07 — HIGH — RESOLVED — Protected/fresh resource state incomplete
 
-**Risk:** circular implementation ordering and ambiguous handoff authorization.
+**Resolution:** resource freshness state is `FRESH | RESERVED | EXPOSED`; reservation is durable before access; uncertain recovery fails closed to EXPOSED; EXPOSED never becomes FRESH again; reuse policy is explicit.
 
-**Affected:** PRD_INDEX, PRD-08, PRD-09, PRD-10.
+**Proof:** `CORE_SEMANTICS.md §8`; PRD-07; PRD-14.
 
-**Required remediation:** define dependency classes (HARD / CONDITIONAL / CROSS-CUTTING / INTEGRATION or equivalent) and remove circular hard dependencies.
+- [x] RESOLVED
 
-- [ ] RESOLVED
+### F-08 — HIGH — RESOLVED — Amendment/new-lineage rules discretionary
 
-### F-06 — HIGH — OPEN — Lock and outcome-exposure boundaries are not canonical
+**Resolution:** amendments classified EDITORIAL vs NORMATIVE. Normative post-outcome changes create new affected proof/study lineage; old adjudications remain immutable. Newly discovered prerequisites produce a new ClaimGraph revision and do not rewrite old evidence.
 
-**Problem:** documents use “execution authorized”, “proof frozen”, “after evidence exposure”, `PRE_LOCK`, `LOCKED_PRE_OUTCOME`, and “post-outcome” without one event model.
+**Proof:** `CORE_SEMANTICS.md §9`; PRD-01; PRD-02; README.
 
-**Risk:** an implementation cannot know when changes become prohibited or when a resource becomes spent.
+- [x] RESOLVED
 
-**Affected:** PRD-01, PRD-03, PRD-04, PRD-05, PRD-13.
+### F-09 — MEDIUM — RESOLVED — Undefined fixed-point/cycle exception
 
-**Required remediation:** define canonical events such as Goal freeze, ClaimGraph freeze, Proof freeze/authorization, ProtectedResource reservation/exposure, Outcome exposure, Adjudication.
+**Resolution:** v0.x HARD Claim dependencies are strictly a DAG. Fixed-point/cyclic semantics are explicitly deferred.
 
-- [ ] RESOLVED
+**Proof:** `CORE_SEMANTICS.md §5`; PRD-02.
 
-### F-07 — HIGH — OPEN — Protected/fresh resource state model is incomplete
+- [x] RESOLVED
 
-**Problem:** freshness is described conceptually but resource identity, reservation, exposure transition, and reuse policy are not defined.
+### F-10 — HIGH — RESOLVED — Next-Step ranking not deterministic/governed
 
-**Risk:** a confirmatory seed/dataset could be observed before its exposure is durably recorded and later misclassified as fresh.
+**Resolution:** two-stage selection introduced: deterministic admissibility then frozen SelectionPolicy ranking. Default ranking fields and lexical `proof_id` tie-break are defined. Authorized non-default choice is recorded but must remain inside admissible set.
 
-**Affected:** PRD-03, PRD-04, PRD-06, PRD-14.
+**Proof:** `CORE_SEMANTICS.md §11`; PRD-06.
 
-**Required remediation:** define resource identity + freshness state and require reservation/exposure bookkeeping before or atomically with protected access; exposed resources never become fresh again.
+- [x] RESOLVED
 
-- [ ] RESOLVED
+### F-11 — MEDIUM — RESOLVED — “Smallest/minimal proof” undefined
 
-### F-08 — HIGH — OPEN — Amendment/new-lineage rules are discretionary
+**Resolution:** minimality is no longer proof validity. Planner emits normalized resource/freshness/complexity estimates; SelectionPolicy ranks admissible proofs.
 
-**Problem:** PRD-01 says semantic amendment after exposure “may require” new lineage; new claims can be added after evidence without exact invalidation rules.
+**Proof:** PRD-03 “Minimality”; `CORE_SEMANTICS.md §11`.
 
-**Risk:** observed outcomes can influence rewritten goals/claims while preserving old authority.
+- [x] RESOLVED
 
-**Affected:** PRD-01, PRD-02, PRD-03, README.
+### F-12 — HIGH — RESOLVED — Evidence trust/admission undefined
 
-**Required remediation:** classify editorial vs normative amendments; require new revision/lineage for post-outcome changes to propositions, satisfaction mapping, thresholds, baselines, protected cohorts, or other decision semantics.
+**Resolution:** Evidence lifecycle and frozen `EvidenceAdmissionPolicy` introduced. Only ADMITTED evidence may reach adjudication; source class, integrity, producer linkage, freshness, independence, derivation and redaction rules are explicit.
 
-- [ ] RESOLVED
+**Proof:** `CORE_SEMANTICS.md §10`; PRD-04; PRD-13.
 
-### F-09 — MEDIUM — OPEN — Claim dependency cycles have an undefined exception
+- [x] RESOLVED
 
-**Problem:** PRD-02 permits “explicitly allowed fixed-point structures” but does not define them.
+### F-13 — MEDIUM — RESOLVED — Evidence relation direction/binding unspecified
 
-**Risk:** implementation-specific cycle handling and non-terminating Next-Step logic.
+**Resolution:** relation direction is explicitly subject→object and all authoritative evidentiary relations bind immutable IDs/hashes; floating “current” targets are prohibited.
 
-**Affected:** PRD-02.
+**Proof:** `CORE_SEMANTICS.md §10`; PRD-04.
 
-**Required remediation:** v0.x hard claim dependencies are a DAG. Defer fixed-point/cyclic dependency semantics to a future explicit extension.
+- [x] RESOLVED
 
-- [ ] RESOLVED
+### F-14 — HIGH — RESOLVED — Executor status overlapped proof verdict
 
-### F-10 — HIGH — OPEN — Next-Step ranking is not deterministic/governed enough
+**Resolution:** executor states changed to `COMPLETED | EXECUTOR_FAILED | CANCELLED | TIMED_OUT | PREEMPTED` (plus pre-run states). PASS/FAIL/INVALID/UNRESOLVED exist only in Adjudication.
 
-**Problem:** preferences such as “high information gain”, “lower complexity/cost”, “smaller/faster” have no normalized values or tie-break rules.
+**Proof:** `CORE_SEMANTICS.md §2.6–2.7`; PRD-07; PRD-05.
 
-**Risk:** two agents can choose materially different next studies under identical state while both claim policy compliance.
+- [x] RESOLVED
 
-**Affected:** PRD-06.
+### F-15 — HIGH — RESOLVED — Authority/independence/override semantics loose
 
-**Required remediation:** separate deterministic admissibility from preference ranking; define a frozen `SelectionPolicy`, normalized ranking fields, deterministic tie-breaker, and authority for choosing among equally admissible candidates.
+**Resolution:** core authority actions, IndependencePolicy dimensions, separation-of-duty enforcement and immutable machine verdict are defined. Human action is a separate `GovernanceDisposition`, never a verdict rewrite.
 
-- [ ] RESOLVED
+**Proof:** `CORE_SEMANTICS.md §12`; PRD-14; PRD-05; PRD-09.
 
-### F-11 — MEDIUM — OPEN — “Smallest/minimal proof” is undefined
+- [x] RESOLVED
 
-**Problem:** Proof Planner uses “smallest admissible” and “minimal” without a measurable dimension.
+### F-16 — MEDIUM — RESOLVED — G2E semantic authority vs GWF source-of-record ambiguous
 
-**Risk:** minimality becomes untestable agent prose.
+**Resolution:** G2E owns semantic definitions; selected runtime owns durable persistence. GWF is default system of record; standalone stores the same canonical objects. Runtime IDs are mappings, not semantic replacements.
 
-**Affected:** PRD-03, PRD-06.
+**Proof:** `CORE_SEMANTICS.md §13`; README §2/§5; PRD-08; PRD-11.
 
-**Required remediation:** make validity independent from minimality; require explicit resource/complexity/freshness estimates and treat minimality as a selection policy over admissible proofs.
+- [x] RESOLVED
 
-- [ ] RESOLVED
+### F-17 — MEDIUM — RESOLVED — Standalone→GWF migration identity not frozen
 
-### F-12 — HIGH — OPEN — Evidence trust/admission semantics are undefined
+**Resolution:** canonical G2E IDs/hashes must remain unchanged through migration; runtime-specific IDs are separate; incompatible major schema/capability fails closed.
 
-**Problem:** Evidence nodes contain a “trust class”, but classes and admission criteria are not specified. Reference Acquisition can classify external references as direct empirical evidence without a normative admission path.
+**Proof:** `CORE_SEMANTICS.md §§1,13`; PRD-08; PRD-11.
 
-**Risk:** low-integrity or merely contextual references can accidentally satisfy claims.
+- [x] RESOLVED
 
-**Affected:** PRD-04, PRD-05, PRD-13.
+### F-18 — MEDIUM — RESOLVED — Codex/ChatGPT treated as one app surface
 
-**Required remediation:** define `EvidenceAdmissionPolicy`, integrity/identity requirements, source classes, independence/freshness constraints, and explicit admitted/rejected status.
+**Resolution:** same priority wave retained but separate `Codex` and `ChatGPT` adapter profiles/capability manifests are mandatory. Qualification of one does not imply parity with the other.
 
-- [ ] RESOLVED
+**Proof:** README §6; PRD-09; PHASE_PLAN P5.
 
-### F-13 — MEDIUM — OPEN — Evidence relation direction and binding identity are unspecified
+- [x] RESOLVED
 
-**Problem:** relations such as `SUPPORTS`, `VALIDATES`, `DERIVED_FROM`, `REPRODUCES` have names but no subject→object direction or exact-vs-floating binding rule.
+### F-19 — HIGH — RESOLVED — P1/P2 omitted required policy schemas/engines
 
-**Risk:** incompatible graph implementations and ambiguous provenance traversal.
+**Resolution:** P1 now includes GoalClosureContract, ClaimResolutionPolicy, EvidenceAdmissionPolicy, ProtectedResource, Retry/Amendment, Selection, Authority/Independence and attempt-envelope schemas. P2 includes Claim resolver, Goal evaluator, evidence admission, freshness engine and deterministic selector.
 
-**Affected:** PRD-04.
+**Proof:** `PHASE_PLAN.md P1–P2`; PRD_INDEX implementation note.
 
-**Required remediation:** define relation direction and require immutable target identity for evidentiary relations.
+- [x] RESOLVED
 
-- [ ] RESOLVED
+### F-20 — MEDIUM — RESOLVED — Older P0 QA could be mistaken for current handoff QA
 
-### F-14 — HIGH — OPEN — Executor status can still be confused with proof validity
+**Resolution:** `P0_DOCUMENT_QA.md` is explicitly marked historical structural QA. This `QA_doc.md` is designated current semantic handoff QA.
 
-**Problem:** Execution lifecycle contains `SUCCEEDED | FAILED | INVALIDATED`; `FAILED`/ `INVALIDATED` are not clearly executor-only states and overlap with proof FAIL/INVALID terminology.
+**Proof:** `P0_DOCUMENT_QA.md`; README document navigation.
 
-**Risk:** backend status can leak into adjudication semantics.
+- [x] RESOLVED
 
-**Affected:** PRD-07, PRD-05.
+### F-21 — MEDIUM — RESOLVED — Goal terminal vocabulary inconsistent
 
-**Required remediation:** use explicit executor states (e.g. COMPLETED/EXECUTOR_FAILED/CANCELLED/TIMED_OUT/PREEMPTED) and keep proof verdict exclusively in Adjudication.
+**Resolution:** normative Goal verdicts are `IN_PROGRESS | ACHIEVED | FALSIFIED | UNRESOLVED | STOPPED`. INVALID remains attempt-level only and never directly invalidates/falsifies the Goal.
 
-- [ ] RESOLVED
+**Proof:** `CORE_SEMANTICS.md §2.2/§5`; README; PRD-12.
 
-### F-15 — HIGH — OPEN — Authority, independence, and override semantics are insufficiently locked
+- [x] RESOLVED
 
-**Problem:** roles exist but machine adjudicator vs human reviewer/approver are not clearly separated. Independence is discussed for agents but no `IndependencePolicy` is bound to a proof. Human override is mentioned but not defined.
+### F-22 — MEDIUM — RESOLVED — Result-package integrity/sealing underspecified
 
-**Risk:** same agent can design, execute, review and effectively override a result where independent review was expected.
+**Resolution:** non-circular `PACKAGE_MANIFEST.json` + `PACKAGE_SEAL.json` contract added with file hash/size checks, authoritative-file classification and external-reference verification policy.
 
-**Affected:** PRD-05, PRD-09, PRD-14.
+**Proof:** `CORE_SEMANTICS.md §14`; PRD-12.
 
-**Required remediation:** define authority actions, optional/required separation-of-duty policy, prospective independence policy, and `GovernanceDisposition` that never rewrites machine adjudication.
-
-- [ ] RESOLVED
-
-### F-16 — MEDIUM — OPEN — G2E semantic authority vs GWF system-of-record authority is ambiguous
-
-**Problem:** README calls GWF the default authoritative runtime while G2E owns adjudication/goal closure; facts are said to belong to both G2E state and GWF state.
-
-**Risk:** two competing sources of truth.
-
-**Affected:** README, PRD-08, PRD-11.
-
-**Required remediation:** define semantic authority separately from persistence/system-of-record authority. In GWF mode, GWF persists canonical G2E records but may not reinterpret G2E semantics.
-
-- [ ] RESOLVED
-
-### F-17 — MEDIUM — OPEN — Standalone→GWF migration identity is not frozen
-
-**Problem:** PRD-11 requires semantic parity but does not say whether G2E object IDs/hashes remain unchanged or are remapped during import.
-
-**Risk:** migrated project can appear to have a new scientific/proof identity.
-
-**Affected:** PRD-08, PRD-11.
-
-**Required remediation:** canonical G2E identities remain unchanged; runtime-specific IDs are separate references; compatibility failures fail closed.
-
-- [ ] RESOLVED
-
-### F-18 — MEDIUM — OPEN — Codex and ChatGPT app surfaces are treated as one adapter target
-
-**Problem:** docs use “Codex / ChatGPT adapter” as though harness/capabilities are interchangeable.
-
-**Risk:** implementation may assume parity between distinct app surfaces.
-
-**Affected:** README, PRD-09, PHASE_PLAN.
-
-**Required remediation:** keep same priority wave but use separate `agent_app` profiles/bindings and capability discovery; no assumed behavioral parity.
-
-- [ ] RESOLVED
-
-### F-19 — HIGH — OPEN — P1/P2 implementation plan omits required core policy schemas/engines
-
-**Problem:** P1 lists primary objects but omits goal-satisfaction policy, claim-resolution policy, evidence-admission policy, retry/amendment policy, protected-resource policy, authority/independence policy. P2 omits claim resolver and final goal closure evaluator.
-
-**Risk:** implementation begins with insufficient schema coverage and later requires incompatible state migrations.
-
-**Affected:** PHASE_PLAN, PRD_INDEX.
-
-**Required remediation:** expand P1/P2 exit scope before implementation authorization.
-
-- [ ] RESOLVED
-
-### F-20 — MEDIUM — OPEN — Previous P0 QA can be mistaken for current semantic handoff QA
-
-**Problem:** `P0_DOCUMENT_QA.md` says PASS, but it only checked structural/coverage properties and predates this semantic audit.
-
-**Risk:** downstream agent may cite the older PASS and ignore unresolved semantic findings.
-
-**Affected:** P0_DOCUMENT_QA, PRD_INDEX/README navigation.
-
-**Required remediation:** mark it historical structural QA and designate `QA_doc.md` as current semantic handoff QA.
-
-- [ ] RESOLVED
-
-### F-21 — MEDIUM — OPEN — Goal terminal-state vocabulary is inconsistent
-
-**Problem:** README includes “invalidated”; PRD-12 uses achieved/falsified/unresolved/stopped; INVALID is also a proof verdict.
-
-**Risk:** technical invalid execution may incorrectly become terminal goal INVALID.
-
-**Affected:** README, PRD-01, PRD-05, PRD-12.
-
-**Required remediation:** define one normative GoalVerdict vocabulary and explicitly state that proof-attempt INVALID does not by itself invalidate/falsify the goal.
-
-- [ ] RESOLVED
-
-### F-22 — MEDIUM — OPEN — Result package integrity/sealing is underspecified
-
-**Problem:** PRD-12 lists result files but no non-circular manifest/hash/seal rule or missing-reference verification contract.
-
-**Risk:** final result package can be modified without a canonical integrity failure.
-
-**Affected:** PRD-12.
-
-**Required remediation:** define package manifest, content hashes, external/parent seal semantics, and verification behavior without self-referential hashing.
-
-- [ ] RESOLVED
+- [x] RESOLVED
 
 ---
 
-## 3. Remediation checklist
+## 3. Final handoff checklist
 
-- [ ] Define one normative Core Semantics document referenced by every relevant PRD.
-- [ ] Separate all lifecycle/verdict namespaces.
-- [ ] Define Goal satisfaction and Claim resolution policies.
-- [ ] Define ProofObligation vs ExecutionAttempt retry/closure.
-- [ ] Normalize dependency classes and remove cycles.
-- [ ] Freeze temporal/exposure/freshness semantics.
-- [ ] Freeze evidence admission/relation semantics.
-- [ ] Freeze selection policy and deterministic tie-break.
-- [ ] Freeze authority/independence/override semantics.
-- [ ] Freeze system-of-record and standalone migration semantics.
-- [ ] Split Codex/ChatGPT app profiles.
-- [ ] Expand P1/P2 plan before implementation.
-- [ ] Add result-package integrity policy.
-- [ ] Re-run cross-document consistency/link/dependency QA.
-- [ ] OPEN findings = 0.
-- [ ] Final verdict = PASS.
+- [x] Normative Core Semantics exists and is referenced by every component PRD.
+- [x] Goal, Claim, Proof, Attempt and Adjudication state namespaces are separated.
+- [x] GoalClosureContract and ClaimResolutionPolicy are formalized.
+- [x] Proof retry/closure semantics are explicit.
+- [x] Dependency classes are explicit and HARD graph is acyclic.
+- [x] Temporal lock/outcome-exposure events are canonical.
+- [x] Protected-resource freshness is monotonic/fail-closed.
+- [x] Evidence admission and relation direction/binding are explicit.
+- [x] Selection policy has deterministic admissibility/ranking/tie-break.
+- [x] Authority, independence, separation-of-duty and GovernanceDisposition are explicit.
+- [x] G2E semantic authority vs runtime system-of-record authority is explicit.
+- [x] Standalone↔GWF migration preserves canonical identity.
+- [x] Codex and ChatGPT are separate first-priority profiles.
+- [x] P1/P2 plan covers required policy schemas and deterministic engines.
+- [x] Result Package has non-circular integrity/seal semantics.
+- [x] Older structural QA is clearly historical.
+- [x] Reference baseline pins GWF base commit and MindForge evidence commit.
+- [x] All required G2E/GWF dependency paths exist at remediation commit.
+- [x] MindForge M2/M3/M4 reference files resolve at pinned commit.
+- [x] Remediation commit changes only `g2e/` paths.
+- [x] OPEN findings = 0.
 
-## 4. Current verdict
+## 4. Final QA evidence
 
-**SEMANTIC DOCUMENT QA: FAIL / REMEDIATION REQUIRED**
+Remediation commit:
 
-`OPEN = 22`
+`ed88ec721342456bbb90006b41e2308bdc043fcd`
 
-P1 implementation should remain blocked until this checklist is clean.
+Checks:
+
+- 14/14 component PRDs contain Purpose, Dependencies, References, Acceptance Criteria and Core Semantics linkage.
+- HARD dependency graph: **DAG / PASS**.
+- Required local dependency/reference paths: **all present**.
+- MindForge M2/M3/M4 pinned reference evidence: **all present**.
+- Remediation scope outside `g2e/`: **0 files**.
+- Legacy contradiction scans:
+  - combined Claim lifecycle/verdict enum: absent;
+  - fixed-point HARD-dependency exception: absent;
+  - executor `SUCCEEDED` proof-like state: absent;
+  - Goal INVALID terminal state: absent;
+  - Codex/ChatGPT single assumed profile: absent;
+  - GitHub “independent execution” assumption: absent;
+  - PRD-08 hard cycle to PRD-09/10: absent.
+
+## 5. Verdict
+
+**G2E SEMANTIC DOCUMENT QA: PASS**
+
+`OPEN = 0`
+
+P1 — Core Schemas is now authorized by documentation/semantic QA. Later phases remain gated by `PHASE_PLAN.md`.
