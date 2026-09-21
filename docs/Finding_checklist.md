@@ -666,3 +666,18 @@ Evidence: workflow `35580447186`, artifact `10630420383`.
 **OPEN = 0**
 
 DG-W1 handoff exact-head qualification remains pending.
+
+## 27. DG-W1 formal close
+
+DG-W1 committed handoff HEAD `84383fe2978eff8ab795c7607df6f19360a5ca1f` passed the combined Wave-1 requalification workflow.
+
+- exact-head workflow: `35580636537` PASS
+- exact-head artifact: `10629413613`
+- artifact digest: `sha256:54b8e518ef51553b6e5be1f428d346551a1c4f7b9b53fe0936c61e592a1cafe2`
+- DG-P0/P1/P2/P3: PASS
+- exact tool/version/config fingerprints: recorded
+- forbidden document/GAC runtime hits: none
+
+**OPEN = 0**
+
+DG-W1 is formally closed. Wave 2 may begin with DG-P4 reuse/spec qualification. GAC remains locked until DG-W4 PASS.

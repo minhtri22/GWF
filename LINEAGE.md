@@ -64,3 +64,13 @@ Rules:
 - Exact-head evidence artifact: `10628478735`.
 - Evidence artifact digest: `sha256:ff7465f287f6b368da995a1defafc67c40cc6d6c2057132a2c0e076f8f4145b8`.
 - Outcome: Wave 1's Git/blob revision evidence resolver item is complete; DG-W1 remains a separate open governance gate.
+
+
+## 2026-09-21 — DG-W1 Wave 1 formally closed
+
+- Result: DG-W1 PASS / formally closed.
+- Handoff head: `84383fe2978eff8ab795c7607df6f19360a5ca1f`.
+- Exact-head workflow: `35580636537` PASS.
+- Evidence artifact: `10629413613`.
+- Evidence artifact digest: `sha256:54b8e518ef51553b6e5be1f428d346551a1c4f7b9b53fe0936c61e592a1cafe2`.
+- Outcome: Documentation Validator Foundation is complete; DG-P4 is the next roadmap item.

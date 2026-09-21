@@ -63,3 +63,19 @@ DG-W1 = QA_PASS / EXACT_HEAD_PENDING
 Wave 2 = NOT_OPEN
 GAC = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+
+## 6. Formal-close evidence
+
+The committed DG-W1 handoff HEAD `84383fe2978eff8ab795c7607df6f19360a5ca1f` was requalified with the full Wave-1 combined gate.
+
+- workflow: `35580636537`
+- conclusion: **PASS**
+- artifact: `10629413613`
+- artifact digest: `sha256:54b8e518ef51553b6e5be1f428d346551a1c4f7b9b53fe0936c61e592a1cafe2`
+
+All component real gates, cross-item compatibility checks, fingerprint checks and compile passed again.
+
+**DG-W1 status: FORMALLY CLOSED.**
+
+The next roadmap item is DG-P4 — Document facade / identity mapping. GAC remains locked until DG-W4 PASS.

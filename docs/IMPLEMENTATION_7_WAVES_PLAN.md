@@ -183,7 +183,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 
 ### Wave 1 exit gate — DG-W1
 
-- **Status:** **REQUALIFICATION QA PASS / EXACT-HANDOFF-HEAD PENDING**
+- **Status:** **COMPLETED / PASS / FORMALLY CLOSED**
 - **QA head:** `bea3cf23dd9b14cde999e9effe13e1cc9e6af1e5`
 - **QA workflow:** `35580447186` PASS
 - **QA artifact:** `10630420383`
@@ -196,7 +196,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 - [x] markdownlint, Vale and Lychee outputs normalize through the shared validator contract
 - [x] no authoritative document-state runtime added yet
 - [x] Wave-1 handoff package records exact tool versions/config fingerprints
-- [ ] exact committed DG-W1 handoff HEAD requalification PASS
+- [x] exact committed DG-W1 handoff HEAD requalification PASS — run `35580636537` on `84383fe2978eff8ab795c7607df6f19360a5ca1f`, artifact `10629413613`.
 
 ---
 
