@@ -162,3 +162,20 @@ def test_repeated_identical_output_normalizes_equally(tmp_path, monkeypatch):
 
     monkeypatch.setattr(adapter, "_run", fake_run)
     assert adapter.validate(subject).to_dict() == adapter.validate(subject).to_dict()
+
+
+def test_help_exit_2_with_version_banner_is_accepted(tmp_path, monkeypatch):
+    subject = _write(tmp_path, "good.md", "# Good\n")
+    config = _write(tmp_path, "cfg.yaml", "config: {}\n")
+    adapter = MarkdownlintCli2Adapter(config, command_prefix=("fake",))
+
+    def fake_run(args):
+        if args == ["--help"]:
+            return subprocess.CompletedProcess(args, 2, "markdownlint-cli2 v0.23.3\n", "")
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(adapter, "_run", fake_run)
+    result = adapter.validate(subject)
+    assert result.execution_status == "SUCCEEDED"
+    assert result.content_status == "PASS"
+    assert result.observed_validator_version == "0.23.3"

@@ -162,13 +162,13 @@ class MarkdownlintCli2Adapter:
             return None, "EXECUTABLE_NOT_FOUND"
         except subprocess.TimeoutExpired:
             return None, "VERSION_PROBE_TIMEOUT"
-        if proc.returncode not in {0, 1}:
-            return None, "VERSION_PROBE_FAILED"
         banner = "\n".join([proc.stdout or "", proc.stderr or ""])
         match = _VERSION.search(banner)
-        if not match:
-            return None, "VERSION_UNRESOLVED"
-        return match.group("version"), None
+        if match:
+            return match.group("version"), None
+        if proc.returncode not in {0, 1}:
+            return None, "VERSION_PROBE_FAILED"
+        return None, "VERSION_UNRESOLVED"
 
     @staticmethod
     def _parse_findings(output: str, subject: Path) -> tuple[ValidatorFinding, ...]:
