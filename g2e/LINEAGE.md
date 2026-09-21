@@ -136,3 +136,14 @@
 - **Verified close-through:** `74570fe8074732258285e945322096ac13b0ba10`
 - **Result:** Post-qualification compare contains only `g2e/docs/P4_IMPLEMENTATION_RESULT.md`, `g2e/docs/P4_QUALIFICATION_EVIDENCE.json` and append-only `g2e/LINEAGE.md`; post-qualification mutation in `src/`, `tests/` and `.github/` is 0. The qualified P4 implementation therefore remains exactly the implementation exercised by the authoritative exact-SHA workflows.
 - **Next:** exact P4L capability/dependency audit only; P4L remains CONDITIONAL/CLOSED.
+
+
+### G2E-P4L — Capability / Dependency Audit
+
+- **Status:** CLOSED / NOT AUTHORIZED
+- **Audit baseline:** `dec4c73ad15e9ee0a5883dee4a35bf6f7621bf89`
+- **Audit result:** `5d56c54d505b0173bc6d5152250089ca0a4fac2d`
+- **Audit evidence:** `ccdfb43742dfcc7b9de944daa1ed4f9c70d5d613`
+- **Result:** Exact GWF capability audit found no qualifying PASS evidence for the mandatory base P4L opening set: DG-W4, GAC-P0, GAC-P1 and GAC-P4B. Latest exact Documentation Governance evidence formally closes DG-P5 and identifies DG-P6 as next while DG-W2 remains open; GAC remains locked until DG-W4 PASS. GAC-P2A/DG-GAC-W5/RA-P1C/RA-GAC-W6/GAC-P3 remain capability-triggered and unqualified; none is silently inferred available.
+- **Implementation boundary:** P4L runtime implementation remains prohibited. The audit introduced no `src/`, `tests/` or `.github/` mutation.
+- **Next external dependency frontier:** DG-P6 on the independent GWF Documentation Governance line. A future P4L audit must re-resolve exact gate evidence; prior documentation QA cannot substitute for runtime qualification.
