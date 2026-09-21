@@ -13,7 +13,6 @@ on:
       - "g2e/docs/PRD_08_GWF_ADAPTER.md"
       - "g2e/docs/PRD_14_SECURITY_AUTHORITY.md"
       - "g2e/docs/CORE_SEMANTICS.md"
-      - "src/g2e/schemas.py"
 
 permissions:
   contents: read
