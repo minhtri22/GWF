@@ -1,0 +1,28 @@
+{
+  "schema": "G2E-P5A-D2S1-LOCAL-PRETURN-IMPLEMENTATION-EVIDENCE-v1",
+  "status": "IMPLEMENTATION_PASS_LOCAL_EXECUTION_REQUIRED",
+  "baseline_sha": "3014692ef75a5ccd707907e1b28a14f273d45dfa",
+  "candidate_sha": "ec6aaa1d296f9eb737d79ef4aa7470f95791a705",
+  "workflow_run_id": 35630980327,
+  "workflow_job_id": 106436822474,
+  "artifact_id": 10654433662,
+  "artifact_digest": "sha256:b939301225645cb991ae315955d1ef5b7866680dbe3acb396365417236ed4cc3",
+  "blobs": {
+    "preflight_script": "a5d5369c4c2ecf042bebc77028deda3b33e6c6d4",
+    "tests": "f12923dc2579e92426cb1fa65ba5c8443ab56f75",
+    "workflow": "c173ed5e3d0c84d9f9205dda7f7d0aca5d62c2fc"
+  },
+  "regressions": {
+    "p1": "PASS",
+    "p1_4": "PASS",
+    "p1_5": "PASS",
+    "p2": "PASS",
+    "p3": "PASS",
+    "p4": "PASS"
+  },
+  "no_turn_dispatch_token": true,
+  "model_turn_executed": false,
+  "scientific_attempt_authorized": false,
+  "runtime_adapter_authorized": false,
+  "next_gate": "LOCAL_NO_TURN_PROFILE_SELECTION_PREFLIGHT"
+}
