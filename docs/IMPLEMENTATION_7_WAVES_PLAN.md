@@ -329,7 +329,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P7 — Authority claims + duplicate-authority detection
 
 - **Complexity:** 3
-- **Status:** **PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **Status:** **IMPLEMENTATION QUALIFIED / HANDOFF + EXACT-HEAD QA PENDING**
 - **HARD dependencies:** DG-P4, DG-P6; roadmap Wave-3 admission dependency DG-W2 is formally closed.
 - **Frozen specification:** `docs/DG_P7_AUTHORITY_CLAIMS_SPEC.md`, commit `f226eb8e01b2284381ba0e7cf5527518512c7ce7`, blob `63d2252314e753b7485f1a0249dc011468be275b`.
 - **Document QA:** `docs/DOCUMENT_QA_DG_P7_PREIMPLEMENTATION.md` — PASS.
@@ -346,16 +346,21 @@ Every completed item must record exact dependency revisions/evidence used. A dep
   - [x] transactional collision invariant frozen;
   - [x] D7-F1..D7-F20 frozen;
   - [x] QA PASS.
-- **Implementation acceptance remains open:**
-  - [ ] bounded migration adds `document_authority_claims` only;
-  - [ ] actor authority policies remain semantically unchanged;
-  - [ ] grant/retire service uses Proposal/Approval/Audit + optimistic claim version;
-  - [ ] PRIMARY/COMPOSED collision adjudication implemented;
-  - [ ] authority collision QA emits existing P5 `DUPLICATE_AUTHORITY`;
-  - [ ] D7-F1..D7-F20 PASS;
-  - [ ] P4/P5/P6 and governance regressions PASS;
-  - [ ] no DG-P8+ semantics;
-  - [ ] implementation QA PASS.
+- **Implementation evidence:** HEAD `3f993ac639c8cb3147d0dc8d888c8b5266e54914`; workflow `35610704812` PASS; SQLite artifact `10644396006`; PostgreSQL artifact `10644450806`.
+- **Implementation acceptance:**
+  - [x] bounded migration adds `document_authority_claims` only;
+  - [x] actor authority policies remain semantically unchanged;
+  - [x] grant/retire service uses Proposal/Approval/Audit + optimistic claim version;
+  - [x] PRIMARY/COMPOSED collision adjudication implemented;
+  - [x] authority collision QA emits existing P5 `DUPLICATE_AUTHORITY`;
+  - [x] no-collision scan does not emit synthetic PASS QA;
+  - [x] D7-F1..D7-F20 PASS on SQLite;
+  - [x] D7-F1..D7-F20 PASS on PostgreSQL 17;
+  - [x] P4/P5/P6 and governance regressions PASS;
+  - [x] full repository regression PASS;
+  - [x] no DG-P8+ semantics;
+  - [x] implementation QA PASS;
+  - [ ] handoff exact-head workflow PASS.
 
 ### DG-P8 — Typed document relations
 
@@ -1010,17 +1015,18 @@ Wave 3 — Semantic Documentation Governance
       DEPENDENCY UNLOCKED
        ↓
 DG-P7 — Authority claims + duplicate-authority detection
-      PRE-IMPLEMENTATION SPEC FROZEN
-      DEPENDENCY / DOCUMENT QA PASS
-      IMPLEMENTATION NOT_STARTED
+      IMPLEMENTATION QUALIFIED
+      HEAD 3f993ac639c8cb3147d0dc8d888c8b5266e54914
+      workflow 35610704812 PASS
+      HANDOFF EXACT-HEAD QA PENDING
        ↓
 STOP
 
 DG-P8+ = NOT_STARTED / NOT_AUTHORIZED
 ```
 
-DG-W2 is formally closed and the explicitly authorized DG-P7 pre-implementation qualification has passed.
+DG-P7 bounded implementation qualification has passed on both SQLite and PostgreSQL 17, but formal closure still requires exact-head requalification of the committed handoff package.
 
-DG-P7 implementation remains NOT_STARTED and requires a separate explicit bounded implementation authorization. DG-P8+ remain unopened.
+DG-P8+ remain unopened and DG-W3 remains OPEN / NOT_EXECUTED.
 
 GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.
