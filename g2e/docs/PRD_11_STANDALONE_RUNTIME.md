@@ -19,7 +19,8 @@ MUST provide:
 - minimum authority mode (`single_user`);
 - RuntimeCapabilityManifest;
 - artifact refs;
-- sealed Goal Result Package.
+- sealed Goal Result Package;
+- minimal local Evidence Library Adapter/catalog sufficient to publish/query exact EvidenceCapsules when PRD-17 is enabled.
 
 Filesystem + SQLite is acceptable for v0.x when atomic/crash recovery is explicit.
 
@@ -56,7 +57,7 @@ If a ProofObligation requires an unavailable capability (e.g. separation of duty
 ## Dependencies
 
 - **HARD:** [PRD-04 Evidence Graph](PRD_04_EVIDENCE_GRAPH.md), [PRD-05 Adjudicator](PRD_05_ADJUDICATOR.md), [PRD-07 Execution Protocol](PRD_07_EXECUTION_PROTOCOL.md)
-- **INTEGRATION:** [PRD-08 GWF Adapter](PRD_08_GWF_ADAPTER.md) for migration/parity
+- **INTEGRATION:** [PRD-08 GWF Adapter](PRD_08_GWF_ADAPTER.md) for migration/parity; [PRD-17 Evidence Library Adapter](PRD_17_EVIDENCE_LIBRARY_ADAPTER.md)
 - **CROSS_CUTTING:** [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
 - **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
 

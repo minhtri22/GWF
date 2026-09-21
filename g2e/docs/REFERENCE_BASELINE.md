@@ -38,3 +38,22 @@ References:
 - [M4 reasoning result](https://github.com/minhtri22/MindForge/blob/62141d530832f7694342fe92704a5975bfdbbded/artifacts/model-training-pipeline/m4/IMPLEMENTATION_RESULT.md)
 
 MindForge phase names are not G2E phases. They are empirical source material for generic proof-governance rules.
+
+
+## GWF Governed Artifact Catalog packing baseline
+
+G2E Evidence Library Adapter is designed against the documentation-only GWF Governed Artifact Catalog pack:
+
+- Branch: `docs/governed-artifact-catalog-pack`
+- Candidate: `4cc187320820ea4ff144130b0b63f6d23e3a9e3b`
+- Findings: `94f1db6d7ecf001311d774b729c7a579d65853ab`
+- Remediation: `e013a10707815c99bc65fe93bc5716fc1b55e20e`
+- QA closure: `194c66c3c215ddcc46a6e26dca32e3fb6eda04c5`
+
+References:
+
+- [GAC Specification](https://github.com/minhtri22/GWF/blob/docs/governed-artifact-catalog-pack/docs/GOVERNED_ARTIFACT_CATALOG_SPEC.md)
+- [GAC Integration Boundaries](https://github.com/minhtri22/GWF/blob/docs/governed-artifact-catalog-pack/docs/GOVERNED_ARTIFACT_CATALOG_INTEGRATION_BOUNDARIES.md)
+- [GAC Packing QA](https://github.com/minhtri22/GWF/blob/docs/governed-artifact-catalog-pack/docs/GOVERNED_ARTIFACT_CATALOG_QA.md)
+
+This is a **packing-only contract**, not an implemented GWF service. G2E must not assume GAC runtime availability until separately qualified.

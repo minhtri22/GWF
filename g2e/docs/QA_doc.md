@@ -262,8 +262,8 @@ Checks:
 
 ## 5. Verdict
 
-**G2E SEMANTIC DOCUMENT QA: PASS**
+**G2E P0.1 SEMANTIC DOCUMENT QA: PASS (historical scope)**
 
-`OPEN = 0`
+`OPEN = 0` for P0.1.
 
-P1 — Core Schemas is now authorized by documentation/semantic QA. Later phases remain gated by `PHASE_PLAN.md`.
+A later scope extension introduced Evidence Reuse, Library and Synthesis/Convergence semantics. **P1 is re-blocked** until [P0.2 Library/Synthesis QA](P0_2_LIBRARY_SYNTHESIS_QA.md) is PASS with `OPEN = 0`.

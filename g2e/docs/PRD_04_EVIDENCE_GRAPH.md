@@ -31,6 +31,8 @@ Normative requirements are defined in [Core Semantics §10](CORE_SEMANTICS.md). 
 
 External reference/context material does not become empirical proof solely by being retained.
 
+Prior governed results retrieved through PRD-17 also begin as candidate prior evidence. PRD-15 ApplicabilityAssessment/ReuseDisposition does not replace EvidenceAdmissionPolicy.
+
 ## Relations
 
 Relation direction and immutable binding are normative in [Core Semantics §10](CORE_SEMANTICS.md):
@@ -38,7 +40,8 @@ Relation direction and immutable binding are normative in [Core Semantics §10](
 - evidence → attempt: `PRODUCED_BY`;
 - evidence → claim/proof: `SUPPORTS/FALSIFIES`;
 - evidence → exact artifact/contract revision: `VALIDATES`;
-- evidence → evidence: `DERIVED_FROM/REPRODUCES/CONFLICTS_WITH/SUPERSEDES`.
+- evidence → evidence: `DERIVED_FROM/REPRODUCES/CONFLICTS_WITH/SUPERSEDES`;
+- imported evidence → exact EvidenceCapsule: `IMPORTS_CAPSULE`.
 
 Authoritative relations never float to an unspecified “current” target.
 
@@ -66,6 +69,10 @@ Conflicting evidence remains visible. ClaimResolutionPolicy, not insertion order
 - **CONDITIONAL/INTEGRATION:** [PRD-07 Execution Protocol](PRD_07_EXECUTION_PROTOCOL.md) for live producer binding
 - **CROSS_CUTTING:** [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
 - **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
+
+## Integration with prior evidence
+
+Imported capsule-derived EvidenceRecords MUST bind exact capsule ID/hash and source package seal. Library retrieval rank is not evidentiary weight. Capsule ancestry/provenance remains available for independence checks.
 
 ## References
 

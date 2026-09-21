@@ -30,12 +30,17 @@ Dependency classes are normative in [Core Semantics §6](CORE_SEMANTICS.md).
 | PRD-12 | [Goal Result Package](PRD_12_RESULT_PACKAGE.md) | PRD-01 through PRD-06 | runtime artifact backends | PRD-14 |
 | PRD-13 | [Reference Acquisition](PRD_13_REFERENCE_ACQUISITION.md) | PRD-01, PRD-02 | GWF reference subsystem in default mode | PRD-14 |
 | PRD-14 | [Security & Authority](PRD_14_SECURITY_AUTHORITY.md) | none | runtime-specific authority adapters | applies across all |
+| PRD-15 | [Evidence Reuse & Applicability](PRD_15_EVIDENCE_REUSE_APPLICABILITY.md) | PRD-02, PRD-04 | PRD-17 for governed library discovery/publication | PRD-14 |
+| PRD-16 | [Synthesis & Convergence](PRD_16_SYNTHESIS_CONVERGENCE.md) | PRD-02, PRD-03, PRD-04, PRD-05, PRD-06, PRD-15 | PRD-17 for catalog-backed universe retrieval | PRD-14 |
+| PRD-17 | [Evidence Library Adapter](PRD_17_EVIDENCE_LIBRARY_ADAPTER.md) | PRD-15 | PRD-08 default GWF backend; PRD-11 standalone backend | PRD-14 |
 
 The HARD dependency graph must remain acyclic.
 
+P0.2 adds PRD-15/16/17 before schema implementation. GWF Governed Artifact Catalog is an integration backend contract, not a HARD dependency of G2E core semantics.
+
 ## Implementation phases
 
-See [PHASE_PLAN.md](PHASE_PLAN.md). P1 includes schemas not only for primary entities but also for GoalClosureContract, ClaimResolutionPolicy, EvidenceAdmissionPolicy, SelectionPolicy, Retry/Amendment policies, ProtectedResource policy, and Authority/Independence policy.
+See [PHASE_PLAN.md](PHASE_PLAN.md). P1 includes the original core schemas plus EvidenceCapsule, ClaimSignature, ApplicabilityAssessment, ReuseDisposition/Reuse Proof metadata, SynthesisContract/SynthesisResult, provenance-cluster and Evidence Library Adapter contracts.
 
 ## Architectural references
 

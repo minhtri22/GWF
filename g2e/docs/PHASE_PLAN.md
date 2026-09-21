@@ -20,6 +20,24 @@ Exit:
 - agent-app priority explicit;
 - current semantic QA PASS with OPEN=0.
 
+## P0.2 — Evidence Reuse & Convergence Specification
+
+Scope:
+- PRD-15 Evidence Reuse & Applicability;
+- PRD-16 Synthesis & Convergence;
+- PRD-17 Evidence Library Adapter;
+- GWF Governed Artifact Catalog integration boundary;
+- Core Semantics extensions;
+- cross-document semantic QA.
+
+Exit:
+- prior evidence cannot bypass ProofObligation/EvidenceAdmission;
+- library evidence freshness semantics frozen;
+- provenance overlap/double-counting rules frozen;
+- synthesis universe/inclusion/no-rescue rules frozen;
+- GWF-vs-G2E library ownership boundary explicit;
+- P0.2 QA PASS with OPEN=0.
+
 ## P1 — Core Schemas
 
 Implement canonical schemas for:
@@ -36,7 +54,12 @@ Implement canonical schemas for:
 - SelectionPolicy and SelectionDecision;
 - AmendmentPolicy;
 - AuthorityPolicy, IndependencePolicy, GovernanceDisposition;
-- canonical identity/hash/version fields.
+- canonical identity/hash/version fields;
+- EvidenceCapsule and ClaimSignature;
+- ApplicabilityPolicy/ApplicabilityAssessment/ReuseDisposition;
+- reuse-proof metadata and provenance-cluster identifiers;
+- SynthesisContract, SynthesisUniverse, SynthesisResult, ConvergenceClassification;
+- Evidence Library Adapter query/publication/snapshot contracts.
 
 Exit:
 - schema validation;
@@ -59,12 +82,19 @@ Implement:
 - Next-Step admissible-set engine;
 - deterministic SelectionPolicy ranking/tie-break;
 - amendment/no-rescue enforcement;
-- intentional PASS/FAIL/INVALID/UNRESOLVED fixtures.
+- intentional PASS/FAIL/INVALID/UNRESOLVED fixtures;
+- applicability/reuse-policy engine;
+- Reuse ProofObligation qualification fixtures;
+- provenance-overlap/independence clustering;
+- synthesis universe/inclusion determinism;
+- synthesis no-rescue and transitive-ancestry checks.
 
 Exit:
 - no agent required;
 - no runtime adapter required;
 - known negative fixtures cannot be rescued;
+- prior PASS cannot directly flip a current Claim;
+- dependent capsules cannot be counted as independent by default;
 - multiple-proof Claim resolution tested;
 - alternate-path Goal closure tested;
 - deterministic fixtures PASS.

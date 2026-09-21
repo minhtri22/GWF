@@ -55,6 +55,14 @@ flowchart TD
     CR --> NS
     CR --> GV[Goal Evaluator]
     GV --> RP[Goal Result Package]
+    RP --> EC[Evidence Capsule]
+    EC --> LA[Evidence Library Adapter]
+    LA --> LIB[(GWF GAC default / standalone catalog)]
+    LIB --> CAND[Prior evidence candidates]
+    CAND --> APP[Applicability Assessment]
+    APP --> PP
+    LIB --> SYN[Synthesis / Convergence]
+    SYN --> EG
 ```
 
 ## 2. Normative semantics and source of truth
@@ -181,6 +189,9 @@ Component PRDs:
 | Goal Result Package | [PRD-12](docs/PRD_12_RESULT_PACKAGE.md) |
 | Reference Acquisition | [PRD-13](docs/PRD_13_REFERENCE_ACQUISITION.md) |
 | Security & Authority | [PRD-14](docs/PRD_14_SECURITY_AUTHORITY.md) |
+| Evidence Reuse & Applicability | [PRD-15](docs/PRD_15_EVIDENCE_REUSE_APPLICABILITY.md) |
+| Synthesis & Convergence | [PRD-16](docs/PRD_16_SYNTHESIS_CONVERGENCE.md) |
+| Evidence Library Adapter | [PRD-17](docs/PRD_17_EVIDENCE_LIBRARY_ADAPTER.md) |
 
 ## 8. Governing meta-rules
 
@@ -196,6 +207,10 @@ Component PRDs:
 10. After every adjudication, recompute “what remains unproven?” from the governed graph.
 11. Fresh/protected resources require prospective authorization and durable exposure tracking.
 12. Normative post-outcome changes create new affected lineage; old verdicts remain immutable.
+13. Prior library results are EXPOSED knowledge; reuse never recreates freshness.
+14. Prior results never directly set a current Claim PASS; qualified reuse is a governed ProofObligation.
+15. Cross-study synthesis freezes universe/inclusion/independence/aggregation rules before formal outcome selection.
+16. Shared provenance is clustered before treating multiple results as independent confirmation.
 
 ## 9. Lineage
 
@@ -209,4 +224,4 @@ MindForge M0–M4 is empirical method evidence, not a G2E phase template. Exact 
 
 Implementation authorization is controlled by [QA_doc.md](docs/QA_doc.md) and [PHASE_PLAN.md](docs/PHASE_PLAN.md).
 
-P1 — Core Schemas MUST NOT start while the current semantic QA has open findings. A PASS semantic QA opens P1 only; it does not authorize later phases.
+P0.2 — Evidence Reuse & Convergence Specification is now part of the pre-P1 foundation. P1 MUST NOT start until [P0.2 QA](docs/P0_2_LIBRARY_SYNTHESIS_QA.md) is PASS with no open findings.

@@ -50,3 +50,22 @@
 - [Core Semantics](CORE_SEMANTICS.md)
 - [PRD Index](PRD_INDEX.md)
 - [Reference Baseline](REFERENCE_BASELINE.md)
+
+
+## ADR-011 — Library storage is runtime infrastructure; evidence meaning remains G2E
+
+**Decision:** G2E owns EvidenceCapsule, applicability, reuse and synthesis semantics. GWF Governed Artifact Catalog is the default publication/discovery backend through PRD-17.
+
+**Reason:** keeps GWF generic and prevents G2E from building a parallel storage/catalog platform.
+
+## ADR-012 — Prior results never bypass proof semantics
+
+**Decision:** QUALIFIED_REUSE creates/feeds a governed Reuse ProofObligation; prior PASS never directly sets a new Claim PASS.
+
+**Reason:** preserves EvidenceAdmission, Adjudication, ClaimResolution and no-rescue invariants.
+
+## ADR-013 — Synthesis is a governed proof program, not narrative aggregation
+
+**Decision:** cross-study synthesis freezes its evidence universe, inclusion/exclusion, applicability, independence, aggregation and conflict policies before formal selection. ConvergenceClassification is descriptive and separate from core verdict namespaces.
+
+**Reason:** prevents cherry-picking, vote-counting and post-hoc convergence stories.

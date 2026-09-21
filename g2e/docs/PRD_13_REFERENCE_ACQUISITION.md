@@ -8,6 +8,12 @@ Acquire prior art/specifications/repository capability evidence without contamin
 
 In GWF mode, reuse the GWF Reference Acquisition capability. G2E adds Claim/Proof relation semantics and EvidenceAdmissionPolicy.
 
+Reference Acquisition and Evidence Library are distinct:
+
+- Reference Acquisition discovers external/current prior art, specifications and capability sources.
+- PRD-17 retrieves previously governed G2E/GWF result artifacts such as EvidenceCapsules.
+- Either may inform planning, but neither bypasses Applicability/EvidenceAdmission.
+
 ## Temporal modes
 
 Terms map exactly to [Core Semantics §7](CORE_SEMANTICS.md):
@@ -58,6 +64,7 @@ External tool/framework capability claims must be revalidated and pinned at impl
 5. Reference class does not bypass EvidenceAdmissionPolicy.
 6. GWF mode reuses GWF registry/log primitives.
 7. Standalone exports equivalent records.
+8. External reference retrieval and governed result-library retrieval remain distinguishable provenance classes.
 
 ## Dependencies
 

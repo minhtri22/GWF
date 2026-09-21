@@ -19,6 +19,11 @@ GOAL_RESULT/
 ├── REPRODUCIBILITY_MANIFEST.json
 ├── PACKAGE_MANIFEST.json
 ├── PACKAGE_SEAL.json
+├── library/
+│   ├── EVIDENCE_CAPSULE.json
+│   └── IMPORTS.json
+├── synthesis/
+│   └── SYNTHESIS_RESULT.json
 ├── claims/
 │   └── <claim-id>/
 │       ├── CONTRACT.json
@@ -31,6 +36,10 @@ GOAL_RESULT/
 `PACKAGE_LINEAGE.json` is the machine event lineage for this result package and is distinct from repository project-level `g2e/LINEAGE.md`.
 
 Large binaries may be represented by immutable content-addressed references.
+
+`EVIDENCE_CAPSULE.json` is an optional publishable derivative of the sealed Goal Result Package and binds `PACKAGE_SEAL.json`; it does not replace the source package.
+
+For synthesis Goals, `SYNTHESIS_RESULT.json` binds SynthesisContract, universe, inclusion/exclusion, provenance clusters and transitive ancestry.
 
 ## Final verdict
 
@@ -79,6 +88,8 @@ Record:
 5. Missing required external/binary refs are detectable under verification policy.
 6. Human report regeneration cannot alter formal verdict.
 7. Runtime migration does not change package semantic identities.
+8. Optional EvidenceCapsule binds exact package seal and preserves negative/unresolved source verdicts.
+9. Imported prior evidence and synthesis ancestry are explicitly listed.
 
 ## Dependencies
 

@@ -71,12 +71,13 @@ Unknown incompatible schema/runtime mappings fail closed.
 4. Recovery respects frozen G2E RetryPolicy/freshness.
 5. GWF stricter authority remains effective.
 6. GWF upgrades are independent when compatibility contract passes.
-7. PRD-09/10 can be integrated later without being hard prerequisites for core GWF mapping.
+7. PRD-09/10/17 can be integrated later without being hard prerequisites for core GWF mapping.
+8. GWF Governed Artifact Catalog remains persistence/discovery infrastructure; G2E retains applicability/synthesis semantics.
 
 ## Dependencies
 
 - **HARD:** [PRD-07 Execution Protocol](PRD_07_EXECUTION_PROTOCOL.md)
-- **INTEGRATION:** [PRD-09 Agent App Adapters](PRD_09_AGENT_APP_ADAPTERS.md), [PRD-10 GitHub Adapter](PRD_10_GITHUB_ADAPTER.md)
+- **INTEGRATION:** [PRD-09 Agent App Adapters](PRD_09_AGENT_APP_ADAPTERS.md), [PRD-10 GitHub Adapter](PRD_10_GITHUB_ADAPTER.md), [PRD-17 Evidence Library Adapter](PRD_17_EVIDENCE_LIBRARY_ADAPTER.md)
 - **CROSS_CUTTING:** [PRD-14 Security & Authority](PRD_14_SECURITY_AUTHORITY.md)
 - **NORMATIVE:** [Core Semantics](CORE_SEMANTICS.md)
 

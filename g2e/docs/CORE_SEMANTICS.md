@@ -344,3 +344,47 @@ This avoids self-referential hashing.
 ## 15. Reference baseline
 
 The exact specification/evidence baselines used to derive these semantics are recorded in [REFERENCE_BASELINE.md](REFERENCE_BASELINE.md).
+
+
+## 15. Prior governed evidence and EvidenceCapsules
+
+A prior governed result intended for reuse/library publication is represented by an immutable `EvidenceCapsule` derived from a sealed source Goal Result Package or SynthesisResult.
+
+All prior/library evidence is already `EXPOSED`. Import, publication, migration or reuse MUST NOT transition it to `FRESH`.
+
+A capsule MAY represent PASS, FAIL or UNRESOLVED source results. Favorable-result-only publication is not a valid default library policy.
+
+A capsule binds exact source package seal/hash, source Claim/Proof/evidence identities, ClaimSignature, limitations, regime and provenance ancestry.
+
+Library retrieval creates candidate prior evidence only; it does not admit evidence or resolve a Claim.
+
+## 16. Applicability and qualified reuse
+
+Prior evidence reuse is prospective and policy-driven.
+
+`ReuseDisposition` v0.x:
+
+- `QUALIFIED_REUSE`;
+- `REPLICATION_REQUIRED`;
+- `SYNTHESIS_INPUT`;
+- `METHOD_REFERENCE`;
+- `CONTEXT_ONLY`;
+- `INCOMPATIBLE`.
+
+An `ApplicabilityAssessment` binds exact source capsule, exact target Goal/Claim/Proof revision and exact ApplicabilityPolicy.
+
+`QUALIFIED_REUSE` never directly sets Claim resolution. It authorizes a Reuse ProofObligation whose frozen evidence/admission/applicability criteria are adjudicated through the normal G2E proof path.
+
+Reuse evidence still passes EvidenceAdmissionPolicy. Shared ancestry MUST be represented so dependent capsules cannot be counted as independent confirmations merely because they have different capsule IDs.
+
+## 17. Synthesis and convergence
+
+Cross-study synthesis is a normal G2E Goal/proof specialization, not an alternate verdict engine.
+
+A formal synthesis MUST freeze a `SynthesisContract` before formal inclusion/outcome selection. It binds question, evidence universe/library snapshot or retrieval sessions, inclusion/exclusion, applicability, quality/integrity, independence/provenance clustering, compatibility/regime grouping, aggregation, conflict/boundary policy, conclusion semantics and no-rescue rules.
+
+A descriptive `ConvergenceClassification` such as `CORROBORATED | CONTRADICTED | BOUNDARY_IDENTIFIED | HETEROGENEOUS | INSUFFICIENT_EVIDENCE | UNRESOLVED` is an output artifact only. It does NOT replace Adjudication verdict, Claim resolution or Goal verdict.
+
+A SynthesisResult retains transitive ancestry to all included source capsules. Future independence analysis MUST inspect that ancestry to prevent double counting.
+
+A changing search rank/index cannot silently redefine a frozen synthesis universe.
