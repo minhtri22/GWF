@@ -1,0 +1,8 @@
+# P0 intentionally enables a tiny deterministic rule set.
+config:
+  default: false
+  MD041: true
+  MD047: true
+noBanner: true
+noProgress: true
+noInlineConfig: true
