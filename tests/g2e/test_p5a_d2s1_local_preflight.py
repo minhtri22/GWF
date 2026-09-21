@@ -27,6 +27,19 @@ def test_preflight_constants_are_frozen():
     assert module.EXPECTED_EXECUTION_CONFIG_HASH == "72874872ea241efecbdd537e0a7fbf0718fd036cf4abd564b27b0bcd03dd81ce"
 
 
+def test_setup_error_redaction_hides_user_identity(monkeypatch):
+    module = _load()
+    monkeypatch.setenv("USERPROFILE", r"C:\\Users\\Alice")
+    monkeypatch.setenv("USERNAME", "Alice")
+    raw = (
+        r"orchestrator_helper_launch_failed: failed C:\\Users\\Alice\\tool.exe "
+        r"for Alice"
+    )
+    redacted = module.redact_setup_error(raw)
+    assert "Alice" not in redacted
+    assert "<userprofile>" in redacted or "<user>" in redacted
+
+
 def test_profile_lookup_is_exact_and_requires_allowed():
     module = _load()
     result = {
@@ -86,6 +99,10 @@ def test_windows_setup_gate_fails_closed_and_requires_ready():
     assert 'setup_params.get("success") is True' in source
     assert 'readiness_after_status != "ready"' in source
     assert "CONFIG_TOML_MUTATED_BY_WINDOWS_SANDBOX_SETUP" in source
+    assert "windows_sandbox_setup_error_code" in source
+    assert "windows_sandbox_setup_error_redacted" in source
+    assert "windows_sandbox_setup_error_sha256" in source
+    assert "redact_setup_error(setup_error)" in source
 
 
 def test_preflight_uses_only_local_mutable_paths():
