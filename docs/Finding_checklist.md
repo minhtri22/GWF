@@ -1098,3 +1098,60 @@ DG-P6 overall             = NOT_YET_PASS
 DG-W2                     = OPEN
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+## 43. DG-P6 implementation findings
+
+### F-83 — LOW — RESOLVED
+
+- **Initial finding:** The first DG-P6 implementation fixture D6-F13 referenced gate type `plan_ready`, which does not exist in the frozen research domain. The implementation run therefore stopped at 19/20 fixtures before bounded gate/regression evidence could execute.
+- **Negative evidence:** workflow `35598139354` on HEAD `006c198738ef75a915e54c48a7f8400f728a5b25`.
+- **Resolution:** Changed only D6-F13 to the existing `prior_art_ready` domain gate and asserted the exact `INPUT_UNVERIFIED` violation. Runtime code, frozen specification, validity vocabulary and zero-migration decision were unchanged.
+- **Repair evidence:** commit `5f5121db3e505204452946d31de8dedb3ca5e73e`; workflow `35598284725` PASS.
+- **Final status:** `RESOLVED`
+
+## 44. DG-P6 implementation qualification checklist
+
+- [x] implementation started from exact qualification HEAD `dc14622b8e9ff6b66f643567ff9dda27335c8ab0`.
+- [x] frozen specification blob remained `155a0c81c291568dbf7d2ba942a9386484f2dd14`.
+- [x] no migration/schema change.
+- [x] global KnowledgeKernel VALIDITY unchanged.
+- [x] lifecycle service implemented over Artifact.lifecycle_status.
+- [x] lifecycle transitions use Artifact.version optimistic concurrency.
+- [x] lifecycle transitions append Audit.
+- [x] archive/logical-supersession transitions remain deferred/fail-closed.
+- [x] document-effective BLOCKED is derived, not persisted globally.
+- [x] exact QA/finding state drives reconciliation.
+- [x] only UNVERIFIED -> VALID clean promotion is allowed.
+- [x] later blockers demote VALID -> UNVERIFIED with audit.
+- [x] STALE/DIRTY/FAILED are not cleared by QA alone.
+- [x] legacy set_validity_system() compatibility retained.
+- [x] DocumentFacade read model exposes lifecycle/kernel/effective state without mutation.
+- [x] D6-F1..D6-F20 PASS.
+- [x] bounded zero-migration/global-validity gate PASS.
+- [x] Knowledge/Execution/Decision/P4/P5 regressions PASS.
+- [x] full repository regression PASS.
+- [x] compile PASS.
+- [x] evidence artifact `10638170391` recorded.
+- [x] DG-P7/P8 remain NOT_STARTED.
+- [x] DG-W2 remains OPEN.
+- [x] GAC remains locked.
+
+## 45. Current aggregate status after DG-P6 implementation qualification
+
+**OPEN = 0**
+
+All findings F-01 through F-83 recorded in this checklist are resolved.
+
+```text
+DG-P5                     = FORMALLY_CLOSED
+DG-P6 specification       = FROZEN
+DG-P6 implementation      = QUALIFIED_PASS
+DG-P6 implementation SHA  = 5f5121db3e505204452946d31de8dedb3ca5e73e
+DG-P6 workflow            = 35598284725 PASS
+DG-P6 artifact            = 10638170391
+DG-P6 handoff             = PENDING_COMMIT
+DG-P6 exact-head QA       = PENDING
+DG-W2                     = OPEN
+DG-P7/P8                  = NOT_STARTED
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+```

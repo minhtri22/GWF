@@ -270,7 +270,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P6 — Lifecycle + validity mapping
 
 - **Complexity:** 3
-- **Status:** **AUTHORIZED / PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **Status:** **IMPLEMENTATION QUALIFIED / HANDOFF + EXACT-HEAD QA PENDING**
 - **HARD dependencies:** DG-P4, DG-P5; both satisfied.
 - **Frozen specification:** `docs/DG_P6_LIFECYCLE_VALIDITY_MAPPING_SPEC.md`, commit `29d3f987f4d23a752563c1e61c5df4e9dd964979`, blob `155a0c81c291568dbf7d2ba942a9386484f2dd14`.
 - **Document QA:** `docs/DOCUMENT_QA_DG_P6_PREIMPLEMENTATION.md` — PASS.
@@ -288,15 +288,18 @@ Every completed item must record exact dependency revisions/evidence used. A dep
   - [x] D6-F1..D6-F20 frozen;
   - [x] existing KnowledgeKernel semantics remain compatible;
   - [x] document QA PASS.
-- **Implementation acceptance remains open:**
-  - [ ] no schema migration;
-  - [ ] global VALIDITY unchanged;
-  - [ ] lifecycle transition service uses Artifact.version + Audit;
-  - [ ] validity reconciliation is evidence-derived, not arbitrary setter;
-  - [ ] D6-F1..D6-F20 PASS;
-  - [ ] Knowledge/Execution/Decision/P4/P5 regressions PASS;
-  - [ ] no DG-P7/P8 semantics;
-  - [ ] implementation QA PASS.
+- **Implementation evidence:** HEAD `5f5121db3e505204452946d31de8dedb3ca5e73e`; workflow `35598284725` PASS; artifact `10638170391`; digest `sha256:891484a4f0d54b85c5101fc7d7944b10b2c10af19a4df88e771ed1718c3b31b5`.
+- **Implementation acceptance:**
+  - [x] no schema migration;
+  - [x] global VALIDITY unchanged;
+  - [x] lifecycle transition service uses Artifact.version + Audit;
+  - [x] validity reconciliation is evidence-derived, not arbitrary setter;
+  - [x] D6-F1..D6-F20 PASS;
+  - [x] Knowledge/Execution/Decision/P4/P5 regressions PASS;
+  - [x] full repository regression PASS;
+  - [x] no DG-P7/P8 semantics;
+  - [x] implementation QA PASS;
+  - [ ] handoff exact-head workflow PASS.
 
 ### Wave 2 exit gate — DG-W2
 
