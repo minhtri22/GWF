@@ -1392,3 +1392,114 @@ DG-P8+                    = NOT_STARTED / NOT_AUTHORIZED
 DG-W3                     = OPEN / NOT_EXECUTED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+## 54. DG-P8 pre-implementation qualification findings
+
+### F-95 — LOW — RESOLVED
+
+- **Initial finding:** DG-P7 was formally closed at `cf143d959b338e8d77811f5b2b79789ccbbb20aa`, but the roadmap/finding snapshot still cited the earlier handoff exact-head run rather than final closure run `35611830804`.
+- **Resolution:** Verified final run `35611830804` PASS on exact formal-close HEAD. Final SQLite artifact is `10644398017` with digest `sha256:fba2d1bfc994670522ea27cd1bcb7eeb2c346132ee8802d5ee0ba53693af6945`; PostgreSQL artifact is `10644037882` with digest `sha256:f3740de876167d21252e2bf1937dc0650a36dbc923323f059c194aed1756e23c`. Roadmap frontier is updated to these exact final identities.
+- **Final status:** `RESOLVED`
+
+### F-96 — HIGH — RESOLVED
+
+- **Initial finding:** Existing `TraceLink` could be mistaken for canonical typed document relation state merely because both are graph edges.
+- **Resolution:** Freeze two layers: `document_relations` is governed semantic declaration state; `trace_links` remains revision-level operational/provenance state.
+- **Final status:** `RESOLVED`
+
+### F-97 — HIGH — RESOLVED
+
+- **Initial finding:** TraceLink source identity is an exact `source_revision_id`, while a semantic document relation normally persists across ordinary revisions of one logical document.
+- **Resolution:** P8 relation source is logical governed-document Artifact; exact declaration Revision is provenance only. Later source revisions neither clone nor silently retire the relation.
+- **Final status:** `RESOLVED`
+
+### F-98 — HIGH — RESOLVED
+
+- **Initial finding:** TraceLink has no ACTIVE/RETIRED lifecycle, optimistic version, or retirement provenance required for current semantic relation state.
+- **Resolution:** Exactly one bounded `document_relations` current-state table is justified.
+- **Final status:** `RESOLVED`
+
+### F-99 — HIGH — RESOLVED
+
+- **Initial finding:** Mapping every document relation to TraceLink HARD/SOFT/INFORMATIONAL semantics would erase distinctions such as REFERENCES, bidirectional MUST_ALIGN_WITH, SUPERSEDES, VALIDATES and GENERATED_FROM.
+- **Resolution:** Blanket mapping is forbidden. TraceLink projection is deferred until binding + relation-specific semantics are independently qualified.
+- **Final status:** `RESOLVED`
+
+### F-100 — HIGH — RESOLVED
+
+- **Initial finding:** P8 could silently choose `LOGICAL_CURRENT` or `PINNED_REVISION`, preempting DG-P9 and potentially allowing VALIDATES/GENERATED_FROM to float.
+- **Resolution:** P8 excludes target binding mode and exact target revision/hash from its contract. P9 remains the sole owner of binding semantics.
+- **Final status:** `RESOLVED`
+
+### F-101 — HIGH — RESOLVED
+
+- **Initial finding:** Introducing semantic document relations could accidentally create a second generic graph subsystem with node/type/event/projection tables parallel to PRIM-TRACE.
+- **Resolution:** P8 justifies one semantic current-state table only. Existing TraceLink remains the future operational projection substrate; no node/type/event/projection table is admitted.
+- **Final status:** `RESOLVED`
+
+### F-102 — HIGH — RESOLVED
+
+- **Initial finding:** Markdown hyperlinks, text mentions or existing TraceLinks could be treated as implicit semantic relations.
+- **Resolution:** Canonical relations require explicit governed declaration. Automated analysis may propose, never silently create, a relation.
+- **Final status:** `RESOLVED`
+
+### F-103 — HIGH — RESOLVED
+
+- **Initial finding:** A P8 `SUPERSEDES` relation could accidentally mutate DG-P7 authority ownership or P6 lifecycle before later supersession governance exists.
+- **Resolution:** P8 SUPERSEDES is declaration-only. Authority/lifecycle mutation remains explicitly outside P8.
+- **Final status:** `RESOLVED`
+
+## 55. DG-P8 pre-implementation qualification checklist
+
+- [x] exact DG-P7 final formal-close HEAD `cf143d959b338e8d77811f5b2b79789ccbbb20aa` verified.
+- [x] final exact-head run `35611830804` PASS verified.
+- [x] final SQLite/PostgreSQL artifact identities and digests verified.
+- [x] Documentation Integrity §10 loaded.
+- [x] DG-P8/DG-P9 roadmap split loaded.
+- [x] `trace_links` schema inventoried.
+- [x] `create_trace_link()` semantics inventoried.
+- [x] `compute_impact()` TraceLink traversal semantics inventoried.
+- [x] research-domain trace type registry inventoried.
+- [x] TraceLink canonical relation-store model rejected.
+- [x] TraceLink future projection-substrate role frozen.
+- [x] logical source document identity frozen.
+- [x] exact declaration revision provenance frozen.
+- [x] relation ACTIVE -> RETIRED lifecycle frozen.
+- [x] Proposal/Approval/Audit reuse frozen.
+- [x] eight required relation types frozen.
+- [x] target-kind vocabulary frozen.
+- [x] direction semantics frozen.
+- [x] no Markdown/TraceLink inference.
+- [x] exactly one `document_relations` table justified.
+- [x] no nodes/types/events/projection table.
+- [x] P8/P9 binding boundary frozen.
+- [x] no TraceLink projection authorized in P8.
+- [x] SUPERSEDES authority/lifecycle side effects excluded.
+- [x] D8-F1..D8-F20 frozen.
+- [x] no DG-P9+ implementation authorized.
+- [x] no DG-W3 closure authorized.
+- [x] no GAC/RA/G2E authorized.
+- [x] implementation has not started.
+
+## 56. Current aggregate status after DG-P8 pre-implementation qualification
+
+**OPEN = 0**
+
+All findings F-01 through F-103 are resolved.
+
+```text
+DG-P7                     = FORMALLY_CLOSED
+DG-P7 final closure HEAD  = cf143d959b338e8d77811f5b2b79789ccbbb20aa
+DG-P7 final exact run     = 35611830804 PASS
+DG-P8 authorization       = PREIMPLEMENTATION_ONLY
+DG-P8 specification       = FROZEN
+DG-P8 spec commit         = 211308141106481104590b3d55cdc8c19d6b6d8e
+DG-P8 spec blob           = d6996951522caa061b29f94d1b1f4f579251adaa
+DG-P8 dependency qualify  = PASS
+DG-P8 document QA         = PASS
+DG-P8 implementation      = NOT_STARTED
+DG-P8 overall             = NOT_YET_PASS
+DG-P9+                    = NOT_STARTED / NOT_AUTHORIZED
+DG-W3                     = OPEN / NOT_EXECUTED
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+```

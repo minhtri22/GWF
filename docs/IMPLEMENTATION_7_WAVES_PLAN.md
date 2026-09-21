@@ -365,14 +365,36 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P8 — Typed document relations
 
 - **Complexity:** 3
-- **HARD dependencies:** DG-P4.
+- **Status:** **PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **HARD dependencies:** DG-P4; roadmap Wave-3 dependency DG-P7 is formally closed.
+- **Frozen specification:** `docs/DG_P8_TYPED_DOCUMENT_RELATIONS_SPEC.md`, commit `211308141106481104590b3d55cdc8c19d6b6d8e`, blob `d6996951522caa061b29f94d1b1f4f579251adaa`.
+- **Document QA:** `docs/DOCUMENT_QA_DG_P8_PREIMPLEMENTATION.md` — PASS.
 - **Governing document:** `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §10.
-- **Acceptance checklist:**
-  - [ ] relation direction explicit;
-  - [ ] required relation types represented;
-  - [ ] relation semantics not inferred from Markdown links;
-  - [ ] integration with existing `trace_links` evaluated before new graph storage;
-  - [ ] QA PASS.
+- **Reuse verdict:** `document_relations` is canonical semantic state; existing `trace_links` remains revision-level operational/provenance state and may only be a later qualified projection substrate.
+- **Persistence decision:** exactly one bounded new table `document_relations`; no node/type/event/projection table.
+- **Pre-implementation checklist:**
+  - [x] relation direction explicit;
+  - [x] required relation types represented;
+  - [x] relation semantics not inferred from Markdown links or TraceLinks;
+  - [x] integration with existing `trace_links` evaluated before new graph storage;
+  - [x] logical-document source lifetime separated from source Revision provenance;
+  - [x] ACTIVE/RETIRED relation lifecycle frozen;
+  - [x] P8/P9 binding boundary frozen;
+  - [x] no TraceLink projection authorized in P8;
+  - [x] SUPERSEDES has no P7/lifecycle side effect in P8;
+  - [x] D8-F1..D8-F20 frozen;
+  - [x] QA PASS.
+- **Implementation acceptance remains open:**
+  - [ ] bounded migration adds `document_relations` only;
+  - [ ] relation service uses Proposal/Approval/Audit + optimistic versioning;
+  - [ ] required relation types/target kinds enforced;
+  - [ ] no Markdown/TraceLink inference;
+  - [ ] no target binding mode/revision/hash semantics;
+  - [ ] no TraceLink projection;
+  - [ ] D8-F1..D8-F20 PASS;
+  - [ ] P4/P5/P6/P7 + Knowledge/Trace regressions PASS;
+  - [ ] no DG-P9+ semantics;
+  - [ ] implementation QA PASS.
 
 ### DG-P9 — Logical-current vs pinned-revision binding
 
@@ -1016,19 +1038,21 @@ Wave 3 — Semantic Documentation Governance
        ↓
 DG-P7 — Authority claims + duplicate-authority detection
       PASS / FORMALLY CLOSED
-      handoff HEAD 30170e2f0b94f0cde6994c5b9b3ee7c920379688
-      exact-head run 35611325233 PASS
+      final closure HEAD cf143d959b338e8d77811f5b2b79789ccbbb20aa
+      final exact-head run 35611830804 PASS
        ↓
 DG-P8 — Typed document relations
-      NEXT / NOT_STARTED / NOT_AUTHORIZED
+      PRE-IMPLEMENTATION SPEC FROZEN
+      DEPENDENCY / DOCUMENT QA PASS
+      IMPLEMENTATION NOT_STARTED
        ↓
 STOP
 
-DG-P8+ = NOT_STARTED / NOT_AUTHORIZED
+DG-P9+ = NOT_STARTED / NOT_AUTHORIZED
 ```
 
-DG-P7 is formally closed after exact-head requalification on both SQLite and PostgreSQL 17.
+DG-P7 is formally closed at final exact closure evidence, and the explicitly authorized DG-P8 pre-implementation qualification has passed.
 
-DG-P8 is the next roadmap item but remains NOT_STARTED / NOT_AUTHORIZED. DG-W3 remains OPEN / NOT_EXECUTED.
+DG-P8 implementation remains NOT_STARTED and requires a separate explicit bounded implementation authorization. DG-P9+ remain unopened. DG-W3 remains OPEN / NOT_EXECUTED.
 
 GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.

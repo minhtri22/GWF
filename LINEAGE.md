@@ -210,3 +210,12 @@ Rules:
 - SQLite evidence artifact: `10643909615`, digest `sha256:0480597ac095ba5f67c70cca7204173bdc3b988373e90b520bdfa98faf613825`.
 - PostgreSQL evidence artifact: `10643409931`, digest `sha256:d90b98a201b3b28849135e84775af8f9a3f99a37057c46503713c7669c5a84af`.
 - Outcome: document source-of-truth authority is now explicit, proposal/approval-governed, composition-aware, collision-detectable and cross-backend qualified without conflating actor authorization or introducing a parallel authority subsystem.
+
+
+## 2026-09-21 — DG-P8 pre-implementation qualification completed
+
+- Result: DG-P8 typed-document-relation semantic/dependency qualification PASS.
+- Specification commit: `211308141106481104590b3d55cdc8c19d6b6d8e`.
+- Specification blob: `d6996951522caa061b29f94d1b1f4f579251adaa`.
+- Dependency: DG-P7 final formal-close HEAD `cf143d959b338e8d77811f5b2b79789ccbbb20aa`, final exact-head workflow `35611830804` PASS.
+- Outcome: canonical typed document relations require one logical-document current-state table, while existing `trace_links` remains a distinct revision-level operational/provenance substrate whose projection use is deferred until binding and relation-specific semantics are qualified.
