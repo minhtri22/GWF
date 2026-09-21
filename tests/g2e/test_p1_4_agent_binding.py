@@ -241,8 +241,9 @@ def test_validate_agent_binding_identity_rejects_manifest_identity_drift():
     data = binding.model_dump(mode="python", exclude={"content_hash"})
     data["provider_ref"] = "other-provider"
     drifted = AgentBinding.sealed(**data)
+    drifted_attempt = agent_attempt(drifted)
     with pytest.raises(ValueError, match="provider_ref does not match manifest"):
-        validate_agent_binding_identity(manifest, equivalence, drifted, attempt)
+        validate_agent_binding_identity(manifest, equivalence, drifted, drifted_attempt)
 
 
 def test_validate_agent_binding_identity_rejects_wrong_refs_and_attempt_id():
@@ -308,7 +309,6 @@ def test_standalone_propagates_binding_identity_without_interpreting_verdict(tmp
     assert result.transport_ref == binding.transport_ref
     assert result.executor_state == AttemptState.COMPLETED
     validate_agent_binding_identity(manifest, equivalence, binding, report.final_attempt, result)
-    runtime.close()
 
 
 def test_p1_4_schema_code_is_provider_neutral():
