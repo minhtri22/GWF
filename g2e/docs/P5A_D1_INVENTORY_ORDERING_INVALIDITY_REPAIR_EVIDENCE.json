@@ -1,0 +1,39 @@
+{
+  "schema": "G2E-P5A-D1-INVENTORY-ORDERING-REPAIR-EVIDENCE-v1",
+  "status": "PASS",
+  "qualified_candidate": "4e447ef19a843aa3dd1337c57a9c70b4c1a00de1",
+  "baseline": "e8702669df8d8f834818e6f00ad0c8dd1bf8ba17",
+  "result_commit": "293c1986b93d91b5c22be4db03d68498b54bb595",
+  "result_blob": "5c3ed86e5a7d5b219407fdf3289572f8f5f7c00c",
+  "original_evidence": {
+    "discovery_sha256": "ba098a56be39e996488e5a543af8c373199f8b4cc66f922be6d7bc6386c6e860",
+    "original_verdict": "INVALID",
+    "original_reason_codes": [
+      "INVENTORY_PATHS_NOT_SORTED"
+    ]
+  },
+  "blobs": {
+    "repair_spec": "246a90d468c194ede91e7a2fb87925d971610028",
+    "adjudicator": "b2ba81801d2bfe7a662acb477fa449e16d13fa55",
+    "repair_test": "e36121ef55c572acdf03e951387590706656567f",
+    "workflow": "9ed761d529c24e22ea605ba4b2c5b420ae508a2b"
+  },
+  "workflow": {
+    "run_id": 35597985704,
+    "job_id": 106327133946,
+    "conclusion": "PASS",
+    "artifact_id": 10637389197,
+    "artifact_digest": "sha256:09a599886c44d3d3d2544d6ff61a93205f47c137d8807598caadda97ea6c2130"
+  },
+  "repair_scope": "PLATFORM_PATH_ORDER_VALIDATION_ONLY",
+  "invariants": {
+    "discovery_probe_mutated": false,
+    "runtime_core_mutated": false,
+    "required_tokens_changed": false,
+    "inventory_digest_algorithm_changed": false,
+    "fresh_codex_recollection_authorized": false,
+    "d2_authorized": false,
+    "runtime_adapter_authorized": false
+  },
+  "next_admissible_step": "READJUDICATE_ORIGINAL_DISCOVERY_ONCE_WITH_QUALIFIED_REPAIRED_ADJUDICATOR"
+}
