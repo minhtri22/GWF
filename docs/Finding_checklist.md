@@ -921,3 +921,63 @@ DG-P6                     = NOT_STARTED
 DG-W2                     = OPEN
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+## 37. DG-P5 implementation findings
+
+### F-72 — LOW — RESOLVED
+
+- **Initial finding:** The first DG-P5 qualification workflow referenced two regression test paths that do not exist in the repository, so the workflow stopped after D5-F1..D5-F20 and the bounded schema gate had already passed.
+- **Resolution:** Changed only the workflow regression selection to existing test files covering Execution/Evidence/Gate/Failure, Knowledge, Persistence and DG-P4 compatibility. DG-P5 runtime code, migration, frozen specification and acceptance gates were unchanged.
+- **Negative evidence preserved:** workflow `35584776602` on head `c42800b6d635ba5d90be0b947955ccdfbaeb9f91`.
+- **Repair evidence:** commit `fda9f7b3c5486f629e47f13652a758de158f7d22`; workflow `35584865418` PASS.
+- **Final status:** `RESOLVED`
+
+## 38. DG-P5 implementation qualification checklist
+
+- [x] implementation started from exact qualification HEAD `6d4ab89bfb86426dcf19703ae264f7c009f33015`.
+- [x] frozen specification blob remained `29ca1c85f665468aade7fc555b634a134af9a46a`.
+- [x] migration `0008_v086_dg_p5_document_findings` adds `document_findings`.
+- [x] no `document_qa_records` table added.
+- [x] no validator-execution table added.
+- [x] no waiver table added.
+- [x] no finding-transition table added.
+- [x] DocumentQARecord persists as PRIM-EVIDENCE.
+- [x] ValidatorExecution persists as PRIM-EVIDENCE.
+- [x] Evidence writer supports bounded outer transaction participation while existing default behavior remains auto-commit.
+- [x] QA creation is atomic across validator Evidence, QA Evidence, findings and audit.
+- [x] reserved core Evidence type collision fails closed.
+- [x] finding lifecycle + optimistic versioning implemented.
+- [x] exact-resolution verification implemented.
+- [x] prior QA does not transfer to a new document revision.
+- [x] waiver reuses Proposal/Approval.
+- [x] minimum non-waivable classes enforced.
+- [x] expired/review-due waiver is not effective clean state.
+- [x] D5-F1..D5-F20 PASS.
+- [x] bounded schema/primitive gate PASS.
+- [x] targeted Evidence/Gate/Failure regressions PASS.
+- [x] full repository regression PASS.
+- [x] compile PASS.
+- [x] evidence artifact `10631014201` recorded.
+- [x] DG-P6 remains NOT_STARTED.
+- [x] no DG-P11 placeholder state introduced.
+- [x] GAC remains locked.
+
+## 39. Current aggregate status after DG-P5 implementation qualification
+
+**OPEN = 0**
+
+All findings F-01 through F-72 recorded in this checklist are resolved.
+
+```text
+DG-P4                     = FORMALLY_CLOSED
+DG-P5 specification       = FROZEN
+DG-P5 implementation      = QUALIFIED_PASS
+DG-P5 implementation SHA  = fda9f7b3c5486f629e47f13652a758de158f7d22
+DG-P5 workflow            = 35584865418 PASS
+DG-P5 artifact            = 10631014201
+DG-P5 handoff             = PENDING_COMMIT
+DG-P5 exact-head QA       = PENDING
+DG-P6                     = NOT_STARTED
+DG-W2                     = OPEN
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+```

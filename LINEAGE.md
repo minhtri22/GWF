@@ -112,3 +112,13 @@ Rules:
 - Specification blob: `29ca1c85f665468aade7fc555b634a134af9a46a`.
 - Dependency: DG-P4 final formal-close HEAD `a11d9ad205272c4c16c49eddb398dee4c8a0ff05`, exact-head workflow `35582578994` PASS.
 - Outcome: QA records and validator executions selected for PRIM-EVIDENCE reuse; one dedicated DocumentFinding current-state table justified; waiver/history reuse existing approval and audit primitives.
+
+
+## 2026-09-21 — DG-P5 implementation qualification completed
+
+- Result: DG-P5 implementation qualification PASS.
+- Qualified implementation HEAD: `fda9f7b3c5486f629e47f13652a758de158f7d22`.
+- Workflow: `35584865418` PASS.
+- Evidence artifact: `10631014201`.
+- Evidence artifact digest: `sha256:feb5203fafaac98640569a1d0816b6626fe7279214dfed2d41488f819f2c852e`.
+- Outcome: exact-revision document QA now reuses PRIM-EVIDENCE; governed finding lifecycle persists in one dedicated current-state table with atomic QA creation and Proposal/Approval-backed waiver.

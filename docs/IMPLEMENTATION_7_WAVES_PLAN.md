@@ -238,7 +238,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P5 — QA run + finding persistence
 
 - **Complexity:** 3
-- **Status:** **AUTHORIZED / PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **Status:** **IMPLEMENTATION QUALIFIED / HANDOFF + EXACT-HEAD QA PENDING**
 - **HARD dependencies:** DG-P0, DG-P4; both satisfied.
 - **Frozen specification:** `docs/DG_P5_QA_FINDING_PERSISTENCE_SPEC.md`, commit `9e846621faf7b1a81c605ad624f4abbc6c354470`, blob `29ca1c85f665468aade7fc555b634a134af9a46a`.
 - **Document QA:** `docs/DOCUMENT_QA_DG_P5_PREIMPLEMENTATION.md` — PASS.
@@ -255,14 +255,17 @@ Every completed item must record exact dependency revisions/evidence used. A dep
   - [x] Evidence transactional extension bounded;
   - [x] D5-F1..D5-F20 frozen;
   - [x] document QA PASS.
-- **Implementation acceptance remains open:**
-  - [ ] migration adds only `document_findings`;
-  - [ ] Evidence writer transactional extension preserves existing callers;
-  - [ ] QA/finding service implementation PASS;
-  - [ ] D5-F1..D5-F20 PASS;
-  - [ ] existing Evidence/Gate/Failure regressions PASS;
-  - [ ] no DG-P6/P11+ semantics;
-  - [ ] implementation QA PASS.
+- **Implementation evidence:** head `fda9f7b3c5486f629e47f13652a758de158f7d22`; workflow `35584865418` PASS; artifact `10631014201` digest `sha256:feb5203fafaac98640569a1d0816b6626fe7279214dfed2d41488f819f2c852e`.
+- **Implementation acceptance:**
+  - [x] migration adds only `document_findings`;
+  - [x] Evidence writer transactional extension preserves existing callers;
+  - [x] QA/finding service implementation PASS;
+  - [x] D5-F1..D5-F20 PASS;
+  - [x] existing Evidence/Gate/Failure regressions PASS;
+  - [x] full repository regression PASS;
+  - [x] no DG-P6/P11+ semantics;
+  - [x] implementation QA PASS;
+  - [ ] handoff exact-head workflow PASS.
 
 ### DG-P6 — Lifecycle + validity mapping
 
