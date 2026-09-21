@@ -116,3 +116,13 @@
 - **Verified workflows:** P1 `35581467359`, P2 `35581467348`, P3 `35581467424` — all PASS on the exact qualified SHA.
 - **Result:** 8/8 qualified implementation/test/workflow blobs match P3 qualification evidence; the post-qualification path through evidence closure and lineage contains no `src/`, `tests/` or `.github/` mutation. The earlier DecisionRule debt remains closed through restart, adjudication, package export and independent semantic replay.
 - **Next:** P4 — Base GWF Adapter; P4L remains conditional and closed.
+
+
+### G2E-P4 — Base GWF Adapter
+
+- **Status:** PASS
+- **Qualified implementation:** `1f6d49957c0c0dffa7b83c11caebed4ab2b90e0b`
+- **Authoritative qualification:** P1 `35584223713` / job `106283704496` — 29/29 PASS; P2 `35584223744` / job `106283704804` — 43/43 PASS (+ P1 29/29); P3 `35584223806` / job `106283705392` — 25/25 PASS (+ P1/P2); P4 `35584223810` / job `106283705280` — 17/17 PASS (+ P1/P2/P3 regressions).
+- **Evidence closure:** `fbae7dcf6484556a1acf339f8187f8a2092faef0`
+- **Result:** Base GWF mapping preserves canonical G2E exact refs/hashes while keeping GWF IDs, hashes and runtime success states as mappings only; standalone↔GWF parity is qualified through ExecutionAttempt, provider-neutral ExecutionResult, Evidence, P2 Adjudication, protected-resource fail-closed recovery, Claim/Goal resolution and Result Package semantic manifest. Fresh-runtime restart reconstruction and authority/retry/mapping negative fixtures PASS. P1–P3 qualified blobs remain unchanged.
+- **Next:** exact P4L capability/dependency audit only; P4L Shared Library integration remains CONDITIONAL/CLOSED until `GWF_LIBRARY_INTEGRATION_MAPPING.md` gates are independently satisfied.
