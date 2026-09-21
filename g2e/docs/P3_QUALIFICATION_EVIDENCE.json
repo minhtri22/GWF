@@ -1,0 +1,89 @@
+{
+  "schema": "G2E-P3-QUALIFICATION-v1",
+  "status": "PASS",
+  "qualified_implementation_sha": "b9345f3cbeba564a0bf666d388d3873d9ffd1191",
+  "prerequisite_hardening": {
+    "p1_1": {
+      "purpose": "frozen decision rule binding",
+      "qualified_sha": "0002790f0ea3da1c6e03b69124e3bfd38741b3b5",
+      "status": "PASS"
+    },
+    "p1_2": {
+      "purpose": "runtime/execution/package prerequisite schemas",
+      "qualified_sha": "fe02721b436e94fc7cd34a68f136d6088ca4b411",
+      "evidence_commit": "9165a3afd75b7386370e9eb7642ee0579a3d1a5b",
+      "status": "PASS"
+    },
+    "p1_3": {
+      "purpose": "package external reference integrity",
+      "qualified_sha": "931b7d23239f625136be12d26564e9f89f8785b9",
+      "evidence_commit": "e4ef2f8c62558b540f1babba7e9b5f2dc9bb0497",
+      "status": "PASS"
+    }
+  },
+  "workflows": {
+    "p1": {
+      "run_id": 35581467359,
+      "job_id": 106275090078,
+      "conclusion": "success",
+      "tests_passed": 29
+    },
+    "p2": {
+      "run_id": 35581467348,
+      "job_id": 106275090278,
+      "conclusion": "success",
+      "tests_passed": 43
+    },
+    "p3": {
+      "run_id": 35581467424,
+      "job_id": 106275090584,
+      "conclusion": "success",
+      "tests_passed": 25
+    }
+  },
+  "files": {
+    "src/g2e/schemas.py": "62b4ab6717bc6c0a00f3670c73024df5a6ad41ca",
+    "src/g2e/engine.py": "4213f949f10e1f49c977fc22e06ea3a76d787be4",
+    "src/g2e/standalone.py": "5d8c853d94a5fdf4030ccc6da6ea7829e256002a",
+    "src/g2e/__init__.py": "2e72f06a2fd348127666b35d5d872fe9220d6834",
+    "tests/g2e/test_p1_core_schemas.py": "0fa530ff8e65aaa9ffb48878088ea31e29321a29",
+    "tests/g2e/test_p2_deterministic_core.py": "2bed4b2e6db339d541b66a70d47077032cc6d54a",
+    "tests/g2e/test_p3_standalone_runtime.py": "3bfc23315e2d5b24f8bdb05dd4fc76fdd595e6e9",
+    ".github/workflows/g2e-p3-standalone-runtime.yml": "2362e9c8971c91a9b6710a285c9d23c98e34dca3"
+  },
+  "semantic_findings": {
+    "P3-QA-F01": "RESOLVED",
+    "P3-QA-F02": "RESOLVED",
+    "P3-QA-F03": "RESOLVED",
+    "P3-QA-F04": "RESOLVED",
+    "P3-QA-F05": "RESOLVED",
+    "P3-QA-F06": "RESOLVED",
+    "P3-QA-F07": "RESOLVED",
+    "P3-QA-F08": "RESOLVED"
+  },
+  "gates": {
+    "restart_recovery": true,
+    "atomic_persistence": true,
+    "terminal_adjudication_immutable": true,
+    "protected_exposure_fail_closed": true,
+    "local_executor_facade": true,
+    "proof_result_replay": true,
+    "claim_resolution_derived": true,
+    "goal_verdict_derived": true,
+    "package_manifest_seal": true,
+    "external_reference_policy": true,
+    "independent_semantic_package_verification": true,
+    "resealed_false_verdict_rejected": true,
+    "standalone_library_publish_query_snapshot_replay": true,
+    "query_failure_distinct_from_zero": true,
+    "library_capability_identity_fail_closed": true,
+    "runtime_capability_identity_fail_closed": true,
+    "source_package_semantic_verification": true,
+    "decision_rule_identity_preserved": true,
+    "no_gwf_import": true
+  },
+  "downstream_authorization": {
+    "p4_base_gwf_adapter": true,
+    "p4l_shared_library": false
+  }
+}

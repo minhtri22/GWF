@@ -2,7 +2,7 @@
 
 ## Status
 
-**CANDIDATE QA: FAIL / remediation required**
+**FINAL SEMANTIC / IMPLEMENTATION QA: PASS**
 
 Candidate:
 
@@ -17,7 +17,7 @@ Candidate workflows:
 
 Green CI is insufficient until the semantic findings below are resolved.
 
-## P3-QA-F01 — HIGH — OPEN — No canonical ProofResult; package Claim resolution can be caller-asserted
+## P3-QA-F01 — HIGH — RESOLVED — No canonical ProofResult; package Claim resolution can be caller-asserted
 
 P2 has a deterministic in-memory ProofClosure, but no canonical terminal ProofResult schema/artifact. The current P3 package builder accepts a caller-provided Claim resolution map.
 
@@ -30,9 +30,9 @@ That permits a package caller to assert Claim PASS even if persisted Adjudicatio
 - P3 package derives ClaimResolution from exact ProofResults + frozen ClaimResolutionPolicy;
 - caller can no longer inject final Claim resolution.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-## P3-QA-F02 — HIGH — OPEN — Standalone Library identity/capability contract is incomplete
+## P3-QA-F02 — HIGH — RESOLVED — Standalone Library identity/capability contract is incomplete
 
 PRD-17 requires query result publication IDs + exact subject hashes and capability-qualified backend selection.
 
@@ -45,9 +45,9 @@ Current schema/query execution carries subject refs but not publication IDs, and
 - publish/query/snapshot/provenance/integrity operations fail closed unless exact standalone LibraryCapabilityManifest marks required capabilities QUALIFIED;
 - QueryContract.required_capability_ids enforced.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-## P3-QA-F03 — HIGH — OPEN — Capsule publication does not independently verify source package
+## P3-QA-F03 — HIGH — RESOLVED — Capsule publication does not independently verify source package
 
 Current publish path checks capsule/contract seal strings agree, but does not itself verify the referenced source package manifest/seal. A fabricated 64-byte seal value could be published.
 
@@ -58,7 +58,7 @@ Current publish path checks capsule/contract seal strings agree, but does not it
 - standalone publication calls verifier on exact source package before publication;
 - capsule source package type and seal hash must match the verified PackageSeal.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
 ## Existing-debt verification
 
@@ -82,7 +82,7 @@ This invariant must remain green after remediation.
 
 The implementation at `49e4c6e787bad65eb86ba84b3dd33c9ebc16d4ae` addresses the original F01–F03 mechanisms, but closure remains blocked by the findings below.
 
-## P3-QA-F04 — HIGH — OPEN — Goal package trusts caller-supplied ProofResult without replaying its exact closure
+## P3-QA-F04 — HIGH — RESOLVED — Goal package trusts caller-supplied ProofResult without replaying its exact closure
 
 The package builder checks that ProofResult points at a packaged Proof, but it does not prove that:
 - every ProofResult adjudication ref is present in the supplied decision ledger;
@@ -93,25 +93,25 @@ A fabricated canonical ProofResult can therefore assert PASS/FAIL independently 
 
 **Required:** replay materialization from exact packaged Proof + RetryPolicy + ordered Adjudications and require exact ProofResult identity before Claim resolution.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-## P3-QA-F05 — HIGH — OPEN — Standalone Library accepts capability manifests without exact backend identity binding
+## P3-QA-F05 — HIGH — RESOLVED — Standalone Library accepts capability manifests without exact backend identity binding
 
 `require_capability` checks only capability status. A manifest for another backend/adapter/runtime could be supplied and authorize standalone operations.
 
 **Required:** bind `backend_type=STANDALONE`, exact standalone backend ID, adapter version, runtime version and no-silent-fallback before capability status is considered.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-## P3-QA-F06 — MEDIUM — OPEN — Runtime capability check does not bind exact standalone runtime identity
+## P3-QA-F06 — MEDIUM — RESOLVED — Runtime capability check does not bind exact standalone runtime identity
 
 `require_capabilities` checks availability flags but not runtime ID/version/mode. A foreign RuntimeCapabilityManifest could authorize standalone runtime operations.
 
 **Required:** exact runtime ID/version/mode/persistence identity validation before capability checks.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-## P3-QA-F07 — HIGH — OPEN — Capsule source Claim terminality/resolution is not verified from sealed source package
+## P3-QA-F07 — HIGH — RESOLVED — Capsule source Claim terminality/resolution is not verified from sealed source package
 
 Publication verifies package integrity/type/seal, but does not prove that `source_goal_ref`, `source_claim_ref` and `source_claim_resolution` match the authoritative content inside the sealed GOAL_RESULT package. It also does not fail closed on `UNKNOWN` source Claim resolution.
 
@@ -121,7 +121,7 @@ Publication verifies package integrity/type/seal, but does not prove that `sourc
 - exact source Goal/Claim refs and terminal resolution must match the capsule;
 - unsupported source package types fail closed instead of being accepted by seal-string agreement alone.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
 ## Current closure state
 
@@ -130,7 +130,7 @@ Publication verifies package integrity/type/seal, but does not prove that `sourc
 P3 remains **NOT CLOSED** until F01–F07 are all demonstrated resolved on one exact qualified SHA.
 
 
-## P3-QA-F08 — HIGH — OPEN — Goal Result verifier checks integrity but not independently re-derived semantics
+## P3-QA-F08 — HIGH — RESOLVED — Goal Result verifier checks integrity but not independently re-derived semantics
 
 The current `verify_goal_result_package` verifies canonical manifest/seal, member hashes/sizes and required paths, but does not re-derive:
 
@@ -151,10 +151,63 @@ The heterogeneous `PROOF_GRAPH.json` dependency list also lacks explicit schema-
 4. `verify_goal_result_package` must parse authoritative objects, replay ProofResult closure, re-resolve Claims, re-evaluate Goal and compare files;
 5. GOAL_RESULT capsule publication must use this semantic verifier, not integrity-only verification.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
 ## Updated closure state
 
 `OPEN = 8`
 
 P3 remains **NOT CLOSED**.
+
+
+## Final qualification
+
+Qualified implementation SHA:
+
+`b9345f3cbeba564a0bf666d388d3873d9ffd1191`
+
+Authoritative workflows:
+
+- P1 schema gate: run `35581467359`, job `106275090078` — PASS
+- P2 deterministic core: run `35581467348`, job `106275090278` — PASS
+- P3 standalone runtime: run `35581467424`, job `106275090584` — PASS
+
+Final fixture counts:
+
+- P1: `29/29 PASS`
+- P2: `43/43 PASS`
+- P3: `25/25 PASS`
+- compileall: PASS
+- P2 forbidden-runtime-dependency check: PASS
+- P3 standalone no-GWF-import check: PASS
+
+### Final semantic closure
+
+- [x] F01 canonical ProofResult exists and Goal package Claim resolutions derive from exact ProofResults.
+- [x] F02 standalone Library binds publication IDs to exact subjects and requires qualified capabilities.
+- [x] F03 capsule publication verifies the exact sealed source package.
+- [x] F04 package replays ProofResult from exact Proof + RetryPolicy + Adjudication history.
+- [x] F05 standalone Library rejects foreign/mismatched capability manifests.
+- [x] F06 standalone runtime rejects foreign/mismatched runtime manifests.
+- [x] F07 GOAL_RESULT publication verifies exact source Goal, Claim and terminal Claim resolution.
+- [x] F08 independent Goal Result verification replays Proof/Claim/Goal semantics and rejects a semantically false but correctly re-sealed package.
+
+### Prior DecisionRule debt
+
+The P1.1 DecisionRule gap remains closed end-to-end:
+
+- `ProofObligation.decision_rule_ref` is required;
+- P2 Adjudication binds exact `decision_rule_hash`;
+- standalone restart preserves both exact identities;
+- tagged `PROOF_GRAPH.json` exports the exact DecisionRule;
+- independent Goal Result verification replays ProofResult closure against that exact rule identity.
+
+No runtime workaround or ungoverned decision-rule convention remains in P3.
+
+## Final verdict
+
+`OPEN = 0`
+
+**G2E P3 — STANDALONE RUNTIME: PASS**
+
+P4 — Base GWF Adapter is the next phase allowed by the phase plan. P4L remains conditional and closed.
