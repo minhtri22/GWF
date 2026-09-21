@@ -1,0 +1,72 @@
+{
+  "schema": "G2E-P5-PREIMPLEMENTATION-QUALIFICATION-EVIDENCE-v1",
+  "adjudication": "SPEC_PASS_RUNTIME_BLOCKED",
+  "p5_preimplementation_spec": "PASS",
+  "runtime_implementation_authorized": false,
+  "runtime_adapter_mutation": false,
+  "audit_baseline": "660cfbb98ab2066e3fb94adda7657087de9ab26f",
+  "qualified_candidate": "a799a6039498dfd4196b9874f230da48fdbb42c1",
+  "result_commit": "d8e2babb629b1036e07ed45504f1255ef45d737b",
+  "result_blob": "88811ae407ae51836360ab445123fc4af2545cf6",
+  "blobs": {
+    "spec": "7dc381d8022f61a81f26d39a1350dd4a8501e49e",
+    "qualification_test": "c6b6a5238c8badf59b2ce49c33d13d3435f6cabe",
+    "workflow": "f497791e69a63621ca2ac2939b559eae8144192e",
+    "p1_schema_unchanged": "62b4ab6717bc6c0a00f3670c73024df5a6ad41ca"
+  },
+  "workflow": {
+    "run_id": 35587111264,
+    "job_id": 106292892218,
+    "conclusion": "success",
+    "artifact_id": 10632522432,
+    "artifact_name": "g2e-p5-preimplementation-qualification",
+    "artifact_digest": "sha256:f6d0bc2dafcf3e073e9119a419f41d2ef73e0f03ff7311bca94615cf344fedcd"
+  },
+  "gates": {
+    "zero_implementation_diff": true,
+    "qualified_p1_schema_blob_unchanged": true,
+    "compile_existing_g2e_gwf": true,
+    "p1_regression": true,
+    "p2_regression": true,
+    "p3_regression": true,
+    "p4_regression": true,
+    "p5_zero_implementation_qualification": true,
+    "no_codex_runtime_adapter": true,
+    "no_chatgpt_runtime_adapter": true,
+    "qualification_report_emitted": true
+  },
+  "findings": {
+    "P5-F01": {
+      "status": "CONFIRMED_PREREQUISITE",
+      "summary": "RuntimeCapabilityManifest is a backend runtime manifest and cannot be reinterpreted as an agent-app capability manifest."
+    },
+    "P5-F02": {
+      "status": "CONFIRMED_PREREQUISITE",
+      "summary": "Canonical AgentBinding identity/binding-mode/equivalence reference is absent from the current qualified ExecutionAttemptEnvelope."
+    }
+  },
+  "blocking_prerequisite": {
+    "id": "P1.4_AGENT_PROFILE_BINDING_IDENTITY",
+    "scope": "schema-only",
+    "required_before": [
+      "P5A_CODEX_RUNTIME_PROFILE",
+      "P5B_CHATGPT_RUNTIME_PROFILE"
+    ],
+    "must_define": [
+      "AgentCapabilityManifest",
+      "AgentBinding",
+      "exact agent_binding_ref or semantic equivalent in ExecutionAttemptEnvelope",
+      "binding-to-attempt/result identity consistency",
+      "prospective binding mode and equivalence policy"
+    ]
+  },
+  "profile_availability": {
+    "codex": "UNQUALIFIED_UNTIL_ACTUAL_HARNESS_DISCOVERY",
+    "chatgpt": "UNQUALIFIED_UNTIL_ACTUAL_HARNESS_DISCOVERY"
+  },
+  "p4l_dependency": {
+    "status": "CLOSED_NON_BLOCKING",
+    "hard_dependency_of_p5": false
+  },
+  "next_admissible_step": "P1.4_AGENT_PROFILE_BINDING_IDENTITY_PREIMPLEMENTATION_AND_SCHEMA_QUALIFICATION"
+}
