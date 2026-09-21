@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
 from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import Field, field_validator, model_validator
 
-from .canonical import CanonicalModel, ExactRef, StrictModel
+from .canonical import CanonicalModel, ExactRef, StrictModel, assert_supported_schema_version
 
 
 DecimalString = str
@@ -158,6 +159,20 @@ class GoalContract(CanonicalModel):
     amendment_policy_ref: ExactRef | None = None
     authority_policy_ref: ExactRef | None = None
 
+    @model_validator(mode="after")
+    def _frozen_has_no_blocking_ambiguity(self):
+        if self.lifecycle == GoalContractLifecycle.FROZEN:
+            unresolved = [
+                a.ambiguity_id
+                for a in self.ambiguities
+                if a.blocking and not a.disposition
+            ]
+            if unresolved:
+                raise ValueError(
+                    f"FROZEN goal has unresolved blocking ambiguities: {unresolved}"
+                )
+        return self
+
 
 class GoalExpression(StrictModel):
     op: Literal["CLAIM", "ALL", "ANY"]
@@ -291,7 +306,7 @@ class AuthorityAction(StrictModel):
 class AuthorityPolicy(CanonicalModel):
     schema_kind = "authority_policy"
     actions: tuple[AuthorityAction, ...]
-    delegated_authority_may_exceed_parent: bool = False
+    delegated_authority_may_exceed_parent: Literal[False] = False
 
 
 class ProtectedResource(CanonicalModel):
@@ -334,9 +349,13 @@ class ProofObligation(CanonicalModel):
             if not isinstance(item, str) or not item:
                 raise ValueError(f"threshold {key} must be a non-empty decimal string")
             try:
-                float(item)
-            except ValueError:
-                raise ValueError(f"threshold {key} must be decimal text") from None
+                decimal = Decimal(item)
+            except InvalidOperation:
+                raise ValueError(
+                    f"threshold {key} must be finite decimal text"
+                ) from None
+            if not decimal.is_finite():
+                raise ValueError(f"threshold {key} must be finite decimal text")
         return value
 
 
@@ -525,6 +544,16 @@ class ApplicabilityAssessment(CanonicalModel):
     reason_codes: tuple[str, ...] = ()
 
 
+class ReuseProofMetadata(CanonicalModel):
+    schema_kind = "reuse_proof_metadata"
+    target_claim_ref: ExactRef
+    capsule_refs: tuple[ExactRef, ...]
+    applicability_assessment_refs: tuple[ExactRef, ...]
+    evidence_admission_policy_ref: ExactRef
+    required_disposition: Literal["QUALIFIED_REUSE"] = "QUALIFIED_REUSE"
+    no_new_empirical_execution: Literal[True] = True
+
+
 class EvidenceIndependenceCluster(CanonicalModel):
     schema_kind = "evidence_independence_cluster"
     member_capsule_refs: tuple[ExactRef, ...]
@@ -672,6 +701,15 @@ class LibraryCapabilityManifest(CanonicalModel):
     exact_backend_revision: str | None = None
     silent_fallback_allowed: Literal[False] = False
 
+    @field_validator("supported_schema_versions")
+    @classmethod
+    def _supported_versions_fail_closed(cls, value):
+        if not value:
+            raise ValueError("supported_schema_versions must not be empty")
+        for version in value:
+            assert_supported_schema_version(version)
+        return value
+
 
 SCHEMA_MODELS = (
     GoalRequirement,
@@ -699,6 +737,7 @@ SCHEMA_MODELS = (
     EvidenceCapsule,
     ApplicabilityPolicy,
     ApplicabilityAssessment,
+    ReuseProofMetadata,
     EvidenceIndependenceCluster,
     SynthesisUniverse,
     SynthesisContract,

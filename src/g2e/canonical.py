@@ -17,7 +17,15 @@ def _normalize(value: Any) -> Any:
     if isinstance(value, str):
         return unicodedata.normalize("NFC", value)
     if isinstance(value, dict):
-        return {_normalize(k): _normalize(v) for k, v in value.items()}
+        normalized: dict[Any, Any] = {}
+        for key, item in value.items():
+            normalized_key = _normalize(key)
+            if normalized_key in normalized:
+                raise ValueError(
+                    f"canonical key collision after NFC normalization: {normalized_key!r}"
+                )
+            normalized[normalized_key] = _normalize(item)
+        return normalized
     if isinstance(value, (list, tuple)):
         return [_normalize(v) for v in value]
     if isinstance(value, float):

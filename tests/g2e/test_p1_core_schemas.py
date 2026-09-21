@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from g2e import (
     Adjudication,
     AdjudicationVerdict,
+    AmbiguityRecord,
     AttemptState,
     AuthorityPolicy,
     BackendQualificationStatus,
@@ -34,6 +35,7 @@ from g2e import (
     ProofObligation,
     ProofRetryPolicy,
     Provenance,
+    ReuseProofMetadata,
     SCHEMA_REGISTRY,
     SelectionPolicy,
     SelectionRankField,
@@ -107,6 +109,7 @@ def test_schema_registry_covers_p1_surface():
         "claim_signature",
         "applicability_policy",
         "applicability_assessment",
+        "reuse_proof_metadata",
         "evidence_independence_cluster",
         "synthesis_universe",
         "synthesis_contract",
@@ -456,3 +459,111 @@ def test_selection_policy_schema_can_encode_deterministic_tie_break():
 def test_authority_policy_cannot_enable_delegated_escalation():
     policy = sealed(AuthorityPolicy, "auth", actions=())
     assert policy.delegated_authority_may_exceed_parent is False
+
+
+
+def test_canonical_json_rejects_nfc_key_collision():
+    with pytest.raises(ValueError, match="canonical key collision"):
+        canonical_json({"é": 1, "e\\u0301": 2})
+
+
+def test_frozen_goal_rejects_unresolved_blocking_ambiguity():
+    with pytest.raises(ValidationError, match="blocking ambiguities"):
+        sealed(
+            GoalContract,
+            "goal-blocked",
+            lifecycle=GoalContractLifecycle.FROZEN,
+            goal_statement="g",
+            ambiguities=(
+                AmbiguityRecord(
+                    ambiguity_id="a1",
+                    description="must resolve",
+                    blocking=True,
+                    owner="goal-owner",
+                ),
+            ),
+        )
+
+
+def test_authority_policy_rejects_delegated_escalation():
+    with pytest.raises(ValidationError):
+        sealed(
+            AuthorityPolicy,
+            "auth-bad",
+            actions=(),
+            delegated_authority_may_exceed_parent=True,
+        )
+
+
+def test_proof_threshold_rejects_nan_and_infinity():
+    _, admission, retry, amendment, _ = base_policies()
+    for bad in ("NaN", "Infinity", "-Infinity"):
+        with pytest.raises(ValidationError, match="finite decimal text"):
+            sealed(
+                ProofObligation,
+                f"proof-{bad}",
+                lifecycle=ProofLifecycle.FROZEN,
+                target_claim_id="claim-1",
+                proposition="p",
+                decision_thresholds={"metric": bad},
+                evidence_admission_policy_ref=admission.exact_ref(),
+                retry_policy_ref=retry.exact_ref(),
+                amendment_policy_ref=amendment.exact_ref(),
+            )
+
+
+def test_reuse_proof_metadata_is_explicit_and_no_empirical_execution():
+    goal = sealed(
+        GoalContract,
+        "g-reuse",
+        lifecycle=GoalContractLifecycle.FROZEN,
+        goal_statement="reuse",
+    )
+    resolution, admission, *_ = base_policies()
+    claim = sealed(
+        Claim,
+        "c-reuse",
+        proposition="reuse prior evidence",
+        claim_class="reuse",
+        resolution_policy_ref=resolution.exact_ref(),
+        lifecycle=ClaimLifecycle.READY,
+        resolution=ClaimResolution.UNKNOWN,
+    )
+    metadata = sealed(
+        ReuseProofMetadata,
+        "reuse-meta",
+        target_claim_ref=claim.exact_ref(),
+        capsule_refs=(goal.exact_ref(),),
+        applicability_assessment_refs=(goal.exact_ref(),),
+        evidence_admission_policy_ref=admission.exact_ref(),
+    )
+    assert metadata.no_new_empirical_execution is True
+    with pytest.raises(ValidationError):
+        ReuseProofMetadata.sealed(
+            object_id="bad-reuse",
+            revision_id="r1",
+            provenance=P,
+            target_claim_ref=claim.exact_ref(),
+            capsule_refs=(goal.exact_ref(),),
+            applicability_assessment_refs=(goal.exact_ref(),),
+            evidence_admission_policy_ref=admission.exact_ref(),
+            no_new_empirical_execution=False,
+        )
+
+
+def test_library_manifest_rejects_unknown_schema_major():
+    cap = LibraryCapability(
+        capability_id="LOCAL",
+        status=BackendQualificationStatus.QUALIFIED,
+    )
+    with pytest.raises(ValidationError, match="unsupported schema major"):
+        sealed(
+            LibraryCapabilityManifest,
+            "lib-v2",
+            backend_id="standalone",
+            backend_type="STANDALONE",
+            adapter_version="p1",
+            supported_schema_versions=("2.0",),
+            capabilities=(cap,),
+            security_access_model="single-user",
+        )
