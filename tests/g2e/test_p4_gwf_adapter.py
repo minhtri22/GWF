@@ -10,8 +10,14 @@ from gwr.utils import parse_json
 
 from g2e import (
     AdjudicationVerdict,
+    AgentBinding,
+    AgentCapability,
+    AgentCapabilityManifest,
+    AgentEquivalencePolicy,
+    AgentProfileAvailability,
     AmendmentPolicy,
     AttemptState,
+    BindingMode,
     Claim,
     ClaimGraph,
     ClaimLifecycle,
@@ -36,6 +42,7 @@ from g2e import (
     ProofRetryPolicy,
     ProtectedResource,
     Provenance,
+    validate_agent_binding_identity,
 )
 from g2e.canonical import ExactRef
 from g2e.engine import (
@@ -358,6 +365,90 @@ def test_canonical_roundtrip_preserves_g2e_identity_and_keeps_hash_domains_separ
     assert adapter.load_exact("goal_contract", program["goal"].exact_ref()) == program["goal"]
     # GWF hashes its wrapper representation; it is not the G2E canonical hash.
     assert mapping.gwf_revision_hash != mapping.g2e_ref.content_hash
+    runtime.close()
+
+
+def test_gwf_execution_propagates_exact_agent_binding_identity(tmp_path):
+    program = build_program()
+    manifest = sealed(
+        AgentCapabilityManifest,
+        "agent-manifest",
+        agent_app="fixture-agent",
+        profile_version="1",
+        harness_ref="fixture-harness@1",
+        exact_harness_revision="fixture-harness-sha",
+        provider_ref="fixture-provider",
+        model_ref="fixture-model",
+        transport_ref="native",
+        availability=AgentProfileAvailability.AVAILABLE,
+        capabilities=(
+            AgentCapability(
+                capability_id="repository_read",
+                available=True,
+                qualification_refs=("fixture:repo-read",),
+            ),
+        ),
+        max_authority_scope=("READ",),
+        discovery_evidence_refs=("fixture:discovery",),
+    )
+    equivalence = sealed(
+        AgentEquivalencePolicy,
+        "agent-equivalence",
+        material_dimensions=(
+            "agent_app",
+            "provider_ref",
+            "model_ref",
+            "harness_ref",
+            "transport_ref",
+        ),
+    )
+    binding = sealed(
+        AgentBinding,
+        "agent-binding",
+        resolved_attempt_id=program["attempt"].attempt_id,
+        agent_app=manifest.agent_app,
+        capability_manifest_ref=manifest.exact_ref(),
+        equivalence_policy_ref=equivalence.exact_ref(),
+        binding_mode=BindingMode.FROZEN,
+        harness_ref=manifest.harness_ref,
+        provider_ref=manifest.provider_ref,
+        model_ref=manifest.model_ref,
+        transport_ref=manifest.transport_ref,
+        required_capability_ids=("repository_read",),
+        authority_scope=("READ",),
+        resolved_at="2026-09-21T10:50:00Z",
+    )
+    data = program["attempt"].model_dump(mode="python", exclude={"content_hash"})
+    data.update(
+        {
+            "agent_app": binding.agent_app,
+            "provider_ref": binding.provider_ref,
+            "model_ref": binding.model_ref,
+            "harness_ref": binding.harness_ref,
+            "transport_ref": binding.transport_ref,
+            "agent_binding_ref": binding.exact_ref(),
+            "authority_scope": binding.authority_scope,
+        }
+    )
+    program["attempt"] = ExecutionAttemptEnvelope.sealed(**data)
+
+    runtime, _, adapter = make_adapter(tmp_path)
+    persist_program(adapter, program)
+    adapter.persist_canonical(manifest)
+    adapter.persist_canonical(equivalence)
+    adapter.persist_canonical(binding)
+
+    report = gwf_execute(adapter, program)
+    assert report.execution_result.agent_binding_ref == binding.exact_ref()
+    assert report.execution_result.agent_app == binding.agent_app
+    assert report.execution_result.harness_ref == binding.harness_ref
+    validate_agent_binding_identity(
+        manifest,
+        equivalence,
+        binding,
+        report.final_attempt,
+        report.execution_result,
+    )
     runtime.close()
 
 
