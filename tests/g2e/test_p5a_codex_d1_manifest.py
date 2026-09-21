@@ -23,7 +23,7 @@ def _load_materializer():
 
 def test_manifest_spec_freezes_d1_only_scope():
     text = SPEC.read_text(encoding="utf-8")
-    assert "D1 structural surface only" in text
+    assert "PASS / structural surface only" in text
     assert "D2: NOT AUTHORIZED" in text
     assert "Codex runtime adapter:** NOT AUTHORIZED" in text
     assert "repository_read" in text
