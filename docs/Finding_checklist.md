@@ -1713,3 +1713,63 @@ GAC                       = LOCKED_UNTIL_DG-W4_PASS
 - **Final status:** RESOLVED
 
 **OPEN = 0**
+
+
+## 64. DG-P9 implementation qualification checklist
+
+- [x] implementation started from exact qualification HEAD `52ae1ebded1f9a942cee55d6d2ce061b5bcb8290`.
+- [x] frozen spec commit/blob remained `1a9f8737e36392c8a8db49b93c9371ceee16085f` / `73e1d7c8c01ea954af2a65e1df1942b4f95738f3`.
+- [x] exactly one migration `0011_v086_dg_p9_relation_binding` added.
+- [x] migration extends `document_relations` only.
+- [x] no new P9 binding/cache/projection table added.
+- [x] legacy P8 rows retain NULL binding; no automatic backfill/default.
+- [x] new relation declaration requires explicit legal atomic binding.
+- [x] one-time `BIND_DOCUMENT_RELATION` implemented with Proposal/Approval/Audit.
+- [x] binding mutation uses optimistic `relation.version`.
+- [x] rebind rejected; retire-old + create-new remains the semantic change path.
+- [x] frozen relation-type legality matrix enforced.
+- [x] pinned DOCUMENT Revision ownership enforced.
+- [x] LOGICAL_CURRENT DOCUMENT resolver returns exact read snapshot.
+- [x] historical pinned Revision remains resolvable after target advances.
+- [x] VALIDATES never floats.
+- [x] GENERATED_FROM requires exact verified identity.
+- [x] unsupported external target resolver fails closed.
+- [x] no binding-resolution cache.
+- [x] no TraceLink projection.
+- [x] no impact/validity/Evidence/finding/authority/lifecycle side effects.
+- [x] D9-F1..D9-F20 PASS on SQLite.
+- [x] D9-F1..D9-F20 PASS on PostgreSQL 17.
+- [x] bounded DG-P9 gate PASS on SQLite and PostgreSQL 17.
+- [x] P8/Knowledge/Trace/P4/P5/P6/P7 targeted regressions PASS.
+- [x] full repository regression PASS.
+- [x] compile PASS.
+- [x] compatibility finding F-116 resolved without changing frozen D9 semantics.
+- [x] qualified run `35628998000` recorded.
+- [x] SQLite evidence artifact `10653386409`, digest `sha256:651c9a59f77d83176cbc452d39a9beebf17c27e2390ef83a96aee85ed29ea160`.
+- [x] PostgreSQL evidence artifact `10653461137`, digest `sha256:aff7462c949ce6645bd0edc4ea130cbce884ac424a72234fc79ad8b9dc7b8ae4`.
+- [x] DG-P10+ remain NOT_STARTED / NOT_AUTHORIZED.
+- [x] DG-W3 remains OPEN / NOT_EXECUTED.
+- [x] GAC remains locked until DG-W4 PASS.
+- [ ] committed handoff exact-head requalification PASS.
+
+## 65. Current aggregate state during DG-P9 handoff
+
+**OPEN = 0**
+
+All findings F-01 through F-116 are resolved.
+
+```text
+DG-P8                     = FORMALLY_CLOSED
+DG-P9 specification       = FROZEN
+DG-P9 implementation      = QUALIFIED_PASS
+DG-P9 implementation SHA  = 9ffd64a1e9b98ea307ed8f9682b88e26570dc208
+DG-P9 workflow            = 35628998000 PASS
+DG-P9 SQLite artifact     = 10653386409
+DG-P9 PostgreSQL artifact = 10653461137
+DG-P9 handoff             = PENDING_COMMIT
+DG-P9 exact-head QA       = PENDING
+DG-P9 overall             = NOT_YET_FORMALLY_CLOSED
+DG-P10+                   = NOT_STARTED / NOT_AUTHORIZED
+DG-W3                     = OPEN / NOT_EXECUTED
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+```

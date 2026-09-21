@@ -402,12 +402,12 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P9 — Logical-current vs pinned-revision binding
 
 - **Complexity:** 3
-- **Status:** **PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **Status:** **IMPLEMENTATION QUALIFIED / HANDOFF + EXACT-HEAD QA PENDING**
 - **HARD dependencies:** DG-P8 — formally closed at final HEAD `4a93e564adf52ae0dfdffabefaef32d431bbef6d`.
 - **Frozen specification:** `docs/DG_P9_RELATION_TARGET_BINDING_SPEC.md`, commit `1a9f8737e36392c8a8db49b93c9371ceee16085f`, blob `73e1d7c8c01ea954af2a65e1df1942b4f95738f3`.
 - **Document QA:** `docs/DOCUMENT_QA_DG_P9_PREIMPLEMENTATION.md` — PASS.
 - **Governing document:** `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §10.
-- **Persistence verdict:** no new table; future migration `0011_v086_dg_p9_relation_binding` may only extend `document_relations` with `target_binding_mode` and `target_revision_or_hash`.
+- **Persistence verdict:** migration `0011_v086_dg_p9_relation_binding` extends `document_relations` only with `target_binding_mode` and `target_revision_or_hash`; no new P9 table.
 - **Legality verdict:** MUST_ALIGN_WITH current-only; SUPERSEDES/DERIVED_FROM/VALIDATES/GENERATED_FROM pinned-only; DEPENDS_ON/REFERENCES/IMPLEMENTS dual-mode.
 - **Pre-implementation checklist:**
   - [x] `LOGICAL_CURRENT` and `PINNED_REVISION` distinct;
@@ -421,21 +421,25 @@ Every completed item must record exact dependency revisions/evidence used. A dep
   - [x] no impact/validity/Evidence side effect;
   - [x] D9-F1..D9-F20 frozen;
   - [x] QA PASS.
-- **Implementation acceptance remains open:**
-  - [ ] bounded migration extends `document_relations` only;
-  - [ ] no new P9 table;
-  - [ ] legacy NULL binding preserved without default;
-  - [ ] BIND_DOCUMENT_RELATION uses Proposal/Approval/Audit + optimistic versioning;
-  - [ ] new relation creation requires legal explicit binding;
-  - [ ] relation legality matrix enforced;
-  - [ ] native DOCUMENT resolver returns exact snapshot;
-  - [ ] external unsupported resolver fails closed;
-  - [ ] resolver is side-effect free;
-  - [ ] no TraceLink projection;
-  - [ ] D9-F1..D9-F20 PASS;
-  - [ ] P8/Knowledge/Trace regressions PASS;
-  - [ ] no DG-P10+ semantics;
-  - [ ] implementation QA PASS.
+- **Implementation evidence:** HEAD `9ffd64a1e9b98ea307ed8f9682b88e26570dc208`; workflow `35628998000` PASS; SQLite artifact `10653386409`; PostgreSQL artifact `10653461137`.
+- **Implementation acceptance:**
+  - [x] bounded migration extends `document_relations` only;
+  - [x] no new P9 table;
+  - [x] legacy NULL binding preserved without default;
+  - [x] BIND_DOCUMENT_RELATION uses Proposal/Approval/Audit + optimistic versioning;
+  - [x] new relation creation requires legal explicit binding;
+  - [x] relation legality matrix enforced;
+  - [x] native DOCUMENT resolver returns exact snapshot;
+  - [x] external unsupported resolver fails closed;
+  - [x] resolver is side-effect free;
+  - [x] no TraceLink projection;
+  - [x] D9-F1..D9-F20 PASS on SQLite and PostgreSQL 17;
+  - [x] P8/Knowledge/Trace regressions PASS;
+  - [x] full repository regression PASS;
+  - [x] compile PASS;
+  - [x] no DG-P10+ semantics;
+  - [x] implementation QA PASS;
+  - [ ] handoff exact-head workflow PASS.
 
 ### DG-P10 — Change classification
 
@@ -1077,9 +1081,10 @@ DG-P8 — Typed document relations
       final exact-head run 35622798852 PASS
        ↓
 DG-P9 — Logical-current vs pinned-revision binding
-      PRE-IMPLEMENTATION SPEC FROZEN
-      DEPENDENCY / DOCUMENT QA PASS
-      IMPLEMENTATION NOT_STARTED
+      IMPLEMENTATION QUALIFIED
+      HEAD 9ffd64a1e9b98ea307ed8f9682b88e26570dc208
+      workflow 35628998000 PASS
+      HANDOFF EXACT-HEAD QA PENDING
        ↓
 STOP
 
