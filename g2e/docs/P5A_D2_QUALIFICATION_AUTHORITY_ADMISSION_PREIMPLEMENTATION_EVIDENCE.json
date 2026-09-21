@@ -1,0 +1,72 @@
+{
+  "schema": "G2E-P5A-D2-QUALIFICATION-AUTHORITY-PREIMPLEMENTATION-EVIDENCE-v1",
+  "adjudication": "SPEC_PASS_IMPLEMENTATION_REQUIRED",
+  "qualified_candidate": "e771faccb8b4370e6720d34f9905c2504846f96f",
+  "baseline": "11c04f7c7be88ebfd40ea6755a8bfc633262048d",
+  "result_commit": "3d2f69f94c46b2796f2458956eb586164df0ef55",
+  "result_blob": "fbb0611b575ec87f3cbc61d17695104196f5778b",
+  "workflow": {
+    "run_id": 35603911135,
+    "job_id": 106346284252,
+    "conclusion": "PASS",
+    "artifact_id": 10641056299,
+    "artifact_digest": "sha256:c3fadfc2a42f75f9d252ec13b48877bc064276b2f52ef08e9167c2f489b9e740"
+  },
+  "blobs": {
+    "spec": "dfaed0e1fcabf23d1cd3d2b4b5978dc9190eef68",
+    "test": "7d3f0df49527b52a7941a3e4188aa0666e127d89",
+    "workflow": "58bc9d797b627e77ccda7d3cc2783fe02e6f5728"
+  },
+  "decision": {
+    "qualification_authority_is_capability_evidence": false,
+    "qualification_authority_may_mutate_manifest": false,
+    "normal_p1_4_semantics_preserved": true,
+    "future_schema_primitive": "QualificationAuthorityGrant",
+    "future_binding_fields": [
+      "qualification_authority_ref",
+      "qualification_target_capability_ids"
+    ],
+    "parent_authority_source": "AuthorityPolicy",
+    "future_validator": "validate_qualification_agent_binding_identity"
+  },
+  "p5_fx_001_frozen_grant": {
+    "role": "qualification_executor",
+    "target_capability_ids": [
+      "repository_read",
+      "repository_write"
+    ],
+    "granted_authority_scope": [
+      "READ_FROZEN_FIXTURE",
+      "WRITE_DESIGNATED_OUTPUT"
+    ],
+    "allowed_read_paths": [
+      "input.json",
+      "TASK.md"
+    ],
+    "allowed_write_paths": [
+      "result.json"
+    ],
+    "network_allowed": false,
+    "interactive_approval_allowed": false,
+    "single_attempt": true,
+    "may_imply_capability_available": false,
+    "may_be_reused_for_operational_binding": false
+  },
+  "blocker": {
+    "id": "D2-F01",
+    "status": "RESOLVABLE_BY_BOUNDED_P1_5_IMPLEMENTATION"
+  },
+  "zero_fresh": {
+    "fresh_d2_outcome_consumed": false,
+    "model_turn_executed": false,
+    "runtime_core_mutated": false
+  },
+  "authorization": {
+    "p1_5_implementation_authorized": true,
+    "final_d2_binding_authorized": false,
+    "d2_execution_authorized": false,
+    "model_turn_authorized": false,
+    "codex_runtime_adapter_authorized": false
+  },
+  "next_admissible_step": "P1.5_QUALIFICATION_ATTEMPT_AUTHORITY_BOUNDED_SCHEMA_GOVERNANCE_IMPLEMENTATION"
+}
