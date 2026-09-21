@@ -60,6 +60,7 @@ from g2e.engine import (
     deduplicate_synthesis_observations,
     enforce_amendment_boundary,
     evaluate_evidence_admission,
+    materialize_evidence_admission,
     evaluate_goal,
     ref_key,
     resolve_claim,
@@ -265,16 +266,24 @@ def attempt_for(proof, retry, *, state=AttemptState.COMPLETED, suffix="1"):
     )
 
 
-def evidence_for(attempt, score: str, *, object_id="e1", lifecycle=EvidenceLifecycle.ADMITTED):
+def evidence_for(attempt, score: str, admission, *, object_id="e1"):
     payload = {"metrics": {"score": score}}
-    record = sealed(
+    candidate = sealed(
         EvidenceRecord,
         object_id,
         source_class="FIXTURE",
-        lifecycle=lifecycle,
+        lifecycle=EvidenceLifecycle.CANDIDATE,
         producer_attempt_ref=attempt.exact_ref(),
         payload_digest=canonical_hash(payload),
         freshness_state=FreshnessState.FRESH,
+    )
+    decision = evaluate_evidence_admission(candidate, admission)
+    record = materialize_evidence_admission(
+        candidate,
+        admission,
+        decision,
+        revision_id="r2",
+        provenance=P,
     )
     return record, payload
 
@@ -472,7 +481,7 @@ def test_evidence_admission_accepts_only_policy_compliant_evidence():
     _, _, claim, _, _, _, admission, retry, amendment, independence = goal_claim_fixture()
     proof, _ = proof_fixture(claim, admission, retry, amendment, independence)
     attempt = attempt_for(proof, retry)
-    record, _ = evidence_for(attempt, "0.90")
+    record, _ = evidence_for(attempt, "0.90", admission)
     decision = evaluate_evidence_admission(
         record,
         admission,
@@ -505,7 +514,7 @@ def test_evidence_relation_direction_is_deterministic():
     _, _, claim, _, _, _, admission, retry, amendment, independence = goal_claim_fixture()
     proof, _ = proof_fixture(claim, admission, retry, amendment, independence)
     attempt = attempt_for(proof, retry)
-    record, _ = evidence_for(attempt, "0.90")
+    record, _ = evidence_for(attempt, "0.90", admission)
     relation = sealed(
         EvidenceRelation,
         "rel-1",
@@ -535,16 +544,18 @@ def test_adjudicator_known_pass_fail_unresolved(score, expected):
     _, _, claim, _, _, _, admission, retry, amendment, independence = goal_claim_fixture()
     proof, dr = proof_fixture(claim, admission, retry, amendment, independence)
     attempt = attempt_for(proof, retry)
-    record, payload = evidence_for(attempt, score)
+    record, payload = evidence_for(attempt, score, admission)
     adj = adjudicate_attempt(
         proof,
         dr,
+        admission,
         attempt,
         (record,),
         {record.object_id: payload},
         object_id=f"adj-{score}",
         revision_id="r1",
         provenance=P,
+        independence_satisfied=True,
     )
     assert adj.verdict == expected
     assert adj.decision_rule_hash == dr.content_hash
@@ -557,12 +568,14 @@ def test_adjudicator_invalid_execution_is_not_substantive_fail():
     adj = adjudicate_attempt(
         proof,
         dr,
+        admission,
         attempt,
         (),
         {},
         object_id="adj-invalid",
         revision_id="r1",
         provenance=P,
+        independence_satisfied=True,
     )
     assert adj.verdict == AdjudicationVerdict.INVALID
 
@@ -571,16 +584,18 @@ def test_adjudicator_rejects_tampered_evidence_payload():
     _, _, claim, _, _, _, admission, retry, amendment, independence = goal_claim_fixture()
     proof, dr = proof_fixture(claim, admission, retry, amendment, independence)
     attempt = attempt_for(proof, retry)
-    record, _ = evidence_for(attempt, "0.90")
+    record, _ = evidence_for(attempt, "0.90", admission)
     adj = adjudicate_attempt(
         proof,
         dr,
+        admission,
         attempt,
         (record,),
         {record.object_id: {"metrics": {"score": "0.10"}}},
         object_id="adj-tampered",
         revision_id="r1",
         provenance=P,
+        independence_satisfied=True,
     )
     assert adj.verdict == AdjudicationVerdict.INVALID
     assert any("DIGEST_MISMATCH" in reason for reason in adj.reason_codes)
@@ -590,21 +605,24 @@ def test_adjudication_is_one_shot_per_attempt():
     _, _, claim, _, _, _, admission, retry, amendment, independence = goal_claim_fixture()
     proof, dr = proof_fixture(claim, admission, retry, amendment, independence)
     attempt = attempt_for(proof, retry)
-    record, payload = evidence_for(attempt, "0.90")
+    record, payload = evidence_for(attempt, "0.90", admission)
     first = adjudicate_attempt(
         proof,
         dr,
+        admission,
         attempt,
         (record,),
         {record.object_id: payload},
         object_id="adj-1",
         revision_id="r1",
         provenance=P,
+        independence_satisfied=True,
     )
     with pytest.raises(CoreInvariantError, match="already adjudicated"):
         adjudicate_attempt(
             proof,
             dr,
+            admission,
             attempt,
             (record,),
             {record.object_id: payload},
@@ -624,6 +642,7 @@ def test_adjudicator_rejects_rule_not_bound_by_proof():
         adjudicate_attempt(
             proof,
             other_rule,
+            admission,
             attempt,
             (),
             {},
@@ -640,12 +659,14 @@ def test_invalid_attempt_retry_budget_is_bounded():
     adj = adjudicate_attempt(
         proof,
         dr,
+        admission,
         attempt,
         (),
         {},
         object_id="adj-invalid",
         revision_id="r1",
         provenance=P,
+        independence_satisfied=True,
     )
     first = close_proof(adj, retry, invalid_attempts_including_current=1)
     exhausted = close_proof(adj, retry, invalid_attempts_including_current=2)
@@ -1327,3 +1348,83 @@ def test_synthesis_contract_post_outcome_mutation_is_no_rescue():
     )
     with pytest.raises(CoreInvariantError, match="new lineage"):
         enforce_amendment_boundary(contract, changed, outcome_exposed=True)
+
+
+
+def test_admission_materialization_binds_exact_policy():
+    _, _, claim, _, _, _, admission, retry, amendment, independence = goal_claim_fixture()
+    proof, _ = proof_fixture(claim, admission, retry, amendment, independence)
+    attempt = attempt_for(proof, retry)
+    record, _ = evidence_for(attempt, "0.90", admission)
+    assert record.lifecycle == EvidenceLifecycle.ADMITTED
+    assert record.admission_policy_ref == admission.exact_ref()
+    assert record.admission_reason == "ADMITTED"
+
+
+def test_adjudicator_rejects_unbound_admitted_evidence():
+    _, _, claim, _, _, _, admission, retry, amendment, independence = goal_claim_fixture()
+    proof, dr = proof_fixture(claim, admission, retry, amendment, independence)
+    attempt = attempt_for(proof, retry)
+    payload = {"metrics": {"score": "0.90"}}
+    forged = sealed(
+        EvidenceRecord,
+        "forged",
+        source_class="FIXTURE",
+        lifecycle=EvidenceLifecycle.ADMITTED,
+        producer_attempt_ref=attempt.exact_ref(),
+        payload_digest=canonical_hash(payload),
+        freshness_state=FreshnessState.FRESH,
+    )
+    adj = adjudicate_attempt(
+        proof,
+        dr,
+        admission,
+        attempt,
+        (forged,),
+        {forged.object_id: payload},
+        object_id="adj-forged",
+        revision_id="r1",
+        provenance=P,
+        independence_satisfied=True,
+    )
+    assert adj.verdict == AdjudicationVerdict.INVALID
+    assert adj.admitted_evidence_refs == ()
+    assert any("ADMISSION_POLICY_MISMATCH" in r for r in adj.reason_codes)
+
+
+def test_adjudicator_requires_independence_verification_when_bound():
+    _, _, claim, _, _, _, admission, retry, amendment, independence = goal_claim_fixture()
+    proof, dr = proof_fixture(claim, admission, retry, amendment, independence)
+    attempt = attempt_for(proof, retry)
+    record, payload = evidence_for(attempt, "0.90", admission)
+    adj = adjudicate_attempt(
+        proof,
+        dr,
+        admission,
+        attempt,
+        (record,),
+        {record.object_id: payload},
+        object_id="adj-independence",
+        revision_id="r1",
+        provenance=P,
+    )
+    assert adj.verdict == AdjudicationVerdict.INVALID
+    assert "INDEPENDENCE_NOT_VERIFIED" in adj.reason_codes
+
+
+def test_direct_admissibility_rejects_wrong_retry_policy_ref():
+    _, _, claim, _, _, _, admission, retry, amendment, independence = goal_claim_fixture()
+    proof, _ = proof_fixture(claim, admission, retry, amendment, independence)
+    wrong = sealed(
+        ProofRetryPolicy,
+        "wrong-retry",
+        max_invalid_replacement_attempts=retry.max_invalid_replacement_attempts,
+    )
+    result = check_proof_admissibility(
+        proof,
+        {claim.object_id: claim},
+        {},
+        wrong,
+    )
+    assert not result.admissible
+    assert "RETRY_POLICY_REF_MISMATCH" in result.reasons

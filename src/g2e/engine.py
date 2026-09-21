@@ -205,6 +205,8 @@ def check_proof_admissibility(
     amendment_valid: bool = True,
 ) -> AdmissibilityResult:
     reasons: list[str] = []
+    if retry_policy.exact_ref() != proof.retry_policy_ref:
+        reasons.append("RETRY_POLICY_REF_MISMATCH")
     claim = claims_by_id.get(proof.target_claim_id)
     if claim is None:
         reasons.append("TARGET_CLAIM_MISSING")
@@ -333,6 +335,34 @@ def evaluate_evidence_admission(
     if reasons:
         return AdmissionDecision(EvidenceLifecycle.REJECTED, tuple(reasons))
     return AdmissionDecision(EvidenceLifecycle.ADMITTED, ())
+
+
+def materialize_evidence_admission(
+    evidence: EvidenceRecord,
+    policy: EvidenceAdmissionPolicy,
+    decision: AdmissionDecision,
+    *,
+    revision_id: str,
+    provenance: Provenance,
+) -> EvidenceRecord:
+    reason = "ADMITTED" if not decision.reasons else ";".join(decision.reasons)
+    return EvidenceRecord.sealed(
+        schema_version=evidence.schema_version,
+        object_id=evidence.object_id,
+        revision_id=revision_id,
+        provenance=provenance,
+        source_class=evidence.source_class,
+        lifecycle=decision.lifecycle,
+        producer_attempt_ref=evidence.producer_attempt_ref,
+        subject_refs=evidence.subject_refs,
+        artifact_refs=evidence.artifact_refs,
+        resource_refs=evidence.resource_refs,
+        payload_digest=evidence.payload_digest,
+        immutable_external_ref=evidence.immutable_external_ref,
+        freshness_state=evidence.freshness_state,
+        admission_policy_ref=policy.exact_ref(),
+        admission_reason=reason,
+    )
 
 
 def validate_evidence_relation(
@@ -473,6 +503,7 @@ def _metric_values_from_evidence(
 def adjudicate_attempt(
     proof: ProofObligation,
     rule: DecisionRule,
+    admission_policy: EvidenceAdmissionPolicy,
     attempt: ExecutionAttemptEnvelope,
     evidence: Sequence[EvidenceRecord],
     payloads: Mapping[str, Mapping[str, Any]],
@@ -481,24 +512,53 @@ def adjudicate_attempt(
     revision_id: str,
     provenance: Provenance,
     existing_adjudications: Sequence[Adjudication] = (),
+    independence_satisfied: bool | None = None,
     adjudicator_version: str = "g2e-p2-v1",
 ) -> Adjudication:
     if proof.decision_rule_ref != rule.exact_ref():
         raise CoreInvariantError("decision rule does not match frozen proof identity")
+    if proof.evidence_admission_policy_ref != admission_policy.exact_ref():
+        raise CoreInvariantError(
+            "evidence admission policy does not match frozen proof identity"
+        )
     if attempt.proof_ref != proof.exact_ref():
         raise CoreInvariantError("attempt does not bind exact frozen proof")
     if any(a.attempt_ref == attempt.exact_ref() for a in existing_adjudications):
         raise CoreInvariantError("execution attempt already adjudicated")
 
-    admitted_refs = tuple(record.exact_ref() for record in evidence)
-    verdict = AdjudicationVerdict.UNRESOLVED
+    verified_evidence: list[EvidenceRecord] = []
     reasons: list[str] = []
+
+    for record in evidence:
+        if record.lifecycle != EvidenceLifecycle.ADMITTED:
+            reasons.append(f"EVIDENCE_NOT_ADMITTED:{record.object_id}")
+            continue
+        if record.admission_policy_ref != proof.evidence_admission_policy_ref:
+            reasons.append(f"EVIDENCE_ADMISSION_POLICY_MISMATCH:{record.object_id}")
+            continue
+        if (
+            admission_policy.require_attempt_linkage
+            and record.producer_attempt_ref != attempt.exact_ref()
+        ):
+            reasons.append(f"EVIDENCE_ATTEMPT_LINK_MISMATCH:{record.object_id}")
+            continue
+        verified_evidence.append(record)
+
+    admitted_refs = tuple(record.exact_ref() for record in verified_evidence)
+    verdict = AdjudicationVerdict.UNRESOLVED
 
     if attempt.state != AttemptState.COMPLETED:
         verdict = AdjudicationVerdict.INVALID
         reasons.append(f"ATTEMPT_NOT_COMPLETED:{attempt.state}")
+    elif proof.independence_policy_ref is not None and independence_satisfied is not True:
+        verdict = AdjudicationVerdict.INVALID
+        reasons.append("INDEPENDENCE_NOT_VERIFIED")
+    elif reasons:
+        verdict = AdjudicationVerdict.INVALID
     else:
-        metrics, metric_reasons = _metric_values_from_evidence(evidence, payloads)
+        metrics, metric_reasons = _metric_values_from_evidence(
+            verified_evidence, payloads
+        )
         reasons.extend(metric_reasons)
 
         predicates = (
