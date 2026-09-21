@@ -486,6 +486,35 @@ CREATE TABLE IF NOT EXISTS document_findings(
 """.strip(),
     ),
 
+    Migration(
+        "0009_v086_dg_p7_document_authority_claims",
+        """
+CREATE TABLE IF NOT EXISTS document_authority_claims(
+  claim_id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  document_id TEXT NOT NULL,
+  authority_scope TEXT NOT NULL,
+  authority_key TEXT NOT NULL,
+  mode TEXT NOT NULL,
+  composition_role TEXT,
+  composition_policy_ref TEXT,
+  composition_policy_hash TEXT,
+  status TEXT NOT NULL,
+  granted_revision_id TEXT NOT NULL,
+  grant_proposal_id TEXT NOT NULL,
+  retired_by_proposal_id TEXT,
+  version INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  retired_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_document_authority_collision
+  ON document_authority_claims(project_id, authority_scope, authority_key, status);
+CREATE INDEX IF NOT EXISTS idx_document_authority_owner
+  ON document_authority_claims(document_id, status);
+""".strip(),
+    ),
+
 ]
 
 

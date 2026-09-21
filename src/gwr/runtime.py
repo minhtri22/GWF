@@ -21,6 +21,7 @@ from .github_plugin import GitHubPluginService
 from .document_facade import DocumentFacadeService
 from .document_qa import DocumentQAService
 from .document_state import DocumentLifecycleValidityService
+from .document_authority import DocumentAuthorityService
 
 class GovernedWorkflowRuntime:
     def __init__(self, domain: str|DomainPackage, db_path=":memory:", *, auth_secret=None, object_store_root=None, observer=None, observability_path=None):
@@ -68,6 +69,13 @@ class GovernedWorkflowRuntime:
             self.governance,
             self.project_governance,
         )
+        self.document_authority=DocumentAuthorityService(
+            self.db,
+            self.knowledge,
+            self.document_qa,
+            self.governance,
+            self.project_governance,
+        )
         self.documents=DocumentFacadeService(self.knowledge,self.github,self.document_state)
         self.process=ProcessInspectorService(self)
         self.object_store=None; self.objects=None
@@ -97,6 +105,8 @@ class GovernedWorkflowRuntime:
     def commit_approved_proposal(self, proposal_id, actor_id, expected_version=0):
         p=self.governance.require_approved(proposal_id)
         if p["action"]=="CREATE_REVISION": return self.knowledge.commit_revision_from_proposal(proposal_id,actor_id,expected_version)
+        if p["action"] in {"DECLARE_DOCUMENT_AUTHORITY","DECLARE_COMPOSED_DOCUMENT_AUTHORITY","RETIRE_DOCUMENT_AUTHORITY"}:
+            return self.document_authority.apply_approved_proposal(proposal_id,actor_id)
         raise ValueError(f"No runtime dispatcher for proposal action {p['action']}")
     def close(self):
         self.observe("runtime_closed")
