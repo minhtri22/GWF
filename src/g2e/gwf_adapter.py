@@ -669,6 +669,7 @@ class GWFAdapter:
             model_ref=initial_attempt.model_ref,
             harness_ref=initial_attempt.harness_ref,
             transport_ref=initial_attempt.transport_ref,
+            agent_binding_ref=initial_attempt.agent_binding_ref,
             technical_error_class=technical_error_class,
             technical_error_reason=technical_error_reason,
             redaction_metadata={"mode": "gwf-base-adapter"},
