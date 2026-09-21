@@ -4,7 +4,7 @@ import argparse
 import hashlib
 import json
 import re
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
 
 
@@ -72,7 +72,16 @@ def _find_sensitive_keys(value: Any, path: str = "$") -> list[str]:
     return hits
 
 
-def _validate_inventory(value: Any) -> tuple[bool, list[str], str | None]:
+def _expected_inventory_order(paths: list[str], platform_system: str | None) -> list[str]:
+    if platform_system == "Windows":
+        return [path.as_posix() for path in sorted(PureWindowsPath(item) for item in paths)]
+    return [path.as_posix() for path in sorted(PurePosixPath(item) for item in paths)]
+
+
+def _validate_inventory(
+    value: Any,
+    platform_system: str | None,
+) -> tuple[bool, list[str], str | None]:
     reasons: list[str] = []
     if not isinstance(value, list) or not value:
         return False, ["INVENTORY_MISSING_OR_EMPTY"], None
@@ -99,7 +108,7 @@ def _validate_inventory(value: Any) -> tuple[bool, list[str], str | None]:
             paths.append(path)
         normalized.append(item)
 
-    if paths != sorted(paths):
+    if paths != _expected_inventory_order(paths, platform_system):
         reasons.append("INVENTORY_PATHS_NOT_SORTED")
     if len(paths) != len(set(paths)):
         reasons.append("INVENTORY_PATHS_DUPLICATE")
@@ -167,7 +176,12 @@ def adjudicate_data(data: Any, input_sha256: str, source_sha256: str) -> dict[st
 
     inventory_present = "generated_schema_files" in data
     if inventory_present:
-        inventory_ok, inventory_reasons, recomputed = _validate_inventory(data.get("generated_schema_files"))
+        platform_value = data.get("platform")
+        platform_system = platform_value.get("system") if isinstance(platform_value, dict) else None
+        inventory_ok, inventory_reasons, recomputed = _validate_inventory(
+            data.get("generated_schema_files"),
+            platform_system,
+        )
         reasons.extend(inventory_reasons)
         if inventory_ok:
             base["recomputed_schema_inventory_digest"] = recomputed
