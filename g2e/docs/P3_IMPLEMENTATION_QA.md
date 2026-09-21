@@ -128,3 +128,33 @@ Publication verifies package integrity/type/seal, but does not prove that `sourc
 `OPEN = 7`
 
 P3 remains **NOT CLOSED** until F01–F07 are all demonstrated resolved on one exact qualified SHA.
+
+
+## P3-QA-F08 — HIGH — OPEN — Goal Result verifier checks integrity but not independently re-derived semantics
+
+The current `verify_goal_result_package` verifies canonical manifest/seal, member hashes/sizes and required paths, but does not re-derive:
+
+- ProofResult from exact Proof + RetryPolicy + Adjudication history;
+- Claim resolutions from exact ClaimResolutionPolicy + ProofResults;
+- final Goal verdict from GoalClosureContract;
+- claim resolution files against those derived resolutions.
+
+A semantically modified package could therefore be re-manifested/re-sealed and still pass integrity verification.
+
+The heterogeneous `PROOF_GRAPH.json` dependency list also lacks explicit schema-kind tags, preventing an independent verifier from parsing all frozen dependencies without out-of-band type assumptions.
+
+**Required:**
+
+1. write proof/dependency graph entries as explicit `{schema_kind, payload}` records;
+2. factor the same deterministic package-state derivation into export and verify paths;
+3. record `authorized_stop` in FINAL_VERDICT so STOPPED can be reproduced;
+4. `verify_goal_result_package` must parse authoritative objects, replay ProofResult closure, re-resolve Claims, re-evaluate Goal and compare files;
+5. GOAL_RESULT capsule publication must use this semantic verifier, not integrity-only verification.
+
+- [ ] RESOLVED
+
+## Updated closure state
+
+`OPEN = 8`
+
+P3 remains **NOT CLOSED**.
