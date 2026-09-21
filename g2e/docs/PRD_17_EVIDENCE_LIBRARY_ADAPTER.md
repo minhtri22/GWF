@@ -46,7 +46,7 @@ Minimum GWF capability levels:
 - `GAC_METADATA_CORE`: GAC-P0 + GAC-P1 PASS — exact governed revision publication/query contract.
 - `GAC_OBJECTREF`: additionally GAC-P2A PASS when ObjectRef subjects are required.
 - `GAC_SHARED_LIBRARY_CROSS_PROJECT`: DG-GAC-W5 PASS for the minimum governed cross-project Shared Library substrate.
-- `GAC_G2E_CONSUMER`: GAC-P4B PASS plus the G2E adapter qualification for the exact PRD-17 contract.
+- `GAC_G2E_CONSUMER`: GAC-P4B PASS plus the G2E adapter qualification for the exact PRD-17 contract. GAC-P4B may qualify the GWF consumer contract against the frozen PRD-17 fixture and does not require completed G2E P4L runtime beforehand.
 - `GAC_OPTIONAL_SEARCH`: GAC-P3 PASS only when optional FTS/vector/external search is actually required.
 - `RA_GAC_CURATED_DISCOVERY`: RA-P1C PASS when PRD-13 research-side GWF_CATALOG curation is required.
 - `RA_GAC_RESEARCH_WORKFLOW`: RA-GAC-W6 PASS when the full research workflow bridge is required.

@@ -153,7 +153,7 @@ G2E MUST resolve exact evidence for every requested capability.
 | Exact revision publication/query contract | GAC-P0 + GAC-P1 PASS; their DG-W4 prerequisite lineage resolvable |
 | ObjectRef subject publication | GAC-P2A PASS |
 | Minimum cross-project Shared Library | DG-GAC-W5 PASS |
-| G2E-specific GAC consumer path | GAC-P4B PASS + G2E PRD-17 adapter qualification |
+| G2E-specific GAC consumer path | GAC-P4B PASS + G2E PRD-17 adapter qualification; P4B may use the frozen PRD-17 contract fixture and does not require completed P4L runtime |
 | Optional FTS/vector/external search | GAC-P3 PASS; never required for core metadata Library |
 | Research-curated GAC discovery | RA-P1C PASS |
 | Full research workflow Shared Library bridge | RA-GAC-W6 PASS |

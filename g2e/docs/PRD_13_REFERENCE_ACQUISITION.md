@@ -101,6 +101,6 @@ External tool/framework capability claims must be revalidated and pinned at impl
 
 ## References
 
-- [GWF Reference Acquisition Specification](../../docs/V0.8.6_REFERENCE_ACQUISITION_SPEC.md)
+- [Reconciled GWF Reference Acquisition Specification](https://github.com/minhtri22/GWF/blob/be7d606c64a97d9525d1f72d744fe5b7a336ff0c/docs/V0.8.6_REFERENCE_ACQUISITION_SPEC.md)
 - [GWF Library Integration Mapping](GWF_LIBRARY_INTEGRATION_MAPPING.md)
 - [Reference Baseline](REFERENCE_BASELINE.md)

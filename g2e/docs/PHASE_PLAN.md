@@ -158,7 +158,7 @@ Open only when the requested GWF capabilities are qualified under [GWF Library I
 
 Minimum for the normal G2E GWF-backed Evidence Library path:
 
-- GAC-P4B G2E consumer fixture PASS;
+- GAC-P4B G2E consumer fixture PASS (contract/fixture qualification may precede P4L runtime implementation);
 - GAC-P0/P1 evidence resolvable;
 - DG-W4 prerequisite lineage resolvable;
 - additional GAC-P2A/P3/P4A or RA-P1C/RA-GAC-W6 only when the requested operation requires those capabilities.
@@ -228,4 +228,4 @@ No provider may require a G2E core schema change.
 - [PRD Index](PRD_INDEX.md)
 - [Reference Baseline](REFERENCE_BASELINE.md)
 - [GWF Agent Interoperability Foundation](../../docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md)
-- [GWF 7-Wave plan](../../docs/IMPLEMENTATION_7_WAVES_PLAN.md)
+- [Reconciled GWF 7-Wave plan](https://github.com/minhtri22/GWF/blob/be7d606c64a97d9525d1f72d744fe5b7a336ff0c/docs/IMPLEMENTATION_7_WAVES_PLAN.md)
