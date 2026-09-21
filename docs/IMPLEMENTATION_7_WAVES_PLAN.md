@@ -270,7 +270,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P6 — Lifecycle + validity mapping
 
 - **Complexity:** 3
-- **Status:** **IMPLEMENTATION QUALIFIED / HANDOFF + EXACT-HEAD QA PENDING**
+- **Status:** **COMPLETED / PASS / FORMALLY CLOSED**
 - **HARD dependencies:** DG-P4, DG-P5; both satisfied.
 - **Frozen specification:** `docs/DG_P6_LIFECYCLE_VALIDITY_MAPPING_SPEC.md`, commit `29d3f987f4d23a752563c1e61c5df4e9dd964979`, blob `155a0c81c291568dbf7d2ba942a9386484f2dd14`.
 - **Document QA:** `docs/DOCUMENT_QA_DG_P6_PREIMPLEMENTATION.md` — PASS.
@@ -299,13 +299,13 @@ Every completed item must record exact dependency revisions/evidence used. A dep
   - [x] full repository regression PASS;
   - [x] no DG-P7/P8 semantics;
   - [x] implementation QA PASS;
-  - [ ] handoff exact-head workflow PASS.
+  - [x] handoff exact-head workflow PASS — run `35598699495` on `d25454481f0d972c83225e10d3d09b1bb997faf9`, artifact `10637792150`.
 
 ### Wave 2 exit gate — DG-W2
 
 - [x] DG-P4 PASS
 - [x] DG-P5 PASS
-- [ ] DG-P6 PASS
+- [x] DG-P6 PASS
 - [ ] exact-revision QA invalidation demonstrated
 - [ ] no duplicate knowledge subsystem created without justification
 - [ ] handoff contains schema/migration decisions and compatibility evidence
@@ -968,16 +968,18 @@ DG-P5 — QA run + finding persistence
       final exact-head run 35585295768 PASS
        ↓
 DG-P6 — Lifecycle + validity mapping
-      AUTHORIZED
-      PRE-IMPLEMENTATION SPEC FROZEN
-      DEPENDENCY / DOCUMENT QA PASS
-      IMPLEMENTATION NOT_STARTED
+      PASS / FORMALLY CLOSED
+      handoff HEAD d25454481f0d972c83225e10d3d09b1bb997faf9
+      exact-head run 35598699495 PASS
+       ↓
+DG-W2 — Wave 2 exit gate
+      OPEN / NOT_EXECUTED
        ↓
 STOP
 ```
 
-DG-P6 is the active frontier. Its bounded implementation may reuse existing Artifact/Revision/P5/Audit state only; it may not add a schema migration or add `BLOCKED` to global `KnowledgeKernel.VALIDITY`.
+DG-P6 is formally closed. The next roadmap frontier is the separate DG-W2 Wave 2 exit-gate qualification, which remains OPEN / NOT_EXECUTED.
 
-DG-P7/P8, DG-W2 closure and later-wave semantics are not opened by this qualification.
+DG-P7/P8 and later-wave semantics remain unopened until the applicable exit gate is explicitly authorized and passed.
 
 GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.

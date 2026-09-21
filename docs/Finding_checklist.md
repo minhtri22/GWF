@@ -1149,9 +1149,11 @@ DG-P6 implementation      = QUALIFIED_PASS
 DG-P6 implementation SHA  = 5f5121db3e505204452946d31de8dedb3ca5e73e
 DG-P6 workflow            = 35598284725 PASS
 DG-P6 artifact            = 10638170391
-DG-P6 handoff             = PENDING_COMMIT
-DG-P6 exact-head QA       = PENDING
-DG-W2                     = OPEN
+DG-P6 handoff HEAD        = d25454481f0d972c83225e10d3d09b1bb997faf9
+DG-P6 exact-head workflow = 35598699495 PASS
+DG-P6 exact-head artifact = 10637792150
+DG-P6 overall             = FORMALLY_CLOSED
+DG-W2                     = OPEN / NOT_EXECUTED
 DG-P7/P8                  = NOT_STARTED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```

@@ -151,3 +151,13 @@ Rules:
 - Evidence artifact: `10638170391`.
 - Evidence artifact digest: `sha256:891484a4f0d54b85c5101fc7d7944b10b2c10af19a4df88e771ed1718c3b31b5`.
 - Outcome: governed-document lifecycle now reuses Artifact state with optimistic audit, while evidence-derived validity reconciliation preserves the existing kernel vocabulary and exposes documentation BLOCKED only as a derived effective state.
+
+
+## 2026-09-21 — DG-P6 formally closed
+
+- Result: DG-P6 PASS / formally closed.
+- Handoff HEAD: `d25454481f0d972c83225e10d3d09b1bb997faf9`.
+- Exact-head workflow: `35598699495` PASS.
+- Evidence artifact: `10637792150`.
+- Evidence artifact digest: `sha256:370e34264c5ac33dec4c1303a6a8abc5e4e5065a4935fa70e46ae0128b89bfe4`.
+- Outcome: document lifecycle and effective validity are now qualified over existing Artifact/Revision/P5 primitives with zero schema migration and unchanged global KnowledgeKernel validity vocabulary.

@@ -184,3 +184,19 @@ Formal close requires:
 6. re-run exact workflow on the final closure HEAD.
 
 DG-P7/P8 remain unopened and DG-W2 remains OPEN throughout this close.
+
+
+## 12. Exact-handoff qualification
+
+The committed DG-P6 handoff HEAD `d25454481f0d972c83225e10d3d09b1bb997faf9` was requalified on its exact HEAD.
+
+- exact-head workflow: `35598699495`
+- conclusion: **PASS**
+- evidence artifact: `10637792150`
+- artifact digest: `sha256:370e34264c5ac33dec4c1303a6a8abc5e4e5065a4935fa70e46ae0128b89bfe4`
+
+D6-F1..D6-F20, zero-migration/global-validity gate, targeted Knowledge/Execution/Decision/P4/P5 regressions, full regression and compile all passed again.
+
+**DG-P6 status: FORMALLY CLOSED.**
+
+This does not adjudicate DG-W2. DG-W2 remains OPEN / NOT_EXECUTED. DG-P7/P8 remain NOT_STARTED. GAC remains locked until DG-W4 PASS.
