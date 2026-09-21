@@ -402,13 +402,40 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P9 — Logical-current vs pinned-revision binding
 
 - **Complexity:** 3
-- **HARD dependencies:** DG-P8.
+- **Status:** **PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **HARD dependencies:** DG-P8 — formally closed at final HEAD `4a93e564adf52ae0dfdffabefaef32d431bbef6d`.
+- **Frozen specification:** `docs/DG_P9_RELATION_TARGET_BINDING_SPEC.md`, commit `1a9f8737e36392c8a8db49b93c9371ceee16085f`, blob `73e1d7c8c01ea954af2a65e1df1942b4f95738f3`.
+- **Document QA:** `docs/DOCUMENT_QA_DG_P9_PREIMPLEMENTATION.md` — PASS.
 - **Governing document:** `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §10.
-- **Acceptance checklist:**
-  - [ ] `LOGICAL_CURRENT` and `PINNED_REVISION` distinct;
-  - [ ] `VALIDATES` cannot float;
-  - [ ] `GENERATED_FROM` exact identity preserved;
-  - [ ] QA PASS.
+- **Persistence verdict:** no new table; future migration `0011_v086_dg_p9_relation_binding` may only extend `document_relations` with `target_binding_mode` and `target_revision_or_hash`.
+- **Legality verdict:** MUST_ALIGN_WITH current-only; SUPERSEDES/DERIVED_FROM/VALIDATES/GENERATED_FROM pinned-only; DEPENDS_ON/REFERENCES/IMPLEMENTS dual-mode.
+- **Pre-implementation checklist:**
+  - [x] `LOGICAL_CURRENT` and `PINNED_REVISION` distinct;
+  - [x] `VALIDATES` cannot float;
+  - [x] `GENERATED_FROM` exact identity preserved;
+  - [x] legacy P8 rows are not auto-backfilled;
+  - [x] one-time governed binding + no-rebind frozen;
+  - [x] DOCUMENT native current/pinned resolution frozen;
+  - [x] external targets fail closed absent qualified resolver;
+  - [x] no TraceLink projection;
+  - [x] no impact/validity/Evidence side effect;
+  - [x] D9-F1..D9-F20 frozen;
+  - [x] QA PASS.
+- **Implementation acceptance remains open:**
+  - [ ] bounded migration extends `document_relations` only;
+  - [ ] no new P9 table;
+  - [ ] legacy NULL binding preserved without default;
+  - [ ] BIND_DOCUMENT_RELATION uses Proposal/Approval/Audit + optimistic versioning;
+  - [ ] new relation creation requires legal explicit binding;
+  - [ ] relation legality matrix enforced;
+  - [ ] native DOCUMENT resolver returns exact snapshot;
+  - [ ] external unsupported resolver fails closed;
+  - [ ] resolver is side-effect free;
+  - [ ] no TraceLink projection;
+  - [ ] D9-F1..D9-F20 PASS;
+  - [ ] P8/Knowledge/Trace regressions PASS;
+  - [ ] no DG-P10+ semantics;
+  - [ ] implementation QA PASS.
 
 ### DG-P10 — Change classification
 
@@ -1046,19 +1073,21 @@ DG-P7 — Authority claims + duplicate-authority detection
        ↓
 DG-P8 — Typed document relations
       PASS / FORMALLY CLOSED
-      handoff HEAD 11eba1b424896b421fc4a32c8a1970dfcf6c34dc
-      exact-head run 35622268576 PASS
+      final closure HEAD 4a93e564adf52ae0dfdffabefaef32d431bbef6d
+      final exact-head run 35622798852 PASS
        ↓
-DG-P9 — Relation target binding
-      NEXT / NOT_STARTED / NOT_AUTHORIZED
+DG-P9 — Logical-current vs pinned-revision binding
+      PRE-IMPLEMENTATION SPEC FROZEN
+      DEPENDENCY / DOCUMENT QA PASS
+      IMPLEMENTATION NOT_STARTED
        ↓
 STOP
 
-DG-P9+ = NOT_STARTED / NOT_AUTHORIZED
+DG-P10+ = NOT_STARTED / NOT_AUTHORIZED
 ```
 
-DG-P8 is formally closed after exact-head requalification on both SQLite and PostgreSQL 17.
+DG-P8 is formally closed at final exact closure evidence, and the explicitly authorized DG-P9 pre-implementation qualification has passed.
 
-DG-P9 is the next roadmap item but remains NOT_STARTED / NOT_AUTHORIZED. DG-W3 remains OPEN / NOT_EXECUTED.
+DG-P9 implementation remains NOT_STARTED and requires a separate explicit bounded implementation authorization. DG-P10+ remain unopened. DG-W3 remains OPEN / NOT_EXECUTED.
 
 GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.

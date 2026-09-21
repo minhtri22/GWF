@@ -1578,3 +1578,127 @@ DG-P9+                    = NOT_STARTED / NOT_AUTHORIZED
 DG-W3                     = OPEN / NOT_EXECUTED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+## 60. DG-P9 pre-implementation qualification findings
+
+### F-105 — LOW — RESOLVED
+
+- **Initial finding:** DG-P8 was finally closed at 4a93e564adf52ae0dfdffabefaef32d431bbef6d, but the roadmap/finding snapshot still cited the earlier handoff run 35622268576 as closure evidence.
+- **Resolution:** Verified final exact-head run 35622798852 PASS on the formal-close HEAD. Final SQLite artifact is 10650208254 with digest sha256:f956a6481a689fb01be862cec1c700981b7f3e289e5fa5e72c5b4bcae4580613; PostgreSQL artifact is 10649124278 with digest sha256:807c84a3188190c90db1b8b73de116575f088db2192247414422086dd222468e.
+- **Final status:** RESOLVED
+
+### F-106 — HIGH — RESOLVED
+
+- **Initial finding:** Target binding could be modeled as a separate current-state table, splitting one semantic relation across two canonical stores.
+- **Resolution:** Binding is part of DocumentRelation meaning. P9 justifies extending document_relations with target_binding_mode and target_revision_or_hash only; no binding table.
+- **Final status:** RESOLVED
+
+### F-107 — HIGH — RESOLVED
+
+- **Initial finding:** Existing P8 rows could be silently defaulted to LOGICAL_CURRENT/PINNED_REVISION.
+- **Resolution:** Migration must not backfill. NULL means legacy unbound absence and requires explicit governed binding.
+- **Final status:** RESOLVED
+
+### F-108 — HIGH — RESOLVED
+
+- **Initial finding:** Relation types had no frozen legality matrix, allowing callers to choose semantically unsafe modes.
+- **Resolution:** Freeze relation-specific binding legality matrix in DG-P9 spec.
+- **Final status:** RESOLVED
+
+### F-109 — HIGH — RESOLVED
+
+- **Initial finding:** VALIDATES or GENERATED_FROM could float and falsely apply old evidence/provenance to a new target revision.
+- **Resolution:** Both are PINNED_REVISION-only and require exact immutable target identity.
+- **Final status:** RESOLVED
+
+### F-110 — HIGH — RESOLVED
+
+- **Initial finding:** DERIVED_FROM/SUPERSEDES could lose exact historical identity if allowed to float.
+- **Resolution:** Both are PINNED_REVISION-only.
+- **Final status:** RESOLVED
+
+### F-111 — HIGH — RESOLVED
+
+- **Initial finding:** A pinned MUST_ALIGN_WITH relation could remain aligned to history while the normative target advances.
+- **Resolution:** MUST_ALIGN_WITH is LOGICAL_CURRENT-only.
+- **Final status:** RESOLVED
+
+### F-112 — HIGH — RESOLVED
+
+- **Initial finding:** In-place rebinding could rewrite historical graph meaning.
+- **Resolution:** Legacy rows may bind once; any later binding change requires retire-old + create-new.
+- **Final status:** RESOLVED
+
+### F-113 — HIGH — RESOLVED
+
+- **Initial finding:** Arbitrary non-document tokens could be mislabeled as verified exact/current bindings.
+- **Resolution:** External target bindings fail closed without an independently qualified target-kind resolver.
+- **Final status:** RESOLVED
+
+### F-114 — HIGH — RESOLVED
+
+- **Initial finding:** LOGICAL_CURRENT resolution could be cached/persisted or consumed later without an exact snapshot, producing pseudo-pin or TOCTOU ambiguity.
+- **Resolution:** Resolver returns exact Revision/content hash/Artifact-version snapshot without mutating relation; downstream consumers must freeze their own exact identity.
+- **Final status:** RESOLVED
+
+### F-115 — HIGH — RESOLVED
+
+- **Initial finding:** P9 resolution could silently create TraceLinks, impact state, validity changes or Evidence.
+- **Resolution:** P9 resolver is pure identity resolution. All propagation/evidence side effects are forbidden and deferred.
+- **Final status:** RESOLVED
+
+## 61. DG-P9 pre-implementation qualification checklist
+
+- [x] exact DG-P8 final formal-close HEAD 4a93e564adf52ae0dfdffabefaef32d431bbef6d verified.
+- [x] final exact-head run 35622798852 PASS verified.
+- [x] final SQLite/PostgreSQL artifacts/digests verified.
+- [x] governing Documentation Integrity §10 loaded.
+- [x] P8 canonical relation runtime/schema inventoried.
+- [x] existing TraceLink/impact semantics inventoried.
+- [x] LOGICAL_CURRENT semantics frozen.
+- [x] PINNED_REVISION semantics frozen.
+- [x] per-relation legality matrix frozen.
+- [x] VALIDATES pinned-only.
+- [x] GENERATED_FROM pinned-only.
+- [x] DERIVED_FROM pinned-only.
+- [x] SUPERSEDES pinned-only.
+- [x] MUST_ALIGN_WITH current-only.
+- [x] DEPENDS_ON/REFERENCES/IMPLEMENTS dual-mode.
+- [x] no legacy binding default/backfill.
+- [x] one-time legacy bind + no-rebind rule frozen.
+- [x] native DOCUMENT current/pinned resolver contract frozen.
+- [x] external target resolver fail-closed boundary frozen.
+- [x] no new P9 table.
+- [x] future schema extension limited to target_binding_mode + target_revision_or_hash on document_relations.
+- [x] no TraceLink schema change.
+- [x] no binding cache.
+- [x] no TraceLink projection.
+- [x] no impact/validity/Evidence side effects.
+- [x] D9-F1..D9-F20 frozen.
+- [x] no DG-P10+ implementation authorized.
+- [x] no DG-W3 closure authorized.
+- [x] no GAC/RA/G2E authorized.
+- [x] implementation has not started.
+
+## 62. Current aggregate status after DG-P9 pre-implementation qualification
+
+**OPEN = 0**
+
+All findings F-01 through F-115 are resolved.
+
+~~~text
+DG-P8                     = FORMALLY_CLOSED
+DG-P8 final closure HEAD  = 4a93e564adf52ae0dfdffabefaef32d431bbef6d
+DG-P8 final exact run     = 35622798852 PASS
+DG-P9 authorization       = PREIMPLEMENTATION_ONLY
+DG-P9 specification       = FROZEN
+DG-P9 spec commit         = 1a9f8737e36392c8a8db49b93c9371ceee16085f
+DG-P9 spec blob           = 73e1d7c8c01ea954af2a65e1df1942b4f95738f3
+DG-P9 dependency qualify  = PASS
+DG-P9 document QA         = PASS
+DG-P9 implementation      = NOT_STARTED
+DG-P9 overall             = NOT_YET_PASS
+DG-P10+                   = NOT_STARTED / NOT_AUTHORIZED
+DG-W3                     = OPEN / NOT_EXECUTED
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+~~~

@@ -239,3 +239,12 @@ Rules:
 - SQLite evidence artifact: `10650102588`, digest `sha256:61a5fd125cf10e767753c79372c826b8dcdaaa8e831f0e2e56da4a9f1ca00147`.
 - PostgreSQL evidence artifact: `10650297246`, digest `sha256:7329e88ac80eeb5d781000b8ac356be069248a704464b043b80f87f1be4ada83`.
 - Outcome: canonical typed document relations are now governed logical-document state with explicit lifecycle and provenance, while TraceLink remains unchanged and DG-P9 target-binding semantics remain unopened.
+
+
+## 2026-09-21 — DG-P9 pre-implementation qualification completed
+
+- Result: DG-P9 relation-target-binding semantic/dependency qualification PASS.
+- Specification commit: `1a9f8737e36392c8a8db49b93c9371ceee16085f`.
+- Specification blob: `73e1d7c8c01ea954af2a65e1df1942b4f95738f3`.
+- Dependency: DG-P8 final formal-close HEAD `4a93e564adf52ae0dfdffabefaef32d431bbef6d`, final exact-head workflow `35622798852` PASS.
+- Outcome: relation target binding is part of canonical DocumentRelation state; VALIDATES/GENERATED_FROM/DERIVED_FROM/SUPERSEDES are pinned, MUST_ALIGN_WITH follows logical-current, and resolution is side-effect-free with no TraceLink projection.
