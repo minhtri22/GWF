@@ -451,6 +451,23 @@ def test_standalone_and_gwf_attempt_and_candidate_evidence_are_identical(tmp_pat
 
     assert g_report.final_attempt == s_report.final_attempt
     assert g_report.candidate_evidence == s_report.candidate_evidence
+
+    # ExecutionResult has runtime timestamps/redaction metadata, but every
+    # provider-neutral scientific/execution field must remain identical.
+    def semantic_result_projection(result):
+        return result.model_dump(
+            mode="json",
+            exclude={
+                "content_hash",
+                "started_at",
+                "ended_at",
+                "redaction_metadata",
+            },
+        )
+
+    assert semantic_result_projection(g_report.execution_result) == (
+        semantic_result_projection(s_report.execution_result)
+    )
     assert adapter.load_evidence_payload(g_report.candidate_evidence[0]) == {
         "metrics": {"score": "0.90"}
     }
@@ -666,6 +683,152 @@ def test_terminal_adjudication_mapping_cannot_be_rewritten(tmp_path):
     assert changed.content_hash != adjudication.content_hash
     with pytest.raises(GWFMappingConflictError, match="different canonical hash"):
         adapter.persist_canonical(changed)
+    runtime.close()
+
+
+def test_gwf_mapping_and_checkpoint_survive_fresh_runtime_restart(tmp_path):
+    db_path = tmp_path / "restart-gwf.sqlite"
+    runtime = GovernedWorkflowRuntime(g2e_gwf_domain(), db_path=str(db_path))
+    project_id = runtime.create_project("g2e-p4-restart")
+    adapter = GWFAdapter(runtime, project_id)
+    program = build_program()
+    persist_program(adapter, program)
+    report = gwf_execute(adapter, program)
+    final_ref = report.final_attempt.exact_ref()
+    result_ref = report.execution_result.exact_ref()
+    evidence_ref = report.candidate_evidence[0].exact_ref()
+    checkpoint_id = report.checkpoint_id
+    runtime.close()
+
+    reopened = GovernedWorkflowRuntime(g2e_gwf_domain(), db_path=str(db_path))
+    reopened_adapter = GWFAdapter(reopened, project_id)
+    assert reopened_adapter.load_exact("execution_attempt_envelope", final_ref) == (
+        report.final_attempt
+    )
+    assert reopened_adapter.load_exact("execution_result", result_ref) == (
+        report.execution_result
+    )
+    reopened_evidence = reopened_adapter.load_exact("evidence_record", evidence_ref)
+    assert reopened_evidence == report.candidate_evidence[0]
+    assert reopened_adapter.load_evidence_payload(reopened_evidence) == {
+        "metrics": {"score": "0.90"}
+    }
+    reopened_adapter.verify_checkpoint(
+        checkpoint_id,
+        (final_ref, result_ref, evidence_ref),
+    )
+    reopened.close()
+
+
+def test_result_package_semantic_manifest_is_identical_across_standalone_and_gwf(tmp_path):
+    program = build_program()
+
+    standalone = StandaloneRuntime(tmp_path / "parity-standalone-runtime")
+    s_report = standalone.executor.execute(
+        program["attempt"],
+        lambda: LocalExecutionOutcome(
+            action_summary="emit deterministic fixture metric",
+            evidence=(
+                CandidateEvidenceSpec(
+                    source_class="LOCAL",
+                    payload={"metrics": {"score": "0.90"}},
+                    object_id="fixture-evidence",
+                ),
+            ),
+        ),
+        provenance=P,
+    )
+    s_candidate = s_report.candidate_evidence[0]
+    s_decision = evaluate_evidence_admission(s_candidate, program["admission"])
+    s_admitted = materialize_evidence_admission(
+        s_candidate,
+        program["admission"],
+        s_decision,
+        revision_id="admitted-r1",
+        provenance=P,
+    )
+    s_payload = s_report.evidence_payloads[s_candidate.object_id]
+    s_adjudication = adjudicate_attempt(
+        program["proof"],
+        program["decision_rule"],
+        program["admission"],
+        s_report.final_attempt,
+        (s_admitted,),
+        {s_admitted.object_id: s_payload},
+        object_id="adjudication-1",
+        revision_id="r1",
+        provenance=P,
+        independence_satisfied=True,
+    )
+    s_proof_result = materialize_proof_result(
+        program["proof"],
+        program["retry"],
+        (s_adjudication,),
+        invalid_attempt_count=0,
+        object_id="proof-result-proof-1",
+        revision_id="r1",
+        provenance=P,
+    )
+
+    runtime, _, adapter = make_adapter(tmp_path)
+    persist_program(adapter, program)
+    g_report = gwf_execute(adapter, program)
+    g_admitted, g_adjudication, g_proof_result, _, _ = adjudicate_report(
+        adapter, program, g_report
+    )
+
+    assert g_report.final_attempt == s_report.final_attempt
+    assert g_report.candidate_evidence[0] == s_candidate
+    assert g_admitted == s_admitted
+    assert g_adjudication == s_adjudication
+    assert g_proof_result == s_proof_result
+
+    common = dict(
+        goal=program["goal"],
+        goal_closure=program["closure"],
+        claim_graph=program["graph"],
+        proofs=(program["proof"],),
+        proof_dependencies=(
+            program["decision_rule"],
+            program["admission"],
+            program["retry"],
+            program["amendment"],
+            program["independence"],
+            program["resolution_policy"],
+        ),
+        reproducibility_manifest={
+            "decision_rule_hash": program["decision_rule"].content_hash,
+            "parity_contract": "p4",
+        },
+        package_lineage=(),
+        provenance=P,
+        framework_version="g2e-p4",
+    )
+    s_package = export_goal_result_package(
+        tmp_path / "semantic-package-standalone",
+        proof_results=(s_proof_result,),
+        evidence=(s_admitted,),
+        adjudications=(s_adjudication,),
+        runtime_id="g2e-standalone",
+        runtime_version="0.1",
+        **common,
+    )
+    g_package = export_goal_result_package(
+        tmp_path / "semantic-package-gwf",
+        proof_results=(g_proof_result,),
+        evidence=(g_admitted,),
+        adjudications=(g_adjudication,),
+        runtime_id=GWF_RUNTIME_ID,
+        runtime_version=GWF_RUNTIME_VERSION,
+        **common,
+    )
+
+    # The manifest is the semantic package identity. Only the outer runtime seal
+    # is allowed to differ by backend.
+    assert s_package.manifest == g_package.manifest
+    assert s_package.seal.manifest_ref == g_package.seal.manifest_ref
+    assert s_package.seal.runtime_id == "g2e-standalone"
+    assert g_package.seal.runtime_id == GWF_RUNTIME_ID
     runtime.close()
 
 
