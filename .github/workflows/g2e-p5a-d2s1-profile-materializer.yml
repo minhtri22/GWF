@@ -1,0 +1,174 @@
+name: G2E P5A D2-S1 Profile Materializer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - "g2e/docs/P5A_D2S1_PERMISSION_PROFILE_SUCCESSOR_PREIMPLEMENTATION.md"
+      - "g2e/docs/P5A_D2S1_ZERO_FRESH_SPEC_QA.md"
+      - "scripts/g2e/p5a_d2s1_profile_materializer.py"
+      - "tests/g2e/test_p5a_d2s1_profile_materializer.py"
+      - ".github/workflows/g2e-p5a-d2s1-profile-materializer.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  p5a-d2s1-profile-materializer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+      BASELINE_SHA: "dfc8e438b8b4d91582a97809bc402862a07d29f7"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Verify bounded implementation diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$BASELINE_SHA^{commit}"
+          mapfile -t changed < <(git diff --name-only "$BASELINE_SHA"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            ".github/workflows/g2e-p5a-d2s1-profile-materializer.yml"
+            "scripts/g2e/p5a_d2s1_profile_materializer.py"
+            "tests/g2e/test_p5a_d2s1_profile_materializer.py"
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for item in "${allowed[@]}"; do
+              if [[ "$path" == "$item" ]]; then ok=true; break; fi
+            done
+            if [[ "$ok" != true ]]; then
+              echo "Out-of-scope D2-S1 implementation mutation: $path" >&2
+              exit 1
+            fi
+          done
+          if git diff --name-only "$BASELINE_SHA"...HEAD | grep -E '^(src/g2e|src/gwr)/'; then
+            echo "D2-S1 profile materializer must not mutate runtime/core" >&2
+            exit 1
+          fi
+
+      - name: Compile
+        run: python -m compileall -q src/g2e src/gwr scripts/g2e/p5a_d2s1_profile_materializer.py
+
+      - name: Run P1 regression
+        run: pytest -q tests/g2e/test_p1_core_schemas.py
+
+      - name: Run P1.4 regression
+        run: pytest -q tests/g2e/test_p1_4_agent_binding.py
+
+      - name: Run P1.5 regression
+        run: pytest -q tests/g2e/test_p1_5_qualification_authority.py
+
+      - name: Run P2 regression
+        run: pytest -q tests/g2e/test_p2_deterministic_core.py
+
+      - name: Run P3 regression
+        run: pytest -q tests/g2e/test_p3_standalone_runtime.py
+
+      - name: Run P4 regression
+        run: pytest -q tests/g2e/test_p4_gwf_adapter.py
+
+      - name: Run D2-S1 materializer tests
+        run: pytest -q tests/g2e/test_p5a_d2s1_profile_materializer.py
+
+      - name: Materialize canonical successor profile pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOCAL_ROOT="$RUNNER_TEMP/g2e-p5a-d2s1"
+          mkdir -p "$LOCAL_ROOT"
+          python scripts/g2e/p5a_d2s1_profile_materializer.py             --local-root "$LOCAL_ROOT"             --output-dir "$LOCAL_ROOT/profile-pack"
+          cp -R "$LOCAL_ROOT/profile-pack" ./p5a_d2s1_profile_pack
+
+      - name: Independently verify materialized successor pack
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib
+          import importlib.util
+          import json
+          from pathlib import Path
+
+          builder = Path("scripts/g2e/p5a_d2s1_profile_materializer.py")
+          spec = importlib.util.spec_from_file_location("d2s1_verify", builder)
+          module = importlib.util.module_from_spec(spec)
+          assert spec and spec.loader
+          spec.loader.exec_module(module)
+
+          root = Path("p5a_d2s1_profile_pack")
+          contract = json.loads(
+              (root / "P5A_D2S1_PROFILE_MATERIALIZATION.json").read_text(encoding="utf-8")
+          )
+          module.verify_contract(contract)
+          config_sha = hashlib.sha256((root / "config.toml").read_bytes()).hexdigest()
+          assert config_sha == contract["config_toml_sha256"]
+          assert contract["model_turn_executed"] is False
+          assert contract["fresh_outcome_consumed"] is False
+          assert contract["scientific_attempt_authorized"] is False
+          PY
+
+      - name: Emit qualification report
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import subprocess
+          from pathlib import Path
+
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          root = Path("p5a_d2s1_profile_pack")
+          contract_path = root / "P5A_D2S1_PROFILE_MATERIALIZATION.json"
+          config_path = root / "config.toml"
+          contract = json.loads(contract_path.read_text(encoding="utf-8"))
+
+          report = {
+              "schema": "G2E-P5A-D2S1-PROFILE-MATERIALIZER-QUALIFICATION-v1",
+              "candidate_sha": git("rev-parse", "HEAD"),
+              "baseline_sha": "dfc8e438b8b4d91582a97809bc402862a07d29f7",
+              "spec_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S1_PERMISSION_PROFILE_SUCCESSOR_PREIMPLEMENTATION.md"),
+              "qa_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S1_ZERO_FRESH_SPEC_QA.md"),
+              "builder_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s1_profile_materializer.py"),
+              "test_blob": git("rev-parse", "HEAD:tests/g2e/test_p5a_d2s1_profile_materializer.py"),
+              "workflow_blob": git("rev-parse", "HEAD:.github/workflows/g2e-p5a-d2s1-profile-materializer.yml"),
+              "adjudication": "IMPLEMENTATION_PASS_LOCAL_PREFLIGHT_REQUIRED",
+              "attempt_id": contract["attempt_id"],
+              "profile_id": contract["profile_id"],
+              "config_toml_sha256": hashlib.sha256(config_path.read_bytes()).hexdigest(),
+              "contract_file_sha256": hashlib.sha256(contract_path.read_bytes()).hexdigest(),
+              "execution_config_hash": contract["execution_config_hash"],
+              "fresh_outcome_consumed": False,
+              "model_turn_executed": False,
+              "scientific_attempt_authorized": False,
+              "runtime_adapter_authorized": False,
+          }
+          Path("p5a_d2s1_profile_materializer_report.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p5a-d2s1-profile-materializer
+          path: |
+            p5a_d2s1_profile_pack/*
+            p5a_d2s1_profile_materializer_report.json
+          if-no-files-found: error
