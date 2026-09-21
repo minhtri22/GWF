@@ -1,0 +1,21 @@
+{
+  "schema": "G2E-P1.3-PACKAGE-EXTERNAL-REFERENCE-v1",
+  "status": "PASS",
+  "qualified_schema_sha": "931b7d23239f625136be12d26564e9f89f8785b9",
+  "finding": "P3-F04",
+  "workflows": {
+    "p1": {
+      "run_id": 35577723392,
+      "job_id": 106263241695,
+      "tests_passed": 27,
+      "conclusion": "success"
+    },
+    "p2_regression": {
+      "run_id": 35577723441,
+      "job_id": 106263242213,
+      "tests_passed": 41,
+      "conclusion": "success"
+    }
+  },
+  "p3_authorized": true
+}

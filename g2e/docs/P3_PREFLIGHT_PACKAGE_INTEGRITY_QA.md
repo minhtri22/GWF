@@ -27,10 +27,10 @@ Add canonical PackageExternalReference entries to PackageManifest with:
 
 The P3 verifier must consume this inventory and fail closed under REQUIRE_RESOLUTION.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
 ## Verdict
 
-`OPEN = 1`
+`OPEN = 0`
 
-**P3 Result Package implementation remains blocked only on P3-F04.**
+**PASS — external-reference integrity inventory is schema-bound; P3 Result Package implementation may open.**
