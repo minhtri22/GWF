@@ -1,0 +1,167 @@
+name: G2E P5A.2 Codex D1 Manifest Qualification
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - "g2e/docs/P5A_CODEX_D1_MANIFEST_QUALIFICATION.md"
+      - "scripts/g2e/p5a_materialize_codex_d1_manifest.py"
+      - "tests/g2e/test_p5a_codex_d1_manifest.py"
+      - ".github/workflows/g2e-p5a-codex-d1-manifest.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  p5a-codex-d1-manifest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+      P5A2_BASELINE_SHA: "30ddf0693621ae81f3c7b7aef9eec9f936751f2e"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Verify bounded manifest-only diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$P5A2_BASELINE_SHA^{commit}"
+          mapfile -t changed < <(git diff --name-only "$P5A2_BASELINE_SHA"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            ".github/workflows/g2e-p5a-codex-d1-manifest.yml"
+            "g2e/docs/P5A_CODEX_D1_MANIFEST_QUALIFICATION.md"
+            "scripts/g2e/p5a_materialize_codex_d1_manifest.py"
+            "tests/g2e/test_p5a_codex_d1_manifest.py"
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for item in "${allowed[@]}"; do
+              if [[ "$path" == "$item" ]]; then ok=true; break; fi
+            done
+            if [[ "$ok" != true ]]; then
+              echo "Out-of-scope P5A.2 mutation: $path" >&2
+              exit 1
+            fi
+          done
+          if git diff --name-only "$P5A2_BASELINE_SHA"...HEAD | grep -E '^(src/g2e|src/gwr)/'; then
+            echo "P5A.2 must not mutate runtime/core implementation" >&2
+            exit 1
+          fi
+
+      - name: Compile
+        run: python -m compileall -q src/g2e src/gwr scripts/g2e/p5a_materialize_codex_d1_manifest.py
+
+      - name: Run P1 regression
+        run: pytest -q tests/g2e/test_p1_core_schemas.py
+
+      - name: Run P1.4 regression
+        run: pytest -q tests/g2e/test_p1_4_agent_binding.py
+
+      - name: Run P2 regression
+        run: pytest -q tests/g2e/test_p2_deterministic_core.py
+
+      - name: Run P3 regression
+        run: pytest -q tests/g2e/test_p3_standalone_runtime.py
+
+      - name: Run P4 regression
+        run: pytest -q tests/g2e/test_p4_gwf_adapter.py
+
+      - name: Run P5A D1 manifest qualification
+        run: pytest -q tests/g2e/test_p5a_codex_d1_manifest.py
+
+      - name: Materialize exact canonical manifest
+        run: |
+          python scripts/g2e/p5a_materialize_codex_d1_manifest.py \
+            --evidence g2e/docs/P5A_CODEX_D1_EVIDENCE.json \
+            --output P5A_CODEX_AGENT_CAPABILITY_MANIFEST.json
+
+      - name: Verify materialized canonical manifest
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from g2e import AgentCapabilityManifest
+
+          path = Path("P5A_CODEX_AGENT_CAPABILITY_MANIFEST.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          manifest = AgentCapabilityManifest.parse_authoritative(data)
+          actual = {c.capability_id: c.available for c in manifest.capabilities}
+          forbidden_true = {
+              "repository_read",
+              "repository_write",
+              "shell_execution",
+              "test_execution",
+              "network_access",
+              "side_effect_approval_execution",
+              "active_task_cancellation_interruption",
+              "completed_task_artifact_extraction",
+              "model_task_correctness",
+          }
+          assert not [cap for cap in forbidden_true if actual.get(cap) is True]
+          assert manifest.max_authority_scope == ()
+          print(json.dumps({
+              "object_id": manifest.object_id,
+              "revision_id": manifest.revision_id,
+              "content_hash": manifest.content_hash,
+              "harness_ref": manifest.harness_ref,
+          }, sort_keys=True))
+          PY
+
+      - name: Emit qualification report
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, json, subprocess
+          from pathlib import Path
+          from g2e import AgentCapabilityManifest
+
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          manifest_path = Path("P5A_CODEX_AGENT_CAPABILITY_MANIFEST.json")
+          raw = manifest_path.read_bytes()
+          manifest = AgentCapabilityManifest.parse_authoritative(json.loads(raw))
+          report = {
+              "schema": "G2E-P5A-CODEX-D1-MANIFEST-QUALIFICATION-v1",
+              "candidate_sha": git("rev-parse", "HEAD"),
+              "baseline_sha": "30ddf0693621ae81f3c7b7aef9eec9f936751f2e",
+              "spec_blob": git("rev-parse", "HEAD:g2e/docs/P5A_CODEX_D1_MANIFEST_QUALIFICATION.md"),
+              "materializer_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_materialize_codex_d1_manifest.py"),
+              "test_blob": git("rev-parse", "HEAD:tests/g2e/test_p5a_codex_d1_manifest.py"),
+              "workflow_blob": git("rev-parse", "HEAD:.github/workflows/g2e-p5a-codex-d1-manifest.yml"),
+              "manifest_file_sha256": hashlib.sha256(raw).hexdigest(),
+              "manifest_exact_ref": {
+                  "object_id": manifest.object_id,
+                  "revision_id": manifest.revision_id,
+                  "content_hash": manifest.content_hash,
+              },
+              "d1_structural_only": True,
+              "d2_authorized": False,
+              "runtime_adapter_authorized": False,
+          }
+          Path("p5a_codex_d1_manifest_report.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+          )
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p5a-codex-d1-manifest
+          path: |
+            P5A_CODEX_AGENT_CAPABILITY_MANIFEST.json
+            p5a_codex_d1_manifest_report.json
+          if-no-files-found: error
