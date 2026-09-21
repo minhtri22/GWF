@@ -365,7 +365,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P8 — Typed document relations
 
 - **Complexity:** 3
-- **Status:** **IMPLEMENTATION QUALIFIED / HANDOFF + EXACT-HEAD QA PENDING**
+- **Status:** **COMPLETED / PASS / FORMALLY CLOSED**
 - **HARD dependencies:** DG-P4; roadmap Wave-3 dependency DG-P7 is formally closed.
 - **Frozen specification:** `docs/DG_P8_TYPED_DOCUMENT_RELATIONS_SPEC.md`, commit `211308141106481104590b3d55cdc8c19d6b6d8e`, blob `d6996951522caa061b29f94d1b1f4f579251adaa`.
 - **Document QA:** `docs/DOCUMENT_QA_DG_P8_PREIMPLEMENTATION.md` — PASS.
@@ -397,7 +397,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
   - [x] full repository regression PASS;
   - [x] no DG-P9+ semantics;
   - [x] implementation QA PASS;
-  - [ ] handoff exact-head workflow PASS.
+  - [x] handoff exact-head workflow PASS — run `35622268576` on `11eba1b424896b421fc4a32c8a1970dfcf6c34dc`; SQLite artifact `10650102588`; PostgreSQL artifact `10650297246`.
 
 ### DG-P9 — Logical-current vs pinned-revision binding
 
@@ -1045,18 +1045,20 @@ DG-P7 — Authority claims + duplicate-authority detection
       final exact-head run 35611830804 PASS
        ↓
 DG-P8 — Typed document relations
-      IMPLEMENTATION QUALIFIED
-      HEAD e784d7f56c0cfdf25ca453da48d570cd202ad0cc
-      workflow 35621561857 PASS
-      HANDOFF EXACT-HEAD QA PENDING
+      PASS / FORMALLY CLOSED
+      handoff HEAD 11eba1b424896b421fc4a32c8a1970dfcf6c34dc
+      exact-head run 35622268576 PASS
+       ↓
+DG-P9 — Relation target binding
+      NEXT / NOT_STARTED / NOT_AUTHORIZED
        ↓
 STOP
 
 DG-P9+ = NOT_STARTED / NOT_AUTHORIZED
 ```
 
-DG-P8 bounded implementation qualification has passed on both SQLite and PostgreSQL 17, but formal closure still requires exact-head requalification of the committed handoff package.
+DG-P8 is formally closed after exact-head requalification on both SQLite and PostgreSQL 17.
 
-DG-P9+ remain unopened and DG-W3 remains OPEN / NOT_EXECUTED.
+DG-P9 is the next roadmap item but remains NOT_STARTED / NOT_AUTHORIZED. DG-W3 remains OPEN / NOT_EXECUTED.
 
 GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.

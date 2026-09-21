@@ -229,3 +229,13 @@ Rules:
 - SQLite evidence artifact: `10649881388`, digest `sha256:18b47ce4c730bd66a70de43eb881785281fc141c12a4f72564d4682be618d474`.
 - PostgreSQL evidence artifact: `10649322400`, digest `sha256:62214aecf3fb2347626417ac467f82f32968a576b477ef8a07c387d6d7eaf05b`.
 - Outcome: canonical typed document relations now have explicit logical-document current state, governed lifecycle and provenance, while TraceLink remains unchanged as a distinct operational/provenance primitive and DG-P9 binding semantics remain unopened.
+
+
+## 2026-09-21 — DG-P8 formally closed
+
+- Result: DG-P8 PASS / formally closed.
+- Handoff HEAD: `11eba1b424896b421fc4a32c8a1970dfcf6c34dc`.
+- Exact-head workflow: `35622268576` PASS.
+- SQLite evidence artifact: `10650102588`, digest `sha256:61a5fd125cf10e767753c79372c826b8dcdaaa8e831f0e2e56da4a9f1ca00147`.
+- PostgreSQL evidence artifact: `10650297246`, digest `sha256:7329e88ac80eeb5d781000b8ac356be069248a704464b043b80f87f1be4ada83`.
+- Outcome: canonical typed document relations are now governed logical-document state with explicit lifecycle and provenance, while TraceLink remains unchanged and DG-P9 target-binding semantics remain unopened.
