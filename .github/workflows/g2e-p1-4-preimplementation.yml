@@ -1,0 +1,123 @@
+name: G2E P1.4 Agent Binding Pre-Implementation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - "g2e/docs/P1_4_AGENT_PROFILE_BINDING_PREIMPLEMENTATION.md"
+      - "tests/g2e/test_p1_4_preimplementation.py"
+      - ".github/workflows/g2e-p1-4-preimplementation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  p1-4-preimplementation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+      P1_4_BASELINE_SHA: "bfd7e29513ef22f569f931ab75f9d29fd5ec89f6"
+      P1_SCHEMA_BLOB: "62b4ab6717bc6c0a00f3670c73024df5a6ad41ca"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Verify zero-implementation diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$P1_4_BASELINE_SHA^{commit}"
+          mapfile -t changed < <(git diff --name-only "$P1_4_BASELINE_SHA"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            ".github/workflows/g2e-p1-4-preimplementation.yml"
+            "g2e/docs/P1_4_AGENT_PROFILE_BINDING_PREIMPLEMENTATION.md"
+            "tests/g2e/test_p1_4_preimplementation.py"
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for item in "${allowed[@]}"; do
+              if [[ "$path" == "$item" ]]; then ok=true; break; fi
+            done
+            if [[ "$ok" != true ]]; then
+              echo "Unexpected preimplementation mutation: $path" >&2
+              exit 1
+            fi
+          done
+
+      - name: Verify qualified P1 schema unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD:src/g2e/schemas.py)"
+          echo "schemas.py blob=$actual"
+          test "$actual" = "$P1_SCHEMA_BLOB"
+
+      - name: Compile existing G2E/GWF
+        run: python -m compileall -q src/g2e src/gwr
+
+      - name: Run P1 regression
+        run: pytest -q tests/g2e/test_p1_core_schemas.py
+
+      - name: Run P2 regression
+        run: pytest -q tests/g2e/test_p2_deterministic_core.py
+
+      - name: Run P3 regression
+        run: pytest -q tests/g2e/test_p3_standalone_runtime.py
+
+      - name: Run P4 regression
+        run: pytest -q tests/g2e/test_p4_gwf_adapter.py
+
+      - name: Run P1.4 zero-implementation qualification
+        run: pytest -q tests/g2e/test_p1_4_preimplementation.py
+
+      - name: Assert no provider runtime adapter files
+        shell: bash
+        run: |
+          set -euo pipefail
+          hits="$(find src/g2e src/gwr -type f \( -iname '*codex*' -o -iname '*chatgpt*' \) -print)"
+          test -z "$hits"
+
+      - name: Emit preimplementation report
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+          report = {
+              "schema": "G2E-P1.4-PREIMPLEMENTATION-v1",
+              "candidate_sha": git("rev-parse", "HEAD"),
+              "baseline_sha": os.environ["P1_4_BASELINE_SHA"],
+              "spec_blob": git("rev-parse", "HEAD:g2e/docs/P1_4_AGENT_PROFILE_BINDING_PREIMPLEMENTATION.md"),
+              "test_blob": git("rev-parse", "HEAD:tests/g2e/test_p1_4_preimplementation.py"),
+              "workflow_blob": git("rev-parse", "HEAD:.github/workflows/g2e-p1-4-preimplementation.yml"),
+              "p1_schema_blob": git("rev-parse", "HEAD:src/g2e/schemas.py"),
+              "zero_implementation": True,
+              "preimplementation_qualification": "PASS",
+              "schema_implementation_authorized": True,
+              "codex_runtime_authorized": False,
+              "chatgpt_runtime_authorized": False,
+          }
+          Path("p1_4_preimplementation_report.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+          )
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p1-4-preimplementation
+          path: p1_4_preimplementation_report.json
+          if-no-files-found: error
