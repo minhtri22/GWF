@@ -267,3 +267,16 @@
 - **P5-FX-001 frozen grant scope:** role `qualification_executor`; targets `repository_read`, `repository_write`; authority `READ_FROZEN_FIXTURE`, `WRITE_DESIGNATED_OUTPUT`; reads `input.json`, `TASK.md`; write `result.json`; network/interactive approval false.
 - **Implementation boundary:** no core/runtime/script implementation, no final D2 AgentBinding, no model turn, no Codex runtime adapter, no ChatGPT P5B work.
 - **Next:** P1.5 — Qualification Attempt Authority, bounded provider-neutral schema/governance implementation followed by P1/P1.4/P2/P3/P4/P1.5 exact-SHA qualification.
+
+
+### G2E-P1.5 — Qualification Attempt Authority
+
+- **Status:** PASS
+- **Qualified candidate:** `6e9c518671c3f9ba140daa798458b37bee83647c`
+- **Authoritative workflow:** `35607098718` / job `106356752615` — PASS
+- **Evidence artifact:** `10642236550`; digest `sha256:cbc71ccc50363860ee817d434f206d6655f5adb0299a07b116eeb064e6f00a12`
+- **Result:** canonical `QualificationAuthorityGrant`, optional qualification fields on AgentBinding, and explicit `validate_qualification_agent_binding_identity` are qualified. Normal P1.4 semantics remain fail-closed and unchanged for operational bindings.
+- **D2-F01:** resolved at the schema/governance prerequisite level without marking unavailable capabilities AVAILABLE or widening the D1 manifest authority ceiling.
+- **Qualification semantics:** already-qualified prerequisites remain in `required_capability_ids`; unavailable capabilities under test live only in `qualification_target_capability_ids`; exact bounded attempt authority is supplied only by `qualification_authority_ref` under the exact AuthorityPolicy.
+- **Implementation boundary:** provider-neutral only; no D2 outcome/model turn, Codex runtime adapter or ChatGPT P5B work.
+- **Next:** materialize exact P5-FX-001 AuthorityPolicy + QualificationAuthorityGrant + final D2 AgentBinding + pre-dispatch attempt identity, then run a final zero-fresh admission qualification before any model turn.
