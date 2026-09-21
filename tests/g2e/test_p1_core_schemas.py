@@ -464,7 +464,7 @@ def test_authority_policy_cannot_enable_delegated_escalation():
 
 def test_canonical_json_rejects_nfc_key_collision():
     with pytest.raises(ValueError, match="canonical key collision"):
-        canonical_json({"é": 1, "e\\u0301": 2})
+        canonical_json({"é": 1, "e\u0301": 2})
 
 
 def test_frozen_goal_rejects_unresolved_blocking_ambiguity():
