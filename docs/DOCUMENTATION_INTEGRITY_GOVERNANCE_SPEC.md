@@ -646,7 +646,7 @@ An `INTEGRATE` decision does not authorize adding the dependency now and does no
 | Code-coupled drift detector | **OPTIONAL ADAPTER** | Swimm or equivalent drift tool | Reports `IMPLEMENTATION_DRIFT`; does not decide GWF validity alone |
 | General policy-as-code engine | **OPTIONAL ADAPTER** | OPA/Rego | May evaluate delegated policy later; GWF remains authority/orchestrator |
 | Documentation website/CMS | **OPTIONAL ADAPTER** | Existing site/CMS tools | Presentation/authoring surface only |
-| Search/index/vector retrieval over project docs | **OPTIONAL ADAPTER** | Existing search/index systems | Discovery aid; retrieved text is not authority without revision identity |
+| Local authoring/search assistance inside documentation | **OPTIONAL ADAPTER** | Existing search/index systems | Discovery aid only; retrieved text is not authority without revision identity. Cross-project governed discovery is excluded here and uses GAC. |
 
 ### Matrix invariant
 
@@ -660,6 +660,14 @@ For an `INTEGRATE` or `OPTIONAL ADAPTER` capability, the allowed choices are:
 4. propose a documented architecture amendment if the tool is demonstrably unsuitable.
 
 "Reimplement the whole external product inside GWF" is not the default path.
+
+### 19.1 Governed cross-project discovery boundary
+
+Documentation Governance does not own a second cross-project search/catalog subsystem.
+
+When a governed document revision is eligible for shared discovery, publication/query uses the **GWF Governed Artifact Catalog (GAC)**. Documentation Governance remains authoritative for document identity, authority, lifecycle, validity, QA and dependency semantics; GAC receives only an exact eligible revision reference plus publication/search metadata.
+
+Local authoring search/index assistance may remain an optional adapter, but it must not become an alternate cross-project source of truth or bypass GAC access/publication policy.
 
 ## 20. External tool boundary rationale
 

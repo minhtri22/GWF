@@ -4,16 +4,13 @@
 
 **Document status:** implementation plan / phased authorization map.
 
-**Planning baseline:** documentation branch `docs/reference-agent-interop-specs` at `a05425cb948332c01ca4f2dde280a4f4ee2cd02c`.
+**Planning lineage:** original 7-wave plan committed on `docs/reference-agent-interop-specs`; this revision reconciles the plan with the Governed Artifact Catalog / G2E Shared Library documentation on `docs/governed-artifact-catalog-pack`.
 
 This plan converts the approved specification set into an ordered implementation roadmap optimized for **lower complexity first without violating hard dependencies**.
 
-This document does not by itself authorize every wave. The current user authorization covers:
+DG-P0 has already formal-closed on implementation head `ef322ff0618b83fbfaef40b096cb43f5193d8db0`; exact-head workflow `35560831581` passed.
 
-1. writing and QA of this plan; and
-2. if this plan passes QA, immediate implementation of **DG-P0 — External Validator Foundation** only.
-
-All later items remain planned, not authorized.
+This document does not automatically authorize the next implementation item. After this reconciliation, **DG-P1 is the next planned item**, but implementation requires a later explicit authorization.
 
 ## 2. Governing documents
 
@@ -22,10 +19,14 @@ The following documents define the semantics used by this plan:
 - `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` — document identity, QA, findings, relations, validity, BUILD/INTEGRATE/OPTIONAL ADAPTER matrix.
 - `docs/V0.8.6_REFERENCE_ACQUISITION_SPEC.md` — reference query plan, retrieval log, registry, evidence map, temporal integrity.
 - `docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md` — harness vs Agent Pool, bindings, execution envelope, transport/governance boundary.
+- `docs/GOVERNED_ARTIFACT_CATALOG_SPEC.md` — GWF Shared Library catalog/publication/query substrate.
+- `docs/GOVERNED_ARTIFACT_CATALOG_INTEGRATION_BOUNDARIES.md` — ownership boundaries among GWF core, Documentation Governance, Reference Acquisition, GAC and G2E.
+- `docs/Finding_doc.md` — reconciliation findings and closure checklist for the GAC/G2E Library integration.
 - `docs/FUTURE_NODE_AGENT_ORCHESTRATION_PARKING_LOT.md` — explicitly deferred node-level orchestration.
 - `docs/Finding_checklist.md` — cumulative resolved specification findings.
 - `docs/DOCUMENT_QA_DOCUMENTATION_GOVERNANCE.md` — QA evidence for Documentation Governance.
 - `docs/DOCUMENT_QA_REFERENCE_AGENT_INTEROP.md` — QA evidence for Reference Acquisition + Agent Interoperability.
+- `docs/DOCUMENT_QA_GAC_7_WAVES_RECONCILIATION.md` — current cross-document QA for the GAC/G2E Library reconciliation and revised 7-wave plan.
 
 ## 3. Complexity scale
 
@@ -47,9 +48,9 @@ Priority rule:
 
 Planning control identities:
 
-- **PLAN-QA** — `docs/DOCUMENT_QA_7_WAVES_PLAN.md` with PASS verdict bound to the exact plan blob/revision.
+- **PLAN-QA** — `docs/DOCUMENT_QA_GAC_7_WAVES_RECONCILIATION.md` with PASS verdict bound to the exact reconciled plan blob/revision. `docs/DOCUMENT_QA_7_WAVES_PLAN.md` remains historical QA for the pre-GAC plan.
 - **DIG-SPEC** — `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` exact reviewed revision.
-- **DG-Wn / RA-W6 / AI-W7** — the named wave exit gate with its committed handoff/evidence package.
+- **DG-Wn / DG-GAC-W5 / RA-GAC-W6 / AI-W7** — the named wave exit gate with its committed handoff/evidence package.
 
 - **HARD** — item must not start until the dependency has passed its acceptance gate.
 - **ORDERING** — roadmap sequencing decision; technically separable, but intentionally scheduled later.
@@ -67,7 +68,8 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P0 — External Validator Foundation + markdownlint
 
 - **Complexity:** 2
-- **Authorization:** **AUTHORIZED after this plan QA PASS**
+- **Status:** **COMPLETED / PASS**
+- **Completion evidence:** implementation/handoff head `ef322ff0618b83fbfaef40b096cb43f5193d8db0`; exact-head workflow `35560831581` PASS.
 - **HARD dependencies:**
   - PLAN-QA — this 7-wave plan must PASS.
   - DIG-SPEC — `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` exact reviewed revision.
@@ -92,20 +94,20 @@ Every completed item must record exact dependency revisions/evidence used. A dep
   - no GitHub Ruleset/CODEOWNERS mutation;
   - no Vale/Lychee yet.
 - **Acceptance checklist:**
-  - [ ] adapter interface is provider-neutral;
-  - [ ] exact input/content hash recorded;
-  - [ ] validator version/config identity recorded;
-  - [ ] valid fixture returns successful execution with zero structural findings;
-  - [ ] invalid fixture returns deterministic structural findings with location;
-  - [ ] a real pinned markdownlint-cli2 executable/version passes a smoke fixture; mocks/shims alone cannot qualify P0;
-  - [ ] pinned markdownlint config identity/hash recorded;
-  - [ ] missing/unavailable validator fixture is not represented as document FAIL;
-  - [ ] adapter cannot mutate source content;
-  - [ ] repeated identical fixture invocation normalizes equivalently;
-  - [ ] no secret material persisted in execution result;
-  - [ ] unit tests PASS;
-  - [ ] P0 QA gate PASS;
-  - [ ] exact commit/evidence recorded.
+  - [x] adapter interface is provider-neutral;
+  - [x] exact input/content hash recorded;
+  - [x] validator version/config identity recorded;
+  - [x] valid fixture returns successful execution with zero structural findings;
+  - [x] invalid fixture returns deterministic structural findings with location;
+  - [x] a real pinned markdownlint-cli2 executable/version passes a smoke fixture; mocks/shims alone cannot qualify P0;
+  - [x] pinned markdownlint config identity/hash recorded;
+  - [x] missing/unavailable validator fixture is not represented as document FAIL;
+  - [x] adapter cannot mutate source content;
+  - [x] repeated identical fixture invocation normalizes equivalently;
+  - [x] no secret material persisted in execution result;
+  - [x] unit tests PASS;
+  - [x] P0 QA gate PASS;
+  - [x] exact commit/evidence recorded.
 
 ### DG-P1 — Vale terminology/prose adapter
 
@@ -150,9 +152,9 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 
 ### Wave 1 exit gate — DG-W1
 
-This is a **future wave gate**, not authorization to continue automatically after DG-P0. The current authorization frontier still stops after DG-P0.
+Wave 1 remains open after DG-P0. Completion of DG-P0 does not authorize DG-P1/P2/P3 automatically.
 
-- [ ] DG-P0 PASS
+- [x] DG-P0 PASS
 - [ ] DG-P1 PASS
 - [ ] DG-P2 PASS
 - [ ] DG-P3 PASS
@@ -365,9 +367,9 @@ This is a **future wave gate**, not authorization to continue automatically afte
 
 ---
 
-# Wave 5 — Repository Enforcement and Implementation Alignment
+# Wave 5 — Repository Enforcement, Catalog Foundation, and Implementation Alignment
 
-**Goal:** connect GWF document validity to repository enforcement and implementation drift.
+**Goal:** finish the Documentation Governance integration surface and establish the minimum governed cross-project Shared Library substrate before research workflow integration.
 
 ### DG-P17 — GitHub QA enforcement integration
 
@@ -382,6 +384,62 @@ This is a **future wave gate**, not authorization to continue automatically afte
   - [ ] no secret in static/public surfaces;
   - [ ] QA PASS.
 
+### GAC-P0 — Contract qualification
+
+- **Complexity:** 3
+- **HARD dependencies:** DG-W4.
+- **Governing documents:**
+  - `docs/GOVERNED_ARTIFACT_CATALOG_SPEC.md` §§3–8, 14.
+  - `docs/GOVERNED_ARTIFACT_CATALOG_INTEGRATION_BOUNDARIES.md`.
+- **Acceptance checklist:**
+  - [ ] CatalogEntry / PublicationPolicy / CatalogQuery contracts qualified;
+  - [ ] exact subject identity and access fixtures;
+  - [ ] no second KnowledgeKernel/document registry;
+  - [ ] zero FTS/vector/search-backend requirement;
+  - [ ] query failure cannot masquerade as empty results;
+  - [ ] QA PASS.
+
+### GAC-P1 — Metadata catalog over existing KnowledgeKernel
+
+- **Complexity:** 3
+- **HARD dependencies:** GAC-P0, DG-W4.
+- **Governing document:** `docs/GOVERNED_ARTIFACT_CATALOG_SPEC.md` §§4–10, 14.
+- **Acceptance checklist:**
+  - [ ] publish/withdraw exact GWF revisions;
+  - [ ] tenant/workspace/project authorization;
+  - [ ] deterministic metadata query;
+  - [ ] publication identity/idempotency;
+  - [ ] audit/provenance;
+  - [ ] no FTS/vector requirement;
+  - [ ] QA PASS.
+
+### GAC-P2A — ObjectRef subjects
+
+- **Complexity:** 3
+- **HARD dependencies:** GAC-P1.
+- **Governing document:** `docs/GOVERNED_ARTIFACT_CATALOG_SPEC.md` §§4.2, 8, 14.
+- **Acceptance checklist:**
+  - [ ] exact ObjectRef identity retained;
+  - [ ] no blob duplication;
+  - [ ] access intersection enforced;
+  - [ ] no Reference Acquisition dependency introduced;
+  - [ ] QA PASS.
+
+### GAC-P4A — Generic cross-project pilot
+
+- **Complexity:** 4
+- **HARD dependencies:** GAC-P1, DG-W4.
+- **Governing documents:**
+  - `docs/GOVERNED_ARTIFACT_CATALOG_SPEC.md` §14.
+  - `docs/GOVERNED_ARTIFACT_CATALOG_INTEGRATION_BOUNDARIES.md`.
+- **Acceptance checklist:**
+  - [ ] multiple projects in one workspace/tenant;
+  - [ ] publish/query/withdraw/supersede exact entries;
+  - [ ] document eligibility integration fixture;
+  - [ ] catalog visibility cannot broaden source permission;
+  - [ ] no G2E semantic dependency;
+  - [ ] QA PASS.
+
 ### DG-P18 — Code/schema/API/workflow/dataset bindings
 
 - **Complexity:** 4
@@ -392,6 +450,19 @@ This is a **future wave gate**, not authorization to continue automatically afte
   - [ ] target change creates review obligation;
   - [ ] change does not prove doc wrong automatically;
   - [ ] no auto-rewrite;
+  - [ ] QA PASS.
+
+### DG-P20 — Existing-document migration pilot
+
+- **Complexity:** 4
+- **HARD dependencies:** DG-W4, DG-P7, DG-P17.
+- **Governing document:** `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §33.
+- **Acceptance checklist:**
+  - [ ] candidate docs discovered without auto-authority assignment;
+  - [ ] metadata inference labeled inferred;
+  - [ ] collision audit before activation;
+  - [ ] Git provenance preserved;
+  - [ ] bounded pilot only;
   - [ ] QA PASS.
 
 ### DG-P19 — Research study-lock integration
@@ -410,22 +481,14 @@ This is a **future wave gate**, not authorization to continue automatically afte
   - [ ] stricter research authority wins;
   - [ ] QA PASS.
 
-### DG-P20 — Existing-document migration pilot
-
-- **Complexity:** 4
-- **HARD dependencies:** DG-W4, DG-P7, DG-P17.
-- **Governing document:** `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §33.
-- **Acceptance checklist:**
-  - [ ] candidate docs discovered without auto-authority assignment;
-  - [ ] metadata inference labeled inferred;
-  - [ ] collision audit before activation;
-  - [ ] Git provenance preserved;
-  - [ ] bounded pilot only;
-  - [ ] QA PASS.
-
-### Wave 5 exit gate — DG-W5
+### Wave 5 exit gate — DG-GAC-W5
 
 - [ ] DG-P17…DG-P20 PASS
+- [ ] GAC-P0 PASS
+- [ ] GAC-P1 PASS
+- [ ] GAC-P2A PASS
+- [ ] GAC-P4A PASS
+- [ ] deterministic cross-project Shared Library metadata query works without optional search backend
 - [ ] repository enforcement consumes GWF evidence
 - [ ] code↔docs change creates review obligation
 - [ ] research-lock bypass fixture fails
@@ -433,19 +496,20 @@ This is a **future wave gate**, not authorization to continue automatically afte
 
 ---
 
-# Wave 6 — Reference Acquisition v0.8.6
+# Wave 6 — Reference Acquisition + Governed Shared Library Bridge
 
-**Goal:** add governed external research-reference acquisition using Documentation Governance primitives instead of creating a separate evidence universe.
+**Goal:** add governed research-reference acquisition and make the GWF Shared Library an internal reproducible discovery channel without turning catalog results into automatic evidence admission.
 
 ### RA-P0 — Query plan + retrieval log
 
 - **Complexity:** 3
 - **HARD dependencies:** DG-W3; DG-P5 exact QA/finding semantics.
-- **ORDERING dependency:** DG-W5, because Documentation Governance is intentionally completed first.
-- **Governing document:** `docs/V0.8.6_REFERENCE_ACQUISITION_SPEC.md` §§6.1–6.2, 8–10.
+- **ORDERING dependency:** DG-GAC-W5.
+- **Governing document:** `docs/V0.8.6_REFERENCE_ACQUISITION_SPEC.md` §§4.5, 6.1–6.2, 8–10.
 - **Checklist:**
   - [ ] plan revision;
   - [ ] acquisition mode;
+  - [ ] external source classes + internal source channels;
   - [ ] exact executed queries;
   - [ ] append-only retrieval events;
   - [ ] amendment provenance;
@@ -460,7 +524,37 @@ This is a **future wave gate**, not authorization to continue automatically afte
   - [ ] canonical vs inspected identity separated;
   - [ ] dispositions preserved;
   - [ ] multi-query observations linked;
+  - [ ] GAC origin/catalog subject refs representable;
   - [ ] exact Git commit for retained repositories;
+  - [ ] QA PASS.
+
+### RA-P1C — Governed Catalog discovery bridge
+
+- **Complexity:** 3
+- **HARD dependencies:** RA-P0, RA-P1, GAC-P1.
+- **Governing documents:**
+  - `docs/V0.8.6_REFERENCE_ACQUISITION_SPEC.md` §§4.5, 6, 9–10.
+  - `docs/GOVERNED_ARTIFACT_CATALOG_SPEC.md` §§5.5, 7–10.
+- **Acceptance checklist:**
+  - [ ] CatalogQueryExecution identity captured;
+  - [ ] authoritative catalog snapshot captured;
+  - [ ] exact CatalogEntry candidates captured;
+  - [ ] partial/backend failure is not encoded as zero matches;
+  - [ ] selected candidates normalize into the research reference registry;
+  - [ ] catalog result remains candidate discovery, not evidence admission;
+  - [ ] QA PASS.
+
+### GAC-P2B — External immutable-reference bridge
+
+- **Complexity:** 3
+- **HARD dependencies:** GAC-P1, RA-P1.
+- **Governing documents:**
+  - `docs/GOVERNED_ARTIFACT_CATALOG_SPEC.md` §§4.4, 8, 14.
+  - `docs/V0.8.6_REFERENCE_ACQUISITION_SPEC.md` §§6.2–6.3.
+- **Acceptance checklist:**
+  - [ ] external subject uses verified digest or accepted immutable provider identity;
+  - [ ] Reference Acquisition provenance is referenced, not duplicated;
+  - [ ] mutable URL alone fails eligibility;
   - [ ] QA PASS.
 
 ### RA-P2 — GitHub/source-code acquisition adapter
@@ -497,6 +591,7 @@ This is a **future wave gate**, not authorization to continue automatically afte
 - **Governing document:** `docs/V0.8.6_REFERENCE_ACQUISITION_SPEC.md` §§6.4, 7.
 - **Checklist:**
   - [ ] relation direction fixed;
+  - [ ] external and GAC-discovered identities deduplicate deterministically where they refer to the same exact source;
   - [ ] explicit vs inferred assertion basis;
   - [ ] duplicate identity handling deterministic;
   - [ ] QA PASS.
@@ -504,12 +599,12 @@ This is a **future wave gate**, not authorization to continue automatically afte
 ### RA-P5 — Coverage/temporal/novelty handoff gates
 
 - **Complexity:** 4
-- **HARD dependencies:** RA-P0…RA-P4, DG-P19.
+- **HARD dependencies:** RA-P0…RA-P4, RA-P1C, DG-P19.
 - **Governing document:** `docs/V0.8.6_REFERENCE_ACQUISITION_SPEC.md` §§8, 10–14.
 - **Checklist:**
-  - [ ] REQUIRED vs OPTIONAL coverage;
+  - [ ] REQUIRED vs OPTIONAL external classes/internal channels;
   - [ ] PRE_LOCK / LOCKED_PRE_OUTCOME / POST_OUTCOME enforced;
-  - [ ] required-source outage cannot silently PASS;
+  - [ ] required source/channel outage cannot silently PASS;
   - [ ] novelty collision behavior mode-specific;
   - [ ] governed handoff to prior art/novelty;
   - [ ] QA PASS.
@@ -524,18 +619,39 @@ This is a **future wave gate**, not authorization to continue automatically afte
   - current `research_orchestrator.py` contracts.
 - **Checklist:**
   - [ ] explicit decision on phase insertion vs split;
+  - [ ] governed Shared Library query appears in the research flow without bypassing reference curation;
   - [ ] fixed-phase assumptions migrated intentionally;
   - [ ] historical studies not silently backfilled;
   - [ ] regression suite PASS;
   - [ ] v0.8.6 gate PASS.
 
-### Wave 6 exit gate — RA-W6
+### Conditional non-blocking GAC items
+
+#### GAC-P3 — Optional search adapters
+
+- **Complexity:** 4
+- **HARD dependencies:** GAC-P1.
+- **Status:** triggered only when deterministic metadata query is insufficient.
+- **Not required for:** DG-GAC-W5, RA-GAC-W6, or minimum Shared Library readiness.
+
+#### GAC-P4B — G2E consumer fixture
+
+- **Complexity:** 3
+- **HARD dependencies:** GAC-P1.
+- **EXTERNAL/trigger dependency:** frozen G2E Evidence Library Adapter/semantic contract.
+- **Status:** consumer-integration qualification; not a prerequisite for GAC core readiness or Reference Acquisition.
+
+### Wave 6 exit gate — RA-GAC-W6
 
 - [ ] RA-P0…RA-P6 PASS
+- [ ] RA-P1C PASS
+- [ ] GAC-P2B PASS
 - [ ] reference chain reconstructable end-to-end
-- [ ] exact paper/repo identities retained
+- [ ] Shared Library query provenance reconstructable end-to-end
+- [ ] exact paper/repo/catalog subject identities retained
 - [ ] temporal integrity demonstrated
 - [ ] research-domain regression PASS
+- [ ] GAC-P3/GAC-P4B absence does not block this gate
 
 ---
 
@@ -547,7 +663,7 @@ This is a **future wave gate**, not authorization to continue automatically afte
 
 - **Complexity:** 3
 - **HARD dependencies:** existing GWF execution/audit primitives.
-- **ORDERING dependency:** RA-W6; sequencing choice, not an architectural requirement.
+- **ORDERING dependency:** RA-GAC-W6; sequencing choice, not an architectural requirement.
 - **Governing document:** `docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md` §§5, 14–18.
 - **Checklist:**
   - [ ] executor status distinct from GWF gate PASS;
@@ -653,7 +769,8 @@ The following are **not active implementation items** in this 7-wave plan:
 - cost optimizer;
 - provider health ranking;
 - visual node editor;
-- model equivalence automation.
+- model equivalence automation;
+- direct agent access to a search backend that bypasses GAC publication/query authority.
 
 **Governing document:** `docs/FUTURE_NODE_AGENT_ORCHESTRATION_PARKING_LOT.md`.
 
@@ -664,7 +781,7 @@ Revisit only when one of its explicit triggers occurs.
 ```text
 PLAN-QA
   ↓
-DG-P0
+DG-P0  [COMPLETED]
   ├──→ DG-P1
   ├──→ DG-P2
   └──→ DG-P3
@@ -681,12 +798,26 @@ DG-P0
           ↓
    no-silent-cascade
           ↓
- repo enforcement + code/research alignment
+        DG-W4
           ↓
- Reference Acquisition v0.8.6
-          ↓ [ORDERING]
+   ┌──────┴──────────────┐
+   │                     │
+DG enforcement       GAC-P0 → GAC-P1 → GAC-P2A
+   │                     │
+   └──────────┬──────────┘
+              ↓
+          DG-GAC-W5
+              ↓
+  Reference Acquisition
+      + GAC query bridge
+      + GAC-P2B external refs
+              ↓
+          RA-GAC-W6
+              ↓ [ORDERING]
  Agent Interoperability v0.8.7
 ```
+
+GAC-P3 optional search adapters and GAC-P4B G2E consumer qualification are trigger-based and non-blocking for the minimum Shared Library / Reference Acquisition gates.
 
 Hard dependency detail remains authoritative in each item above; this diagram is only a summary.
 
@@ -698,6 +829,7 @@ Every item completion package must include:
 - [ ] exact implementation commit SHA;
 - [ ] exact parent SHA;
 - [ ] exact governing document blob/revision identities;
+- [ ] exact catalog/publication/query policy identities when GAC is involved;
 - [ ] HARD dependencies and their PASS evidence;
 - [ ] external dependency version/config evidence where applicable;
 - [ ] files changed;
@@ -720,6 +852,9 @@ No item may be marked complete with unresolved required handoff fields.
 - [ ] lower complexity is preferred only after HARD dependencies are satisfied;
 - [ ] failed QA does not auto-trigger redesign;
 - [ ] external tool outage is not converted into document failure;
+- [ ] GAC backend/index failure is not converted into a valid empty Library result;
+- [ ] catalog discovery never becomes automatic research evidence admission;
+- [ ] cross-project governed discovery does not bypass GAC authority/access checks;
 - [ ] no external validator receives governance authority;
 - [ ] no silent document cascade repair;
 - [ ] no silent executor substitution;
@@ -731,14 +866,24 @@ No item may be marked complete with unresolved required handoff fields.
 
 # 9. Current authorization frontier
 
-At publication of this plan:
+At this reconciled planning state:
 
 ```text
 7-WAVE PLAN QA
-      ↓ PASS required
-DG-P0 — External Validator Foundation + markdownlint
-      ↓
+      PASS
+       ↓
+DG-P0
+      PASS / formal-close
+       ↓
+GAC/G2E Library documentation reconciliation
+      PASS required before resuming implementation
+       ↓
+DG-P1 — Vale terminology/prose adapter
+      NEXT PLANNED
+       ↓
 STOP
 ```
 
-Only DG-P0 is authorized after plan QA PASS. DG-P1 and later items require a new explicit implementation authorization or a later user instruction that clearly advances the roadmap.
+DG-P1 is the next planned item because Wave 1 remains incomplete and DG-P1/P2/P3 are the lowest-complexity eligible items after DG-P0. **This revised plan does not itself authorize DG-P1 implementation.**
+
+GAC implementation is not the next step. Its earliest active gate is after **DG-W4 PASS**, as specified in Wave 5.

@@ -52,7 +52,18 @@ Artifact → Revision → ObjectRef / TraceLink / Evidence
 
 Canonical payload remains owned by existing GWF primitives. The catalog stores/indexes a reference to exact governed identity plus publication/search metadata.
 
-### 3.1 GWF owns
+### 3.1 Shared Library terminology
+
+For integration purposes, **Shared Library** is a consumer-facing capability built on the Governed Artifact Catalog; it is not a second canonical store.
+
+- GWF GAC owns governed publication, scope, discovery, and exact artifact identity.
+- G2E may expose an **Evidence Library** semantic view over GAC results and may publish G2E artifacts through GWF.
+- Reference Acquisition may query GAC as an internal governed discovery channel during research.
+- Canonical payloads remain in existing GWF Artifact/Revision/ObjectRef or accepted external immutable-reference systems.
+
+Therefore `Library`, `Catalog`, and `G2E Evidence Library` are related but not interchangeable authority concepts.
+
+### 3.2 GWF owns
 
 - durable catalog membership;
 - tenant/workspace/project scope;
@@ -64,7 +75,7 @@ Canonical payload remains owned by existing GWF primitives. The catalog stores/i
 - audit/provenance of publication actions;
 - optional search-backend adapter contracts.
 
-### 3.2 GWF does not own
+### 3.3 GWF does not own
 
 - whether studies corroborate/contradict;
 - applicability of prior evidence to a new claim;
@@ -99,7 +110,9 @@ Catalog MUST NOT introduce a competing document registry, link checker, Markdown
 
 Reference Acquisition owns external retrieval/session/canonical-source provenance. It MAY produce a candidate subject for catalog publication when the exact inspected snapshot/reference satisfies PublicationPolicy.
 
-Retrieval alone does not publish an item. Publication does not convert a reference into empirical proof.
+The direction also works from GAC to research: Reference Acquisition MAY query GAC as an **internal governed discovery channel**. Such query results remain candidate references. The research workflow must preserve the CatalogQueryExecution identity, authoritative catalog snapshot, exact CatalogEntry identities observed, and the exact subject identities selected for further interpretation.
+
+Retrieval alone does not publish an item. Catalog discovery does not convert a candidate into empirical proof or automatically admit it into a study.
 
 ### 4.5 Agent interoperability
 
@@ -317,15 +330,24 @@ Catalog metadata MUST NOT persist reusable credentials, provider tokens or raw s
 
 Withdrawal does not delete audit/provenance history.
 
-## 12. Source validity and catalog visibility
+## 12. Source state and catalog visibility
 
-Catalog membership and artifact validity are separate.
+Catalog membership is separate from source lifecycle, validity, execution status, or domain-specific state.
 
-If a published source later becomes `STALE/DIRTY/FAILED/SUPERSEDED`:
+GAC MUST NOT collapse different source-state namespaces into one catalog enum. Instead it surfaces an attributable source-state observation with at least:
+
+- `source_state_namespace` (for example `GWF_REVISION_VALIDITY`, `DOCUMENT_VALIDITY`, `DOCUMENT_LIFECYCLE`, or a registered domain namespace);
+- `source_state_value`;
+- exact source revision/hash observed;
+- observation time and provenance.
+
+For Documentation Governance, lifecycle (for example `ACTIVE | SUPERSEDED`) remains distinct from validity (for example `VALID | STALE | BLOCKED`). For generic GWF revisions, existing revision-validity semantics remain owned by the KnowledgeKernel.
+
+When a published source later changes state:
 
 - entry remains historically attributable;
 - PublicationPolicy controls default visibility;
-- current known source validity is surfaced;
+- current known typed source state is surfaced;
 - entry never silently repoints.
 
 ## 13. Failure classes
@@ -354,6 +376,10 @@ Search/index failure is not equivalent to “no matching artifacts exist”.
 
 This package does not authorize implementation.
 
+### Implementation dependency gate
+
+GAC-P0 and GAC-P1 MUST NOT begin until **DG-W4 PASS** (or a later explicitly documented equivalent compatibility gate) establishes stable document identity/validity/relation integration semantics. This gate prevents GAC from freezing temporary document assumptions into a competing registry.
+
 ### GAC-P0 — Contract qualification
 
 CatalogEntry, PublicationPolicy, CatalogQuery/Result, identity/access fixtures; zero search backend.
@@ -362,17 +388,25 @@ CatalogEntry, PublicationPolicy, CatalogQuery/Result, identity/access fixtures; 
 
 Publish/withdraw exact GWF revisions; tenant/workspace/project authorization; deterministic metadata query; audit; no FTS/vector.
 
-### GAC-P2 — Object/external immutable refs
+### GAC-P2A — ObjectRef subjects
 
-ObjectRef subjects, Reference Acquisition bridge, subject resolution.
+Add exact GWF ObjectRef publication/resolution after GAC-P1. This item has no Reference Acquisition dependency.
+
+### GAC-P2B — External immutable-reference bridge
+
+Add `EXTERNAL_IMMUTABLE_REF` publication/resolution only after the Reference Acquisition registry/identity contract is qualified. Preserve external retrieval provenance rather than duplicating it in GAC.
 
 ### GAC-P3 — Optional search adapters
 
-FTS/vector/external search with query/index provenance.
+FTS/vector/external search with query/index provenance. **GAC-P3 is not required for minimum Shared Library readiness**; deterministic metadata query from GAC-P1 is the minimum governed discovery path.
 
-### GAC-P4 — Cross-project pilot
+### GAC-P4A — Generic cross-project pilot
 
-Multiple projects in one workspace/tenant; publish/query/withdraw/supersede; Documentation Governance integration fixture; G2E consumer fixture after G2E semantics freeze.
+Multiple GWF projects in one workspace/tenant; publish/query/withdraw/supersede; Documentation Governance integration fixture. This pilot does not depend on G2E semantic freeze.
+
+### GAC-P4B — G2E consumer fixture
+
+After the G2E Evidence Library Adapter/semantic contract is frozen, verify that G2E can publish/query governed artifacts through GAC without transferring ClaimSignature, applicability, independence, reuse, or synthesis semantics into GWF. GAC-P4B is a consumer-integration fixture, not a prerequisite for GAC core readiness.
 
 ## 15. Explicit non-goals
 
@@ -409,4 +443,6 @@ Multiple projects in one workspace/tenant; publish/query/withdraw/supersede; Doc
 
 ### Documentation Governance frontier
 
-The active Documentation Governance P0 implementation explicitly leaves document registry, dependency graph runtime, lifecycle/validity persistence and stale propagation for later phases. GAC must integrate with those stabilized APIs later rather than preempt them.
+DG-P0 has formal-close evidence on implementation head `ef322ff0618b83fbfaef40b096cb43f5193d8db0` with exact-head workflow `35560831581` PASS. DG-P0 still intentionally leaves document registry, dependency graph runtime, lifecycle/validity persistence and stale propagation for later phases.
+
+Accordingly, the exact GAC implementation gate is **DG-W4 PASS**, not merely DG-P0 completion. GAC must integrate with those stabilized APIs rather than preempt them.

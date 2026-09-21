@@ -20,7 +20,16 @@ Freeze ownership boundaries before implementation so the future GAC agent does n
 | Synthesis/convergence | no | no | no | no | G2E OWNS |
 | Authority/audit | OWNS primitives | specializes | specializes | uses | declares semantic needs |
 
-## 3. No-duplication rules
+## 3. Shared Library naming boundary
+
+The consumer-facing phrase **Shared Library** maps to GAC publication/discovery infrastructure.
+
+- GAC is the GWF-side governed catalog substrate.
+- G2E Evidence Library is a domain-semantic consumer/view and remains owned by G2E.
+- Existing Artifact/Revision/ObjectRef remain canonical payload stores.
+- No separate “Library database” may be introduced merely to connect G2E and GWF.
+
+## 4. No-duplication rules
 
 ### B-01 — No parallel artifact store
 
@@ -58,7 +67,7 @@ FTS/vector/external search indexes are rebuildable from authoritative CatalogEnt
 
 Domain/G2E metadata uses namespaced schema/version ownership. GWF catalog core does not reinterpret consumer-specific fields.
 
-## 4. Documentation Governance integration
+## 5. Documentation Governance integration
 
 Expected future handshake:
 
@@ -84,11 +93,13 @@ PublicationPolicy applies visibility
 never silently repoint
 ~~~
 
-GAC implementation must wait for stable document identity/validity APIs rather than duplicating temporary assumptions.
+The exact implementation dependency used by the reconciled roadmap is **DG-W4 PASS**. GAC-P0/P1 must not substitute an earlier temporary document model for this gate.
 
-## 5. Reference Acquisition integration
+## 6. Reference Acquisition integration
 
-Expected handshake:
+There are two governed directions.
+
+External-reference publication:
 
 ~~~text
 retrieval session
@@ -100,11 +111,27 @@ immutable-reference eligibility
 GAC candidate/publish
 ~~~
 
+Internal Shared Library discovery for research:
+
+~~~text
+research query plan
+  ↓
+GAC CatalogQueryExecution
+  ↓
+catalog snapshot + exact CatalogEntry candidates
+  ↓
+Reference Acquisition registry/curation
+  ↓
+prior-art / novelty interpretation
+~~~
+
 A mutable URL string alone is insufficient immutable identity when the source can change. External publication requires verified digest or provider-issued immutable snapshot/version identity accepted by PublicationPolicy.
 
-## 6. G2E integration boundary
+GAC query results remain candidates. They do not bypass Reference Acquisition curation, prior-art reasoning, research study locks, or evidence-admission rules.
 
-Future G2E may publish an `EvidenceCapsule` or `SynthesisResult` as a normal governed GWF artifact revision and then request catalog publication.
+## 7. G2E integration boundary
+
+Future G2E may publish an `EvidenceCapsule` or `SynthesisResult` as a normal governed GWF artifact revision and then request catalog publication. GAC core qualification does not depend on G2E semantic freeze; only the G2E-specific consumer fixture does.
 
 GAC sees:
 
@@ -124,20 +151,22 @@ GAC does **not** evaluate:
 
 Those belong to G2E.
 
-## 7. Agent implementation boundary
+## 8. Agent implementation boundary
 
 Current package is documentation only.
 
-Future implementation should begin only after:
+Future GAC implementation should begin only after:
 
-1. Documentation Governance active work has completed or established stable integration APIs.
+1. **DG-W4 PASS** establishes stable document identity/validity/relation integration semantics.
 2. this pack is reconciled with the then-current GWF baseline.
 3. actual registry/validity/API conflicts are recorded before code.
 4. code work is explicitly authorized.
 
+DG-P0 completion alone is not sufficient to open GAC.
+
 No file in `src/`, `tests/`, `.github/`, migrations, DomainSDK, or shared implementation plans is part of this pack.
 
-## 8. References
+## 9. References
 
 - [GAC Specification](GOVERNED_ARTIFACT_CATALOG_SPEC.md)
 - [Documentation Integrity & Governance](DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md)
