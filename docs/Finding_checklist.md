@@ -645,3 +645,24 @@ DG-P3 overall             = FORMALLY_CLOSED
 DG-W1                     = OPEN
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+## 26. DG-W1 Wave 1 requalification
+
+No new implementation finding was opened by the Wave-1 combined QA.
+
+Requalification on head `bea3cf23dd9b14cde999e9effe13e1cc9e6af1e5` verified:
+
+- DG-P0 real gate PASS;
+- DG-P1 real gate PASS;
+- DG-P2 real gate PASS;
+- DG-P3 real gate PASS;
+- shared validator contract compatibility PASS;
+- exact tool/version/config fingerprints recorded;
+- no authoritative document-state or GAC runtime present;
+- compile PASS.
+
+Evidence: workflow `35580447186`, artifact `10630420383`.
+
+**OPEN = 0**
+
+DG-W1 handoff exact-head qualification remains pending.

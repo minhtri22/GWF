@@ -183,7 +183,11 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 
 ### Wave 1 exit gate — DG-W1
 
-Wave 1 remains open. DG-P3 is formally closed after exact-head workflow `35577202015` PASS on handoff head `0331eedf20910b8d3b23018a6f7c86d114258baf`. Closing DG-P3 does not automatically close DG-W1.
+- **Status:** **REQUALIFICATION QA PASS / EXACT-HANDOFF-HEAD PENDING**
+- **QA head:** `bea3cf23dd9b14cde999e9effe13e1cc9e6af1e5`
+- **QA workflow:** `35580447186` PASS
+- **QA artifact:** `10630420383`
+- **QA document:** `docs/DOCUMENT_QA_DG_W1_WAVE1.md`
 
 - [x] DG-P0 PASS
 - [x] DG-P1 PASS
@@ -191,7 +195,8 @@ Wave 1 remains open. DG-P3 is formally closed after exact-head workflow `3557720
 - [x] DG-P3 PASS
 - [x] markdownlint, Vale and Lychee outputs normalize through the shared validator contract
 - [x] no authoritative document-state runtime added yet
-- [ ] Wave-1 handoff package records exact tool versions/config fingerprints
+- [x] Wave-1 handoff package records exact tool versions/config fingerprints
+- [ ] exact committed DG-W1 handoff HEAD requalification PASS
 
 ---
 
