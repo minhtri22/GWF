@@ -1,0 +1,53 @@
+{
+  "schema": "G2E-P5A-D2-P5-FX-001-PREIMPLEMENTATION-EVIDENCE-v1",
+  "adjudication": "SPEC_PASS_EXECUTION_BLOCKED",
+  "qualified_candidate": "15eeae4776a969cb0d64b9d55f33146e303161ec",
+  "baseline": "3d2206ad06a84bb78ee81983dfa06f8cae2cf002",
+  "result_commit": "c003619402284428077c955754422f8b9992dbd2",
+  "result_blob": "6abf06fee647b63c568c8d9da69b8443d652ff51",
+  "workflow": {
+    "run_id": 35603125876,
+    "job_id": 106343728888,
+    "conclusion": "PASS",
+    "artifact_id": 10639439364,
+    "artifact_digest": "sha256:ff7d2ef4592e734767bcb297b51c8b06d7b037d80968beeeb35956bc3d8559ef"
+  },
+  "blobs": {
+    "spec": "401762a3edb0c9fd81b25d9428bf7d49926d2ad5",
+    "builder": "e25cf943091571c4b7f8b6a3413aaeb2bc6e1e8a",
+    "test": "c8c238446f87c0b7e3d1ea376ce439ba88db5112",
+    "workflow": "93c536d44bb32e20750774f4fc0ae67d378f3238"
+  },
+  "preregistration": {
+    "file_sha256": "eaeff7a8141697b2ecb824709277ba51db5e60643a722f2d06b3d5d3f6d4d4b4",
+    "input_sha256": "a176454229feef1ce8bd7eab1ea79fbfeff07c229c88123edf862fea9160eef6",
+    "task_sha256": "4c4aba6a82d540440dfef725b2568afdef4be3b26c3e4e84e2b34c54e6dd460e",
+    "proof_ref": {
+      "object_id": "p5a-d2-p5-fx-001-proof",
+      "revision_id": "p5-fx-001-v1",
+      "content_hash": "8e275db790fe4c83061385f9988f4165f54d514611a44a4a555c5d01f6d3dbcd"
+    },
+    "preflight_binding_ref": {
+      "object_id": "p5a-d2-preflight-binding",
+      "revision_id": "p5-fx-001-v1",
+      "content_hash": "a5a9287d464d3d3450e9cf82d7866d45e9e2fc2921b0c28d938fd7257a3940f8"
+    }
+  },
+  "blocker": {
+    "id": "D2-F01",
+    "status": "CONFIRMED",
+    "manifest_max_authority_scope": [],
+    "required_execution_authority": [
+      "READ_FROZEN_FIXTURE",
+      "WRITE_DESIGNATED_OUTPUT"
+    ],
+    "final_execution_agent_binding_frozen": false
+  },
+  "authorization": {
+    "model_turn_authorized": false,
+    "d2_execution_authorized": false,
+    "codex_runtime_adapter_authorized": false,
+    "chatgpt_p5b_touched": false
+  },
+  "next_admissible_step": "P5A_D2_QUALIFICATION_AUTHORITY_ADMISSION_PREREQUISITE"
+}
