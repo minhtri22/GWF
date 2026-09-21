@@ -164,3 +164,19 @@ Formal close requires:
 4. preserve the resulting exact-head run and artifact identity.
 
 Until that exact-head PASS exists, DG-P3 is not formally closed and DG-W1 remains open.
+
+
+## 12. Formal-close evidence
+
+The committed handoff package at `0331eedf20910b8d3b23018a6f7c86d114258baf` was re-qualified on its exact HEAD.
+
+- exact-head workflow: `35577202015`
+- conclusion: **PASS**
+- exact-head artifact: `10628478735`
+- artifact digest: `sha256:ff7465f287f6b368da995a1defafc67c40cc6d6c2057132a2c0e076f8f4145b8`
+
+All DG-P3 unit/fixture, real GitHub identity, bounded regression and compile gates passed again.
+
+**DG-P3 status: FORMALLY CLOSED.**
+
+DG-W1 remains OPEN and requires its own governed next step. GAC remains locked until DG-W4 PASS.

@@ -638,8 +638,10 @@ DG-P3 implementation      = QUALIFIED_PASS
 DG-P3 implementation SHA  = 9b4426f4c0d3dd6f39b2e2b2750473fd309b779b
 DG-P3 workflow            = 35577009823 PASS
 DG-P3 artifact            = 10627989044
-DG-P3 handoff             = PENDING_COMMIT
-DG-P3 exact-head QA       = PENDING
+DG-P3 handoff HEAD        = 0331eedf20910b8d3b23018a6f7c86d114258baf
+DG-P3 exact-head workflow = 35577202015 PASS
+DG-P3 exact-head artifact = 10628478735
+DG-P3 overall             = FORMALLY_CLOSED
 DG-W1                     = OPEN
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```

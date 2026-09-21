@@ -151,7 +151,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P3 — Git/blob revision evidence resolver
 
 - **Complexity:** 2
-- **Status:** **IMPLEMENTATION QUALIFIED / HANDOFF + EXACT-HEAD QA PENDING**
+- **Status:** **COMPLETED / PASS / FORMALLY CLOSED**
 - **Frozen specification:** `docs/DG_P3_GIT_BLOB_RESOLVER_SPEC.md`, commit `f8d18e55d17344f10c0eb45c9d8beb3df6eea279`, blob `e005776db28d57ce1276b07475b9a7f7a5b6be97`.
 - **Document QA:** `docs/DOCUMENT_QA_DG_P3_PREIMPLEMENTATION.md` — PASS.
 - **Reuse verdict:** existing Artifact/Revision, ObjectRef, generic Evidence, PluginConnection/RepositoryBinding and v0.8.4 GitHub read/SHA primitives are sufficient; no schema migration/new canonical store.
@@ -179,16 +179,16 @@ Every completed item must record exact dependency revisions/evidence used. A dep
   - [x] no credential material persisted;
   - [x] bounded regression 54/54 PASS;
   - [x] implementation QA PASS;
-  - [ ] handoff commit exact-head workflow PASS.
+  - [x] handoff commit exact-head workflow PASS — run `35577202015` on `0331eedf20910b8d3b23018a6f7c86d114258baf`, artifact `10628478735`.
 
 ### Wave 1 exit gate — DG-W1
 
-Wave 1 remains open. DG-P3 implementation has qualified, but formal close still requires the committed handoff package to pass its exact-head workflow.
+Wave 1 remains open. DG-P3 is formally closed after exact-head workflow `35577202015` PASS on handoff head `0331eedf20910b8d3b23018a6f7c86d114258baf`. Closing DG-P3 does not automatically close DG-W1.
 
 - [x] DG-P0 PASS
 - [x] DG-P1 PASS
 - [x] DG-P2 PASS
-- [ ] DG-P3 PASS
+- [x] DG-P3 PASS
 - [x] markdownlint, Vale and Lychee outputs normalize through the shared validator contract
 - [x] no authoritative document-state runtime added yet
 - [ ] Wave-1 handoff package records exact tool versions/config fingerprints

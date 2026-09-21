@@ -54,3 +54,13 @@ Rules:
 - Evidence artifact: `10627989044`.
 - Evidence artifact digest: `sha256:ca9f74f9e6b7db30b2f11b81e80604b3dc2aff1c95d0d46f590beb3cabbd82c9`.
 - Outcome: exact GitHub repository/commit/blob revision evidence resolver qualified; read-only repository resolution and write capability are separated; existing SHA-safe write behavior remains qualified.
+
+
+## 2026-09-21 — DG-P3 formally closed
+
+- Result: DG-P3 PASS / formally closed.
+- Handoff head: `0331eedf20910b8d3b23018a6f7c86d114258baf`.
+- Exact-head workflow: `35577202015` PASS.
+- Exact-head evidence artifact: `10628478735`.
+- Evidence artifact digest: `sha256:ff7465f287f6b368da995a1defafc67c40cc6d6c2057132a2c0e076f8f4145b8`.
+- Outcome: Wave 1's Git/blob revision evidence resolver item is complete; DG-W1 remains a separate open governance gate.
