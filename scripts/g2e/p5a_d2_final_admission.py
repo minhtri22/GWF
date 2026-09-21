@@ -254,8 +254,113 @@ def build_final_admission() -> dict:
     }
 
 
+def verify_final_admission(pack: dict) -> None:
+    report, manifest, proof, equivalence = inherited_contract()
+
+    if pack.get("schema") != "G2E-P5A-D2-FINAL-ADMISSION-v1":
+        raise ValueError("final admission schema mismatch")
+    if pack.get("fresh_outcome_consumed") is not False:
+        raise ValueError("fresh D2 outcome present before final admission")
+    if pack.get("model_turn_executed") is not False:
+        raise ValueError("model turn executed before final admission")
+    if pack.get("runtime_adapter_authorized") is not False:
+        raise ValueError("runtime adapter authorization drift")
+    if pack.get("d2_scientific_attempts_authorized_after_gate") != 1:
+        raise ValueError("final admission must authorize at most one D2 attempt")
+
+    authority_policy = AuthorityPolicy.parse_authoritative(pack["authority_policy"])
+    grant = QualificationAuthorityGrant.parse_authoritative(pack["qualification_authority_grant"])
+    binding = AgentBinding.parse_authoritative(pack["final_agent_binding"])
+    attempt = ExecutionAttemptEnvelope.parse_authoritative(pack["predispatch_attempt"])
+
+    if manifest.exact_ref().model_dump(mode="json") != pack["refs"]["manifest"]:
+        raise ValueError("manifest exact ref drift")
+    if proof.exact_ref().model_dump(mode="json") != pack["refs"]["proof"]:
+        raise ValueError("proof exact ref drift")
+    if equivalence.exact_ref().model_dump(mode="json") != pack["refs"]["equivalence_policy"]:
+        raise ValueError("equivalence policy exact ref drift")
+    if authority_policy.exact_ref().model_dump(mode="json") != pack["refs"]["authority_policy"]:
+        raise ValueError("authority policy exact ref drift")
+    if grant.exact_ref().model_dump(mode="json") != pack["refs"]["qualification_authority_grant"]:
+        raise ValueError("qualification grant exact ref drift")
+    if binding.exact_ref().model_dump(mode="json") != pack["refs"]["final_agent_binding"]:
+        raise ValueError("final binding exact ref drift")
+    if attempt.exact_ref().model_dump(mode="json") != pack["refs"]["predispatch_attempt"]:
+        raise ValueError("predispatch attempt exact ref drift")
+
+    if proof.content_hash != PROOF_HASH or manifest.content_hash != MANIFEST_HASH:
+        raise ValueError("inherited exact identity drift")
+    if attempt.state != AttemptState.LOCKED:
+        raise ValueError("predispatch attempt must be LOCKED")
+    if attempt.attempt_id != ATTEMPT_ID or grant.attempt_id != ATTEMPT_ID or binding.resolved_attempt_id != ATTEMPT_ID:
+        raise ValueError("attempt identity drift")
+    if tuple(binding.required_capability_ids) != REQUIRED_PREREQUISITES:
+        raise ValueError("required prerequisite set drift")
+    if tuple(binding.qualification_target_capability_ids) != QUALIFICATION_TARGETS:
+        raise ValueError("qualification target set drift")
+    if tuple(grant.target_capability_ids) != QUALIFICATION_TARGETS:
+        raise ValueError("grant target set drift")
+    if tuple(binding.authority_scope) != GRANTED_AUTHORITY:
+        raise ValueError("binding authority scope drift")
+    if tuple(grant.granted_authority_scope) != GRANTED_AUTHORITY:
+        raise ValueError("grant authority scope drift")
+    if tuple(grant.allowed_read_paths) != READ_PATHS or tuple(grant.allowed_write_paths) != WRITE_PATHS:
+        raise ValueError("grant path scope drift")
+    if grant.network_allowed is not False or grant.interactive_approval_allowed is not False:
+        raise ValueError("forbidden network or interactive approval")
+    if binding.harness_ref != manifest.harness_ref or attempt.harness_ref != manifest.harness_ref:
+        raise ValueError("harness identity drift")
+    if binding.provider_ref != manifest.provider_ref or attempt.provider_ref != manifest.provider_ref:
+        raise ValueError("provider identity drift")
+    if binding.model_ref != manifest.model_ref or attempt.model_ref != manifest.model_ref:
+        raise ValueError("model identity drift")
+    if binding.transport_ref != manifest.transport_ref or attempt.transport_ref != manifest.transport_ref:
+        raise ValueError("transport identity drift")
+
+    config = pack["execution_config"]
+    if config.get("input_sha256") != INPUT_SHA256 or config.get("task_sha256") != TASK_SHA256:
+        raise ValueError("fixture or task hash drift")
+    if config.get("harness_sha256") != HARNESS_SHA256:
+        raise ValueError("execution config harness drift")
+    if config.get("network_allowed") is not False or config.get("interactive_approval_allowed") is not False:
+        raise ValueError("execution config side-effect policy drift")
+    if config.get("pre_workspace") != report["fixture"]["pre_workspace"]:
+        raise ValueError("pre-workspace inventory drift")
+    if config.get("only_permitted_post_addition") != report["fixture"]["only_permitted_post_addition"]:
+        raise ValueError("post-workspace mutation contract drift")
+    if tuple(config.get("allowed_read_paths", ())) != READ_PATHS:
+        raise ValueError("execution config read path drift")
+    if tuple(config.get("allowed_write_paths", ())) != WRITE_PATHS:
+        raise ValueError("execution config write path drift")
+    if tuple(config.get("authority_scope", ())) != GRANTED_AUTHORITY:
+        raise ValueError("execution config authority drift")
+    if config.get("max_invalid_replacement_attempts") != 0:
+        raise ValueError("retry budget drift")
+    if pack.get("execution_config_hash") != _sha256_json(config):
+        raise ValueError("execution config hash mismatch")
+    if attempt.config_hash != pack["execution_config_hash"]:
+        raise ValueError("attempt config hash mismatch")
+
+    validate_qualification_agent_binding_identity(
+        manifest,
+        equivalence,
+        grant,
+        authority_policy,
+        proof,
+        binding,
+        attempt,
+        expected_allowed_read_paths=READ_PATHS,
+        expected_allowed_write_paths=WRITE_PATHS,
+    )
+
+    capabilities = {cap.capability_id: cap.available for cap in manifest.capabilities}
+    if capabilities.get("repository_read") is not False or capabilities.get("repository_write") is not False:
+        raise ValueError("qualification target availability changed before D2")
+
+
 def materialize(output_dir: Path) -> dict:
     pack = build_final_admission()
+    verify_final_admission(pack)
     output_dir.mkdir(parents=True, exist_ok=True)
     objects = {
         "P5A_D2_AUTHORITY_POLICY.json": pack["authority_policy"],
