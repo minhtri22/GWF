@@ -92,7 +92,10 @@ class MarkdownlintCli2Adapter:
 
         first = next((line.strip() for line in p.stdout.splitlines() if line.strip()), "")
         match = re.search(r"markdownlint-cli2\s+v(?P<v>\d+\.\d+\.\d+)", first)
-        if p.returncode != 0 or not match:
+        # markdownlint-cli2 intentionally returns 2 for --help after printing
+        # the banner. Accept only the documented help outcomes when the exact
+        # version banner can be parsed; other outcomes fail closed.
+        if p.returncode not in {0, 2} or not match:
             return None, "VERSION_PROBE_FAILED"
         return match.group("v"), None
 

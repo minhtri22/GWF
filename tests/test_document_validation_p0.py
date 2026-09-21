@@ -168,3 +168,21 @@ def test_context_is_redacted_from_persisted_message():
     assert findings is not None
     assert findings[0].message == "Trailing spaces"
     assert "SECRET_TOKEN" not in findings[0].message
+
+
+def test_real_help_exit_code_two_is_valid_version_probe(tmp_path):
+    exe = _write_fake(
+        tmp_path,
+        'import sys\n'
+        'if "--help" in sys.argv: '
+        'print("markdownlint-cli2 v0.23.3 (markdownlint v0.41.1)"); sys.exit(2)\n'
+        'sys.exit(0)\n',
+    )
+    result = MarkdownlintCli2Adapter(
+        executable=exe,
+        expected_version="0.23.3",
+        config_path=_cfg(tmp_path),
+    ).validate(_doc(tmp_path))
+
+    assert result.execution_status == "SUCCEEDED"
+    assert result.validator_version == "0.23.3"
