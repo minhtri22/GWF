@@ -1,0 +1,45 @@
+{
+  "schema": "G2E-P1.5-QUALIFICATION-ATTEMPT-AUTHORITY-EVIDENCE-v1",
+  "status": "PASS",
+  "qualified_candidate": "6e9c518671c3f9ba140daa798458b37bee83647c",
+  "baseline": "53c7ac3d138968a2b96ece9ac58b95aef04511dc",
+  "result_commit": "aaf5d861f887909c7fe56b883f4064dfb2ffbd67",
+  "result_blob": "3692e04a4438983cd5dac2c5460848f146dbd49b",
+  "workflow": {
+    "run_id": 35607098718,
+    "job_id": 106356752615,
+    "conclusion": "PASS",
+    "artifact_id": 10642236550,
+    "artifact_digest": "sha256:cbc71ccc50363860ee817d434f206d6655f5adb0299a07b116eeb064e6f00a12"
+  },
+  "blobs": {
+    "implementation_contract": "01c96bf9c40a499dd569f5b9e7e32696edcafaa0",
+    "schema": "8631f9af598103f6c095fa3981255b9bf4609f64",
+    "test": "6799d4f524cf4c59301f8fb55532060590e3cdfb",
+    "workflow": "aec9ed777c426a44c67e5683bbf6054b2f2579a2"
+  },
+  "qualified_surface": {
+    "schema_kind": "qualification_authority_grant",
+    "binding_fields": [
+      "qualification_authority_ref",
+      "qualification_target_capability_ids"
+    ],
+    "validator": "validate_qualification_agent_binding_identity",
+    "normal_p1_4_semantics_preserved": true,
+    "provider_neutral": true
+  },
+  "d2_f01": {
+    "status": "RESOLVED_AT_SCHEMA_GOVERNANCE_PREREQUISITE_LEVEL",
+    "capability_self_qualification_allowed": false,
+    "operational_reuse_allowed": false
+  },
+  "authorization": {
+    "p5_fx_001_grant_materialization_authorized": true,
+    "final_d2_binding_materialization_authorized": true,
+    "final_zero_fresh_admission_required": true,
+    "d2_execution_authorized": false,
+    "model_turn_authorized": false,
+    "codex_runtime_adapter_authorized": false
+  },
+  "next_admissible_step": "P5A_D2_FINAL_ADMISSION_MATERIALIZATION_AND_ZERO_FRESH_QUALIFICATION"
+}
