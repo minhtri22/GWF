@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 30
     env:
       PYTHONPATH: src
-      BASELINE_SHA: "dfc8e438b8b4d91582a97809bc402862a07d29f7"
+      BASELINE_SHA: "3738205c16b460710e357461c29607ccd59beaea"
 
     steps:
       - uses: actions/checkout@v4
@@ -141,7 +141,7 @@ jobs:
           report = {
               "schema": "G2E-P5A-D2S1-PROFILE-MATERIALIZER-QUALIFICATION-v1",
               "candidate_sha": git("rev-parse", "HEAD"),
-              "baseline_sha": "dfc8e438b8b4d91582a97809bc402862a07d29f7",
+              "baseline_sha": "3738205c16b460710e357461c29607ccd59beaea",
               "spec_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S1_PERMISSION_PROFILE_SUCCESSOR_PREIMPLEMENTATION.md"),
               "qa_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S1_ZERO_FRESH_SPEC_QA.md"),
               "builder_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s1_profile_materializer.py"),
