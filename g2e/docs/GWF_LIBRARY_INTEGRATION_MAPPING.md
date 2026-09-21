@@ -16,7 +16,8 @@ Current integration authority:
 - GAC specification blob: 831a4f9260ff6a1f74d531d9d24a91cdb6feff7e
 - GAC integration-boundary blob: 2fef77627127bf58c6376202f96de681d5b3050a
 - Reference Acquisition specification blob: 110dae0b492b56492c52eec2dfc64a8d2070d966
-- reconciliation QA blob: 624bc36f9012af92711f80b2ee1d6157b358f570
+- reconciled GAC QA blob: 624bc36f9012af92711f80b2ee1d6157b358f570
+- cross-document reconciliation QA blob: fe5e076c34f7665bb0d6cd354ae779b83e18a29a
 
 The earlier GAC packing head 194c66c... remains historical design lineage, not current cross-system integration authority.
 

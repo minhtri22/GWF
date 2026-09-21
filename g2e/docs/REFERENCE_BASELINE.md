@@ -79,6 +79,7 @@ Exact reconciled Git blobs recorded by GWF QA:
 - GWF reconciliation Findings: `e314098f3a10c2bc15fffe8f3323e8832a91419a`
 - reconciled GAC Handoff: `cb5f0c1ef33122a6e997dcaeb29ac588b1f045c9`
 - reconciled GAC QA: `624bc36f9012af92711f80b2ee1d6157b358f570`
+- cross-document GAC/G2E/7-wave reconciliation QA: `fe5e076c34f7665bb0d6cd354ae779b83e18a29a`
 
 Pinned references:
 
