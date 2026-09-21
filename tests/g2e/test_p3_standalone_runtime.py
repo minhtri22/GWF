@@ -40,6 +40,9 @@ from g2e import (
     LibraryQueryContract,
     MetricPredicate,
     PackageExternalReference,
+    PackageManifest,
+    PackageMember,
+    PackageSeal,
     ProofLifecycle,
     ProofObligation,
     ProofResolution,
@@ -71,6 +74,7 @@ from g2e.standalone import (
     UnsupportedCapabilityError,
     export_goal_result_package,
     verify_goal_result_package,
+    verify_result_package,
 )
 
 P = Provenance(created_by="p3-fixture", created_at="2026-09-21T08:30:00Z")
@@ -758,9 +762,10 @@ def test_result_package_seal_detects_mutation_and_unclassified_files(tmp_path):
     )
     proof_graph = json.loads((package_dir / "PROOF_GRAPH.json").read_text())
     dependencies = {
-        item["object_id"]: item for item in proof_graph["dependencies"]
+        item["payload"]["object_id"]: item for item in proof_graph["dependencies"]
     }
-    assert dependencies[program["decision_rule"].object_id]["content_hash"] == program[
+    assert dependencies[program["decision_rule"].object_id]["schema_kind"] == "decision_rule"
+    assert dependencies[program["decision_rule"].object_id]["payload"]["content_hash"] == program[
         "decision_rule"
     ].content_hash
 
@@ -1082,6 +1087,98 @@ def test_library_publication_rejects_nonterminal_source_claim_resolution(tmp_pat
     )
     manifest = qualified_library_manifest(runtime)
     with pytest.raises(StandaloneRuntimeError, match="must be terminal"):
+        runtime.library.publish_capsule(
+            capsule,
+            contract,
+            {},
+            capability_manifest=manifest,
+            source_package_dir=package_dir,
+        )
+
+
+
+def _reseal_package(package_dir: Path, *, revision_suffix: str = "tampered"):
+    old_manifest = PackageManifest.parse_authoritative(
+        json.loads((package_dir / "PACKAGE_MANIFEST.json").read_text())
+    )
+    old_seal = PackageSeal.parse_authoritative(
+        json.loads((package_dir / "PACKAGE_SEAL.json").read_text())
+    )
+    members = tuple(
+        PackageMember(
+            path=member.path,
+            sha256=hashlib.sha256((package_dir / member.path).read_bytes()).hexdigest(),
+            size=len((package_dir / member.path).read_bytes()),
+        )
+        for member in old_manifest.members
+    )
+    manifest = PackageManifest.sealed(
+        object_id=old_manifest.object_id,
+        revision_id=revision_suffix + "-manifest",
+        provenance=P,
+        members=members,
+        external_reference_policy=old_manifest.external_reference_policy,
+        external_references=old_manifest.external_references,
+        non_authoritative_paths=old_manifest.non_authoritative_paths,
+    )
+    manifest_bytes = canonical_json(manifest.model_dump(mode="json")).encode("utf-8")
+    (package_dir / "PACKAGE_MANIFEST.json").write_bytes(manifest_bytes)
+    seal = PackageSeal.sealed(
+        object_id=old_seal.object_id,
+        revision_id=revision_suffix + "-seal",
+        provenance=P,
+        package_type=old_seal.package_type,
+        manifest_ref=manifest.exact_ref(),
+        manifest_file_sha256=hashlib.sha256(manifest_bytes).hexdigest(),
+        framework_version=old_seal.framework_version,
+        runtime_id=old_seal.runtime_id,
+        runtime_version=old_seal.runtime_version,
+        attestation_identity=old_seal.attestation_identity,
+    )
+    (package_dir / "PACKAGE_SEAL.json").write_text(
+        canonical_json(seal.model_dump(mode="json")), encoding="utf-8"
+    )
+    return manifest, seal
+
+
+def test_semantic_verifier_rejects_resealed_false_goal_verdict(tmp_path):
+    runtime = StandaloneRuntime(tmp_path / "runtime")
+    program, package_dir, _ = build_source_package(
+        runtime, tmp_path, resolution=ClaimResolution.FAIL, suffix="semantic-reseal"
+    )
+    final_path = package_dir / "FINAL_VERDICT.json"
+    final_doc = json.loads(final_path.read_text())
+    assert final_doc["verdict"] == GoalVerdict.FALSIFIED.value
+    final_doc["verdict"] = GoalVerdict.ACHIEVED.value
+    final_path.write_text(canonical_json(final_doc), encoding="utf-8")
+    _reseal_package(package_dir)
+
+    # Cryptographic/integrity verification alone now succeeds.
+    assert verify_result_package(package_dir).seal.package_type == "GOAL_RESULT"
+    # Formal G2E semantics must still fail.
+    with pytest.raises(
+        PackageVerificationError,
+        match="FINAL_VERDICT does not match deterministic Goal replay",
+    ):
+        verify_goal_result_package(package_dir)
+
+
+def test_library_publication_uses_semantic_source_verifier(tmp_path):
+    runtime = StandaloneRuntime(tmp_path / "runtime")
+    program, package_dir, verification = build_source_package(
+        runtime, tmp_path, resolution=ClaimResolution.FAIL, suffix="semantic-publish"
+    )
+    capsule, contract = make_capsule(
+        program, verification, resolution=ClaimResolution.FAIL
+    )
+    final_path = package_dir / "FINAL_VERDICT.json"
+    final_doc = json.loads(final_path.read_text())
+    final_doc["verdict"] = GoalVerdict.ACHIEVED.value
+    final_path.write_text(canonical_json(final_doc), encoding="utf-8")
+    _reseal_package(package_dir, revision_suffix="publish-tampered")
+
+    manifest = qualified_library_manifest(runtime)
+    with pytest.raises(PackageVerificationError, match="deterministic Goal replay"):
         runtime.library.publish_capsule(
             capsule,
             contract,

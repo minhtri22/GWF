@@ -24,6 +24,7 @@ from .schemas import (
     Adjudication,
     AttemptState,
     BackendQualificationStatus,
+    Claim,
     ClaimGraph,
     ClaimResolution,
     ClaimResolutionPolicy,
@@ -1225,7 +1226,7 @@ class StandaloneEvidenceLibrary:
                 "BACKEND_CAPABILITY_UNSUPPORTED:source_package_type:"
                 + capsule.source_package_type
             )
-        verified_source = verify_result_package(
+        verified_source = verify_goal_result_package(
             source_package_dir, external_resolver=external_resolver
         )
         if verified_source.seal.package_type != capsule.source_package_type:
@@ -1643,34 +1644,53 @@ def _fsync_dir(path: Path) -> None:
         os.close(fd)
 
 
-def export_goal_result_package(
-    destination: str | Path,
+def _tagged_model(model: CanonicalModel) -> dict[str, Any]:
+    return {
+        "schema_kind": model.schema_kind,
+        "payload": model.model_dump(mode="json"),
+    }
+
+
+def _parse_tagged_model(value: Mapping[str, Any]) -> CanonicalModel:
+    if set(value) != {"schema_kind", "payload"}:
+        raise PackageVerificationError("tagged canonical object shape invalid")
+    kind = value["schema_kind"]
+    payload = value["payload"]
+    if not isinstance(kind, str) or not isinstance(payload, Mapping):
+        raise PackageVerificationError("tagged canonical object fields invalid")
+    try:
+        return schema_model(kind).parse_authoritative(dict(payload))
+    except Exception as exc:
+        raise PackageVerificationError(
+            f"tagged canonical object validation failed:{kind}:{exc}"
+        ) from exc
+
+
+def _derive_goal_package_state(
     *,
     goal: GoalContract,
     goal_closure: GoalClosureContract,
-    claim_graph: CanonicalModel,
-    proofs: Sequence[CanonicalModel],
+    claim_graph: ClaimGraph,
+    proofs: Sequence[ProofObligation],
     proof_results: Sequence[ProofResult],
     proof_dependencies: Sequence[CanonicalModel],
     evidence: Sequence[EvidenceRecord],
     adjudications: Sequence[Adjudication],
-    reproducibility_manifest: Mapping[str, Any],
-    package_lineage: Sequence[Mapping[str, Any]],
-    provenance: Provenance,
-    imported_refs: Sequence[ExactRef] = (),
-    synthesis_result: SynthesisResult | None = None,
-    external_reference_policy: ExternalReferencePolicy = ExternalReferencePolicy.OFFLINE_ONLY,
-    external_references: Sequence[PackageExternalReference] = (),
-    framework_version: str = "g2e-p3",
-    runtime_id: str = RUNTIME_ID,
-    runtime_version: str = RUNTIME_VERSION,
-    external_resolver: Callable[[PackageExternalReference], bytes | None] | None = None,
-    authorized_stop: bool = False,
-) -> PackageVerificationResult:
+    authorized_stop: bool,
+) -> tuple[dict[str, ClaimResolution], GoalVerdict]:
     if goal_closure.goal_contract_ref != goal.exact_ref():
         raise StandaloneRuntimeError("GoalClosureContract does not bind exact Goal")
     if goal_closure.claim_graph_ref != claim_graph.exact_ref():
         raise StandaloneRuntimeError("GoalClosureContract does not bind exact ClaimGraph")
+
+    for claim in claim_graph.claims:
+        try:
+            Claim.parse_authoritative(claim.model_dump(mode="json"))
+        except Exception as exc:
+            raise StandaloneRuntimeError(
+                f"embedded Claim canonical identity invalid:{claim.object_id}:{exc}"
+            ) from exc
+
     proof_by_id = {proof.object_id: proof for proof in proofs}
     if len(proof_by_id) != len(tuple(proofs)):
         raise StandaloneRuntimeError("duplicate packaged Proof IDs")
@@ -1703,6 +1723,7 @@ def export_goal_result_package(
 
     result_by_proof_id: dict[str, ProofResult] = {}
     proof_outcomes: dict[str, ProofOutcome] = {}
+    used_adjudications: set[tuple[str, str, str]] = set()
     for result in proof_results:
         proof = proof_by_id.get(result.proof_ref.object_id)
         if proof is None or proof.exact_ref() != result.proof_ref:
@@ -1716,10 +1737,7 @@ def export_goal_result_package(
             result.retry_policy_ref.content_hash,
         )
         retry_policy = retry_policy_by_ref.get(retry_key)
-        if (
-            retry_policy is None
-            or retry_policy.exact_ref() != proof.retry_policy_ref
-        ):
+        if retry_policy is None or retry_policy.exact_ref() != proof.retry_policy_ref:
             raise StandaloneRuntimeError(
                 "ProofResult RetryPolicy does not match packaged frozen Proof"
             )
@@ -1764,6 +1782,7 @@ def export_goal_result_package(
                     raise StandaloneRuntimeError(
                         "Adjudication admitted evidence missing from package"
                     )
+            used_adjudications.add(key)
             history.append(adjudication)
 
         expected_result = materialize_proof_result(
@@ -1783,17 +1802,18 @@ def export_goal_result_package(
         result_by_proof_id[proof.object_id] = result
         proof_outcomes[proof.object_id] = ProofOutcome(result.outcome.value)
 
+    if set(adjudication_by_ref) != used_adjudications:
+        raise StandaloneRuntimeError(
+            "decision ledger contains adjudication not referenced by ProofResult"
+        )
+
     claim_resolution_policies = tuple(
         dependency
         for dependency in proof_dependencies
         if isinstance(dependency, ClaimResolutionPolicy)
     )
     policy_by_ref = {
-        (
-            policy.object_id,
-            policy.revision_id,
-            policy.content_hash,
-        ): policy
+        (policy.object_id, policy.revision_id, policy.content_hash): policy
         for policy in claim_resolution_policies
     }
     claim_resolutions: dict[str, ClaimResolution] = {}
@@ -1816,10 +1836,54 @@ def export_goal_result_package(
             raise StandaloneRuntimeError(
                 f"terminal Claim lacks terminal resolution: {claim_id}"
             )
+
     final_verdict = evaluate_goal(
         goal_closure,
         claim_resolutions,
         can_progress=False,
+        authorized_stop=authorized_stop,
+    )
+    return claim_resolutions, final_verdict
+
+
+def export_goal_result_package(
+    destination: str | Path,
+    *,
+    goal: GoalContract,
+    goal_closure: GoalClosureContract,
+    claim_graph: CanonicalModel,
+    proofs: Sequence[CanonicalModel],
+    proof_results: Sequence[ProofResult],
+    proof_dependencies: Sequence[CanonicalModel],
+    evidence: Sequence[EvidenceRecord],
+    adjudications: Sequence[Adjudication],
+    reproducibility_manifest: Mapping[str, Any],
+    package_lineage: Sequence[Mapping[str, Any]],
+    provenance: Provenance,
+    imported_refs: Sequence[ExactRef] = (),
+    synthesis_result: SynthesisResult | None = None,
+    external_reference_policy: ExternalReferencePolicy = ExternalReferencePolicy.OFFLINE_ONLY,
+    external_references: Sequence[PackageExternalReference] = (),
+    framework_version: str = "g2e-p3",
+    runtime_id: str = RUNTIME_ID,
+    runtime_version: str = RUNTIME_VERSION,
+    external_resolver: Callable[[PackageExternalReference], bytes | None] | None = None,
+    authorized_stop: bool = False,
+) -> PackageVerificationResult:
+    if not isinstance(claim_graph, ClaimGraph):
+        raise StandaloneRuntimeError("Goal Result package requires canonical ClaimGraph")
+    typed_proofs = tuple(proofs)
+    if not all(isinstance(proof, ProofObligation) for proof in typed_proofs):
+        raise StandaloneRuntimeError("Goal Result package contains non-ProofObligation")
+    claim_resolutions, final_verdict = _derive_goal_package_state(
+        goal=goal,
+        goal_closure=goal_closure,
+        claim_graph=claim_graph,
+        proofs=typed_proofs,
+        proof_results=proof_results,
+        proof_dependencies=proof_dependencies,
+        evidence=evidence,
+        adjudications=adjudications,
         authorized_stop=authorized_stop,
     )
 
@@ -1838,18 +1902,18 @@ def export_goal_result_package(
         "PROOF_GRAPH.json": _json_file_bytes(
             {
                 "proofs": [
-                    p.model_dump(mode="json")
-                    for p in sorted(proofs, key=lambda x: x.object_id)
+                    _tagged_model(p)
+                    for p in sorted(typed_proofs, key=lambda x: x.object_id)
                 ],
                 "results": [
-                    result.model_dump(mode="json")
+                    _tagged_model(result)
                     for result in sorted(
                         proof_results,
                         key=lambda x: x.proof_ref.object_id,
                     )
                 ],
                 "dependencies": [
-                    p.model_dump(mode="json")
+                    _tagged_model(p)
                     for p in sorted(
                         proof_dependencies,
                         key=lambda x: (x.schema_kind, x.object_id),
@@ -1869,6 +1933,7 @@ def export_goal_result_package(
                 "goal_ref": goal.exact_ref().model_dump(mode="json"),
                 "goal_closure_ref": goal_closure.exact_ref().model_dump(mode="json"),
                 "verdict": final_verdict.value,
+                "authorized_stop": authorized_stop,
             }
         ),
         "REPRODUCIBILITY_MANIFEST.json": _json_file_bytes(dict(reproducibility_manifest)),
@@ -2068,6 +2133,126 @@ def verify_goal_result_package(
     )
     if result.seal.package_type != "GOAL_RESULT":
         raise PackageVerificationError("package is not GOAL_RESULT")
+
+    root = Path(package_dir)
+    try:
+        goal = GoalContract.parse_authoritative(
+            json.loads((root / "GOAL.json").read_bytes())
+        )
+        goal_closure = GoalClosureContract.parse_authoritative(
+            json.loads((root / "GOAL_CLOSURE.json").read_bytes())
+        )
+        claim_graph = ClaimGraph.parse_authoritative(
+            json.loads((root / "CLAIM_GRAPH.json").read_bytes())
+        )
+        proof_doc = json.loads((root / "PROOF_GRAPH.json").read_bytes())
+        evidence_doc = json.loads((root / "EVIDENCE_GRAPH.json").read_bytes())
+        decision_doc = json.loads((root / "DECISION_LEDGER.json").read_bytes())
+        final_doc = json.loads((root / "FINAL_VERDICT.json").read_bytes())
+    except Exception as exc:
+        raise PackageVerificationError(
+            f"GOAL_RESULT semantic content cannot be parsed: {exc}"
+        ) from exc
+
+    try:
+        proofs = tuple(
+            _parse_tagged_model(item) for item in proof_doc["proofs"]
+        )
+        proof_results = tuple(
+            _parse_tagged_model(item) for item in proof_doc["results"]
+        )
+        dependencies = tuple(
+            _parse_tagged_model(item) for item in proof_doc["dependencies"]
+        )
+    except Exception as exc:
+        if isinstance(exc, PackageVerificationError):
+            raise
+        raise PackageVerificationError(
+            f"PROOF_GRAPH tagged content invalid: {exc}"
+        ) from exc
+
+    if not all(isinstance(item, ProofObligation) for item in proofs):
+        raise PackageVerificationError("PROOF_GRAPH proofs contain wrong schema kind")
+    if not all(isinstance(item, ProofResult) for item in proof_results):
+        raise PackageVerificationError("PROOF_GRAPH results contain wrong schema kind")
+
+    try:
+        evidence = tuple(
+            EvidenceRecord.parse_authoritative(item) for item in evidence_doc
+        )
+        adjudications = tuple(
+            Adjudication.parse_authoritative(item) for item in decision_doc
+        )
+        authorized_stop = bool(final_doc["authorized_stop"])
+    except Exception as exc:
+        raise PackageVerificationError(
+            f"GOAL_RESULT evidence/decision content invalid: {exc}"
+        ) from exc
+
+    try:
+        claim_resolutions, derived_verdict = _derive_goal_package_state(
+            goal=goal,
+            goal_closure=goal_closure,
+            claim_graph=claim_graph,
+            proofs=proofs,
+            proof_results=proof_results,
+            proof_dependencies=dependencies,
+            evidence=evidence,
+            adjudications=adjudications,
+            authorized_stop=authorized_stop,
+        )
+    except Exception as exc:
+        raise PackageVerificationError(
+            f"GOAL_RESULT deterministic semantic replay failed: {exc}"
+        ) from exc
+
+    try:
+        if ExactRef.model_validate(final_doc["goal_ref"]) != goal.exact_ref():
+            raise PackageVerificationError("FINAL_VERDICT goal ref mismatch")
+        if (
+            ExactRef.model_validate(final_doc["goal_closure_ref"])
+            != goal_closure.exact_ref()
+        ):
+            raise PackageVerificationError("FINAL_VERDICT closure ref mismatch")
+        if GoalVerdict(final_doc["verdict"]) != derived_verdict:
+            raise PackageVerificationError(
+                "FINAL_VERDICT does not match deterministic Goal replay"
+            )
+    except PackageVerificationError:
+        raise
+    except Exception as exc:
+        raise PackageVerificationError(
+            f"FINAL_VERDICT content invalid: {exc}"
+        ) from exc
+
+    for claim in claim_graph.claims:
+        resolution_path = (
+            root
+            / "claims"
+            / _safe_component(claim.object_id)
+            / "RESOLUTION.json"
+        )
+        if not resolution_path.is_file():
+            raise PackageVerificationError(
+                f"Claim resolution file missing: {claim.object_id}"
+            )
+        try:
+            resolution_doc = json.loads(resolution_path.read_bytes())
+            claim_ref = ExactRef.model_validate(resolution_doc["claim_ref"])
+            resolution = ClaimResolution(resolution_doc["resolution"])
+        except Exception as exc:
+            raise PackageVerificationError(
+                f"Claim resolution file invalid:{claim.object_id}:{exc}"
+            ) from exc
+        if claim_ref != claim.exact_ref():
+            raise PackageVerificationError(
+                f"Claim resolution ref mismatch: {claim.object_id}"
+            )
+        if resolution != claim_resolutions[claim.object_id]:
+            raise PackageVerificationError(
+                f"Claim resolution does not match deterministic replay: {claim.object_id}"
+            )
+
     return result
 
 
