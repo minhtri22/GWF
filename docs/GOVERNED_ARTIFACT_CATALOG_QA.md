@@ -2,95 +2,158 @@
 
 ## Status
 
-**Semantic QA: FAIL / remediation required.**
+**PACKING DOCUMENT QA: PASS**
 
 Candidate specification commit:
 
 `4cc187320820ea4ff144130b0b63f6d23e3a9e3b`
 
+Findings commit:
+
+`94f1db6d7ecf001311d774b729c7a579d65853ab`
+
+Remediation commit under QA:
+
+`e013a10707815c99bc65fe93bc5716fc1b55e20e`
+
 ## Scope
 
-Review only the new packing-only GAC documents. This QA does not validate an implementation.
+This QA validates only the GAC packing/specification documents. It does not validate an implementation and authorizes no code.
 
-## Findings
+## Findings and resolution
 
-### GAC-F01 — HIGH — OPEN — Publication uniqueness/idempotency is undefined
+### GAC-F01 — HIGH — RESOLVED — Publication uniqueness/idempotency
 
-Repeated publication of the same exact subject under the same scope/policy could create multiple active entries with ambiguous identity.
+**Resolution:** publication identity is idempotent over exact subject identity/hash + publication scope + PublicationPolicy hash. Duplicate active logical publication is not created for the same tuple.
 
-Required: define publication identity/idempotency key and collision behavior.
+**Proof:** GAC Specification §5.1.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-### GAC-F02 — HIGH — OPEN — Publication policy identity/snapshot is insufficient
+### GAC-F02 — HIGH — RESOLVED — Publication policy identity/snapshot
 
-`publication_policy_ref` alone does not prove which exact policy version/hash admitted an item or what source validity was observed.
+**Resolution:** CatalogEntry binds PublicationPolicy revision/hash and an eligibility snapshot sufficient to reconstruct publication-time validity/classification.
 
-Required: bind exact policy revision/hash and publication-time eligibility snapshot.
+**Proof:** GAC Specification §§5.1, 5.4.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-### GAC-F03 — MEDIUM — OPEN — Search index drift/rebuild semantics are undefined
+### GAC-F03 — MEDIUM — RESOLVED — Search index drift/rebuild
 
-Optional FTS/vector/external indexes are derived state, but the spec does not define rebuild source, index revision identity or stale-index handling.
+**Resolution:** authoritative CatalogEntry state is the rebuild source; FTS/vector/external indexes are derived projections with backend/version/index/source-catalog revision and rebuild status.
 
-Required: catalog database remains authoritative; search indexes are rebuildable projections with explicit index revision/status.
+**Proof:** GAC Specification §10; Integration Boundaries B-08.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-### GAC-F04 — HIGH — OPEN — Query execution status can be confused with “zero matches”
+### GAC-F04 — HIGH — RESOLVED — Query failure vs zero matches
 
-Failure classes mention index unavailability, but CatalogQueryResult does not separate execution validity/completeness from content results.
+**Resolution:** `CatalogQueryExecution` is separate from `CatalogQueryResultSet`; execution status includes `SUCCEEDED | BACKEND_UNAVAILABLE | PARTIAL | FAILED`. Backend/index failure cannot be returned as a valid empty result set.
 
-Required: separate query execution status from result-set status; unavailable/partial index cannot be represented as a valid empty result.
+**Proof:** GAC Specification §5.5.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-### GAC-F05 — MEDIUM — OPEN — Catalog-state transitions are not formalized
+### GAC-F05 — MEDIUM — RESOLVED — Catalog-state transitions
 
-`CANDIDATE | PUBLISHED | WITHDRAWN | TOMBSTONED` exists without allowed transitions/republication semantics.
+**Resolution:** allowed CANDIDATE/PUBLISHED/WITHDRAWN/TOMBSTONED transitions, terminal tombstone semantics, authorized republication event and immutable withdrawal history are explicit.
 
-Required: define allowed transitions, immutable history, authority and whether withdrawn exact subject can be republished as a new entry/revision.
+**Proof:** GAC Specification §5.3.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-### GAC-F06 — MEDIUM — OPEN — Search metadata namespace/ownership is undefined
+### GAC-F06 — MEDIUM — RESOLVED — Metadata namespace ownership
 
-Generic `search_metadata` can create collisions between G2E, software, research and document consumers.
+**Resolution:** core searchable metadata is governed by catalog schema; consumer/domain extensions are namespaced and bind extension schema/version owner.
 
-Required: core metadata fields plus namespaced extension metadata with schema/version owner.
+**Proof:** GAC Specification §9; Integration Boundaries B-09.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-### GAC-F07 — HIGH — OPEN — Catalog visibility could accidentally broaden source access
+### GAC-F07 — HIGH — RESOLVED — Catalog visibility vs source access
 
-Catalog scope and source artifact permission are described but intersection semantics are not explicit.
+**Resolution:** effective read access is catalog visibility AND underlying source/object/reference access. Publication cannot broaden source permission; checks occur before metadata/relevance/locator disclosure.
 
-Required: effective read permission = catalog visibility AND source/object/external-ref access; catalog publication never grants broader source access.
+**Proof:** GAC Specification §7; Integration Boundaries B-07.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-### GAC-F08 — MEDIUM — OPEN — External immutable reference eligibility is too weak
+### GAC-F08 — MEDIUM — RESOLVED — External immutable identity
 
-“Digest when available” can allow a mutable external locator to be presented as immutable.
+**Resolution:** external publication requires verified content digest or provider-issued immutable snapshot/version identity accepted by PublicationPolicy. Mutable URL alone fails eligibility.
 
-Required: external publication must bind either verified content digest or provider-issued immutable snapshot/version identity accepted by PublicationPolicy; otherwise reject.
+**Proof:** GAC Specification §8; Integration Boundaries §5.
 
-- [ ] RESOLVED
+- [x] RESOLVED
 
-## Existing boundary checks
+## Final architecture checklist
+
+### Architecture
 
 - [x] GAC is catalog/index/publication, not canonical artifact storage.
 - [x] Existing Artifact/Revision/TraceLink/ObjectRef primitives are reused.
 - [x] Search results are discovery candidates, not proof/evidence admission.
 - [x] No research-specific synthesis/applicability semantics are assigned to GWF.
-- [x] Documentation Governance remains owner of document registry/QA/validity.
-- [x] Reference Acquisition remains owner of external retrieval provenance.
-- [x] This candidate changes only four new `docs/GOVERNED_ARTIFACT_CATALOG_*.md` files.
-- [x] No code/runtime/schema migration/workflow changes exist.
+- [x] GWF tenancy/authority/audit remain authoritative infrastructure.
+
+### Non-conflict with Documentation Governance
+
+- [x] GAC does not own DocumentRecord/DocumentRevision semantics.
+- [x] GAC does not own document QA/findings/link checking/stale propagation.
+- [x] Document publication requires an exact eligible revision and cannot bypass validity.
+- [x] No active Documentation Governance P0 implementation file is modified.
+
+### Non-conflict with Reference Acquisition / Agent Interop
+
+- [x] External retrieval provenance remains owned by Reference Acquisition.
+- [x] Mutable URL alone is rejected as immutable library identity.
+- [x] Agent apps may propose actions but do not become publication authority.
+
+### Identity / security
+
+- [x] Formal catalog subjects bind exact hashes/revisions.
+- [x] Publication identity/idempotency is explicit.
+- [x] Membership state is separate from source lifecycle/validity.
+- [x] Cross-tenant/global publication is deferred.
+- [x] Effective read access intersects catalog and source authorization.
+- [x] Secrets/credentials are excluded from catalog metadata.
+- [x] Domain extension metadata is namespaced.
+
+### Query/index
+
+- [x] Catalog record state is authoritative; search indexes are rebuildable projections.
+- [x] Index revision/source catalog revision are observable.
+- [x] Query execution status is separate from result content.
+- [x] Search backend failure cannot masquerade as zero matches.
+- [x] Semantic/vector search is optional adapter scope.
+
+### Packing / handoff
+
+- [x] Branch changes exactly four new `docs/GOVERNED_ARTIFACT_CATALOG_*.md` files.
+- [x] No `src/`, `tests/`, `.github/`, migration, DomainSDK or shared implementation-plan mutation.
+- [x] Future agent must reconcile with then-current Documentation Governance implementation.
+- [x] GAC-P0 begins with contract qualification, not search infrastructure.
+- [x] Pack explicitly stops after QA.
+
+## QA evidence
+
+Remediation SHA:
+
+`e013a10707815c99bc65fe93bc5716fc1b55e20e`
+
+Verified:
+
+- changed files from baseline: exactly 4 GAC documentation files;
+- files outside GAC pack: 0;
+- GWF README, Documentation Governance, Reference Acquisition, Agent Interop and current core implementation references resolve;
+- all 8 semantic findings have explicit contract text;
+- no duplicate document-registry ownership;
+- no G2E applicability/synthesis semantics are implemented in GWF pack.
 
 ## Verdict
 
-`OPEN = 8`
+`OPEN = 0`
 
-**FAIL until all findings are resolved.**
+**PASS — PACK COMPLETE / IMPLEMENTATION DEFERRED**
+
+The future GWF agent may consume this package after reconciling it with the then-current Documentation Governance/runtime baseline. Do not implement GAC on this branch.
