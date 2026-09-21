@@ -1,0 +1,36 @@
+{
+  "schema": "G2E-P5A-CODEX-DISCOVERY-PREPARATION-EVIDENCE-v1",
+  "adjudication": "PREPARATION_PASS_ACTUAL_HARNESS_PENDING",
+  "qualified_candidate": "d53ef2d246b099a1f0c654906b1ca35ab61ad9a3",
+  "result_commit": "b162bc888e386768e1a76c1fccdfb34c8e17c933",
+  "result_blob": "5d7286a7db34f12edb541106086d8bede2d7ee57",
+  "blobs": {
+    "spec": "14d83df31a788699990aa7cbeed250b85584ad98",
+    "probe": "5861298808bd4cc91845f1c10ae114709a955e88",
+    "powershell": "20a623830be89ac84bd287b8b49c7db3b7cd748d",
+    "test": "4cc57db26c27eb783438b2bb23716dc387b47dc9",
+    "workflow": "6a5799cd6a5f6a498ca49391de63a21c345958a9"
+  },
+  "workflow": {
+    "run_id": 35591574804,
+    "job_id": 106306922854,
+    "conclusion": "PASS",
+    "artifact_id": 10634153745,
+    "artifact_digest": "sha256:ba379edcd7e60ba50641bdc8cd6a4405dcdb326758482cf9164dce485c5518f7"
+  },
+  "scope": {
+    "runtime_core_mutation": false,
+    "codex_runtime_adapter": false,
+    "chatgpt_runtime_adapter": false,
+    "functional_task_executed": false,
+    "secrets_persisted": false
+  },
+  "evidence_levels": {
+    "D0_documented": "FROZEN",
+    "D1_actual_harness_structural": "PENDING",
+    "D2_functional_harness": "NOT_AUTHORIZED"
+  },
+  "codex_profile_available": false,
+  "runtime_adapter_authorized": false,
+  "next_admissible_step": "EXECUTE_P5A_CODEX_DISCOVERY_ON_EXACT_TARGET_HARNESS_AND_ADJUDICATE_D1"
+}
