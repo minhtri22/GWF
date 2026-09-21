@@ -26,11 +26,11 @@ Relevant governing/runtime blobs at the exact base:
 | `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` | `e50d0f17433c6f0ec57f987278a0d24a7bbd4610` |
 | `docs/IMPLEMENTATION_7_WAVES_PLAN.md` | `3de3ffdbefeaeb3f644e2c2b6daf5e3b7d46098b` |
 | `src/gwr/governance.py` | `0eb8f3eeb7a6ee01512bc778241fa2ee0b42f6a6` |
-| `src/gwr/knowledge.py` | `387f98b47575bc889e9bf88057fd010af2dce853` |
-| `src/gwr/domain.py` | `387f98b47575bc889e9bf88057fd010af2dce853` is NOT the knowledge blob; exact file blobs are independently verified during document QA. |
-| `src/gwr/document_qa.py` | exact base version contains `DUPLICATE_AUTHORITY` and marks it non-waivable |
-| `src/gwr/db.py` | exact base schema has no document-authority-claim table |
-| `src/gwr/migrations.py` | Wave-2 migration frontier ends at `0008_v086_dg_p5_document_findings` |
+| `src/gwr/knowledge.py` | `2c4ae7f406031613c1bd885aa90b80b3f6f93606` |
+| `src/gwr/domain.py` | `387f98b47575bc889e9bf88057fd010af2dce853` |
+| `src/gwr/document_qa.py` | `6179e6d756e52d663eddf107e6355873ddda29f6` |
+| `src/gwr/db.py` | `b9825998757423822ab7ffb22bd37dd202f3e30d` |
+| `src/gwr/migrations.py` | `3508086b9cfe234838e9c50ba900ec1dab71f0f9` |
 
 The document-QA phase must re-read exact blobs rather than rely on the explanatory table if any listed identity is stale.
 
