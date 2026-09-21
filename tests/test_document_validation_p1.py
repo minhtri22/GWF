@@ -205,3 +205,25 @@ def test_vale_config_hash_changes_when_vocabulary_changes(tmp_path):
     rule = styles / "GWF" / "Terminology.yml"
     rule.write_text(rule.read_text(encoding="utf-8") + "# revision\n", encoding="utf-8")
     assert before != adapter._config_hash()
+
+
+def test_vale_secret_like_match_is_redacted():
+    payload = json.dumps(
+        {
+            "/tmp/doc.md": [
+                {
+                    "Span": [1, 16],
+                    "Check": "GWF.Terminology",
+                    "Message": "Do not persist SECRET_TOKEN=abc.",
+                    "Severity": "error",
+                    "Match": "SECRET_TOKEN=abc",
+                    "Line": 1,
+                }
+            ]
+        }
+    )
+    findings = ValeAdapter._parse_findings(payload)
+    assert findings is not None
+    assert len(findings) == 1
+    assert "SECRET_TOKEN=abc" not in findings[0].message
+    assert "<redacted-match>" in findings[0].message
