@@ -1775,3 +1775,154 @@ DG-P10+                   = NOT_STARTED / NOT_AUTHORIZED
 DG-W3                     = OPEN / NOT_EXECUTED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+
+## 66. DG-P10 pre-implementation qualification findings
+
+### F-117 — LOW — RESOLVED
+
+- **Initial finding:** The authorization-frontier prose still described DG-P9 implementation as NOT_STARTED after DG-P9 had already been formally closed and final closure HEAD `7a081bd8f1f2218859963e304230a8904f56a6eb` passed workflow `35629863163`.
+- **Resolution:** DG-P10 binds to the actual final DG-P9 closure HEAD/run/artifacts and the roadmap frontier is corrected before promoting DG-P10 pre-implementation qualification.
+- **Final status:** RESOLVED
+
+### F-118 — HIGH — RESOLVED
+
+- **Initial finding:** The roadmap listed DG-P10 HARD dependencies as DG-P4 + DG-P7 only, while §13 requires QA escalation and P5 owns exact QA/finding semantics including `CHANGE_CLASS_MISMATCH`.
+- **Resolution:** DG-P5 is added as a DG-P10 HARD dependency. P10 reuses P5 semantics and does not create a second finding lifecycle.
+- **Final status:** RESOLVED
+
+### F-119 — HIGH — RESOLVED
+
+- **Initial finding:** Current `DocumentFacade.revise_document()` resolves a candidate and immediately creates the new Revision, leaving no classification gate before authoritative current-state mutation.
+- **Resolution:** P10 freezes a pre-commit invariant: resolve exact candidate -> classify/review/approval -> recheck exact base/version -> only then create Revision.
+- **Final status:** RESOLVED
+
+### F-120 — HIGH — RESOLVED
+
+- **Initial finding:** §13 says the strongest governance class wins but does not define deterministic ordering.
+- **Resolution:** Freeze `EDITORIAL < CLARIFICATION < NORMATIVE < STRUCTURAL < SUPERSESSION` as the governance escalation rank.
+- **Final status:** RESOLVED
+
+### F-121 — HIGH — RESOLVED
+
+- **Initial finding:** A low declared class could be treated as clean merely because semantic review failed to produce an escalation.
+- **Resolution:** Freeze attributable QA review refs plus `EVALUATED | NOT_EVALUATED`; NOT_EVALUATED cannot authorize Revision commit.
+- **Final status:** RESOLVED
+
+### F-122 — HIGH — RESOLVED
+
+- **Initial finding:** The conceptual DocumentRevision change class has no current dedicated revision column, creating pressure for a parallel P10 table or post-hoc mutable label.
+- **Resolution:** Classification reuses immutable PRIM-EVIDENCE; new revisions may bind `effective_change_class + classification_evidence_ref` inside immutable payload metadata. No table, migration or historical backfill.
+- **Final status:** RESOLVED
+
+### F-123 — HIGH — RESOLVED
+
+- **Initial finding:** §14 lists document change policies but no qualified persisted document-level `change_policy` currently exists.
+- **Resolution:** P10 does not claim full §14 enforcement. It freezes a conservative minimum requiring human Approval for NORMATIVE/STRUCTURAL/SUPERSESSION; missing policy metadata cannot relax governance. P15/P16 retain their later responsibilities.
+- **Final status:** RESOLVED
+
+### F-124 — HIGH — RESOLVED
+
+- **Initial finding:** QA escalation could later be erased by agent downgrade or in-place rewrite.
+- **Resolution:** Agent/proposer classification is monotonic. Any lower human review result requires exact-subject Approval and new immutable Evidence referencing the prior classification.
+- **Final status:** RESOLVED
+
+### F-125 — HIGH — RESOLVED
+
+- **Initial finding:** STRUCTURAL/SUPERSESSION labels could be mistaken as authorization to mutate authority, relations, lifecycle or validity.
+- **Resolution:** P10 classification has zero such mutation side effects. Execution remains later explicitly authorized work.
+- **Final status:** RESOLVED
+
+### F-126 — HIGH — RESOLVED
+
+- **Initial finding:** Implementing change-set-wide effective class in P10 would preempt DG-P11.
+- **Resolution:** P10 classifies exactly one document candidate. DG-P11 owns multi-document frozen scope and aggregate effective class.
+- **Final status:** RESOLVED
+
+### F-127 — MEDIUM — RESOLVED
+
+- **Initial finding:** Initial document registration has no prior governed base Revision, so forcing it into the five edit classes would invent unsupported semantics.
+- **Resolution:** P10 applies to revision of an existing governed document; initial registration remains outside this edit-classification contract.
+- **Final status:** RESOLVED
+
+### F-128 — HIGH — RESOLVED
+
+- **Initial finding:** Diff-size heuristics could allow small normative changes to masquerade as EDITORIAL/CLARIFICATION.
+- **Resolution:** Byte/line/token/file size is forbidden as a class-lowering signal.
+- **Final status:** RESOLVED
+
+### F-129 — HIGH — RESOLVED
+
+- **Initial finding:** A P5 `CHANGE_CLASS_MISMATCH` finding could be mistaken for the canonical change classification record.
+- **Resolution:** P5 remains finding/remediation state; P10 canonical classification is immutable `document_change_classification` Evidence.
+- **Final status:** RESOLVED
+
+### F-130 — HIGH — RESOLVED
+
+- **Initial finding:** Classification Evidence could be replayed after the base Revision, Artifact version or proposed source changes.
+- **Resolution:** Classification binds exact base/version/candidate identity and must be rechecked immediately before commit. Stale classification fails closed.
+- **Final status:** RESOLVED
+
+## 67. DG-P10 pre-implementation qualification checklist
+
+- [x] exact DG-P9 final closure HEAD `7a081bd8f1f2218859963e304230a8904f56a6eb` verified.
+- [x] final DG-P9 exact-head run `35629863163` PASS verified.
+- [x] final DG-P9 SQLite/PostgreSQL artifact identities and digests verified.
+- [x] Documentation Integrity §§13-14 loaded.
+- [x] DG-P4 exact identity/runtime path inventoried.
+- [x] DG-P5 QA/finding semantics inventoried.
+- [x] DG-P7 authority semantics inventoried.
+- [x] P5 added as DG-P10 HARD dependency.
+- [x] five-class vocabulary frozen.
+- [x] deterministic governance rank frozen.
+- [x] one-document P10 scope frozen.
+- [x] exact base Revision + candidate source subject frozen.
+- [x] pre-commit classification invariant frozen.
+- [x] mandatory explicit declared class frozen.
+- [x] structured trigger mapping frozen.
+- [x] CLARIFICATION/NORMATIVE ambiguity fails conservatively to NORMATIVE.
+- [x] attributable semantic review frozen.
+- [x] NOT_EVALUATED cannot authorize commit.
+- [x] QA escalation monotonic.
+- [x] agent unilateral downgrade forbidden.
+- [x] governed human replacement bounded.
+- [x] diff-size downgrade heuristics forbidden.
+- [x] conservative NORMATIVE+ Approval minimum frozen.
+- [x] full §14 policy-enforcement overclaim rejected.
+- [x] `document_change_classification` PRIM-EVIDENCE reuse frozen.
+- [x] no P10 table.
+- [x] no schema migration.
+- [x] no historical revision backfill.
+- [x] new Revision payload binding limited to classification refs/class for exact candidate.
+- [x] P5 finding lifecycle remains canonical.
+- [x] STRUCTURAL/SUPERSESSION zero mutation side effects.
+- [x] multi-document effective class deferred to DG-P11.
+- [x] D10-F1..D10-F20 frozen.
+- [x] document QA PASS.
+- [x] implementation has not started.
+- [x] DG-P11+ remain NOT_STARTED / NOT_AUTHORIZED.
+- [x] DG-W3 remains OPEN / NOT_EXECUTED.
+- [x] GAC remains locked until DG-W4 PASS.
+
+## 68. Current aggregate status after DG-P10 pre-implementation qualification
+
+**OPEN = 0**
+
+All findings F-01 through F-130 are resolved.
+
+```text
+DG-P9                     = FORMALLY_CLOSED
+DG-P9 final closure HEAD  = 7a081bd8f1f2218859963e304230a8904f56a6eb
+DG-P9 final exact run     = 35629863163 PASS
+DG-P10 authorization      = PREIMPLEMENTATION_ONLY
+DG-P10 specification      = FROZEN
+DG-P10 spec commit        = f5d8544758cfdaeb1867c1fa9f72dab346c387c7
+DG-P10 spec blob          = 56a99967ebe815c56341b1668c3acb1a1517d589
+DG-P10 dependency qualify = PASS
+DG-P10 document QA        = PASS
+DG-P10 implementation     = NOT_STARTED
+DG-P10 overall            = NOT_YET_PASS
+DG-P11+                   = NOT_STARTED / NOT_AUTHORIZED
+DG-W3                     = OPEN / NOT_EXECUTED
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+```

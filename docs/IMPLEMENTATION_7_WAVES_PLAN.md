@@ -444,14 +444,48 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P10 — Change classification
 
 - **Complexity:** 3
-- **HARD dependencies:** DG-P4, DG-P7.
+- **Status:** **PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **HARD dependencies:** DG-P4, DG-P5, DG-P7.
+- **ORDERING / governance frontier:** DG-P9 formally closed at final HEAD `7a081bd8f1f2218859963e304230a8904f56a6eb`, final exact-head workflow `35629863163` PASS.
+- **Frozen specification:** `docs/DG_P10_CHANGE_CLASSIFICATION_SPEC.md`, commit `f5d8544758cfdaeb1867c1fa9f72dab346c387c7`, blob `56a99967ebe815c56341b1668c3acb1a1517d589`.
+- **Document QA:** `docs/DOCUMENT_QA_DG_P10_PREIMPLEMENTATION.md` — PASS.
 - **Governing document:** `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §§13–14.
-- **Acceptance checklist:**
-  - [ ] EDITORIAL / CLARIFICATION / NORMATIVE / STRUCTURAL / SUPERSESSION represented;
-  - [ ] QA can escalate classification;
-  - [ ] ambiguous clarification vs normative fails conservatively;
-  - [ ] agent cannot downgrade escalated class;
-  - [ ] QA PASS.
+- **Persistence verdict:** no new table or schema migration; reserve `document_change_classification` as core PRIM-EVIDENCE and bind exact class/evidence ref in immutable new-revision payload metadata.
+- **Pre-implementation acceptance:**
+  - [x] EDITORIAL / CLARIFICATION / NORMATIVE / STRUCTURAL / SUPERSESSION frozen;
+  - [x] deterministic governance rank frozen;
+  - [x] exact base Revision + exact candidate source required;
+  - [x] classification occurs before revision mutation;
+  - [x] explicit declared class required; no default;
+  - [x] semantic trigger floors frozen;
+  - [x] QA can escalate classification monotonically;
+  - [x] required semantic review NOT_EVALUATED fails closed;
+  - [x] ambiguous clarification vs normative resolves to NORMATIVE;
+  - [x] agent cannot unilaterally downgrade escalated class;
+  - [x] governed human lower replacement requires Approval + new immutable Evidence;
+  - [x] diff size cannot lower class;
+  - [x] NORMATIVE/STRUCTURAL/SUPERSESSION require human Approval minimum;
+  - [x] no full §14 policy-enforcement overclaim;
+  - [x] STRUCTURAL/SUPERSESSION have no mutation side effects;
+  - [x] multi-document aggregation remains DG-P11;
+  - [x] D10-F1..D10-F20 frozen;
+  - [x] QA PASS.
+- **Implementation acceptance remains open:**
+  - [ ] reserve core `document_change_classification` Evidence type;
+  - [ ] implement deterministic single-document classifier/adjudicator;
+  - [ ] implement exact candidate/base stale checks;
+  - [ ] implement attributable review and QA escalation inputs;
+  - [ ] implement Proposal/Approval path for NORMATIVE+ commit;
+  - [ ] integrate classifier before `KnowledgeKernel.create_revision()`;
+  - [ ] bind effective class + Evidence ref into new immutable Revision payload;
+  - [ ] preserve P5 finding lifecycle;
+  - [ ] no P10 table/migration;
+  - [ ] no authority/relation/lifecycle/impact/validity mutation;
+  - [ ] D10-F1..D10-F20 PASS;
+  - [ ] P4/P5/P7/P9 regressions PASS;
+  - [ ] full repository regression PASS;
+  - [ ] compile PASS;
+  - [ ] implementation QA PASS.
 
 ### DG-P11 — DocumentChangeSet
 
@@ -1082,16 +1116,21 @@ DG-P8 — Typed document relations
        ↓
 DG-P9 — Logical-current vs pinned-revision binding
       PASS / FORMALLY CLOSED
-      handoff HEAD 5f6ecece5bbb15c36b00a35c7a4dbb6b340e0e4e
-      exact-head run 35629583197 PASS
+      final closure HEAD 7a081bd8f1f2218859963e304230a8904f56a6eb
+      final exact-head run 35629863163 PASS
+       ↓
+DG-P10 — Change classification
+      PRE-IMPLEMENTATION SPEC FROZEN
+      DEPENDENCY / DOCUMENT QA PASS
+      IMPLEMENTATION NOT_STARTED / NOT_AUTHORIZED
        ↓
 STOP
 
-DG-P10+ = NOT_STARTED / NOT_AUTHORIZED
+DG-P11+ = NOT_STARTED / NOT_AUTHORIZED
 ```
 
-DG-P8 is formally closed at final exact closure evidence, and the explicitly authorized DG-P9 pre-implementation qualification has passed.
+DG-P9 is formally closed at final exact closure evidence. The explicitly authorized DG-P10 pre-implementation specification/dependency qualification has passed.
 
-DG-P9 implementation remains NOT_STARTED and requires a separate explicit bounded implementation authorization. DG-P10+ remain unopened. DG-W3 remains OPEN / NOT_EXECUTED.
+DG-P10 implementation remains NOT_STARTED and requires a separate explicit bounded implementation authorization. DG-P11+ remain unopened. DG-W3 remains OPEN / NOT_EXECUTED.
 
 GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.
