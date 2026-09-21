@@ -33,3 +33,15 @@
 - **QA:** `6407fb508a7cb57235795f00580ed0c6405f936d`
 - **Result:** EvidenceCapsule, ClaimResultPackage, applicability/reuse, provenance-overlap, synthesis/convergence and provider-neutral Evidence Library Adapter semantics are frozen; GWF GAC is the default backend only when implemented/qualified.
 - **Next:** P1 — Core Schemas.
+
+
+### G2E-P0.3 — GWF Shared Library Reconciliation
+
+- **Status:** PASS
+- **Findings:** `610e05dd0fa6561df2b60e17e93f921392abc5f2`
+- **Main reconciliation:** `550c257b57f31e046080ff7eefbc3c5771906a55`
+- **Pinned-reference correction:** `ce490c4609105a17f644d4473a86c27f45ad7ecf`
+- **Exact QA-blob correction:** `1c918693814bd0a346842a6a99ce54ebefbbfb84`
+- **QA:** `edb11324a0490454f7c56e11e62a93ae0ccad98d`
+- **Result:** G2E now matches GWF reconciliation `be7d606c...`: Shared Library ownership, direct-vs-Reference-Acquisition routing, exact GAC/RA readiness gates, same-subject dedup, terminology mapping and conditional P4L integration are frozen without introducing a second catalog/store.
+- **Next:** P1 — Core Schemas; GWF-backed Library integration remains conditional P4L.
