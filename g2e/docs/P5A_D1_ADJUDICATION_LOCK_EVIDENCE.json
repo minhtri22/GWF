@@ -1,0 +1,33 @@
+{
+  "schema": "G2E-P5A-D1-ADJUDICATION-LOCK-EVIDENCE-v1",
+  "status": "PASS",
+  "qualified_candidate": "685739bf607ed456ace1bf723a352ab72a5237d3",
+  "baseline": "dea34428cb644a221d34a143a738c35b196d3f05",
+  "result_commit": "d650d564a71808197959cd45bce1b1b1a4b1b901",
+  "result_blob": "5de30fe81e5c17747bc7c3d2bd9a0de9b490e39b",
+  "blobs": {
+    "lock": "a48236824e66b2618e4a08bf00928c94e9b5a815",
+    "adjudicator": "85cc857593a154109cdf5ed749c73f0a2b1e4adb",
+    "test": "0f35f211f48b09cb6f1b8dcaa99451a1203dfc6e",
+    "workflow": "46f0431d600341d45405f57b6840baf2f3caf88d"
+  },
+  "workflow": {
+    "run_id": 35593990611,
+    "job_id": 106314510193,
+    "conclusion": "PASS",
+    "artifact_id": 10636246771,
+    "artifact_digest": "sha256:d844fcd43f3327c24f5ce7eede11df255895215cbeb84f64a485a216c9a9b184"
+  },
+  "zero_fresh": {
+    "actual_harness_evidence_consumed": false,
+    "tracked_discovery_json_present": false,
+    "runtime_core_mutation": false
+  },
+  "authorization": {
+    "d1_collection_authorized": true,
+    "d2_authorized": false,
+    "codex_runtime_adapter_authorized": false,
+    "chatgpt_p5b_touched": false
+  },
+  "next_admissible_step": "ONE_TARGET_HARNESS_DISCOVERY_RUN_THEN_FROZEN_D1_ADJUDICATION"
+}
