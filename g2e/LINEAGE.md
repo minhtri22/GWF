@@ -211,3 +211,17 @@
 - **Result:** invalidity mechanism attributed to cross-platform path-order semantics: Windows probe emits deterministic WindowsPath ordering while the parent adjudicator checked case-sensitive string ordering. Repair mirrors the qualified probe host semantics with PureWindowsPath/PurePosixPath while preserving inventory digest, token, handshake, secret, PASS/FAIL/INVALID and authorization rules.
 - **No-rescue boundary:** no fresh Codex recollection, version switch, token relaxation, discovery-probe mutation, D2 or runtime-adapter opening is authorized.
 - **Next:** pull the qualified repaired adjudicator and re-adjudicate the original discovery JSON exactly once; retain both original INVALID and repaired adjudication.
+
+
+### G2E-P5A — Codex D1 Actual-Harness Qualification
+
+- **Status:** PASS / STRUCTURAL SURFACE ONLY
+- **Original discovery SHA-256:** `ba098a56be39e996488e5a543af8c373199f8b4cc66f922be6d7bc6386c6e860`
+- **Original adjudication:** INVALID solely for `INVENTORY_PATHS_NOT_SORTED`
+- **Qualified invalidity repair:** `4e447ef19a843aa3dd1337c57a9c70b4c1a00de1`; repaired adjudicator blob `b2ba81801d2bfe7a662acb477fa449e16d13fa55`
+- **Repaired adjudication SHA-256:** `04035432c5f290dfd7bbcc91feba8865dc86bfae11686a4e44da2f56cb4ac578`
+- **Repaired verdict:** PASS; reason codes empty; initialize handshake PASS; required protocol tokens all true; recomputed schema inventory digest exactly `4da66f2fac241c53ec857bf1a5f0f9586a445e39c4b0c4e7b4bdb0b103aa8376`.
+- **Harness identity:** reported version `codex-cli 0.0.0`; executable SHA-256 `a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8`.
+- **Result:** Codex is qualified only for the exact D1 structural App Server surface. Functional repository/shell/test/network/approval execution, active-task interruption and completed-task artifact extraction remain unqualified.
+- **Authorization boundary:** exact Codex AgentCapabilityManifest materialization is authorized; D2 and Codex runtime adapter remain NOT AUTHORIZED; ChatGPT P5B remains untouched.
+- **Next:** materialize and independently qualify one canonical Codex AgentCapabilityManifest from D1-only evidence.
