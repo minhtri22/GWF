@@ -77,3 +77,33 @@
 - **Evidence closure:** `290164347db6c52043dfa9f863122d145c288293`
 - **Result:** Deterministic Claim/Goal validation, proof admissibility, evidence admission, protected-resource freshness, one-shot adjudication, bounded retry, Claim/Goal resolution, Next-Step selection, no-rescue, applicability/reuse, independence clustering and synthesis/convergence mechanics qualified with P1 23/23 + P2 41/41 fixtures; no runtime/DB/agent/GWF/GAC dependency opened.
 - **Next:** P3 — Standalone Runtime.
+
+
+### G2E-P1.2 — Standalone Runtime Prerequisite Schemas
+
+- **Status:** PASS
+- **Qualified schema:** `fe02721b436e94fc7cd34a68f136d6088ca4b411`
+- **Authoritative qualification:** P1 `35577307904` / job `106261951175` — PASS; P2 regression `35577307899` / job `106261951530` — PASS
+- **Evidence closure:** `9165a3afd75b7386370e9eb7642ee0579a3d1a5b`
+- **Result:** RuntimeCapabilityManifest, provider-neutral ExecutionResult and canonical PackageManifest/PackageSeal were added and requalified without weakening P1.1/P2 semantics.
+- **Next:** P3 prerequisite package-integrity completion.
+
+
+### G2E-P1.3 — Package External Reference Integrity
+
+- **Status:** PASS
+- **Qualified schema:** `931b7d23239f625136be12d26564e9f89f8785b9`
+- **Authoritative qualification:** P1 `35577723392` / job `106263241695` — PASS; P2 regression `35577723441` / job `106263242213` — PASS
+- **Evidence closure:** `e4ef2f8c62558b540f1babba7e9b5f2dc9bb0497`
+- **Result:** PackageManifest now binds exact external-reference inventory and resolution policy required for independently verifiable sealed result packages.
+- **Next:** P3 — Standalone Runtime.
+
+
+### G2E-P3 — Standalone Runtime
+
+- **Status:** PASS
+- **Qualified implementation:** `b9345f3cbeba564a0bf666d388d3873d9ffd1191`
+- **Authoritative qualification:** P1 `35581467359` / job `106275090078` — PASS; P2 `35581467348` / job `106275090278` — PASS; P3 `35581467424` / job `106275090584` — PASS
+- **Evidence closure:** `b7a00ece1673663b2c8fde2331a20b7beb241490`
+- **Result:** Standalone SQLite/filesystem runtime, fail-closed restart recovery, protected-resource ledger, local executor facade, independently re-verifiable sealed Goal Result packages and qualified local Evidence Library operations passed 29 P1 + 43 P2 + 25 P3 fixtures. Exact DecisionRule identity remains preserved through restart, adjudication, package export and semantic replay.
+- **Next:** P4 — Base GWF Adapter; P4L remains conditional and closed.
