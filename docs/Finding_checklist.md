@@ -292,3 +292,62 @@ No unresolved finding from this audit remains. A future implementation review ma
 **OPEN = 0**
 
 All findings F-01 through F-36 recorded in this checklist are resolved. The documentation-governance specification remains specification-only; implementation-specific findings require a future implementation audit.
+
+## 8. Seven-wave implementation plan QA findings
+
+### F-37 — HIGH — RESOLVED
+
+- **Initial finding:** The plan used `PLAN-QA` and wave-gate IDs without defining how those dependencies resolve to exact evidence identities.
+- **Remediation:** Defined PLAN-QA, DIG-SPEC and wave-gate control identities and required exact commit/blob/run resolution in handoff.
+- **Final status:** `RESOLVED`
+
+### F-38 — MEDIUM — RESOLVED
+
+- **Initial finding:** Complexity ranges such as 1–2 and 3–4 made the “lowest complexity first” priority rule non-deterministic.
+- **Remediation:** Converted every item to one integer priority complexity using the conservative upper bound.
+- **Final status:** `RESOLVED`
+
+### F-39 — MEDIUM — RESOLVED
+
+- **Initial finding:** Several item-level governing-document references used non-canonical bare filenames, which could become ambiguous during handoff.
+- **Remediation:** Normalized governing document references to canonical `docs/...` paths.
+- **Final status:** `RESOLVED`
+
+### F-40 — HIGH — RESOLVED
+
+- **Initial finding:** DG-P0 could theoretically qualify using mocked validator behavior without proving a real pinned markdownlint integration.
+- **Remediation:** Added a mandatory real pinned markdownlint-cli2 smoke fixture and pinned config hash; mocks/shims alone cannot qualify P0.
+- **Final status:** `RESOLVED`
+
+### F-41 — MEDIUM — RESOLVED
+
+- **Initial finding:** Wave 1 exit gate could be read as automatic authorization for P1–P3 once P0 passes.
+- **Remediation:** Explicitly marked DG-W1 as a future gate and retained the current authorization stop immediately after DG-P0.
+- **Final status:** `RESOLVED`
+
+### F-42 — MEDIUM — RESOLVED
+
+- **Initial finding:** P0 required validator config attribution but did not explicitly require a pinned minimal markdownlint config as part of acceptance evidence.
+- **Remediation:** Added minimal config pinning and config content-hash evidence to P0 scope and checklist.
+- **Final status:** `RESOLVED`
+
+## 9. Seven-wave plan checklist
+
+- [x] Every implementation item has one deterministic integer complexity level.
+- [x] Every item lists HARD/ORDERING/OPTIONAL/EXTERNAL dependencies as applicable.
+- [x] Control dependency IDs resolve to exact QA/gate evidence semantics.
+- [x] Every item lists governing document paths.
+- [x] Every item has an acceptance checklist.
+- [x] Every wave has an exit gate.
+- [x] Handoff package requirements are explicit.
+- [x] DG-P0 requires a real pinned markdownlint smoke test.
+- [x] DG-P0 excludes registry/graph/research mutation/auto-fix.
+- [x] Current authorization stops after DG-P0.
+- [x] Parking-lot items are not accidentally promoted into the active 7-wave plan.
+- [x] Implementation remains unauthorized for DG-P1 and later items.
+
+## 10. Current aggregate status after 7-wave plan QA
+
+**OPEN = 0**
+
+All findings F-01 through F-42 recorded in this checklist are resolved.
