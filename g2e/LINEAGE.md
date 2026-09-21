@@ -160,3 +160,16 @@
 - **Result:** P5 dependency, separate Codex/ChatGPT discovery, authority/security, prospective independence, fail-closed behavior and outcome-blind P5-FX-001 contracts are frozen. Zero-implementation QA and P1–P4 regressions PASS with no Codex/ChatGPT runtime adapter mutation. Findings P5-F01/P5-F02 confirm that backend RuntimeCapabilityManifest cannot substitute for app capability identity and that exact canonical AgentBinding identity is still missing.
 - **Implementation boundary:** P5A/P5B runtime adapters remain NOT AUTHORIZED. Neither Codex nor ChatGPT is declared available until actual-harness discovery/qualification.
 - **Next:** P1.4 — Agent Profile / Binding Identity, schema-only prerequisite; requalify P1–P4 before opening P5A.
+
+
+### G2E-P1.4 — Agent Profile / Binding Identity
+
+- **Status:** PASS
+- **Pre-implementation qualification:** `995ca7a87e2acc3bdb7980046509b0061de48a4e`; workflow `35590024177` / job `106302073904` — PASS; artifact `10633823851`.
+- **Qualified implementation:** `d3cb0bdb5644a9f1cff382450b5476e166759d72`
+- **Exact qualification workflows:** P1 `35590544907` / job `106303688907` PASS; P2 `35590544803` / job `106303689038` PASS; P3 `35590544876` / job `106303688896` PASS; P4 `35590544868` / job `106303689021` PASS; P1.4 `35590544831` / job `106303688970` PASS.
+- **P1.4 evidence artifact:** `10634082369`; digest `sha256:7d28b488f937dc1f5d6afb3a6159688c76b9f1dd8c40f72de54f00455e551d22`.
+- **Evidence closure:** `233ab9442338e7ed0d4a53f70dc87ab803165711`
+- **Result:** Canonical AgentCapabilityManifest, AgentEquivalencePolicy and AgentBinding identities are now qualified; ExecutionAttemptEnvelope/ExecutionResult carry exact binding refs; deterministic relation validation fails closed on capability, identity, attempt, authority and result mismatch; standalone and GWF propagate binding identity without acquiring scientific authority. P5-F01/P5-F02 are closed.
+- **Implementation boundary:** provider-neutral schema/propagation only. No Codex/ChatGPT driver, provider API, MCP/ARC runtime, profile discovery runtime, P4L/GAC or Reference Acquisition implementation was opened.
+- **Next:** P5A Codex actual-harness capability discovery/profile qualification preparation. ChatGPT remains a separate independently discoverable P5B profile.
