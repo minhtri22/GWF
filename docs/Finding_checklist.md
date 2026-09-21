@@ -2009,21 +2009,48 @@ GAC                       = LOCKED_UNTIL_DG-W4_PASS
 
 ## 71. DG-P10 implementation qualification findings
 
-### F-142 — HIGH — RESOLVED_PENDING_VERIFY
+### F-142 — HIGH — RESOLVED
 
 - **Negative evidence:** initial DG-P10 implementation workflow `35634856064` on exact HEAD `029adecef4204bad62b474f8f609c41ce45fd2ef`.
 - **Observed outcome:** D10-F1..D10-F20 PASS on SQLite; bounded DG-P10 gate PASS; PostgreSQL 17 D10/gate PASS. SQLite targeted historical regression failed before full regression/compile.
 - **Root cause:** the bounded enrollment API extension accidentally placed optional `document_governance` on `_resolve_source()` instead of `register_document()`, while `register_document()` referenced that name. Legacy DG-P4 registration therefore raised before completing.
 - **Scientific/governance interpretation:** this is an implementation wiring defect, not evidence against the frozen D10 semantics and not a reason to relax any fixture, authority rule or archive policy.
 - **Repair:** move the optional argument to the public registration boundary, keep `_resolve_source()` unchanged, and add a DG-P10 enrollment registration regression while retaining the full historical P4 suite.
-- **Status:** RESOLVED_PENDING_VERIFY until the repaired exact HEAD passes the same qualification workflow.
+- **Verification:** repaired HEAD `b551c7978ec7cc14047c8adae06902f0d75e8b9b`, run `35635200766`, SQLite D10 gate PASS, targeted P4/P5/P7/P8/P9 regressions PASS, full Linux regression PASS, compile PASS; PostgreSQL 17 D10/gate PASS.
+- **Status:** RESOLVED
 
 ### Current implementation finding state
 
 ```text
-F-142 = RESOLVED_PENDING_VERIFY
-active unresolved implementation findings = 1
+F-142 = RESOLVED
+active unresolved implementation findings = 0
 negative run preserved = 35634856064
+D10 frozen semantics changed = NO
+DG-P11 opened = NO
+```
+
+
+## 72. Windows one-click UAT portability finding
+
+### F-143 — HIGH — RESOLVED_PENDING_VERIFY
+
+- **Negative evidence:** exact repaired HEAD `b551c7978ec7cc14047c8adae06902f0d75e8b9b`, GitHub qualification run `35635200766`, Windows job `windows-oneclick-uat`; independently reproduced by local UAT on Windows.
+- **Observed outcome:** bounded DG-P10 gate PASS before full tests; SQLite/Linux full regression PASS; PostgreSQL 17 PASS; Windows full suite failed 21 P0/P1/P2 document-validation tests at version probing.
+- **Failure signature:** Markdownlint/Vale/Lychee fake validator fixtures returned `VERSION_PROBE_FAILED` before validator semantics were exercised.
+- **Root cause:** test fixtures created extensionless Python files with POSIX shebang + chmod and passed them directly to `subprocess.run`. Linux executes these files; Windows does not treat shebang/chmod as an executable contract.
+- **Production impact adjudication:** no evidence of a defect in the validator adapters' real Windows executable contract. Real Windows validator launch targets are executable entry points such as `.cmd` or `.exe`; the failure is confined to the test harness representation of fake tools.
+- **Repair:** keep production adapters unchanged. On Windows, fake validators are wrapped in a `.cmd` launcher invoking the exact current Python interpreter; on POSIX, retain executable shebang scripts. Expected version, findings, fail-closed, mutation-detection and network semantics remain unchanged.
+- **Status:** RESOLVED_PENDING_VERIFY until the same DG-P10 qualification workflow passes Windows one-click UAT on the repaired exact HEAD.
+
+### Current implementation finding state after F-143 repair
+
+```text
+F-142 = RESOLVED
+F-143 = RESOLVED_PENDING_VERIFY
+active unresolved implementation findings = 1
+negative run preserved = 35635200766
+local Windows negative evidence preserved = YES
+validator production semantics changed = NO
 D10 frozen semantics changed = NO
 DG-P11 opened = NO
 ```

@@ -2,8 +2,24 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import os
+import sys
 
 from gwr.document_validation import LycheeAdapter
+
+
+def _write_python_fake(tmp_path: Path, name: str, body: str) -> str:
+    script = tmp_path / f"{name}.py"
+    script.write_text("#!/usr/bin/env python3\n" + body, encoding="utf-8")
+    if os.name == "nt":
+        wrapper = tmp_path / f"{name}.cmd"
+        wrapper.write_text(
+            f'@"{sys.executable}" "{script}" %*\r\n',
+            encoding="utf-8",
+        )
+        return str(wrapper)
+    script.chmod(0o755)
+    return str(script)
 
 
 def _config(tmp_path: Path) -> Path:
@@ -30,9 +46,7 @@ def _fake_lychee(
     mutate: bool = False,
     stderr_text: str = "",
 ) -> str:
-    path = tmp_path / "lychee"
-    body = f"""#!/usr/bin/env python3
-import pathlib
+    body = f"""import pathlib
 import sys
 if "--version" in sys.argv:
     print("lychee {version}")
@@ -45,9 +59,7 @@ if {stderr_text!r}:
     print({stderr_text!r}, file=sys.stderr)
 raise SystemExit({code})
 """
-    path.write_text(body, encoding="utf-8")
-    path.chmod(0o755)
-    return str(path)
+    return _write_python_fake(tmp_path, "lychee", body)
 
 
 def _clean_report() -> dict:
@@ -185,15 +197,14 @@ def test_lychee_version_mismatch_fails_closed(tmp_path: Path):
 
 
 def test_lychee_malformed_json_fails_closed(tmp_path: Path):
-    exe = tmp_path / "lychee"
-    exe.write_text(
-        '#!/usr/bin/env python3\nimport sys\n'
+    exe = _write_python_fake(
+        tmp_path,
+        "lychee-malformed",
+        'import sys\n'
         'print("lychee 0.24.2") if "--version" in sys.argv else print("not-json")\n',
-        encoding="utf-8",
     )
-    exe.chmod(0o755)
     adapter = LycheeAdapter(
-        executable=str(exe),
+        executable=exe,
         expected_version="0.24.2",
         config_path=_config(tmp_path),
     )

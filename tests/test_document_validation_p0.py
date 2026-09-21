@@ -1,15 +1,24 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
+import sys
 
 from gwr.document_validation import MarkdownlintCli2Adapter
 
 
 def _write_fake(tmp_path: Path, body: str, name: str = "markdownlint-cli2") -> str:
-    path = tmp_path / name
-    path.write_text("#!/usr/bin/env python3\n" + body, encoding="utf-8")
-    path.chmod(0o755)
-    return str(path)
+    script = tmp_path / f"{name}.py"
+    script.write_text("#!/usr/bin/env python3\n" + body, encoding="utf-8")
+    if os.name == "nt":
+        wrapper = tmp_path / f"{name}.cmd"
+        wrapper.write_text(
+            f'@"{sys.executable}" "{script}" %*\r\n',
+            encoding="utf-8",
+        )
+        return str(wrapper)
+    script.chmod(0o755)
+    return str(script)
 
 
 def _cfg(tmp_path: Path) -> Path:

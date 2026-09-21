@@ -2,15 +2,24 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import os
+import sys
 
 from gwr.document_validation import ValeAdapter
 
 
 def _write_fake(tmp_path: Path, body: str, name: str = "vale") -> str:
-    path = tmp_path / name
-    path.write_text("#!/usr/bin/env python3\n" + body, encoding="utf-8")
-    path.chmod(0o755)
-    return str(path)
+    script = tmp_path / f"{name}.py"
+    script.write_text("#!/usr/bin/env python3\n" + body, encoding="utf-8")
+    if os.name == "nt":
+        wrapper = tmp_path / f"{name}.cmd"
+        wrapper.write_text(
+            f'@"{sys.executable}" "{script}" %*\r\n',
+            encoding="utf-8",
+        )
+        return str(wrapper)
+    script.chmod(0o755)
+    return str(script)
 
 
 def _config(tmp_path: Path) -> tuple[Path, Path]:
