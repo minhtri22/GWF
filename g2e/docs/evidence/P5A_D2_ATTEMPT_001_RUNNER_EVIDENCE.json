@@ -1,0 +1,111 @@
+{
+  "account_present": true,
+  "account_type": "chatgpt",
+  "app_server_exit_code": 1,
+  "attempt_id": "p5a-d2-p5-fx-001-attempt-001",
+  "auth_ready": true,
+  "callable_or_enabled_app_count": 0,
+  "codex_home_post_entries": [
+    ".sandbox_migration",
+    "auth.json",
+    "goals_1.sqlite",
+    "goals_1.sqlite-shm",
+    "goals_1.sqlite-wal",
+    "installation_id",
+    "logs_2.sqlite",
+    "logs_2.sqlite-shm",
+    "logs_2.sqlite-wal",
+    "memories_1.sqlite",
+    "memories_1.sqlite-shm",
+    "memories_1.sqlite-wal",
+    "models_cache.json",
+    "queue_1.sqlite",
+    "queue_1.sqlite-shm",
+    "queue_1.sqlite-wal",
+    "skills",
+    "state_5.sqlite",
+    "state_5.sqlite-shm",
+    "state_5.sqlite-wal",
+    "thread-writer-locks",
+    "tmp"
+  ],
+  "configured_mcp_count": 0,
+  "driver_exception": "RuntimeError:RPC_ERROR id=6:{'code': -32600, 'message': 'Invalid request: workspaceWrite.readOnlyAccess is no longer supported; use permissionProfile for restricted reads'}",
+  "finished_at": "2026-09-21T16:33:29.073550Z",
+  "input_unchanged": true,
+  "installed_app_count": 0,
+  "instruction_sources": [],
+  "mode": "execute",
+  "permission_request_seen": false,
+  "preflight": {
+    "admission_hashes": {
+      "P5A_D2_AUTHORITY_POLICY.json": "984027e5911c37b5e0b7a9788d836558d0525dbb3b070ce33687788eb4b68e49",
+      "P5A_D2_FINAL_ADMISSION.json": "d505bbb2c68ddff8ddbc2246ed0d1d8891fa01d976adfa575c0f7270535463ba",
+      "P5A_D2_FINAL_AGENT_BINDING.json": "03eb1bb5502fb4418f1d88695779bbb9535aa0f4ff0f84e73771c10a524a66bb",
+      "P5A_D2_PREDISPATCH_ATTEMPT.json": "115ce76ac31139f42be264ae52b0928321ea718f8080d3da1f85e59547ec8e9a",
+      "P5A_D2_QUALIFICATION_AUTHORITY_GRANT.json": "420415c832531c0e59960acd81409857545ae4aeed35c21d3682fbb5bb938f82"
+    },
+    "codex_home_auth_only_at_launch": true,
+    "codex_home_initial_entries": [
+      "auth.json"
+    ],
+    "execution_config_hash": "740d5303d29b757e47571bc50b6367770296f7186a5528cef25adbb806669c3a",
+    "harness_sha256": "a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8",
+    "input_sha256": "a176454229feef1ce8bd7eab1ea79fbfeff07c229c88123edf862fea9160eef6",
+    "isolation_overrides": [
+      "mcp_servers={}",
+      "features.apps=false",
+      "features.plugins=false",
+      "features.remote_plugin=false",
+      "features.workspace_dependencies=false"
+    ],
+    "local_root": "D:\\WORK\\RESEARCH\\4.GWF\\g2e\\.local\\P5A-D2",
+    "runner_sha256": "f9ef2699f4ff77f43cad9316cb9cce5e496d832f72f9eb210ccfc5bcedca0171",
+    "schema_evidence": {
+      "thread_start_sandbox_wire_value": "workspace-write",
+      "thread_start_schema_sha256": "792e2f32e37cece971bd616664ea2053741acbed4e9c92e9d1766427718f2ecd",
+      "turn_start_sandbox_policy_type": "workspaceWrite",
+      "turn_start_schema_sha256": "a3835e8c1e942e4b358e1a670939b89918b16c4d13105a579899892b7ade6dea"
+    },
+    "source_head": "6938072806d61e6920a86abece79406630653f3c",
+    "source_status_clean": true,
+    "task_sha256": "4c4aba6a82d540440dfef725b2568afdef4be3b26c3e4e84e2b34c54e6dd460e"
+  },
+  "protocol_command_execution_seen": false,
+  "protocol_mcp_tool_seen": false,
+  "protocol_web_search_seen": false,
+  "result_exists": false,
+  "result_sha256": null,
+  "result_size": null,
+  "schema": "G2E-P5A-D2-ISOLATED-RUNNER-v2-EVIDENCE",
+  "session_id": "01a0c4d0-bb32-7451-a40d-0f651fccf1d2",
+  "started_at": "2026-09-21T16:33:24.886655Z",
+  "startup_timeout": false,
+  "task_unchanged": true,
+  "terminal_method": null,
+  "terminal_status": null,
+  "thread_id": "01a0c4d0-bb32-7451-a40d-0f651fccf1d2",
+  "turn_elapsed_seconds": 0.078,
+  "turn_id": null,
+  "turn_start_accepted": false,
+  "turn_start_request_sent": true,
+  "turn_timeout": false,
+  "unexpected_server_request": false,
+  "unexpected_workspace_entries": [],
+  "workspace_names": [
+    "TASK.md",
+    "input.json"
+  ],
+  "workspace_post": {
+    "TASK.md": {
+      "is_file": true,
+      "sha256": "4c4aba6a82d540440dfef725b2568afdef4be3b26c3e4e84e2b34c54e6dd460e",
+      "size": 694
+    },
+    "input.json": {
+      "is_file": true,
+      "sha256": "a176454229feef1ce8bd7eab1ea79fbfeff07c229c88123edf862fea9160eef6",
+      "size": 434
+    }
+  }
+}

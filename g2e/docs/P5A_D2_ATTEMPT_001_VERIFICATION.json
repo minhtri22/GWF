@@ -1,0 +1,71 @@
+{
+  "adjudication_inputs": {
+    "attempt_consumed_under_frozen_rule": true,
+    "executor_infrastructure_or_protocol_failure": true,
+    "missing_result_due_protocol_failure": true,
+    "protocol_rejected_before_task_execution": true,
+    "replacement_attempt_authorized_by_current_contract": false,
+    "retry_budget": 0,
+    "substantive_task_metric_observed_zero": false,
+    "turn_start_accepted": false,
+    "turn_start_request_sent": true
+  },
+  "attempt_id": "p5a-d2-p5-fx-001-attempt-001",
+  "checks": {
+    "apps_zero": true,
+    "attempt_id_exact": true,
+    "auth_ready": true,
+    "config_hash_exact": true,
+    "driver_protocol_rejection_exact": true,
+    "evidence_schema_exact": true,
+    "execution_mode": true,
+    "harness_exact": true,
+    "input_hash_exact": true,
+    "input_unchanged": true,
+    "instruction_sources_empty": true,
+    "marker_attempt_exact": true,
+    "marker_config_exact": true,
+    "marker_three_lines": true,
+    "mcp_zero": true,
+    "no_command_execution": true,
+    "no_mcp_tool": true,
+    "no_permission_request": true,
+    "no_result": true,
+    "no_unexpected_workspace_entries": true,
+    "no_web_search": true,
+    "protocol_thread_started": true,
+    "protocol_turn_start_error_hash_exact": true,
+    "protocol_turn_start_invalid_request": true,
+    "runner_exact": true,
+    "source_clean": true,
+    "source_head_exact": true,
+    "task_hash_exact": true,
+    "task_unchanged": true,
+    "thread_attributed": true,
+    "turn_not_accepted": true,
+    "turn_send_recorded": true
+  },
+  "input_artifacts": {
+    "runner_evidence_sha256": "270d41e9d15265ad979250dcc0fb69faa1315e65b26586849ad815455d730617",
+    "sanitized_protocol_sha256": "7cb3a00f9fb2bc2893d637e638cab2c54eef64a592120d5dd56f70b14220dc9f",
+    "turn_start_marker_sha256": "80ee313731b33fa05d8cba7d38e4f4585424e25da4a20c9e7ecebf974fe2075d"
+  },
+  "metric_observation_notes": {
+    "attempt_attribution_valid": "OBSERVED_PASS: exact attempt marker, config hash, thread attribution, and protocol response are internally consistent",
+    "evidence_integrity_valid": "OBSERVED_PASS: exact frozen identities/hashes and sanitized protocol evidence are internally consistent",
+    "executor_completed": "UNOBSERVABLE_AS_TASK_EXECUTION: turn/start was rejected by protocol validation",
+    "mutation_scope_valid": "OBSERVED_PASS: only TASK.md and input.json remained and both hashes were unchanged",
+    "result_schema_valid": "UNOBSERVABLE: no result.json exists because turn/start was rejected",
+    "result_values_correct": "UNOBSERVABLE: no result.json exists because turn/start was rejected"
+  },
+  "metrics": {
+    "attempt_attribution_valid": 1,
+    "evidence_integrity_valid": 1,
+    "executor_completed": null,
+    "mutation_scope_valid": 1,
+    "result_schema_valid": null,
+    "result_values_correct": null
+  },
+  "schema": "G2E-P5A-D2-ATTEMPT-001-VERIFICATION-v1",
+  "verifier_assigns_scientific_verdict": false
+}
