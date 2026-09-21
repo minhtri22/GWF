@@ -207,7 +207,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P4 — Document facade / identity mapping
 
 - **Complexity:** 3
-- **Status:** **IMPLEMENTATION QUALIFIED / HANDOFF + EXACT-HEAD QA PENDING**
+- **Status:** **COMPLETED / PASS / FORMALLY CLOSED**
 - **HARD dependencies:** DG-P3; DG-W1 is formally closed.
 - **Frozen specification:** `docs/DG_P4_DOCUMENT_FACADE_SPEC.md`, commit `149b8f7d12010fc86bda16bb9f22fcda039a2402`, blob `b0034171454d06dbdeec2145ab73d5fb0cee2982`.
 - **Document QA:** `docs/DOCUMENT_QA_DG_P4_PREIMPLEMENTATION.md` — PASS.
@@ -233,7 +233,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
   - [x] full regression 163/163 PASS;
   - [x] no schema migration;
   - [x] implementation QA PASS;
-  - [ ] handoff exact-head workflow PASS.
+  - [x] handoff exact-head workflow PASS — run `35582417034` on `06e477b83f503c0a2eb0cdff16c33a8687545f1b`, artifact `10630384626`.
 
 ### DG-P5 — QA run + finding persistence
 
@@ -264,7 +264,7 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 
 ### Wave 2 exit gate — DG-W2
 
-- [ ] DG-P4 PASS
+- [x] DG-P4 PASS
 - [ ] DG-P5 PASS
 - [ ] DG-P6 PASS
 - [ ] exact-revision QA invalidation demonstrated
@@ -929,10 +929,12 @@ DG-W1
       final exact-head run 35580754186 PASS
        ↓
 DG-P4 — Document facade / identity mapping
-      AUTHORIZED
-      PRE-IMPLEMENTATION SPEC FROZEN
-      REUSE / DOCUMENT QA PASS
-      IMPLEMENTATION NOT_STARTED
+      PASS / FORMALLY CLOSED
+      handoff HEAD 06e477b83f503c0a2eb0cdff16c33a8687545f1b
+      exact-head run 35582417034 PASS
+       ↓
+DG-P5 — QA run + finding persistence
+      NEXT / NOT_STARTED
        ↓
 STOP
 ```

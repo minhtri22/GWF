@@ -93,3 +93,13 @@ Rules:
 - Evidence artifact: `10630782224`.
 - Evidence artifact digest: `sha256:f050ee29f3bc7b68e3b0c44657436708f9de4b657b1cee6d6794bb719b36290f`.
 - Outcome: stable governed-document identity is implemented over existing Artifact/Revision storage with exact Git source provenance and no schema migration.
+
+
+## 2026-09-21 — DG-P4 formally closed
+
+- Result: DG-P4 PASS / formally closed.
+- Handoff HEAD: `06e477b83f503c0a2eb0cdff16c33a8687545f1b`.
+- Exact-head workflow: `35582417034` PASS.
+- Evidence artifact: `10630384626`.
+- Evidence artifact digest: `sha256:060ecc5f9e1172b679adda4483915784174bddfa6f6ca61af5181b0ad45d2b3f`.
+- Outcome: governed-document logical identity and exact revision provenance are now qualified over the existing Artifact/Revision kernel with no schema migration.

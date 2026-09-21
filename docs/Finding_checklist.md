@@ -814,9 +814,11 @@ DG-P4 implementation      = QUALIFIED_PASS
 DG-P4 implementation SHA  = 633e36eda823adb0cf8cdd9d6d1877c7c4e41300
 DG-P4 workflow            = 35582178488 PASS
 DG-P4 artifact            = 10630782224
-DG-P4 handoff             = PENDING_COMMIT
-DG-P4 exact-head QA       = PENDING
-DG-P5                     = NOT_STARTED
+DG-P4 handoff HEAD        = 06e477b83f503c0a2eb0cdff16c33a8687545f1b
+DG-P4 exact-head workflow = 35582417034 PASS
+DG-P4 exact-head artifact = 10630384626
+DG-P4 overall             = FORMALLY_CLOSED
+DG-P5                     = NEXT / NOT_STARTED
 DG-W2                     = OPEN
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```

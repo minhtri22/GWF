@@ -200,3 +200,19 @@ Formal close requires:
 4. preserve exact run and artifact identities.
 
 Until that PASS exists, DG-P4 is not formally closed and DG-P5 remains not started.
+
+
+## 14. Formal-close evidence
+
+The committed handoff HEAD `06e477b83f503c0a2eb0cdff16c33a8687545f1b` was requalified on its exact HEAD.
+
+- exact-head workflow: `35582417034`
+- conclusion: **PASS**
+- evidence artifact: `10630384626`
+- artifact digest: `sha256:060ecc5f9e1172b679adda4483915784174bddfa6f6ca61af5181b0ad45d2b3f`
+
+D4-F1..D4-F15, real GitHub facade smoke, full repository regression and compile all passed again.
+
+**DG-P4 status: FORMALLY CLOSED.**
+
+DG-P5 is the next roadmap item. DG-W2 remains open. GAC remains locked until DG-W4 PASS.
