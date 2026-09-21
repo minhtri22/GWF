@@ -1,0 +1,76 @@
+{
+  "schema": "G2E-P5A-CODEX-D1-EVIDENCE-v1",
+  "status": "PASS",
+  "result_commit": "184589b8deaabb8d36af6059436bf565dacf53fe",
+  "result_blob": "f1acf4ca4e60289aa2a60be6b8b28a83be9cebc8",
+  "original_discovery": {
+    "sha256": "ba098a56be39e996488e5a543af8c373199f8b4cc66f922be6d7bc6386c6e860",
+    "status": "D1_MINIMUM_QUALIFIED",
+    "schema_inventory_digest": "4da66f2fac241c53ec857bf1a5f0f9586a445e39c4b0c4e7b4bdb0b103aa8376",
+    "functional_task_executed": false,
+    "secrets_persisted": false
+  },
+  "original_parent_adjudication": {
+    "verdict": "INVALID",
+    "reason_codes": [
+      "INVENTORY_PATHS_NOT_SORTED"
+    ]
+  },
+  "invalidity_repair": {
+    "qualified_candidate": "4e447ef19a843aa3dd1337c57a9c70b4c1a00de1",
+    "adjudicator_blob": "b2ba81801d2bfe7a662acb477fa449e16d13fa55",
+    "workflow_run": 35597985704,
+    "workflow_job": 106327133946,
+    "artifact_id": 10637389197,
+    "artifact_digest": "sha256:09a599886c44d3d3d2544d6ff61a93205f47c137d8807598caadda97ea6c2130"
+  },
+  "repaired_adjudication": {
+    "file_sha256": "04035432c5f290dfd7bbcc91feba8865dc86bfae11686a4e44da2f56cb4ac578",
+    "adjudicator_source_sha256": "6d31911576ec39cf927294996e4335279fafb10217b307a56afeb50a70955860",
+    "discovery_input_sha256": "ba098a56be39e996488e5a543af8c373199f8b4cc66f922be6d7bc6386c6e860",
+    "verdict": "PASS",
+    "reason_codes": [],
+    "codex_profile_available_for_d1_surface": true,
+    "initialize_handshake_success": true,
+    "runtime_adapter_authorized": false,
+    "d2_authorized": false
+  },
+  "harness": {
+    "reported_version": "codex-cli 0.0.0",
+    "executable_sha256": "a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8"
+  },
+  "required_protocol_tokens": {
+    "initialize": true,
+    "thread/start": true,
+    "thread/resume": true,
+    "turn/start": true,
+    "item/started": true,
+    "item/completed": true
+  },
+  "optional_structural_tokens": {
+    "command/exec": true,
+    "mcpServer": true,
+    "requestApproval": true,
+    "sessionId": true,
+    "skill": true,
+    "thread/fork": true,
+    "turn/steer": true
+  },
+  "functional_capabilities": {
+    "repository_read": "UNQUALIFIED",
+    "repository_write": "UNQUALIFIED",
+    "shell_execution": "UNQUALIFIED",
+    "test_execution": "UNQUALIFIED",
+    "network_access": "UNQUALIFIED",
+    "side_effect_approval_execution": "UNQUALIFIED",
+    "active_task_cancellation_interruption": "UNQUALIFIED",
+    "completed_task_artifact_extraction": "UNQUALIFIED"
+  },
+  "authorization": {
+    "manifest_materialization_authorized": true,
+    "d2_authorized": false,
+    "codex_runtime_adapter_authorized": false,
+    "chatgpt_p5b_touched": false
+  },
+  "next_admissible_step": "MATERIALIZE_AND_QUALIFY_EXACT_CODEX_AGENT_CAPABILITY_MANIFEST_FROM_D1_ONLY"
+}
