@@ -545,6 +545,8 @@ class AgentBinding(CanonicalModel):
             raise ValueError("required_capability_ids must be unique")
         if len(self.authority_scope) != len(set(self.authority_scope)):
             raise ValueError("authority_scope entries must be unique")
+        if not self.resolved_at.endswith("Z"):
+            raise ValueError("resolved_at must be RFC3339 UTC ending in Z")
         return self
 
 
@@ -642,6 +644,8 @@ def validate_agent_binding_identity(
     attempt: ExecutionAttemptEnvelope,
     result: ExecutionResult | None = None,
 ) -> None:
+    if manifest.availability != AgentProfileAvailability.AVAILABLE:
+        raise ValueError("agent capability manifest is not AVAILABLE")
     if binding.capability_manifest_ref != manifest.exact_ref():
         raise ValueError("binding capability manifest reference mismatch")
     if binding.equivalence_policy_ref != equivalence_policy.exact_ref():
@@ -656,9 +660,8 @@ def validate_agent_binding_identity(
         manifest_value = getattr(manifest, field)
         binding_value = getattr(binding, field)
         attempt_value = getattr(attempt, field)
-        if field in {"agent_app", "harness_ref"} or manifest_value is not None:
-            if binding_value != manifest_value:
-                raise ValueError(f"binding {field} does not match manifest")
+        if binding_value != manifest_value:
+            raise ValueError(f"binding {field} does not match manifest")
         if attempt_value != binding_value:
             raise ValueError(f"attempt {field} does not match binding")
 
