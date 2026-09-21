@@ -323,3 +323,64 @@ def test_enrolled_document_metadata_path_consistency_and_direct_revision_bypass_
             "document_role": "PHASE", "governance_state": "MUTABLE",
             "owner_phase_id_or_workunit_type": "x", "document_version": 1,
         }, "docs/gov/control.v1.md")
+
+
+
+def test_p10_enrollment_registration_api_binds_metadata_without_breaking_p4_path():
+    from gwr.document_facade import DocumentFacadeService
+
+    class FakeKnowledge:
+        def __init__(self):
+            self.payload = None
+        def create_artifact(self, project_id, artifact_type, logical_key, actor_id):
+            assert artifact_type == "governed_document"
+            return "art-doc"
+        def create_revision(self, document_id, payload, actor_id, expected_artifact_version):
+            self.payload = payload
+            return {"revision_id": "rev-doc"}
+
+    class FakeGithub:
+        def resolve_blob_revision(self, *args, **kwargs):
+            return {
+                "provider": "github",
+                "repository_id": 1374857546,
+                "repository_full_name_at_resolution": "example/project",
+                "path_locator": "docs/gov/control.v1.md",
+                "resolved_commit_sha": "a" * 40,
+                "blob_sha": "b" * 40,
+                "content_sha256": "c" * 64,
+                "content_size_bytes": 12,
+                "resolved_at": "2026-09-22T00:00:00+00:00",
+            }
+
+    knowledge = FakeKnowledge()
+    svc = DocumentFacadeService(knowledge, FakeGithub())
+    result = svc.register_document(
+        "project-1",
+        "binding-1",
+        "actor-1",
+        document_key="control",
+        title="Control",
+        ref_kind="COMMIT",
+        ref_value="a" * 40,
+        path="docs/gov/control.v1.md",
+        expected_repository_id=1374857546,
+        expected_commit_sha="a" * 40,
+        expected_blob_sha="b" * 40,
+        document_governance={
+            "document_role": "GOV",
+            "governance_state": "FROZEN",
+            "owner_phase_id_or_workunit_type": "phase_governance",
+            "document_version": 1,
+        },
+    )
+    assert result["document_id"] == "art-doc"
+    assert knowledge.payload["document_governance"] == {
+        "document_role": "GOV",
+        "governance_state": "FROZEN",
+        "owner_phase_id_or_workunit_type": "phase_governance",
+        "document_version": 1,
+        "phase_id": None,
+        "previous_revision_id": None,
+        "previous_archive_path": None,
+    }

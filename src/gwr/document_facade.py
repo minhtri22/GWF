@@ -62,7 +62,6 @@ class DocumentFacadeService:
         expected_repository_id: str | int | None,
         expected_commit_sha: str | None,
         expected_blob_sha: str | None,
-        document_governance: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         self._require_exact_expectations(
             expected_repository_id,
@@ -129,6 +128,7 @@ class DocumentFacadeService:
         expected_repository_id: str | int | None,
         expected_commit_sha: str | None,
         expected_blob_sha: str | None,
+        document_governance: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         key = self._document_key(document_key)
         normalized_title = self._title(title)

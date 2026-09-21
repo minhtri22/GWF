@@ -2005,3 +2005,25 @@ DG-P11+                   = NOT_STARTED / NOT_AUTHORIZED
 DG-W3                     = OPEN / NOT_EXECUTED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+
+## 71. DG-P10 implementation qualification findings
+
+### F-142 — HIGH — RESOLVED_PENDING_VERIFY
+
+- **Negative evidence:** initial DG-P10 implementation workflow `35634856064` on exact HEAD `029adecef4204bad62b474f8f609c41ce45fd2ef`.
+- **Observed outcome:** D10-F1..D10-F20 PASS on SQLite; bounded DG-P10 gate PASS; PostgreSQL 17 D10/gate PASS. SQLite targeted historical regression failed before full regression/compile.
+- **Root cause:** the bounded enrollment API extension accidentally placed optional `document_governance` on `_resolve_source()` instead of `register_document()`, while `register_document()` referenced that name. Legacy DG-P4 registration therefore raised before completing.
+- **Scientific/governance interpretation:** this is an implementation wiring defect, not evidence against the frozen D10 semantics and not a reason to relax any fixture, authority rule or archive policy.
+- **Repair:** move the optional argument to the public registration boundary, keep `_resolve_source()` unchanged, and add a DG-P10 enrollment registration regression while retaining the full historical P4 suite.
+- **Status:** RESOLVED_PENDING_VERIFY until the repaired exact HEAD passes the same qualification workflow.
+
+### Current implementation finding state
+
+```text
+F-142 = RESOLVED_PENDING_VERIFY
+active unresolved implementation findings = 1
+negative run preserved = 35634856064
+D10 frozen semantics changed = NO
+DG-P11 opened = NO
+```
