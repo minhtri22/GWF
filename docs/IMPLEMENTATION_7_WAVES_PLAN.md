@@ -6,14 +6,16 @@
 
 **Planning lineage:** original 7-wave plan committed on `docs/reference-agent-interop-specs`; later revisions reconciled Governed Artifact Catalog / G2E Shared Library, Documentation Governance implementation evidence, and the locked Browser Product Surface contract.
 
-This plan converts the approved specification set into an ordered implementation roadmap optimized for **product-usable governed capability without violating hard dependencies**. Runtime semantics, authoritative HTTP contracts, and browser product surfaces are treated as one delivery chain rather than postponing UI/UX to the end.
+This plan converts the approved specification set into an ordered implementation roadmap optimized for **product-usable governed capability without violating hard dependencies**. Runtime semantics, authoritative HTTP contracts, and browser product surfaces are treated as one delivery chain. UI/UX implementation now follows a strict incremental rule: **one bounded slice → PASS/evidence freeze → next slice**; unopened backend capability is implemented later and receives its own UI integration slice only after backend qualification.
 
 Current implementation frontier:
 
 - DG-P0 through DG-P10: completed/formally closed according to their recorded closure evidence.
 - DG-P10 final formal-close HEAD: `a09f79ae74a838d2c5998813560373c849669872`.
 - DG-P10 final exact-head workflow: `35671227699` PASS.
-- Browser Product Surface contract: locked at commit `f97f4f1d7f5e9ca5190be0b54e2da2f15e1b65e9`, blob `91192e659ab0de84a176a63cef1b66d03eeec061`.
+- Browser Product Surface contract: `docs/BROWSER_PRODUCT_SURFACE_SPEC.md`.
+- UI/UX implementation contract: `docs/UI_UX_PRODUCT_ARCHITECTURE_SPEC.md`, QA-fixed blob `f4000eac36f8c82826c73070234acd23f8ac72fd`.
+- UI/UX coverage QA: `docs/UI_UX_QA.md`, blob `2d4877e4064538dc40480db0715f0bd4b19e495e`, `OPEN=0`.
 - DG-P11+ remain unopened until separately authorized.
 - GAC core remains hard-blocked by DG-W4.
 - Codex remains hard-blocked by AI-P0 and separate implementation authorization; its roadmap sequencing remains after the governed Shared Library/GAC program unless explicitly amended again.
@@ -71,156 +73,415 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 
 # Cross-wave Browser Product Surface Track — BPS
 
-**Purpose:** make every governed capability user-operable through the authoritative product surface without creating an eighth wave or duplicating backend semantics.
+**Purpose:** deliver the authoritative GWF browser product incrementally, one bounded user-visible slice at a time, while preserving all existing backend/governance semantics and the seven-wave backend roadmap.
 
-**Governing document:** `docs/BROWSER_PRODUCT_SURFACE_SPEC.md`.
+**Governing documents:**
 
-**Track invariant:**
+- `docs/BROWSER_PRODUCT_SURFACE_SPEC.md`;
+- `docs/UI_UX_PRODUCT_ARCHITECTURE_SPEC.md`;
+- `docs/UI_UX_QA.md` with final `OPEN=0`.
+
+## BPS execution invariant — one slice at a time
+
+The UI/UX program SHALL execute strictly as:
 
 ```text
-qualified runtime semantics
-        ↓
-authoritative product API
-        ↓
-authoritative browser UI/UX
-        ↓
-operator-observed browser UAT
+freeze one slice
+    ↓
+implement only that slice
+    ↓
+targeted automated QA
+    ↓
+full affected regression
+    ↓
+real install/server/browser UAT
+    ↓
+freeze evidence at exact HEAD
+    ↓
+PASS
+    ↓
+open the next slice
 ```
 
-Static fixtures, demo JSON, browser `localStorage`, generated mocks, or UAT-only overlays do not satisfy product acceptance.
+Rules:
 
-The BPS track is cross-wave. Each BPS item opens only when its backend dependencies are qualified; it does not bypass any DG/GAC/RA/AI gate.
+1. only **one BPS implementation slice is OPEN** at a time;
+2. a later slice cannot be implemented merely because its API appears easy;
+3. a slice PASS means its browser surface uses authoritative backend state, survives refresh, preserves permissions/audit/exact identity, and has operator-observed UAT evidence;
+4. static fixtures, demo JSON, browser `localStorage`, mock mutations, generated fake activity and UAT-only overlays are invalid acceptance evidence;
+5. a missing API required by an already-implemented backend capability may be added inside that slice only as a bounded service-backed product API gap;
+6. a capability whose backend/governance implementation is not formally qualified remains `PLANNED_BLOCKED`; no functional UI for it is implemented in advance;
+7. future capability UI is implemented only after that capability's backend formal-close/readiness gate, through a new bounded BPS integration slice;
+8. PASS of a UI slice never authorizes the next backend research/governance phase by itself.
 
-### BPS-P0 — Product server + live browser shell
+This plan uses the finer delivery slices below. The `UX-I0…UX-I6` headings in `UI_UX_PRODUCT_ARCHITECTURE_SPEC.md` remain architectural groupings; this plan is the authoritative execution order.
 
-- **Complexity:** 3
-- **HARD dependencies:** DG-P10 final exact-head closure; locked Browser Product Surface contract.
-- **Scope:** canonical installed server lifecycle and shared live browser shell.
-- **Acceptance checklist:**
-  - [ ] `install.ps1` produces a runnable product environment without requiring a UAT-only dependency injection;
-  - [ ] canonical start/stop/restart command exists;
-  - [ ] server readiness/health is visible;
-  - [ ] exact product version/Git SHA/backend identity visible;
-  - [ ] login/session UI uses the real authentication API;
-  - [ ] navigation shell reserves all product areas from the locked browser contract;
-  - [ ] future-gated areas display explicit disabled maturity state and cannot simulate authoritative actions;
-  - [ ] browser refresh reconstructs state from backend;
-  - [ ] no reusable secret persists in browser/static artifacts;
-  - [ ] browser UAT PASS.
+## Current-capability incremental implementation
 
-### BPS-P1 — Full pre-wave product-lineage browserization
+### BPS-I00 — Canonical product server + shell foundation
 
-- **Complexity:** 4
-- **HARD dependencies:** BPS-P0; corresponding existing product APIs/services.
-- **Scope:** convert the **entire already-implemented product lineage from v0.5 through v0.8.5** into authoritative browser UI/UX. The current static v0.8.x pages are design/reference assets only and must be rewired to live APIs or replaced.
-- **Required surfaces:**
-  - [ ] v0.5 production foundation diagnostics: runtime version, backend/database, object store/CAS, observability/provider status where inspectable;
-  - [ ] v0.6 tenant/workspace/project/member administration;
-  - [ ] v0.7 distributed runtime jobs/workers/leases/recovery visibility;
-  - [ ] v0.8 live project dashboard, approvals and failure/recovery;
-  - [ ] v0.8.1 project lifecycle + process inspector + phase/event history;
-  - [ ] v0.8.2 agent protocol/preflight/plan/execute/problem/recovery/verify/handoff/complete;
-  - [ ] v0.8.3 protocol-driven orchestration/live operational event state;
-  - [ ] v0.8.4 plugin/GitHub integration configuration and SHA-safe change-set lifecycle;
-  - [ ] v0.8.5 Domain Registry, Pilot visibility, Skill Registry/revisions/tool requirements/QA contracts;
-  - [ ] auth/session and current actor context;
-  - [ ] artifact/revision/evidence/checkpoint inspection for already-existing primitives where a browser read surface is meaningful;
-  - [ ] system diagnostics/capability matrix;
-  - [ ] every pre-wave capability is classified LIVE, BACKEND_NO_API, API_NO_UI, or NOT_APPLICABLE with rationale;
-  - [ ] all existing static/localStorage product pages are either rewired to authoritative APIs or retired/replaced;
-  - [ ] no browser-only simulation counts as state;
-  - [ ] browser UAT PASS.
+**Maps to:** UX-I0.
 
-### BPS-P2 — Artifact/Revision/Evidence + DG-P0..P10 product API
+- **HARD dependencies:** DG-P10 formal-close; UI/UX QA `OPEN=0`.
+- **Scope only:**
+  - canonical installed server/start-stop-restart path;
+  - dependency/install separation required to run the product;
+  - live browser app shell;
+  - real auth/session bootstrap;
+  - theme `System|Light|Dark`;
+  - collapsible global sidebar;
+  - route skeleton;
+  - capability maturity badges;
+  - exact build/backend identity and basic health.
+- **Must not yet implement:** Home business dashboard, Projects workflow, Operations, Packages, Project Library, Documents.
+- **PASS gate:**
+  - [ ] clean install reaches canonical server;
+  - [ ] login uses real API;
+  - [ ] reload reconstructs session/shell from backend;
+  - [ ] dark/light parity PASS;
+  - [ ] sidebar expanded/collapsed PASS;
+  - [ ] future items visibly `PLANNED` and non-actionable;
+  - [ ] no reusable credential stored in static/browser state;
+  - [ ] exact-head browser UAT PASS.
 
-- **Complexity:** 4
-- **HARD dependencies:** BPS-P0; DG-P0..DG-P10 formal-close evidence.
-- **Scope:** expose already-qualified backend semantics through bounded authoritative HTTP contracts before browser UI is added.
-- **Acceptance checklist:**
-  - [ ] artifact/revision/evidence/checkpoint read contracts;
-  - [ ] validator evidence/findings read contracts;
-  - [ ] Document facade/revision/history contracts;
-  - [ ] QA/finding lifecycle contracts;
-  - [ ] lifecycle/validity contracts;
-  - [ ] authority claim contracts;
-  - [ ] relation + relation-binding contracts;
-  - [ ] P10 classification/mutation-authority/archive-plan contracts;
-  - [ ] mutating endpoints preserve the same authority/idempotency/audit semantics as native services;
-  - [ ] no P11 source mutation is introduced;
-  - [ ] API QA PASS.
+### BPS-I01 — Home operational dashboard
 
-### BPS-P3 — DG-P0..P10 Documents browser surface
+**Maps to:** UX-I1 / Home.
 
-- **Complexity:** 4
-- **HARD dependencies:** BPS-P2.
-- **Acceptance checklist:**
-  - [ ] Documents navigation/list/detail;
-  - [ ] exact logical document/revision/source identity;
-  - [ ] validator/QA/finding views;
-  - [ ] lifecycle and validity visibly separate;
-  - [ ] authority claims and collision state;
-  - [ ] typed relations and direction;
-  - [ ] LOGICAL_CURRENT vs PINNED_REVISION binding;
-  - [ ] P10 declared/effective class, escalation, workflow mode and mutation-authority decision;
-  - [ ] deterministic archive/version lineage preview;
-  - [ ] explicit notice that P10 does not execute source mutation;
-  - [ ] browser UAT PASS.
+- **HARD dependencies:** BPS-I00 PASS.
+- **Bounded API allowance:** add only the authorized read-only `HomeSummary`/health aggregation required by the UI/UX contract.
+- **Scope only:**
+  - exact Home KPIs;
+  - Executing Projects;
+  - Live Runs;
+  - Attention Required;
+  - Recent Activity;
+  - categorical Core Health.
+- **PASS gate:**
+  - [ ] lifecycle ACTIVE is not conflated with execution activity;
+  - [ ] counts reconcile against authoritative backend fixtures/state;
+  - [ ] no fake AI/agent activity;
+  - [ ] failed/partial/unavailable states differ from zero results;
+  - [ ] refresh consistency PASS;
+  - [ ] exact-head browser UAT PASS.
 
-### BPS-W0 — Current-capability browser readiness gate
+### BPS-I02 — Projects + Access
 
-- [ ] BPS-P0 PASS
-- [ ] BPS-P1 PASS
-- [ ] BPS-P2 PASS
-- [ ] BPS-P3 PASS
-- [ ] installed product starts canonical server
-- [ ] all currently implemented capability across v0.5→v0.8.5 and DG-P0→DG-P10 is reachable through authoritative browser UI or explicitly marked NOT_APPLICABLE with rationale
-- [ ] browser state survives refresh because backend is authoritative
-- [ ] no static/localStorage simulation is counted as acceptance
-- [ ] operator-observed UAT evidence bound to exact product HEAD
+**Maps to:** UX-I1 / Projects + Access.
 
-**Sequencing decision:** BPS-W0 is the next product-readiness milestone before new DG-P11 implementation is promoted. Passing BPS-W0 does not itself authorize DG-P11.
+- **HARD dependencies:** BPS-I01 PASS.
+- **Bounded API allowance:** authorized tenant/workspace/member list projections and session revoke/logout only.
+- **Scope only:**
+  - Projects index/filter;
+  - project create;
+  - tenant/workspace context;
+  - actor/session;
+  - memberships/roles;
+  - member add/revoke where current service authorizes it;
+  - logout/session revoke;
+  - project lifecycle rename/archive/drain/restore.
+- **PASS gate:**
+  - [ ] tenant concealment/isolation UAT PASS;
+  - [ ] project immutable ID preserved across rename;
+  - [ ] ACTIVE/ARCHIVING/ARCHIVED behavior matches service contract;
+  - [ ] archive with active execution requires explicit drain;
+  - [ ] browser refresh reconstructs access/project state;
+  - [ ] exact-head browser UAT PASS.
 
-### BPS-GAC — Shared Library / GAC browser integration
+### BPS-I03 — Global Operations
 
-- **Complexity:** 4
-- **HARD dependencies:** GAC-PCG; BPS-P0.
-- **ORDERING dependency:** AI-CODEX-G0. This is the user-selected product sequence: finish GAC product core, then Codex, then integrate both into UI/UX.
-- **Scope after GAC product core and Codex readiness are qualified:**
-  - [ ] catalog entry list/detail;
-  - [ ] exact subject identity and publication state;
-  - [ ] publish/withdraw/supersede where authorized;
-  - [ ] deterministic metadata query;
-  - [ ] query execution/catalog snapshot identity;
-  - [ ] access intersection and source validity observation;
-  - [ ] PARTIAL/backend failure visibly distinct from zero results;
-  - [ ] browser UAT PASS.
-- **Included by GAC-PCG:** GAC-P2A ObjectRef and GAC-P2B external immutable-reference readiness.
-- **Optional expansion:** GAC-P3 search UI appears only if that optional adapter is actually opened; GAC-P4B G2E consumer UI appears only after its external trigger.
+**Maps to:** UX-I1 / Operations.
 
-### BPS-CODEX — Codex interoperability browser integration
+- **HARD dependencies:** BPS-I02 PASS.
+- **Bounded API allowance:** authorized cross-project read projections for Runs/Approvals/Audit/Runtime.
+- **Scope only:**
+  - global Runs;
+  - Approval inbox;
+  - Audit view;
+  - Distributed Runtime read view.
+- **PASS gate:**
+  - [ ] cross-project results respect actor scope;
+  - [ ] proposal frozen payload/hash visible before decision;
+  - [ ] approve/reject uses authoritative governance path;
+  - [ ] runtime shows jobs/workers/leases/attempts/capacity/recovery without exposing worker-protocol admin mutations;
+  - [ ] exact-head browser UAT PASS.
 
-- **Complexity:** 4
-- **HARD dependencies:** AI-CODEX-G0; BPS-P0.
-- **Acceptance checklist:**
-  - [ ] Codex harness configuration uses opaque connection identity rather than raw reusable credentials;
-  - [ ] repository/workspace/tool capability scope visible;
-  - [ ] execution/locality/network/privacy/authority constraints visible;
-  - [ ] GWF execution identity and Codex session/thread identity both visible;
-  - [ ] AgentExecutionEnvelope attributable;
-  - [ ] Codex executor success remains visibly distinct from GWF gate PASS/completion;
-  - [ ] execution/evidence trace inspectable;
-  - [ ] browser UAT PASS.
+### BPS-I04 — Project Overview
 
-### BPS-W1 — GAC + Codex product-integration gate
+**Maps to:** UX-I2 / Project workspace Overview.
 
-- [ ] GAC-PCG PASS
-- [ ] AI-CODEX-G0 PASS
-- [ ] BPS-GAC PASS
-- [ ] BPS-CODEX PASS
-- [ ] Shared Library and Codex are authoritative live browser surfaces
-- [ ] no credential leakage
-- [ ] exact identities and audit/evidence preserved end-to-end
-- [ ] operator-observed browser UAT PASS
+- **HARD dependencies:** BPS-I03 PASS.
+- **Scope only:**
+  - project header/context;
+  - domain binding;
+  - lifecycle;
+  - current orchestration/phase/activity;
+  - pending approvals/failures;
+  - validity frontier;
+  - distributed summary;
+  - recent project activity;
+  - package/GitHub summary links.
+- **PASS gate:**
+  - [ ] no deep document graph appears on Overview;
+  - [ ] every summary drills into an authoritative detail surface or explicitly reports unavailable;
+  - [ ] exact IDs are copyable;
+  - [ ] exact-head browser UAT PASS.
+
+### BPS-I05 — Project Execution + governed recovery
+
+**Maps to:** UX-I2 plus the complete v0.2→v0.8.3 execution coverage locked by UI/UX QA.
+
+- **HARD dependencies:** BPS-I04 PASS.
+- **Bounded API allowance:** read endpoints for Gate/Decision/ImpactSet/RecoveryPlan not already exposed.
+- **Scope only:**
+  - orchestration and domain-driven phase history;
+  - WorkUnit/Run details;
+  - Gates;
+  - Decisions;
+  - Failures;
+  - LoopGuard;
+  - PIVOT/lineage generation;
+  - RecoveryPlan/ImpactSet;
+  - Checkpoint/resume;
+  - Agent Protocol;
+  - SSE live events and Last-Event-ID resume;
+  - retrieval/provider provenance;
+  - independent verifier evidence;
+  - report/handoff.
+- **PASS gate:**
+  - [ ] PASS/FAIL/BLOCKED gate semantics match backend;
+  - [ ] PIVOT is distinct from retry;
+  - [ ] failed attempts remain visible;
+  - [ ] resume uses authoritative checkpoint state;
+  - [ ] no hidden chain-of-thought is exposed;
+  - [ ] SSE reconnect UAT PASS;
+  - [ ] exact-head browser UAT PASS.
+
+### BPS-I06 — Package Registry + Project package configuration
+
+**Maps to:** UX-I3.
+
+- **HARD dependencies:** BPS-I05 PASS.
+- **Bounded API allowance:** Skill list/detail/revision reads and Package Usage projections.
+- **Scope only:**
+  - Domain Packages/revisions/validation/publish;
+  - Skill Packages/revisions/tool requirements/QA contracts;
+  - Project → Packages;
+  - Package → Projects;
+  - `CONFIGURED` vs `OBSERVED` Skill usage;
+  - exact project Domain pin.
+- **PASS gate:**
+  - [ ] package usage is derived from authoritative bindings/executions;
+  - [ ] no duplicate mutable usage table;
+  - [ ] Domain project pin never silently floats;
+  - [ ] Skill UI does not invent Domain revision lifecycle semantics;
+  - [ ] exact-head browser UAT PASS.
+
+### BPS-I07 — GitHub product surface
+
+**Maps to:** UX-I2 Configuration + global System/GitHub.
+
+- **HARD dependencies:** BPS-I06 PASS.
+- **Bounded API allowance:** reload-safe repository-binding list/detail and adapter-readiness reads.
+- **Scope only:**
+  - PluginConnection;
+  - exact capability set;
+  - repository binding;
+  - branch/write policy;
+  - SHA-safe ChangeSet prepare/preflight/execute/inspect;
+  - COMMITTED vs VERIFIED;
+  - global GitHub status/usage.
+- **PASS gate:**
+  - [ ] GitHub remains the only current LIVE plugin family;
+  - [ ] no reusable token is displayed/stored;
+  - [ ] stale SHA/file conflict is preserved;
+  - [ ] capability presence does not invent unsupported PR/merge actions;
+  - [ ] reload preserves authoritative binding/change-set state;
+  - [ ] exact-head browser UAT PASS.
+
+### BPS-I08 — Project Library: Artifacts / Revisions / Evidence
+
+**Maps to:** UX-I4.
+
+- **HARD dependencies:** BPS-I07 PASS.
+- **Bounded API allowance:** Artifact/Revision/ObjectRef/Evidence/Checkpoint reads and persisted Artifact Trace/Impact reads.
+- **Scope only:**
+  - artifact list/detail;
+  - revisions;
+  - ObjectRef/CAS identity;
+  - Evidence;
+  - checkpoint linkage;
+  - existing Artifact Trace graph;
+  - existing Artifact Impact/ImpactSet inspection.
+- **PASS gate:**
+  - [ ] exact revision/content hashes visible;
+  - [ ] ObjectRef verification state visible;
+  - [ ] Artifact Trace/Impact semantics remain distinct from Document Relations;
+  - [ ] backend errors are not rendered as empty Library;
+  - [ ] exact-head browser UAT PASS.
+
+### BPS-I09 — Documentation Governance API P0→P10
+
+**Maps to:** UX-I5 backend/API portion.
+
+- **HARD dependencies:** BPS-I08 PASS; DG-P0→DG-P10 formal-close evidence.
+- **Scope:** bounded HTTP exposure only for already-qualified DG-P0→P10 services.
+- **Required contracts:**
+  - [ ] document register/enroll/revise with exact source identity;
+  - [ ] validator/QA reads/actions;
+  - [ ] finding resolution/reopen/verify/waiver lifecycle;
+  - [ ] lifecycle/validity inspect/transition/reconcile;
+  - [ ] authority claim/collision/grant/retirement;
+  - [ ] relation declaration/list/retirement;
+  - [ ] relation binding/resolve;
+  - [ ] P10 classification/mutation-authority/archive-plan;
+  - [ ] same native authority/proposal/audit/idempotency semantics;
+  - [ ] no DG-P11 mutation or source write introduced.
+- **PASS gate:**
+  - [ ] targeted API tests PASS;
+  - [ ] SQLite regression PASS;
+  - [ ] PostgreSQL contract/regression PASS where required by existing gate;
+  - [ ] negative authority/stale/hash cases PASS;
+  - [ ] exact-head API evidence frozen.
+
+### BPS-I10 — Documents browser surface P0→P10
+
+**Maps to:** UX-I5 browser portion.
+
+- **HARD dependencies:** BPS-I09 PASS.
+- **Scope only:**
+  - project Documents list/detail;
+  - source/logical/revision identity;
+  - revisions;
+  - QA/findings;
+  - lifecycle vs validity;
+  - authority;
+  - P10 classification and mutation-authority/archive preview;
+  - governed document action flows exposed by BPS-I09.
+- **PASS gate:**
+  - [ ] old-revision QA cannot visually validate current changed revision;
+  - [ ] lifecycle and validity remain separate;
+  - [ ] authority collision/blocked state is explicit;
+  - [ ] P10 visibly performs no source mutation;
+  - [ ] exact-head browser UAT PASS.
+
+### BPS-I11 — Document Relations / Lineage graph
+
+**Maps to:** UX-I6.
+
+- **HARD dependencies:** BPS-I10 PASS.
+- **Scope only:**
+  - selected Document as root;
+  - 1-hop ACTIVE incoming/outgoing relations by default;
+  - canonical P8 relation types and target kinds;
+  - LOGICAL_CURRENT vs PINNED_REVISION exact binding;
+  - node/edge inspector;
+  - Set-as-root only for navigable governed Documents;
+  - accessible table equivalent;
+  - revision lineage view supported by current backend.
+- **Must remain disabled:** DG-P12/P13 Document Impact.
+- **PASS gate:**
+  - [ ] relation graph uses only authoritative relation records;
+  - [ ] no Markdown/text inferred edges;
+  - [ ] graph overflow is explicit, not silently truncated;
+  - [ ] three graph families remain semantically separate;
+  - [ ] exact-head browser UAT PASS.
+
+### BPS-W0 — Full current-capability browser readiness gate
+
+Required:
+
+- [ ] BPS-I00…BPS-I11 PASS in order;
+- [ ] installed product starts canonical server without UAT-only dependency injection;
+- [ ] all user/operator-relevant capability from v0.2→v0.8.5 and DG-P0→DG-P10 is reachable through authoritative browser UI, diagnostic read surface, project-context view, or explicitly `NOT_APPLICABLE` with rationale;
+- [ ] all legacy static/localStorage product-state simulations are retired from acceptance;
+- [ ] browser refresh reconstructs authoritative product state;
+- [ ] exact identities/audit/provenance remain visible end-to-end;
+- [ ] dark/light + sidebar collapse UAT PASS;
+- [ ] operator-observed UAT evidence is bound to exact product HEAD;
+- [ ] full browser regression PASS.
+
+**Sequencing decision:** BPS-W0 completes browserization of the **currently implemented** product. It does not implement or authorize DG-P11+, GAC, Reference Acquisition or Agent Interoperability.
+
+## Future-backend → UI return rule
+
+Capabilities not implemented today are handled later under their own science/governance roadmap.
+
+For each future backend capability:
+
+```text
+backend specification/gate
+    ↓
+backend implementation
+    ↓
+backend QA + formal-close
+    ↓
+NEW bounded BPS integration slice
+    ↓
+API gap only if required
+    ↓
+browser implementation
+    ↓
+browser UAT + regression
+    ↓
+BPS slice PASS
+```
+
+No future UI implementation starts before backend readiness.
+
+### Documentation Governance future UI return
+
+- DG-P11 formal-close → open `BPS-DG11` for DocumentChangeSet/source-mutation UI.
+- DG-P12/P13 formal-close → open `BPS-DG12-13` for Document Impact/stale-review propagation UI.
+- DG-P14 formal-close → open bounded no-silent-cascade browser handling.
+- DG-P15 formal-close → add append-only/supersession lifecycle UI.
+- DG-P16 formal-close → add generated-document provenance/reproducibility UI.
+- Each integration slice must PASS before it is counted as browser-complete; backend PASS alone does not make the UI capability LIVE.
+
+### Shared Library / GAC UI return
+
+`GAC-PCG PASS` opens `BPS-GAC`.
+
+`BPS-GAC` acceptance remains:
+
+- catalog list/detail;
+- exact subject/publication identity;
+- publish/withdraw/supersede where authorized;
+- deterministic query + query/snapshot identity;
+- access intersection/source validity;
+- PARTIAL/backend failure distinct from zero;
+- browser UAT PASS.
+
+Optional GAC-P3/P4B UI appears only after their own trigger/backend qualification.
+
+### Reference Acquisition UI return
+
+RA backend items remain under the seven-wave roadmap. No functional Reference Acquisition UI is built during BPS-I00…I11.
+
+When the minimum RA browser-relevant backend gate is formally closed, open a bounded `BPS-RA` slice using the exact RA artifact/gate semantics; PASS it independently before marking the menu LIVE.
+
+### Agent / Codex UI return
+
+`AI-CODEX-G0 PASS` opens `BPS-CODEX`.
+
+Acceptance:
+
+- opaque connection identity only;
+- repo/workspace/tool scope;
+- locality/network/privacy/authority constraints;
+- GWF execution + Codex session/thread identity;
+- AgentExecutionEnvelope;
+- Codex success distinct from GWF PASS;
+- evidence trace;
+- browser UAT PASS.
+
+Other agent families receive their own BPS slice only after their backend item PASS.
+
+### BPS-W1 — Future capability integration gate
+
+BPS-W1 is no longer a reason to batch GAC and Codex UI work together. Each future BPS slice is independently implemented and PASSed as soon as its backend prerequisite is qualified.
+
+BPS-W1 may be used later as an aggregate product-release gate requiring the applicable future BPS slices to PASS, but it does not replace their individual acceptance.
 
 ---
 
@@ -1209,57 +1470,48 @@ Revisit only when one of its explicit triggers occurs.
 DG-P0..DG-P10 [FORMALLY CLOSED]
           │
           ▼
- BPS-P0 → BPS-P1
-    │        │
-    └→ BPS-P2 → BPS-P3
-                 │
-                 ▼
-               BPS-W0
-                 │
-                 ▼
-              DG-P11
-                 │
-                 ▼
-               DG-W3
-                 │
-                 ▼
-          DG-P12..DG-P16
-                 │
-                 ▼
-               DG-W4
-                 │
-        ┌────────┴─────────┐
-        │                  │
-  DG enforcement     GAC-P0 → GAC-P1 → GAC-P2A
-                           │
-                           ▼
-                       DG-GAC-W5
-                           │
-                    RA-P0 → RA-P1
-                           │
-                           ▼
-                       GAC-P2B
-                           │
-                           ▼
-                        GAC-PCG
-                           │
-                           ▼
-                         AI-P0
-                      ┌────┴────┐
-                      ▼         ▼
-                    AI-P1     AI-P2 Codex
+BPS-I00 → I01 → I02 → I03 → I04 → I05
                                 │
                                 ▼
-                         AI-CODEX-G0
-                         ┌──────┴──────┐
-                         ▼             ▼
-                     BPS-GAC      BPS-CODEX
-                         └──────┬──────┘
+                    I06 → I07 → I08
+                                │
                                 ▼
-                             BPS-W1
+                    I09 → I10 → I11
+                                │
+                                ▼
+                              BPS-W0
+                                │
+                                ▼
+                  separate DG-P11 authorization
+                                │
+                                ▼
+                              DG-P11
+                                │
+                 backend PASS / formal-close
+                                │
+                                ▼
+                            BPS-DG11
+                                │
+                                ▼
+                         next backend item
+                                │
+                 ...same backend→UI loop...
+                                │
+                                ▼
+                              DG-W4
+                                │
+                 GAC / RA / AI backend roadmap
+                                │
+             ┌──────────────────┼──────────────────┐
+             ▼                  ▼                  ▼
+          GAC-PCG          RA readiness       AI-CODEX-G0
+             │                  │                  │
+             ▼                  ▼                  ▼
+          BPS-GAC            BPS-RA           BPS-CODEX
+             │                  │                  │
+             └────────── individual PASS ─────────┘
 
-RA-P2..RA-P6 and RA-GAC-W6 remain a separate research-integration path
-and no longer order-block Codex after GAC-PCG.
+No functional UI is prebuilt for a backend capability that is still PLANNED_BLOCKED.
 ```
 
 GAC-P3 optional search adapters and GAC-P4B G2E consumer qualification are trigger-based and non-blocking for the minimum Shared Library / Reference Acquisition gates.
@@ -1321,67 +1573,79 @@ At this implementation state:
 DG-P0..DG-P10
     PASS / FORMALLY CLOSED
         ↓
-DG-P10 FINAL EXACT-HEAD
-    HEAD a09f79ae74a838d2c5998813560373c849669872
-    run 35671227699 PASS
+UI/UX ARCHITECTURE
+    QA PASS / OPEN=0
+    fixed spec blob f4000eac36f8c82826c73070234acd23f8ac72fd
         ↓
-BROWSER PRODUCT SURFACE CONTRACT
-    LOCKED
-    spec commit f97f4f1d7f5e9ca5190be0b54e2da2f15e1b65e9
+NEXT IMPLEMENTATION PROGRAM
+    BPS-I00  Product server + shell
+        ↓ PASS
+    BPS-I01  Home
+        ↓ PASS
+    BPS-I02  Projects + Access
+        ↓ PASS
+    BPS-I03  Global Operations
+        ↓ PASS
+    BPS-I04  Project Overview
+        ↓ PASS
+    BPS-I05  Project Execution
+        ↓ PASS
+    BPS-I06  Packages
+        ↓ PASS
+    BPS-I07  GitHub
+        ↓ PASS
+    BPS-I08  Artifacts / Evidence
+        ↓ PASS
+    BPS-I09  DG-P0→P10 APIs
+        ↓ PASS
+    BPS-I10  Documents
+        ↓ PASS
+    BPS-I11  Relations / Lineage
+        ↓ PASS
+    BPS-W0
         ↓
-NEXT PLANNED PRODUCT MILESTONE
-    BPS-P0
-      → BPS-P1 [v0.5→v0.8.5 live browserization]
-      → BPS-P2/P3 [DG-P0→P10 API + Documents UI]
-      → BPS-W0
+separate DG-P11 authorization
         ↓
-ONLY AFTER BPS-W0 + separate authorization
-    DG-P11
-        ↓
-DG-W3 → DG-P12..P16 → DG-W4
-        ↓
-GAC-P0 → GAC-P1 → GAC-P2A → GAC-P4A
-        ↓
-DG-GAC-W5
-        ↓
-RA-P0 → RA-P1 → GAC-P2B
-        ↓
-GAC-PCG  [GAC PRODUCT CORE COMPLETE]
-        ↓
-AI-P0 → AI-P2 Codex
-        ↓
-AI-CODEX-G0  [CODEX BACKEND READY]
-        ↓
-BPS-GAC + BPS-CODEX
-        ↓
-BPS-W1
+future backend capability
+        ↓ formal-close
+bounded UI integration slice
+        ↓ PASS
+next capability
 ```
 
 Current governance states:
 
-- **BPS-P0:** PLANNED / NOT_IMPLEMENTED. This plan amendment does not itself authorize code.
+- **BPS-I00:** NEXT PLANNED IMPLEMENTATION SLICE / NOT YET IMPLEMENTED. Plan amendment alone does not modify product code.
+- **BPS-I01…I11:** LOCKED BEHIND PREVIOUS-SLICE PASS.
+- **BPS-W0:** blocked until BPS-I00…I11 all PASS.
 - **DG-P11+:** NOT_STARTED / NOT_AUTHORIZED.
 - **DG-W3:** OPEN / NOT_EXECUTED.
 - **GAC-P0/P1:** PLANNED_BLOCKED until DG-W4 PASS.
-- **GAC-PCG:** PLANNED_BLOCKED until DG-GAC-W5 and GAC-P2B PASS.
-- **Codex AI-P2:** PLANNED_BLOCKED until GAC-PCG sequencing handoff, AI-P0 PASS, and explicit AI implementation authorization.
-- **AI-CODEX-G0:** PLANNED_BLOCKED until AI-P0 + AI-P2 PASS.
-- **BPS-GAC/BPS-CODEX:** PLANNED_BLOCKED until GAC-PCG + AI-CODEX-G0 satisfy the final UI/UX integration sequence.
+- **Reference Acquisition implementation:** governed by its existing roadmap; no current functional browser UI.
+- **Codex AI-P2:** PLANNED_BLOCKED until its backend dependencies/authorization.
+- **Future BPS-DG/GAC/RA/AI slices:** PLANNED_BLOCKED until the corresponding backend formal-close/readiness gate.
 
 The product-priority sequence is now explicit:
 
 ```text
-authoritative UI/UX for current capability
+finish one current UI slice
         ↓
-complete Documentation Governance dependency chain
+PASS + freeze evidence
         ↓
-complete governed GAC / Shared Library readiness
+next current UI slice
         ↓
-implement Codex interoperability foundation + adapter
+...
         ↓
-integrate GAC + Codex into authoritative UI/UX
+BPS-W0 current product browser-ready
         ↓
-operator browser UAT
+resume unopened backend roadmap
+        ↓
+for each newly qualified backend capability:
+    implement bounded UI integration
+        ↓
+    PASS
+        ↓
+    continue
 ```
 
 This sequencing changes roadmap priority, not hard dependency semantics.
