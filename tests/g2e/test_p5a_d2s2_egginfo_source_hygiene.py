@@ -54,6 +54,7 @@ def test_existing_d2s2_execution_files_remain_frozen():
 
 def test_spec_keeps_repair_zero_science():
     spec = SPEC.read_text(encoding="utf-8")
-    assert "NOT AUTHORIZED and NOT CONSUMED" in spec
-    assert "No D2-S2 script, preflight, fixture, model, verifier, retry policy" in spec
-    assert "does not authorize the D2-S2 scientific attempt or a model turn" in spec
+    normalized = " ".join(spec.split())
+    assert "NOT AUTHORIZED and NOT CONSUMED" in normalized
+    assert "No D2-S2 script, preflight, fixture, model, verifier, retry policy" in normalized
+    assert "does not authorize the D2-S2 scientific attempt or a model turn" in normalized
