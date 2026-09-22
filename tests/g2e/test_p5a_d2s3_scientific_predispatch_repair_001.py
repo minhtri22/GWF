@@ -84,6 +84,8 @@ def test_cleanup_is_still_non_bypassable():
 def test_repair_spec_preserves_frozen_science():
     text = " ".join(SPEC.read_text(encoding="utf-8").split())
     assert "PRE-DISPATCH-REPAIR-ONLY" in text
-    assert "No scientific task, fixture, permission profile" in text
+    assert "Frozen scientific semantics MUST remain unchanged" in text
+    assert "df5308888eac7fa0b876f2cd68a51d0f2dd80a1b7c6d556cb04c854067b86e81" in text
+    assert "permission profile `g2e_p5a_d2s3`" in text
     assert "exactly one scientific `turn/start` code path" in text
     assert "No retry is authorized after the attempt-consumption marker exists." in text
