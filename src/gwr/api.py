@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException, Header, Query
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, HTTPException, Header, Query, Request, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from pydantic import BaseModel
 
 from .runtime import GovernedWorkflowRuntime
@@ -12,6 +12,7 @@ from .product import ProjectDashboardService
 import asyncio
 import json
 import yaml
+from pathlib import Path
 
 
 class LoginBody(BaseModel):
@@ -171,8 +172,36 @@ class GitHubExecuteBody(BaseModel):
     changes: list[dict]
 
 
-def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
+def create_app(
+    runtime: GovernedWorkflowRuntime,
+    *,
+    product_info: dict | None = None,
+    web_root: str | Path | None = None,
+    browser_cookie_secure: bool = False,
+) -> FastAPI:
     app = FastAPI(title="Governed Workflow Runtime", version="0.8.5")
+    resolved_product_info = {
+        "product": "Governed Workflow Runtime",
+        "version": "0.8.5",
+        "build_sha": "unknown",
+        "domain_id": runtime.domain.domain_id,
+        "backend": getattr(runtime.db, "backend_name", "unknown"),
+        "server_mode": "embedded",
+    }
+    resolved_product_info.update(product_info or {})
+    browser_cookie_name = "gwr_browser_session"
+    browser_capabilities = [
+        {"id": "home", "label": "Home", "state": "LOCKED", "slice": "BPS-I01"},
+        {"id": "projects", "label": "Projects", "state": "LOCKED", "slice": "BPS-I02"},
+        {"id": "operations", "label": "Operations", "state": "LOCKED", "slice": "BPS-I03"},
+        {"id": "packages", "label": "Packages", "state": "LOCKED", "slice": "BPS-I06"},
+        {"id": "github", "label": "GitHub", "state": "LOCKED", "slice": "BPS-I07"},
+        {"id": "shared-library", "label": "Shared Library", "state": "PLANNED_BLOCKED", "slice": "BPS-GAC"},
+        {"id": "reference-acquisition", "label": "Reference Acquisition", "state": "PLANNED_BLOCKED", "slice": "BPS-RA"},
+        {"id": "agents", "label": "Agents / Codex", "state": "PLANNED_BLOCKED", "slice": "BPS-CODEX"},
+        {"id": "diagnostics", "label": "Diagnostics", "state": "LIVE_FOUNDATION", "slice": "BPS-I00"},
+        {"id": "settings", "label": "Settings", "state": "FOUNDATION_ONLY", "slice": "BPS-I00"},
+    ]
 
     @app.exception_handler(GWRException)
     async def gwr_error(_, exc: GWRException):
@@ -194,6 +223,15 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
         token = authorization.split(" ", 1)[1].strip()
         return token, runtime.auth.verify(token)
 
+    def browser_principal(request: Request):
+        token = request.cookies.get(browser_cookie_name)
+        if not token:
+            raise HTTPException(status_code=401, detail="browser session required")
+        try:
+            return token, runtime.auth.verify(token)
+        except AuthorityDenied as exc:
+            raise HTTPException(status_code=401, detail="browser session invalid or expired") from exc
+
     def project_principal(project_id: str, authorization: str | None, permission: str = "VIEW", *, hide_existence: bool = True):
         scope = runtime.tenancy.scope_for_project(project_id)
         if not scope:
@@ -206,6 +244,63 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
             if hide_existence:
                 raise HTTPException(status_code=404, detail="project not found")
             raise
+
+    @app.post('/browser/auth/login')
+    def browser_login(body: LoginBody, response: Response):
+        try:
+            token = runtime.auth.authenticate(body.username, body.password, client_metadata={"client": "browser"})
+            principal = runtime.auth.verify(token)
+        except AuthorityDenied as exc:
+            raise HTTPException(status_code=401, detail="invalid credentials") from exc
+        response.set_cookie(
+            key=browser_cookie_name,
+            value=token,
+            max_age=runtime.auth.session_ttl_seconds,
+            httponly=True,
+            secure=browser_cookie_secure,
+            samesite="strict",
+            path="/",
+        )
+        return {
+            "ok": True,
+            "actor_id": principal.actor_id,
+            "principal_id": principal.principal_id,
+            "auth_method": principal.auth_method,
+            "expires_at": principal.expires_at,
+        }
+
+    @app.get('/browser/auth/me')
+    def browser_me(request: Request):
+        _, principal = browser_principal(request)
+        return {
+            "actor_id": principal.actor_id,
+            "principal_id": principal.principal_id,
+            "auth_method": principal.auth_method,
+            "expires_at": principal.expires_at,
+            "memberships": runtime.tenancy.memberships_for_actor(principal.actor_id),
+        }
+
+    @app.post('/browser/auth/logout')
+    def browser_logout(request: Request, response: Response):
+        token, _ = browser_principal(request)
+        runtime.auth.revoke(token)
+        response.delete_cookie(browser_cookie_name, path="/")
+        return {"ok": True}
+
+    @app.get('/browser/bootstrap')
+    def browser_bootstrap(request: Request):
+        authenticated = False
+        try:
+            browser_principal(request)
+            authenticated = True
+        except HTTPException:
+            authenticated = False
+        return {
+            "product": resolved_product_info,
+            "capabilities": browser_capabilities,
+            "authenticated": authenticated,
+            "shell_authority": "BPS-I00",
+        }
 
     @app.post('/auth/login')
     def login(body: LoginBody):
@@ -327,7 +422,36 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
 
     @app.get('/health')
     def health():
-        return {"ok": True, "domain": runtime.domain.domain_id, "version": "0.8.5"}
+        return {
+            "ok": True,
+            "domain": runtime.domain.domain_id,
+            "version": resolved_product_info["version"],
+            "build_sha": resolved_product_info["build_sha"],
+            "backend": getattr(runtime.db, "backend_name", "unknown"),
+        }
+
+    @app.get('/ready')
+    def ready():
+        try:
+            runtime.db.one("SELECT 1")
+            migrations = runtime.db.migrations.status() if getattr(runtime.db, "migrations", None) else {"pending": []}
+            pending = list(migrations.get("pending") or [])
+            if pending:
+                return JSONResponse(
+                    status_code=503,
+                    content={"ok": False, "core_health": "DEGRADED", "reason": "pending_migrations", "pending_migrations": pending},
+                )
+            return {
+                "ok": True,
+                "core_health": "HEALTHY",
+                "backend": getattr(runtime.db, "backend_name", "unknown"),
+                "build_sha": resolved_product_info["build_sha"],
+            }
+        except Exception:
+            return JSONResponse(
+                status_code=503,
+                content={"ok": False, "core_health": "UNHEALTHY", "reason": "database_probe_failed"},
+            )
 
     @app.get('/projects/{project_id}/audit')
     def audit(project_id: str, authorization: str | None = Header(default=None)):
@@ -367,13 +491,9 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
 
     @app.get('/product/meta')
     def product_meta():
-        return {
-            "product": "GWR Research Product Alpha",
-            "version": "0.8.5",
-            "domain_id": runtime.domain.domain_id,
-            "backend": getattr(runtime.db, "backend_name", "unknown"),
-            "capabilities": ["domain_sdk", "domain_registry", "research_study_lock", "software_delivery_domain", "linear_domain_orchestration", "pilot_profiles", "one_click_windows_install", "project_lifecycle", "project_archive", "skill_registry", "observable_agent_protocol", "protocol_driven_orchestration", "handoff_chain", "live_operational_events", "recovery_configuration_hierarchy", "auto_recovery", "human_recovery_approval", "plugin_registry", "github_sha_safe_commit", "standard_sha_qa", "process_inspector", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"],
-        }
+        result = dict(resolved_product_info)
+        result["capabilities"] = ["domain_sdk", "domain_registry", "research_study_lock", "software_delivery_domain", "linear_domain_orchestration", "pilot_profiles", "one_click_windows_install", "project_lifecycle", "project_archive", "skill_registry", "observable_agent_protocol", "protocol_driven_orchestration", "handoff_chain", "live_operational_events", "recovery_configuration_hierarchy", "auto_recovery", "human_recovery_approval", "plugin_registry", "github_sha_safe_commit", "standard_sha_qa", "process_inspector", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"]
+        return result
 
     @app.get('/product/domains/current')
     def current_domain(authorization: str = Header(...)):
@@ -762,5 +882,31 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
     def product_distributed(project_id: str, authorization: str = Header(...)):
         project_principal(project_id, authorization, "VIEW")
         return product.distributed(project_id)
+
+    if web_root is not None:
+        static_root = Path(web_root).resolve()
+        index_file = static_root / "index.html"
+        app_js = static_root / "app.js"
+        styles_css = static_root / "styles.css"
+        for required in (index_file, app_js, styles_css):
+            if not required.is_file():
+                raise RuntimeError(f"Required browser shell asset missing: {required}")
+
+        @app.get('/', include_in_schema=False)
+        def root_redirect():
+            return RedirectResponse(url="/app", status_code=307)
+
+        @app.get('/app', include_in_schema=False)
+        @app.get('/app/', include_in_schema=False)
+        def browser_app():
+            return FileResponse(index_file, media_type="text/html")
+
+        @app.get('/assets/app.js', include_in_schema=False)
+        def browser_app_js():
+            return FileResponse(app_js, media_type="text/javascript")
+
+        @app.get('/assets/styles.css', include_in_schema=False)
+        def browser_styles():
+            return FileResponse(styles_css, media_type="text/css")
 
     return app

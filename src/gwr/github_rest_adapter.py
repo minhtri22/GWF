@@ -80,6 +80,21 @@ class GitHubRestAdapter:
         except URLError as exc:
             raise ValidationError("GitHub connection failed", details={"reason": str(exc.reason)}) from None
 
+    def get_repository_identity(self, repository_full_name: str) -> dict:
+        repo = self._repo_path(repository_full_name)
+        try:
+            payload = self._request("GET", f"/repos/{repo}")
+        except _GitHubHttpError as exc:
+            raise ValidationError(
+                "Unable to read GitHub repository identity",
+                details={"status": exc.status},
+            ) from None
+        repository_id = payload.get("id")
+        full_name = str(payload.get("full_name") or "").strip()
+        if repository_id is None or not full_name:
+            raise ValidationError("GitHub repository identity response is incomplete")
+        return {"repository_id": repository_id, "full_name": full_name}
+
     def get_branch_head(self, repository_full_name: str, branch: str) -> str:
         repo = self._repo_path(repository_full_name)
         ref = quote(f"heads/{branch}", safe="/")
