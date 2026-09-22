@@ -177,7 +177,7 @@ def perform_control_plane(client, workspace: Path, profile_id: str, module) -> d
             "params": {
                 "clientInfo": {
                     "name": "g2e_p5a_d2s4_science",
-                    "title": "G2E P5A D2-S3 Science",
+                    "title": "G2E P5A D2-S4 Science",
                     "version": "1.0.0",
                 },
                 "capabilities": {"experimentalApi": True},
