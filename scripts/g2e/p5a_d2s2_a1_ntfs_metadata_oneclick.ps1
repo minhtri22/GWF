@@ -282,13 +282,13 @@ try {
     if ($UnexpectedRootNames.Count -gt 0) {
         throw "ISOLATED_VOLUME_UNEXPECTED_ROOT_ENTRIES:$($UnexpectedRootNames -join ',')"
     }
-    $PayloadNames = @($RootItems | Where-Object { -not $_.PSIsContainer } | Select-Object -ExpandProperty Name | Sort-Object)
-    if (($PayloadNames -join "|") -ne "input.json|TASK.md") {
-        throw "ISOLATED_VOLUME_TASK_PAYLOAD_DRIFT:$($PayloadNames -join ',')"
-    }
     $Svi = @($RootItems | Where-Object { $_.Name -eq "System Volume Information" })
     if ($Svi.Count -gt 1 -or ($Svi.Count -eq 1 -and -not $Svi[0].PSIsContainer)) {
         throw "SYSTEM_VOLUME_INFORMATION_INVALID"
+    }
+    $PayloadNames = @($RootItems | Where-Object { -not $_.PSIsContainer } | Select-Object -ExpandProperty Name | Sort-Object)
+    if (($PayloadNames -join "|") -ne "input.json|TASK.md") {
+        throw "ISOLATED_VOLUME_TASK_PAYLOAD_DRIFT:$($PayloadNames -join ',')"
     }
     $Report.task_payload_names = $PayloadNames
     $Report.filesystem_support_metadata_names = @($Svi | Select-Object -ExpandProperty Name)
