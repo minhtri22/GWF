@@ -1,7 +1,8 @@
 param(
     [string]$ProjectRoot = "",
     [string]$PythonExe = "",
-    [switch]$ConfigSerializationSelfTest
+    [switch]$ConfigSerializationSelfTest,
+    [switch]$RootClassificationSelfTest
 )
 
 $ErrorActionPreference = "Stop"
@@ -70,6 +71,96 @@ function Invoke-ConfigSerializationSelfTest {
     }
 }
 
+function Get-WorkspaceRootClassification([string]$Root) {
+    $payload = @()
+    $metadata = @()
+    $unexpected = @()
+
+    foreach ($item in @(Get-ChildItem -LiteralPath $Root -Force)) {
+        $isReparse = [bool]($item.Attributes -band [IO.FileAttributes]::ReparsePoint)
+
+        if (($item.Name -eq "input.json" -or $item.Name -eq "TASK.md") -and
+            -not $item.PSIsContainer -and
+            -not $isReparse) {
+            $payload += $item.Name
+            continue
+        }
+
+        if ($item.Name -eq "System Volume Information" -and
+            $item.PSIsContainer -and
+            -not $isReparse) {
+            $metadata += $item.Name
+            continue
+        }
+
+        $unexpected += $item.Name
+    }
+
+    return [pscustomobject]@{
+        payload_names = @($payload | Sort-Object)
+        metadata_names = @($metadata | Sort-Object)
+        unexpected_names = @($unexpected | Sort-Object)
+    }
+}
+
+function Invoke-RootClassificationSelfTest {
+    $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("g2e-d2s3-root-" + [Guid]::NewGuid().ToString("N"))
+    try {
+        New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
+        [IO.File]::WriteAllText((Join-Path $tempRoot "input.json"), "{}", [Text.UTF8Encoding]::new($false))
+        [IO.File]::WriteAllText((Join-Path $tempRoot "TASK.md"), "task", [Text.UTF8Encoding]::new($false))
+
+        $c1 = Get-WorkspaceRootClassification $tempRoot
+        if (@($c1.payload_names).Count -ne 2 -or
+            -not (@($c1.payload_names) -contains "input.json") -or
+            -not (@($c1.payload_names) -contains "TASK.md") -or
+            @($c1.metadata_names).Count -ne 0 -or
+            @($c1.unexpected_names).Count -ne 0) {
+            throw "ROOT_CLASSIFICATION_SELFTEST_PAYLOAD_ONLY_FAILED"
+        }
+
+        $svi = Join-Path $tempRoot "System Volume Information"
+        New-Item -ItemType Directory -Path $svi -Force | Out-Null
+        $c2 = Get-WorkspaceRootClassification $tempRoot
+        if (@($c2.metadata_names).Count -ne 1 -or
+            -not (@($c2.metadata_names) -contains "System Volume Information") -or
+            @($c2.unexpected_names).Count -ne 0) {
+            throw "ROOT_CLASSIFICATION_SELFTEST_SVI_DIR_FAILED"
+        }
+
+        $rogueFile = Join-Path $tempRoot "rogue.txt"
+        [IO.File]::WriteAllText($rogueFile, "x", [Text.UTF8Encoding]::new($false))
+        $c3 = Get-WorkspaceRootClassification $tempRoot
+        if (-not (@($c3.unexpected_names) -contains "rogue.txt")) {
+            throw "ROOT_CLASSIFICATION_SELFTEST_UNEXPECTED_FILE_FAILED"
+        }
+        Remove-Item -LiteralPath $rogueFile -Force
+
+        $rogueDir = Join-Path $tempRoot "rogue-dir"
+        New-Item -ItemType Directory -Path $rogueDir -Force | Out-Null
+        $c4 = Get-WorkspaceRootClassification $tempRoot
+        if (-not (@($c4.unexpected_names) -contains "rogue-dir")) {
+            throw "ROOT_CLASSIFICATION_SELFTEST_UNEXPECTED_DIR_FAILED"
+        }
+        Remove-Item -LiteralPath $rogueDir -Recurse -Force
+
+        Remove-Item -LiteralPath $svi -Recurse -Force
+        [IO.File]::WriteAllText($svi, "not-a-directory", [Text.UTF8Encoding]::new($false))
+        $c5 = Get-WorkspaceRootClassification $tempRoot
+        if (-not (@($c5.unexpected_names) -contains "System Volume Information") -or
+            @($c5.metadata_names).Count -ne 0) {
+            throw "ROOT_CLASSIFICATION_SELFTEST_SVI_FILE_FAILED"
+        }
+
+        Write-Host "ROOT_CLASSIFICATION_SELFTEST_PASS"
+    }
+    finally {
+        if (Test-Path -LiteralPath $tempRoot) {
+            Remove-Item -LiteralPath $tempRoot -Recurse -Force
+        }
+    }
+}
+
 function Write-JsonFile([string]$Path, $Object) {
     $json = $Object | ConvertTo-Json -Depth 16
     [IO.File]::WriteAllText(
@@ -90,6 +181,11 @@ function Get-FirstFreeDriveLetter {
 
 if ($ConfigSerializationSelfTest) {
     Invoke-ConfigSerializationSelfTest
+    exit 0
+}
+
+if ($RootClassificationSelfTest) {
+    Invoke-RootClassificationSelfTest
     exit 0
 }
 
@@ -124,7 +220,7 @@ if (-not (Test-IsAdministrator)) {
 
 Set-Location $ProjectRoot
 
-$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_D2S3_PRETURN_CONFIG_SERIALIZATION_REPAIR_001_LOCK.json"
+$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_D2S3_PRETURN_NTFS_ROOT_CLOSURE_REPAIR_002_LOCK.json"
 if (-not (Test-Path -LiteralPath $LockPath -PathType Leaf)) {
     throw "PREFLIGHT_LOCK_MISSING:$LockPath"
 }
@@ -219,9 +315,9 @@ if ((Get-Sha256 $HelperExe) -ne $ExpectedHelperSha256) {
     throw "STAGED_HELPER_HASH_DRIFT"
 }
 
-$LocalRoot = Join-Path $ProjectRoot "g2e\.local\P5A-D2S3-PREFLIGHT-R1"
+$LocalRoot = Join-Path $ProjectRoot "g2e\.local\P5A-D2S3-PREFLIGHT-R2"
 if (Test-Path -LiteralPath $LocalRoot) {
-    throw "D2S3_PREFLIGHT_R1_ROOT_ALREADY_EXISTS:$LocalRoot"
+    throw "D2S3_PREFLIGHT_R2_ROOT_ALREADY_EXISTS:$LocalRoot"
 }
 
 $VolumeDir = Join-Path $LocalRoot "volume"
@@ -233,12 +329,12 @@ New-Item -ItemType Directory -Path $VolumeDir -Force | Out-Null
 New-Item -ItemType Directory -Path $CodexHome -Force | Out-Null
 New-Item -ItemType Directory -Path $ReportDir -Force | Out-Null
 
-$ReportJson = Join-Path $ReportDir "P5A_D2S3_PLATFORM_NO_TURN_R1_REPORT.json"
-$VhdxPath = Join-Path $VolumeDir "P5A-D2S3-PREFLIGHT-R1-TASK.vhdx"
+$ReportJson = Join-Path $ReportDir "P5A_D2S3_PLATFORM_NO_TURN_R2_REPORT.json"
+$VhdxPath = Join-Path $VolumeDir "P5A-D2S3-PREFLIGHT-R2-TASK.vhdx"
 $DiskpartScript = Join-Path $VolumeDir "create_vhdx.diskpart.txt"
 
 $Report = [ordered]@{
-    schema = "G2E-P5A-D2S3-PLATFORM-NO-TURN-R1-REPORT-v1"
+    schema = "G2E-P5A-D2S3-PLATFORM-NO-TURN-R2-REPORT-v1"
     status = "STARTED"
     study_id = $StudyId
     attempt_id = $AttemptId
@@ -260,6 +356,9 @@ $Report = [ordered]@{
     turn_start_request_sent = $false
     scientific_attempt_consumed = $false
     result_exists = $false
+    workspace_payload_names = @()
+    workspace_metadata_names = @()
+    workspace_unexpected_names = @()
     diagnostic = $null
     preflight_evidence_file = $null
     preflight_evidence_sha256 = $null
@@ -293,7 +392,7 @@ try {
             "select vdisk file=""$VhdxPath""",
             "attach vdisk",
             "create partition primary",
-            "format fs=ntfs quick label=G2ED2S3R1",
+            "format fs=ntfs quick label=G2ED2S3R2",
             "assign letter=$DriveLetter"
         )
         [IO.File]::WriteAllLines(
@@ -331,13 +430,27 @@ try {
         Copy-Item -LiteralPath $SourceInput -Destination (Join-Path $VolumeRoot "input.json")
         Copy-Item -LiteralPath $SourceTask -Destination (Join-Path $VolumeRoot "TASK.md")
 
-        $RootNames = @(
-            Get-ChildItem -LiteralPath $VolumeRoot -Force |
-                Select-Object -ExpandProperty Name |
-                Sort-Object
+        $RootClassification = Get-WorkspaceRootClassification $VolumeRoot
+        $Report.workspace_payload_names = @($RootClassification.payload_names)
+        $Report.workspace_metadata_names = @($RootClassification.metadata_names)
+        $Report.workspace_unexpected_names = @($RootClassification.unexpected_names)
+
+        $payloadNames = @($RootClassification.payload_names)
+        $unexpectedNames = @($RootClassification.unexpected_names)
+
+        $payloadValid = (
+            $payloadNames.Count -eq 2 -and
+            ($payloadNames -contains "input.json") -and
+            ($payloadNames -contains "TASK.md")
         )
-        if (($RootNames -join "|") -ne "input.json|TASK.md") {
-            throw "ISOLATED_VOLUME_PRESTATE_DRIFT:$($RootNames -join ',')"
+
+        if (-not $payloadValid -or $unexpectedNames.Count -ne 0) {
+            throw (
+                "ISOLATED_VOLUME_PRESTATE_DRIFT:" +
+                "payload=" + ($payloadNames -join ",") + ";" +
+                "metadata=" + (@($RootClassification.metadata_names) -join ",") + ";" +
+                "unexpected=" + ($unexpectedNames -join ",")
+            )
         }
 
         $InputHash = Get-Sha256 (Join-Path $VolumeRoot "input.json")
