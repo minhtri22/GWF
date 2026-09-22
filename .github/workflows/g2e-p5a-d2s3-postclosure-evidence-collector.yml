@@ -1,0 +1,105 @@
+name: G2E P5A D2-S3 Postclosure Evidence Collector Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - "scripts/g2e/p5a_d2s3_collect_postclosure_evidence.ps1"
+      - "tests/g2e/test_p5a_d2s3_postclosure_evidence_collector.py"
+      - ".github/workflows/g2e-p5a-d2s3-postclosure-evidence-collector.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  collector-static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: src
+      BASELINE_SHA: "2e29ea546ea2eb57291d6b0475f8f5cad1ca3154"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Verify bounded collector diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$BASELINE_SHA^{commit}"
+          mapfile -t changed < <(git diff --name-only "$BASELINE_SHA"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            ".github/workflows/g2e-p5a-d2s3-postclosure-evidence-collector.yml"
+            "scripts/g2e/p5a_d2s3_collect_postclosure_evidence.ps1"
+            "tests/g2e/test_p5a_d2s3_postclosure_evidence_collector.py"
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for item in "${allowed[@]}"; do
+              if [[ "$path" == "$item" ]]; then ok=true; break; fi
+            done
+            if [[ "$ok" != true ]]; then
+              echo "Out-of-scope collector mutation: $path" >&2
+              exit 1
+            fi
+          done
+
+      - name: Parse collector PowerShell
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "scripts/g2e/p5a_d2s3_collect_postclosure_evidence.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -ne 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
+      - name: Run collector qualification
+        run: pytest -q tests/g2e/test_p5a_d2s3_postclosure_evidence_collector.py
+
+      - name: Run P1-P4 regressions
+        run: |
+          pytest -q tests/g2e/test_p1_core_schemas.py
+          pytest -q tests/g2e/test_p1_4_agent_binding.py
+          pytest -q tests/g2e/test_p1_5_qualification_authority.py
+          pytest -q tests/g2e/test_p2_deterministic_core.py
+          pytest -q tests/g2e/test_p3_standalone_runtime.py
+          pytest -q tests/g2e/test_p4_gwf_adapter.py
+
+  collector-windows-parser:
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "scripts\g2e\p5a_d2s3_collect_postclosure_evidence.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -ne 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
