@@ -76,7 +76,7 @@ function renderNav() {
   const groups = navGroups(state.bootstrap.capabilities);
   $("#mainNav").innerHTML = groups.map(([group, items]) => {
     const rows = items.map((item) => {
-      const enabled = ["LIVE_FOUNDATION", "FOUNDATION_ONLY"].includes(item.state);
+      const enabled = item.state === "LIVE_FOUNDATION";
       const active = item.id === "diagnostics";
       return '<button class="nav-item ' + (active ? "active " : "") + (!enabled ? "disabled" : "") +
         '" data-capability="' + esc(item.id) + '" ' + (!enabled ? 'disabled aria-disabled="true"' : "") + '>' +
