@@ -96,7 +96,7 @@ For a governed write, GWF freezes the expected branch/file state, verifies it be
 
 `COMMITTED` alone is not QA-complete; exact verification is required.
 
-## One-click Windows setup + local UAT
+## Windows install + canonical product server
 
 After clone or pull:
 
@@ -104,36 +104,55 @@ After clone or pull:
 .\install.ps1
 ```
 
-By default the installer:
+The default installer is intentionally bounded to make the product runnable:
 
-- resolves Python >=3.11 (prefers Python 3.12);
+- resolves Python >=3.11;
 - creates/updates `.venv`;
-- installs runtime, development and PostgreSQL dependencies;
-- validates production domain/pilot contracts;
-- compiles Python sources;
-- runs the complete local test suite;
-- runs the bounded DG-P10 classification/policy gate;
-- prepares a local UAT workspace under `.gwr\uat`;
-- uses `GWR_TEST_DATABASE_URL` when supplied, otherwise can use ephemeral PostgreSQL 17 when Docker is available;
-- writes a non-secret report to `.gwr\install\install-report.json`.
+- installs normal runtime dependencies, including the canonical ASGI server;
+- validates production Domain/Pilot contracts;
+- compiles runtime sources;
+- validates canonical server configuration wiring with a temporary smoke-only secret;
+- writes exact HEAD/environment/timing evidence to `.gwr\install\install-report.json`.
 
-Useful commands:
+Full repository/DG/PostgreSQL qualification is explicit:
 
 ```powershell
-.\install.ps1
-.\install.ps1 -FreshVenv
-.\install.ps1 -SkipPostgres
-.\install.ps1 -RequirePostgres
-.\install.ps1 -SkipTests -SkipPostgres
+.\install.ps1 -Qualification
+.\install.ps1 -Qualification -SkipPostgres
 ```
 
-After installation, open:
+Legacy qualification switches such as `-SkipPostgres`, `-SkipTests`, `-SkipUat` and `-RequirePostgres` continue to enter qualification mode for compatibility with existing qualification automation.
+
+### Start the canonical local product
+
+Configure a deployment auth secret of at least 32 bytes. A fresh local database may optionally receive one bootstrap human identity.
+
+```powershell
+$env:GWR_AUTH_SECRET = "<at-least-32-byte-local-secret>"
+$env:GWR_BOOTSTRAP_USERNAME = "operator"
+$env:GWR_BOOTSTRAP_PASSWORD = "<at-least-12-character-password>"
+
+.\scripts\gwf_server.ps1 start
+```
+
+Open:
 
 ```text
-.gwr\uat\UAT.md
+http://127.0.0.1:8765/app
 ```
 
-for the exact local DG-P10 UAT command and the project-document folder skeleton.
+Lifecycle commands:
+
+```powershell
+.\scripts\gwf_server.ps1 status
+.\scripts\gwf_server.ps1 restart
+.\scripts\gwf_server.ps1 stop
+```
+
+The browser shell uses an HttpOnly same-origin GWF session cookie. It does not persist reusable bearer tokens in JavaScript-accessible browser storage.
+
+The historical `tools/browser_uat_server.py` and related UAT launchers are not the canonical product server.
+
 
 ## Repository map
 
@@ -141,11 +160,12 @@ for the exact local DG-P10 UAT command and the project-document folder skeleton.
 src/gwr/       runtime kernels/services
 domains/       governed domain packages
 tests/         regression + governance fixtures
-tools/         gates, QA and operational utilities
+tools/         gates, QA and historical/operational utilities
+scripts/       canonical product lifecycle and slice-local UAT entry points
 docs/          architecture/governance/research records for GWF itself
 pilots/        bounded pilot profiles
 evidence/      generated qualification evidence
-web/           product/UAT web surface
+web/           authoritative browser shell/product assets
 ```
 
 ## Current development model
