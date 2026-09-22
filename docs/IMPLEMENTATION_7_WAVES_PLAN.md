@@ -90,15 +90,19 @@ freeze one slice
     ↓
 implement only that slice
     ↓
-targeted automated QA
+assistant QA1→QA6
     ↓
-full affected regression
+PRE_LOCAL_PASS
     ↓
-real install/server/browser UAT
+commit slice-specific one-click PS1
     ↓
-freeze evidence at exact HEAD
+user pulls + runs PS1 locally
     ↓
-PASS
+return JSON report
+    ↓
+exact-HEAD adjudication
+    ↓
+FINAL_SLICE_PASS
     ↓
 open the next slice
 ```
@@ -107,7 +111,7 @@ Rules:
 
 1. only **one BPS implementation slice is OPEN** at a time;
 2. a later slice cannot be implemented merely because its API appears easy;
-3. a slice PASS means its browser surface uses authoritative backend state, survives refresh, preserves permissions/audit/exact identity, and has operator-observed UAT evidence;
+3. `PRE_LOCAL_PASS` means assistant-owned QA1→QA6 all PASS; `FINAL_SLICE_PASS` additionally requires returned local PowerShell evidence and exact-HEAD adjudication;
 4. static fixtures, demo JSON, browser `localStorage`, mock mutations, generated fake activity and UAT-only overlays are invalid acceptance evidence;
 5. a missing API required by an already-implemented backend capability may be added inside that slice only as a bounded service-backed product API gap;
 6. a capability whose backend/governance implementation is not formally qualified remains `PLANNED_BLOCKED`; no functional UI for it is implemented in advance;
@@ -115,6 +119,190 @@ Rules:
 8. PASS of a UI slice never authorizes the next backend research/governance phase by itself.
 
 This plan uses the finer delivery slices below. The `UX-I0…UX-I6` headings in `UI_UX_PRODUCT_ARCHITECTURE_SPEC.md` remain architectural groupings; this plan is the authoritative execution order.
+
+## BPS responsibility split — assistant QA first, local operator verification second
+
+For every current or future BPS implementation slice, acceptance is divided into two explicit states.
+
+### Stage A — Assistant-owned QA 1→6
+
+The implementation agent/ChatGPT owns and must complete all six checks without asking the local operator to diagnose ordinary implementation defects:
+
+1. **Scope completeness**
+   - every item frozen for the active slice is implemented;
+   - no required item is silently omitted;
+   - no functionality from a later locked slice is pulled forward without amendment.
+
+2. **Functional correctness**
+   - UI/API behavior matches the qualified runtime/service contract;
+   - statuses, counts, transitions and identities are derived from authoritative semantics;
+   - negative paths behave as specified.
+
+3. **Authoritative-state correctness**
+   - refresh/re-entry reconstructs product state from backend/database;
+   - browser-local state is limited to presentation preferences and transient forms;
+   - no fixture/localStorage/mock state is accepted as product truth.
+
+4. **Governance and security correctness**
+   - tenant/workspace/project authorization is preserved;
+   - approval/hash/revision/SHA/stale/version checks are preserved;
+   - archived/read-only/mutation-authority rules are preserved;
+   - secrets and hidden resource existence are not leaked.
+
+5. **Automated QA and regression**
+   - targeted tests for the active slice PASS;
+   - affected regression suite PASS;
+   - full regression/gate required by touched subsystems PASS;
+   - SQLite/PostgreSQL contract checks are run wherever the existing qualified gate requires them;
+   - negative tests are included rather than testing only happy paths.
+
+6. **UI/UX contract conformance**
+   - implementation conforms to `docs/UI_UX_PRODUCT_ARCHITECTURE_SPEC.md`;
+   - dark/light/system theme behavior is correct for implemented surfaces;
+   - sidebar/routing/information hierarchy follows the locked design;
+   - loading/empty/partial/error/unauthorized/planned states are distinct;
+   - exact identities remain inspectable/copyable;
+   - no unsupported integration, invented capability or premature future action appears.
+
+All six are mandatory.
+
+```text
+QA1 PASS
+AND QA2 PASS
+AND QA3 PASS
+AND QA4 PASS
+AND QA5 PASS
+AND QA6 PASS
+        ↓
+PRE_LOCAL_PASS
+```
+
+If any QA1→QA6 item fails, the assistant must fix/retest the same slice. It must **not** hand an unfinished defect-discovery job to the user.
+
+### Stage B — Mandatory PowerShell local handoff
+
+Only after `PRE_LOCAL_PASS` may the assistant create the slice-specific Windows one-click script:
+
+```text
+scripts/uiux/bps_iNN_local_uat.ps1
+```
+
+or, for future integration slices:
+
+```text
+scripts/uiux/<slice-id>_local_uat.ps1
+```
+
+The script is committed to the same implementation branch after QA1→QA6 PASS. The user workflow is intentionally short:
+
+```powershell
+git fetch --prune origin <implementation-branch>
+git switch <implementation-branch>
+git pull --ff-only
+
+& ".\scripts\uiux\<slice>_local_uat.ps1"
+```
+
+No manual sequence of internal test commands is required from the user.
+
+### PowerShell local-UAT script contract
+
+Every slice-specific script must:
+
+1. run under Windows PowerShell/PowerShell with `Set-StrictMode` and terminating error behavior;
+2. discover repository root itself;
+3. record:
+   - current Git HEAD;
+   - branch/detached state;
+   - remote origin;
+   - dirty-worktree state;
+   - Windows/PowerShell/Python identity;
+   - start/end UTC timestamps;
+4. refuse scientific/product adjudication if tracked source files are dirty before execution, except explicitly allowlisted local environment/report paths;
+5. call the canonical installer/runtime path for the exact slice instead of introducing a second UAT-only product implementation;
+6. run all machine-verifiable local checks needed by the slice;
+7. start the **actual canonical GWF server**, not a static/UAT-only server;
+8. poll authoritative readiness/health and fail clearly on timeout;
+9. open the real local browser product at the documented URL for browser slices;
+10. present the slice-specific manual browser checklist in the terminal;
+11. capture explicit operator PASS/FAIL for browser-only observations that cannot be machine-proven;
+12. re-query authoritative backend/API state after browser interaction when the slice contains mutations;
+13. stop only processes started by the script, without killing unrelated local services;
+14. preserve stdout/stderr/test/server logs;
+15. write one machine-readable JSON report under:
+
+```text
+.local/<SLICE-ID>/report/<SLICE-ID>_LOCAL_UAT_REPORT.json
+```
+
+16. include in the JSON:
+   - `schema`;
+   - `slice_id`;
+   - `git_head_start`;
+   - `git_head_end`;
+   - `working_tree_clean_at_start`;
+   - environment identities;
+   - machine-check results;
+   - manual UAT results;
+   - server/API evidence;
+   - generated log/evidence paths;
+   - final local verdict;
+17. fail if `git_head_end != git_head_start`;
+18. return non-zero exit code on any mandatory machine check or operator UAT FAIL;
+19. never modify thresholds, governance configuration, frozen test fixtures, scientific inputs or product semantics to obtain PASS;
+20. preserve failed reports/evidence; a rerun creates a new timestamped evidence set rather than overwriting the failure history.
+
+### Stage C — Returned-report adjudication
+
+The user returns the generated JSON report to ChatGPT.
+
+ChatGPT must then verify:
+
+- report schema;
+- all mandatory local checks PASS;
+- all mandatory manual UAT items PASS;
+- start/end HEAD are identical;
+- returned HEAD is the expected implementation HEAD;
+- no invalid dirty-worktree condition;
+- required evidence/logs are present;
+- no result contradicts QA1→QA6.
+
+Only then may the slice become:
+
+```text
+FINAL_SLICE_PASS
+```
+
+If the local report FAILs, the slice remains OPEN. The assistant must diagnose/fix it, re-run QA1→QA6 as affected, produce an updated one-click script if necessary, and request a new local report.
+
+### Responsibility boundary
+
+```text
+Assistant / ChatGPT
+    implement
+      ↓
+    QA 1→6
+      ↓
+    PRE_LOCAL_PASS
+      ↓
+    commit one-click PS1
+      ↓
+User
+    pull
+      ↓
+    run one PS1
+      ↓
+    return JSON report
+      ↓
+Assistant / ChatGPT
+    adjudicate exact-head report
+      ↓
+FINAL_SLICE_PASS
+      ↓
+next slice opens
+```
+
+The user is not responsible for discovering ordinary code/API/UI defects by manually executing development commands. Local validation exists to verify the real Windows installation/server/browser path and operator-observable behavior that cannot be established solely by repository-side QA.
 
 ## Current-capability incremental implementation
 
@@ -148,7 +336,7 @@ This plan uses the finer delivery slices below. The `UX-I0…UX-I6` headings in 
 
 **Maps to:** UX-I1 / Home.
 
-- **HARD dependencies:** BPS-I00 PASS.
+- **HARD dependencies:** BPS-I00 FINAL_SLICE_PASS.
 - **Bounded API allowance:** add only the authorized read-only `HomeSummary`/health aggregation required by the UI/UX contract.
 - **Scope only:**
   - exact Home KPIs;
@@ -169,7 +357,7 @@ This plan uses the finer delivery slices below. The `UX-I0…UX-I6` headings in 
 
 **Maps to:** UX-I1 / Projects + Access.
 
-- **HARD dependencies:** BPS-I01 PASS.
+- **HARD dependencies:** BPS-I01 FINAL_SLICE_PASS.
 - **Bounded API allowance:** authorized tenant/workspace/member list projections and session revoke/logout only.
 - **Scope only:**
   - Projects index/filter;
@@ -192,7 +380,7 @@ This plan uses the finer delivery slices below. The `UX-I0…UX-I6` headings in 
 
 **Maps to:** UX-I1 / Operations.
 
-- **HARD dependencies:** BPS-I02 PASS.
+- **HARD dependencies:** BPS-I02 FINAL_SLICE_PASS.
 - **Bounded API allowance:** authorized cross-project read projections for Runs/Approvals/Audit/Runtime.
 - **Scope only:**
   - global Runs;
@@ -210,7 +398,7 @@ This plan uses the finer delivery slices below. The `UX-I0…UX-I6` headings in 
 
 **Maps to:** UX-I2 / Project workspace Overview.
 
-- **HARD dependencies:** BPS-I03 PASS.
+- **HARD dependencies:** BPS-I03 FINAL_SLICE_PASS.
 - **Scope only:**
   - project header/context;
   - domain binding;
@@ -231,7 +419,7 @@ This plan uses the finer delivery slices below. The `UX-I0…UX-I6` headings in 
 
 **Maps to:** UX-I2 plus the complete v0.2→v0.8.3 execution coverage locked by UI/UX QA.
 
-- **HARD dependencies:** BPS-I04 PASS.
+- **HARD dependencies:** BPS-I04 FINAL_SLICE_PASS.
 - **Bounded API allowance:** read endpoints for Gate/Decision/ImpactSet/RecoveryPlan not already exposed.
 - **Scope only:**
   - orchestration and domain-driven phase history;
@@ -261,7 +449,7 @@ This plan uses the finer delivery slices below. The `UX-I0…UX-I6` headings in 
 
 **Maps to:** UX-I3.
 
-- **HARD dependencies:** BPS-I05 PASS.
+- **HARD dependencies:** BPS-I05 FINAL_SLICE_PASS.
 - **Bounded API allowance:** Skill list/detail/revision reads and Package Usage projections.
 - **Scope only:**
   - Domain Packages/revisions/validation/publish;
@@ -281,7 +469,7 @@ This plan uses the finer delivery slices below. The `UX-I0…UX-I6` headings in 
 
 **Maps to:** UX-I2 Configuration + global System/GitHub.
 
-- **HARD dependencies:** BPS-I06 PASS.
+- **HARD dependencies:** BPS-I06 FINAL_SLICE_PASS.
 - **Bounded API allowance:** reload-safe repository-binding list/detail and adapter-readiness reads.
 - **Scope only:**
   - PluginConnection;
@@ -303,7 +491,7 @@ This plan uses the finer delivery slices below. The `UX-I0…UX-I6` headings in 
 
 **Maps to:** UX-I4.
 
-- **HARD dependencies:** BPS-I07 PASS.
+- **HARD dependencies:** BPS-I07 FINAL_SLICE_PASS.
 - **Bounded API allowance:** Artifact/Revision/ObjectRef/Evidence/Checkpoint reads and persisted Artifact Trace/Impact reads.
 - **Scope only:**
   - artifact list/detail;
@@ -348,7 +536,7 @@ This plan uses the finer delivery slices below. The `UX-I0…UX-I6` headings in 
 
 **Maps to:** UX-I5 browser portion.
 
-- **HARD dependencies:** BPS-I09 PASS.
+- **HARD dependencies:** BPS-I09 FINAL_SLICE_PASS.
 - **Scope only:**
   - project Documents list/detail;
   - source/logical/revision identity;
@@ -369,7 +557,7 @@ This plan uses the finer delivery slices below. The `UX-I0…UX-I6` headings in 
 
 **Maps to:** UX-I6.
 
-- **HARD dependencies:** BPS-I10 PASS.
+- **HARD dependencies:** BPS-I10 FINAL_SLICE_PASS.
 - **Scope only:**
   - selected Document as root;
   - 1-hop ACTIVE incoming/outgoing relations by default;
@@ -391,7 +579,7 @@ This plan uses the finer delivery slices below. The `UX-I0…UX-I6` headings in 
 
 Required:
 
-- [ ] BPS-I00…BPS-I11 PASS in order;
+- [ ] BPS-I00…BPS-I11 `FINAL_SLICE_PASS` in order;
 - [ ] installed product starts canonical server without UAT-only dependency injection;
 - [ ] all user/operator-relevant capability from v0.2→v0.8.5 and DG-P0→DG-P10 is reachable through authoritative browser UI, diagnostic read surface, project-context view, or explicitly `NOT_APPLICABLE` with rationale;
 - [ ] all legacy static/localStorage product-state simulations are retired from acceptance;
@@ -422,9 +610,13 @@ API gap only if required
     ↓
 browser implementation
     ↓
-browser UAT + regression
+assistant QA1→QA6 → PRE_LOCAL_PASS
     ↓
-BPS slice PASS
+slice-specific PS1 local UAT
+    ↓
+returned-report exact-HEAD adjudication
+    ↓
+FINAL_SLICE_PASS
 ```
 
 No future UI implementation starts before backend readiness.
@@ -1641,7 +1833,7 @@ next capability
 Current governance states:
 
 - **BPS-I00:** NEXT PLANNED IMPLEMENTATION SLICE / NOT YET IMPLEMENTED. Plan amendment alone does not modify product code.
-- **BPS-I01…I11:** LOCKED BEHIND PREVIOUS-SLICE PASS.
+- **BPS-I01…I11:** LOCKED BEHIND PREVIOUS-SLICE `FINAL_SLICE_PASS`.
 - **BPS-W0:** blocked until BPS-I00…I11 all PASS.
 - **DG-P11+:** NOT_STARTED / NOT_AUTHORIZED.
 - **DG-W3:** OPEN / NOT_EXECUTED.
