@@ -86,11 +86,11 @@ if ([string]::IsNullOrWhiteSpace($StderrHashPathRaw)) {
 $ProtocolPath = Assert-UnderRoot $ScienceRoot $ProtocolPathRaw
 $StderrHashPath = Assert-UnderRoot $ScienceRoot $StderrHashPathRaw
 
-foreach ($path in @($ProtocolPath, $StderrHashPath)) {
-    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
-        throw "REFERENCED_EVIDENCE_MISSING:$path"
-    }
+if (-not (Test-Path -LiteralPath $ProtocolPath -PathType Leaf)) {
+    throw "REFERENCED_PROTOCOL_EVIDENCE_MISSING:$ProtocolPath"
 }
+
+$StderrHashExists = Test-Path -LiteralPath $StderrHashPath -PathType Leaf
 
 New-Item -ItemType Directory -Path $BundleRoot -Force | Out-Null
 
@@ -99,8 +99,7 @@ $items = @(
     [pscustomobject]@{ Name = "P5A_D2S3_SCIENTIFIC_RUNNER_EVIDENCE.json"; Source = $RunnerEvidence },
     [pscustomobject]@{ Name = "P5A_D2S3_TURN_START_SENT.marker"; Source = $Marker },
     [pscustomobject]@{ Name = "P5A_D2S3_SCIENTIFIC_VERIFICATION.json"; Source = $Verification },
-    [pscustomobject]@{ Name = "P5A_D2S3_PROTOCOL_SANITIZED.jsonl"; Source = $ProtocolPath },
-    [pscustomobject]@{ Name = "P5A_D2S3_STDERR_HASHES.jsonl"; Source = $StderrHashPath }
+    [pscustomobject]@{ Name = "P5A_D2S3_PROTOCOL_SANITIZED.jsonl"; Source = $ProtocolPath }
 )
 
 $manifestItems = @()
@@ -110,8 +109,31 @@ foreach ($item in $items) {
     $manifestItems += [ordered]@{
         name = $item.Name
         source = $item.Source
+        exists = $true
         sha256 = (Get-Sha256 $destination).ToLowerInvariant()
         size_bytes = (Get-Item -LiteralPath $destination).Length
+    }
+}
+
+if ($StderrHashExists) {
+    $stderrDestination = Join-Path $BundleRoot "P5A_D2S3_STDERR_HASHES.jsonl"
+    Copy-Item -LiteralPath $StderrHashPath -Destination $stderrDestination
+    $manifestItems += [ordered]@{
+        name = "P5A_D2S3_STDERR_HASHES.jsonl"
+        source = $StderrHashPath
+        exists = $true
+        sha256 = (Get-Sha256 $stderrDestination).ToLowerInvariant()
+        size_bytes = (Get-Item -LiteralPath $stderrDestination).Length
+    }
+}
+else {
+    $manifestItems += [ordered]@{
+        name = "P5A_D2S3_STDERR_HASHES.jsonl"
+        source = $StderrHashPath
+        exists = $false
+        sha256 = $null
+        size_bytes = 0
+        absence_semantics = "RPC_CLIENT_MATERIALIZES_STDERR_HASH_FILE_ONLY_AFTER_FIRST_STDERR_RECORD"
     }
 }
 
