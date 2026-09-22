@@ -313,3 +313,20 @@ Rules:
 - Handoff PostgreSQL 17 artifact: `10660019330`, digest `sha256:3128253537083b65604c898b80bbf9b08717461280ce24158b69ed1ef523b7ae`.
 - Handoff Windows UAT artifact: `10661103663`, digest `sha256:4f5eec01b8b269d2e92e0b9cd19a9dc18637ce4987b787e36d33c654769b2444`.
 - Outcome: DG-P10 change classification, workflow-scoped document mutation authority, GOV/FROZEN protection and deterministic archive/version lineage planning are formally closed. Concrete source mutation remains DG-P11 and is not authorized by this closure.
+
+
+## 2026-09-22 — Lineage recording policy clarified
+
+- Governance rule: LINEAGE records only the final attributable result of a completed important phase, gate, or project step.
+- Technical repair attempts, harness defects, troubleshooting iterations, transient failed runs, and implementation-level remediation are not lineage milestones and remain outside this file.
+- Existing historical entries are preserved under the append-only policy; this clarification governs future entries.
+
+## 2026-09-22 — DG-P10 final exact-head closure confirmed
+
+- Result: DG-P10 FORMALLY_CLOSED / final exact-head confirmation PASS.
+- Final formal-close HEAD: `a09f79ae74a838d2c5998813560373c849669872`.
+- Final exact-head workflow: `35671227699` PASS.
+- SQLite artifact: `10671026264`, digest `sha256:69f66e83d91b188e65d6bb82bea6029a01777f5fd06cc701c4b34edba954f9a3`.
+- PostgreSQL 17 artifact: `10671440727`, digest `sha256:3462c7e968e7abd9084cec124f0f18b351e35fa701bceb7f50d26a7bf4683e4e`.
+- Windows exact-head artifact: `10671293043`, digest `sha256:2130e5035a3a477a02e7caba1ecb66c0991f5514c6f871ab0671a79800b71dbf`.
+- Outcome: DG-P10 one-document change classification, workflow-scoped document mutation authority, GOV/FROZEN protection, and deterministic archive/version lineage planning are closed on the immutable final HEAD. DG-P11 remains unopened by this result.
