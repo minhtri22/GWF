@@ -1,0 +1,146 @@
+name: G2E P5A D2-S3 Official Release Coherence Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - "g2e/docs/P5A_D2S3_RELEASE_COHERENT_INSTRUMENT_PREIMPLEMENTATION.md"
+      - "scripts/g2e/p5a_d2s3_official_release_asset_audit.py"
+      - "tests/g2e/test_p5a_d2s3_official_release_asset_audit.py"
+      - ".github/workflows/g2e-p5a-d2s3-official-release-coherence.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  s3-i0-official-release-coherence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PYTHONPATH: src
+      BASELINE_SHA: "f64c04b892be8dd7897c42144055da4d10e3f119"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Verify bounded S3-I0 diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$BASELINE_SHA^{commit}"
+          mapfile -t changed < <(git diff --name-only "$BASELINE_SHA"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            ".github/workflows/g2e-p5a-d2s3-official-release-coherence.yml"
+            "scripts/g2e/p5a_d2s3_official_release_asset_audit.py"
+            "tests/g2e/test_p5a_d2s3_official_release_asset_audit.py"
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for item in "${allowed[@]}"; do
+              if [[ "$path" == "$item" ]]; then ok=true; break; fi
+            done
+            if [[ "$ok" != true ]]; then
+              echo "Out-of-scope D2-S3 S3-I0 mutation: $path" >&2
+              exit 1
+            fi
+          done
+
+      - name: Compile audit
+        run: python -m compileall -q scripts/g2e/p5a_d2s3_official_release_asset_audit.py
+
+      - name: Run audit unit qualification
+        run: pytest -q tests/g2e/test_p5a_d2s3_official_release_asset_audit.py
+
+      - name: Execute official release asset coherence audit
+        run: |
+          python scripts/g2e/p5a_d2s3_official_release_asset_audit.py             --output p5a_d2s3_s3_i0_release_asset_audit.json
+
+      - name: Verify S3-I0 PASS artifact
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("p5a_d2s3_s3_i0_release_asset_audit.json")
+          report = json.loads(path.read_text(encoding="utf-8"))
+          assert report["pass"] is True, report
+          assert report["adjudication"] == "OFFICIAL_RELEASE_COHERENT_LOCAL_STAGING_REQUIRED"
+          assert report["executables_invoked"] is False
+          assert report["model_turn_executed"] is False
+          assert report["scientific_attempt_consumed"] is False
+          PY
+
+      - name: Run P1 regression
+        run: pytest -q tests/g2e/test_p1_core_schemas.py
+
+      - name: Run P1.4 regression
+        run: pytest -q tests/g2e/test_p1_4_agent_binding.py
+
+      - name: Run P1.5 regression
+        run: pytest -q tests/g2e/test_p1_5_qualification_authority.py
+
+      - name: Run P2 regression
+        run: pytest -q tests/g2e/test_p2_deterministic_core.py
+
+      - name: Run P3 regression
+        run: pytest -q tests/g2e/test_p3_standalone_runtime.py
+
+      - name: Run P4 regression
+        run: pytest -q tests/g2e/test_p4_gwf_adapter.py
+
+      - name: Emit S3-I0 qualification report
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import subprocess
+          from pathlib import Path
+
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          audit_path = Path("p5a_d2s3_s3_i0_release_asset_audit.json")
+          audit_sha = hashlib.sha256(audit_path.read_bytes()).hexdigest()
+          audit = json.loads(audit_path.read_text(encoding="utf-8"))
+
+          report = {
+              "schema": "G2E-P5A-D2S3-S3-I0-QUALIFICATION-v1",
+              "baseline_sha": "f64c04b892be8dd7897c42144055da4d10e3f119",
+              "candidate_sha": git("rev-parse", "HEAD"),
+              "audit_script_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s3_official_release_asset_audit.py"),
+              "test_blob": git("rev-parse", "HEAD:tests/g2e/test_p5a_d2s3_official_release_asset_audit.py"),
+              "workflow_blob": git("rev-parse", "HEAD:.github/workflows/g2e-p5a-d2s3-official-release-coherence.yml"),
+              "spec_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S3_RELEASE_COHERENT_INSTRUMENT_PREIMPLEMENTATION.md"),
+              "audit_report_sha256": audit_sha,
+              "audit_adjudication": audit["adjudication"],
+              "adjudication": "S3_I0_PASS_LOCAL_STAGING_GATE_REQUIRED",
+              "scientific_attempt_authorized": False,
+              "scientific_attempt_consumed": False,
+              "model_turn_executed": False,
+          }
+          Path("p5a_d2s3_s3_i0_qualification.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p5a-d2s3-s3-i0-official-release-coherence
+          path: |
+            p5a_d2s3_s3_i0_release_asset_audit.json
+            p5a_d2s3_s3_i0_qualification.json
+          if-no-files-found: error
