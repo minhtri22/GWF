@@ -545,6 +545,14 @@ CREATE INDEX IF NOT EXISTS idx_document_relations_type
 """.strip(),
     ),
 
+    Migration(
+        "0011_v086_dg_p9_relation_binding",
+        """
+ALTER TABLE document_relations ADD COLUMN target_binding_mode TEXT;
+ALTER TABLE document_relations ADD COLUMN target_revision_or_hash TEXT;
+""".strip(),
+    ),
+
 ]
 
 
