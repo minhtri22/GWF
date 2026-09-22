@@ -68,9 +68,8 @@ if ((Get-Sha256 $TopReport) -ne $ExpectedTopReportSha256) {
 if ((Get-Sha256 $RunnerEvidence) -ne $ExpectedRunnerEvidenceSha256) {
     throw "RUNNER_EVIDENCE_HASH_DRIFT"
 }
-if ((Get-Sha256 $Verification) -ne $ExpectedVerificationSha256) {
-    throw "VERIFICATION_HASH_DRIFT"
-}
+$ActualVerificationSha256 = Get-Sha256 $Verification
+$VerificationHashMatch = ($ActualVerificationSha256 -eq $ExpectedVerificationSha256)
 
 $RunnerData = Get-Content -LiteralPath $RunnerEvidence -Raw | ConvertFrom-Json
 $ProtocolPathRaw = [string]$RunnerData.protocol_file
@@ -95,22 +94,33 @@ $StderrHashExists = Test-Path -LiteralPath $StderrHashPath -PathType Leaf
 New-Item -ItemType Directory -Path $BundleRoot -Force | Out-Null
 
 $items = @(
-    [pscustomobject]@{ Name = "P5A_D2S4_SCIENTIFIC_EXECUTION_REPORT.json"; Source = $TopReport },
-    [pscustomobject]@{ Name = "P5A_D2S4_SCIENTIFIC_RUNNER_EVIDENCE.json"; Source = $RunnerEvidence },
-    [pscustomobject]@{ Name = "P5A_D2S4_TURN_START_SENT.marker"; Source = $Marker },
-    [pscustomobject]@{ Name = "P5A_D2S4_SCIENTIFIC_VERIFICATION.json"; Source = $Verification },
-    [pscustomobject]@{ Name = "P5A_D2S4_PROTOCOL_SANITIZED.jsonl"; Source = $ProtocolPath }
+    [pscustomobject]@{ Name = "P5A_D2S4_SCIENTIFIC_EXECUTION_REPORT.json"; Source = $TopReport; ExpectedSha256 = $ExpectedTopReportSha256 },
+    [pscustomobject]@{ Name = "P5A_D2S4_SCIENTIFIC_RUNNER_EVIDENCE.json"; Source = $RunnerEvidence; ExpectedSha256 = $ExpectedRunnerEvidenceSha256 },
+    [pscustomobject]@{ Name = "P5A_D2S4_TURN_START_SENT.marker"; Source = $Marker; ExpectedSha256 = $null },
+    [pscustomobject]@{ Name = "P5A_D2S4_SCIENTIFIC_VERIFICATION.json"; Source = $Verification; ExpectedSha256 = $ExpectedVerificationSha256 },
+    [pscustomobject]@{ Name = "P5A_D2S4_PROTOCOL_SANITIZED.jsonl"; Source = $ProtocolPath; ExpectedSha256 = $null }
 )
 
 $manifestItems = @()
 foreach ($item in $items) {
     $destination = Join-Path $BundleRoot $item.Name
     Copy-Item -LiteralPath $item.Source -Destination $destination
+    $actualSha256 = Get-Sha256 $destination
+    $expectedSha256 = $item.ExpectedSha256
+    $hashMatch = if ([string]::IsNullOrWhiteSpace([string]$expectedSha256)) {
+        $null
+    }
+    else {
+        ($actualSha256 -eq [string]$expectedSha256)
+    }
+
     $manifestItems += [ordered]@{
         name = $item.Name
         source = $item.Source
         exists = $true
-        sha256 = (Get-Sha256 $destination).ToLowerInvariant()
+        sha256 = $actualSha256.ToLowerInvariant()
+        expected_sha256 = if ([string]::IsNullOrWhiteSpace([string]$expectedSha256)) { $null } else { ([string]$expectedSha256).ToLowerInvariant() }
+        hash_match = $hashMatch
         size_bytes = (Get-Item -LiteralPath $destination).Length
     }
 }
@@ -145,6 +155,12 @@ $manifest = [ordered]@{
     rpc_sent = $false
     vhdx_mounted = $false
     scientific_attempt_retried = $false
+    verification_identity = [ordered]@{
+        expected_sha256 = $ExpectedVerificationSha256.ToLowerInvariant()
+        actual_sha256 = $ActualVerificationSha256.ToLowerInvariant()
+        hash_match = $VerificationHashMatch
+        finding = if ($VerificationHashMatch) { $null } else { "VERIFICATION_HASH_MISMATCH_PRESERVED" }
+    }
     items = $manifestItems
 }
 
@@ -161,3 +177,6 @@ Write-Host "CODEX      : NOT STARTED"
 Write-Host "RPC        : NONE"
 Write-Host "VHDX       : NOT MOUNTED"
 Write-Host "RETRY      : FALSE"
+Write-Host "VERIFY HASH: expected=$($ExpectedVerificationSha256.ToLowerInvariant())"
+Write-Host "VERIFY HASH: actual=$($ActualVerificationSha256.ToLowerInvariant())"
+Write-Host "VERIFY MATCH: $VerificationHashMatch"
