@@ -297,3 +297,25 @@
 - **Capability boundary:** `repository_read` and `repository_write` remain unavailable before D2. Grant/binding admission does not mutate the D1 manifest.
 - **Authorization boundary:** exactly one scientific D2 attempt is now authorized under the exact frozen attempt/configuration. Retry, prompt/config drift, broader authority, alternate harness and Codex runtime adapter remain unauthorized.
 - **Next:** execute exactly one frozen P5-FX-001 D2 attempt, then freeze resulting evidence before any adjudication or manifest revision.
+
+
+### G2E-P5A-D2-S3 — Release-Coherent Instrument Successor
+
+- **Status:** FORMALLY CLOSED / TERMINAL INVALID / NO RETRY
+- **Study:** `p5a-d2s3-release-coherent-instrument-successor`
+- **Attempt:** `p5a-d2s3-p5-fx-001-attempt-001`
+- **Official Codex SHA-256:** `444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b`
+- **Official helper SHA-256:** `0c3eeb7cee8d2bc4c8644def3c818e8b06760979572dcedc919c38d0f38f64c4`
+- **Execution config:** `df5308888eac7fa0b876f2cd68a51d0f2dd80a1b7c6d556cb04c854067b86e81`
+- **Science-001:** pre-dispatch INVALID; attempt not consumed. Bound report SHA-256 `5da2db218c2b14856a5f07262cc840a63288fb81c490160ea83d0175d4cbca87`.
+- **Science-002 report SHA-256:** `09e71058bd9e9b4b4fd2e5c4f5f0c412c228932fa183d08dc7d6df4d0fc5e712`
+- **Science-002 runner evidence SHA-256:** `ae60858bfd53268fbb43fb5f1166aaa3acd4fe322f23279b139412bb260b8017`
+- **Science-002 verification SHA-256:** `528b1fd3460c1efdd180dfab703dc264a5102d44fabf887411dc3f1bbc51c418`
+- **Observed dispatch:** `turn/start` sent and accepted; turn id `01a0c981-1518-7eb3-9e5c-4373508655bf`.
+- **Frozen adjudication inputs:** attempt consumed=true; turn terminal=false; timeout=false; infrastructure/protocol failure=true; authority violation=false; result absent; retry budget=0; replacement attempt unauthorized.
+- **Scientific verdict:** `INVALID` under the preregistered rule because infrastructure/protocol failure prevents terminal executor/result metrics. This is not substantive FAIL and not PASS.
+- **Capability consequence:** no functional promotion for `repository_read` or `repository_write`; prior structural official-harness qualification remains structural-only.
+- **Resource hygiene:** Science-002 VHDX dismounted and verified detached.
+- **No-rescue boundary:** D2-S3 MUST NOT be rerun, repaired into a replacement attempt, or granted timeout/protocol/harness rescue after consumption.
+- **Formal adjudication:** `g2e/docs/P5A_D2S3_SCIENCE002_FORMAL_ADJUDICATION.md`
+- **Next:** evidence-only post-closure protocol-failure decomposition. Any future model-bearing work requires a new successor study and attempt identity after that decomposition.
