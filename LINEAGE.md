@@ -399,3 +399,16 @@ Rules:
 - Acceptance states: `PRE_LOCAL_PASS` requires assistant QA1→QA6 PASS; `FINAL_SLICE_PASS` additionally requires the user to run a slice-specific one-click PowerShell local-UAT script and return its exact-HEAD JSON report for adjudication.
 - Next script target after BPS-I00 implementation + QA1→QA6 PASS: `scripts/uiux/bps_i00_local_uat.ps1`.
 - This milestone changes planning/acceptance responsibility only and does not authorize BPS-I00 product-code implementation.
+
+
+## 2026-09-22 — BPS-I00 bounded implementation authorized
+
+- Result: `BPS_I00_BOUNDED_IMPLEMENTATION_AUTHORIZATION` PASS.
+- Authorization document blob: `366c338bfeac2e8b1fee3ec4ca45fb504c16dab5`.
+- Authorized plan blob: `312bfd384b6da5f27471d330a2e62b39642ba463`.
+- Mandatory root agent protocol blob: `6aa443d2e0b8629b924ccd4b01fadcb8549dfc4f`.
+- State: `BPS-I00 = AUTHORIZED_BOUNDED / NOT_STARTED`; `BPS-I01 = LOCKED`.
+- Scope: canonical installed GWF server + live shell foundation, real auth/session bootstrap, System/Light/Dark theme, collapsible navigation, exact build/backend identity, and installer/runtime separation required to make the product runnable.
+- Explicit exclusions: Home/business dashboard and BPS-I01+, DG-P11+, GAC, Reference Acquisition, Agent Interoperability/Codex, new data-model semantics.
+- Local UAT script `scripts/uiux/bps_i00_local_uat.ps1` remains forbidden until assistant QA1→QA6 reaches `PRE_LOCAL_PASS`.
+- Authorization gate itself changed documentation only; no product implementation was performed.
