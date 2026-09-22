@@ -195,7 +195,7 @@ if (-not (Test-IsAdministrator)) {
 
 Set-Location $ProjectRoot
 
-$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_D2S3_SCIENTIFIC_EXECUTION_LOCK.json"
+$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_D2S3_SCIENTIFIC_PREDISPATCH_REPAIR_001_LOCK.json"
 if (-not (Test-Path -LiteralPath $LockPath -PathType Leaf)) {
     throw "SCIENTIFIC_LOCK_MISSING"
 }
