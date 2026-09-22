@@ -62,7 +62,8 @@ function Quote-NativeArgument([string]$Value) {
 
 function Invoke-Git(
     [string]$Root,
-    [string[]]$GitArgs
+    [string[]]$GitArgs,
+    [switch]$RequireStderr
 ) {
     if ($null -eq $GitArgs -or $GitArgs.Count -eq 0) {
         throw "GIT_ARGUMENT_VECTOR_EMPTY"
@@ -109,6 +110,10 @@ function Invoke-Git(
         throw "GIT_FAILED[$code]: git -C $Root $($GitArgs -join ' ') :: STDOUT=$($stdout.Trim()) :: STDERR=$($stderr.Trim())"
     }
 
+    if ($RequireStderr -and [string]::IsNullOrWhiteSpace($stderr)) {
+        throw "GIT_STDERR_SELFTEST_EXPECTED_NONEMPTY"
+    }
+
     return $stdout.Trim()
 }
 
@@ -132,7 +137,7 @@ if ($GitFetchStderrSelfTest) {
         "--verbose",
         "origin",
         "feature/g2e-framework"
-    ) | Out-Null
+    ) -RequireStderr | Out-Null
     Write-Host "GIT_FETCH_STDERR_SELFTEST_PASS"
     exit 0
 }
