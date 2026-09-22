@@ -17,7 +17,7 @@ HARNESS_SHA256 = "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd649851
 INPUT_SHA256 = "a176454229feef1ce8bd7eab1ea79fbfeff07c229c88123edf862fea9160eef6"
 TASK_SHA256 = "4c4aba6a82d540440dfef725b2568afdef4be3b26c3e4e84e2b34c54e6dd460e"
 R2_EVIDENCE_SHA256 = "87f18cf15f06eb1bc3e0a9e28f76e3208b2c082c3cd458221242d65db7b8cc28"
-PREFLIGHT_MODULE_SHA = "ecd0af7cd487e14ea1691f4195af1d147efd0fe4"
+PREFLIGHT_MODULE_GIT_BLOB = "ecd0af7cd487e14ea1691f4195af1d147efd0fe4"
 
 TURN_TIMEOUT_S = 90.0
 STARTUP_TIMEOUT_S = 12.0
@@ -38,8 +38,13 @@ def sha256_bytes(data: bytes) -> str:
 
 def load_preflight_module(project_root: Path):
     path = project_root / "scripts" / "g2e" / "p5a_d2s3_platform_no_turn_preflight.py"
-    if sha256_file(path) != PREFLIGHT_MODULE_SHA:
-        raise RuntimeError("PREFLIGHT_MODULE_BLOB_DRIFT")
+    actual_blob = run_git(
+        project_root,
+        "rev-parse",
+        "HEAD:scripts/g2e/p5a_d2s3_platform_no_turn_preflight.py",
+    )
+    if actual_blob != PREFLIGHT_MODULE_GIT_BLOB:
+        raise RuntimeError(f"PREFLIGHT_MODULE_BLOB_DRIFT:{actual_blob}")
     spec = importlib.util.spec_from_file_location("d2s3_preflight_frozen", path)
     module = importlib.util.module_from_spec(spec)
     assert spec and spec.loader
