@@ -121,7 +121,7 @@ if ($evidenceHash -ne $ExpectedEvidenceSha256) {
     throw "A2_EVIDENCE_HASH_MISMATCH:$evidenceHash"
 }
 if ($evidenceHash -ne $declaredEvidenceHash) {
-    throw "A2_EVIDENCE_DECLARED_HASH_MISMATCH:$evidenceHash:$declaredEvidenceHash"
+    throw "A2_EVIDENCE_DECLARED_HASH_MISMATCH:$($evidenceHash):$($declaredEvidenceHash)"
 }
 
 $evidence = Get-Content -LiteralPath $evidencePath -Raw | ConvertFrom-Json
