@@ -39,13 +39,17 @@ def test_collector_binds_exact_science002_evidence_hashes():
         assert token in source
 
 
-def test_collector_requires_protocol_stderr_marker_and_verification():
+def test_collector_requires_protocol_marker_and_verification_and_tracks_optional_stderr():
     source = SCRIPT.read_text(encoding="utf-8")
     assert "P5A_D2S3_SCIENTIFIC_RUNNER_EVIDENCE.json" in source
     assert "P5A_D2S3_TURN_START_SENT.marker" in source
     assert "P5A_D2S3_SCIENTIFIC_VERIFICATION.json" in source
     assert "protocol_file" in source
     assert "stderr_hash_file" in source
+    assert "REFERENCED_PROTOCOL_EVIDENCE_MISSING" in source
+    assert "$StderrHashExists" in source
+    assert 'exists = $false' in source
+    assert 'RPC_CLIENT_MATERIALIZES_STDERR_HASH_FILE_ONLY_AFTER_FIRST_STDERR_RECORD' in source
     assert "Assert-UnderRoot" in source
 
 
