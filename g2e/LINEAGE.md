@@ -379,3 +379,20 @@
 - **Recovery qualification:** run `35750732353` PASS — synthetic session JSONL error recovery, SQLite read-only recovery, secret-redaction, Windows PowerShell 5.1 and P1-P4.
 - **Recovery lock:** `g2e/docs/P5A_D2S4_PERSISTED_TURN_ERROR_RECOVERY_LOCK.json`.
 - **Next:** exactly one local read-only persisted-error collection. No D2-S5 execution is authorized until recovery identifies a concrete mechanism or returns `UNRESOLVED_FROM_EXISTING_LOCAL_EVIDENCE`.
+
+
+### G2E-P5A-D2 — Terminal stop after D2-S4 persisted recovery
+
+- **D2 status:** CLOSED / NO D2-S5 AUTHORIZATION.
+- **D2-S4 recovery bundle SHA256:** `60a94c50d9eaba65c49840ffeb5861d347aab2298b91d213bb6ea910de6f3a1b`.
+- **Recovery JSON SHA256:** `72ad98eb08ac225ac6bbcb21fbbf44852264fe2474bd960db0d8402052572cd8`.
+- **Recovery mode:** read-only existing local evidence; Codex=false; RPC=false; VHDX=false; retry=false; forbidden files read=false.
+- **Text/session/log recovery:** scanned text files = 0; exact thread/turn matches = 0.
+- **SQLite recovery:** six SQLite files inspected read-only; exact thread/turn matches = 0.
+- **Final mechanism adjudication:** `UNRESOLVED_FROM_EXISTING_LOCAL_EVIDENCE`.
+- **D2-S4 scientific verdict:** unchanged — INVALID / attempt consumed / no retry.
+- **Successor decision:** D2-S5 not authorized because no single mechanism-specific prospective change is supported by existing evidence.
+- **Terminal stop:** `UNRESOLVED_FROM_EXISTING_LOCAL_EVIDENCE / STOP_MODEL_EXECUTION / NO_D2S5_AUTHORIZATION`.
+- **Recovery result:** `g2e/docs/P5A_D2S4_PERSISTED_TURN_ERROR_RECOVERY_RESULT.md`
+- **Stop decision:** `g2e/docs/P5A_D2_TERMINAL_STOP_DECISION.md`
+- **Future direction if reopened:** a separately identified observability/instrumentation adequacy program, qualified before any model-bearing task.
