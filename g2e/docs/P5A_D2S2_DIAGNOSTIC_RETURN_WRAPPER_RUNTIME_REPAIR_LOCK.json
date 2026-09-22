@@ -1,0 +1,23 @@
+{
+  "schema": "G2E-P5A-D2S2-DIAGNOSTIC-RETURN-WRAPPER-RUNTIME-REPAIR-LOCK-v1",
+  "qualified": true,
+  "baseline_sha": "c4129a4dc8c30d4bc97de2acbfcfd20d90e68762",
+  "qualified_candidate_sha": "70a180c93af7e266d800ec772d9fae3b564a4e90",
+  "wrapper_blob": "41abc7b6a857f3cc2db046a72da6588fb7e019c4",
+  "test_blob": "defa620d200300ffdfb7691c013e3b7448492906",
+  "workflow_blob": "6959bfdc69b1dd23d7bf14bf42feca3210fb444b",
+  "repair_spec_blob": "729080ce6638bfc2625286762f16cecc62b609a4",
+  "frozen_d2s2_oneclick_blob": "1507b716645971ee60b0c2131973a953f98e7036",
+  "frozen_d2s2_preflight_blob": "005bd3ff5f34ea60a05d15baa25a0d4f6e9341c3",
+  "frozen_diagnostic_blob": "90b3f9d834974d62b0b8b6e1966705e680d164bc",
+  "workflow_run_id": 35678077801,
+  "workflow_job_id": 106588728018,
+  "artifact_id": 10673732999,
+  "artifact_digest": "sha256:d4b7bedb5e8df30e28675ab11341d7cc765e91b0652f7cd7d4d20d882ea20a6c",
+  "runtime_git_helper_selftest": "PASS",
+  "adjudication": "RETURN_WRAPPER_RUNTIME_REPAIR_PASS_LOCAL_EXECUTION_REQUIRED",
+  "scientific_attempt_authorized": false,
+  "scientific_attempt_consumed": false,
+  "model_turn_executed": false,
+  "next_gate": "ONE_FRESH_LOCAL_RETURN_WRAPPER_EXECUTION"
+}
