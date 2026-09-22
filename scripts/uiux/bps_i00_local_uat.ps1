@@ -86,7 +86,7 @@ function Invoke-LoggedPowerShell {
     & $ScriptPath @Arguments 2>&1 | Tee-Object -FilePath $LogPath -Append | Out-Host
     $code = $LASTEXITCODE
     if ($null -eq $code) { $code = 0 }
-    if ($code -ne 0) { throw "Command failed with exit code $code: $ScriptPath $($Arguments -join ' ')" }
+    if ($code -ne 0) { throw "Command failed with exit code ${code}: $ScriptPath $($Arguments -join ' ')" }
 }
 
 function Wait-Ready {
