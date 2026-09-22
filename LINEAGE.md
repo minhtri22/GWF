@@ -387,3 +387,15 @@ Rules:
 - Locked current sequence: `BPS-I00 → I01 → I02 → I03 → I04 → I05 → I06 → I07 → I08 → I09 → I10 → I11 → BPS-W0`, with each slice requiring implementation, QA/regression, exact-HEAD browser UAT/evidence, and PASS before the next slice opens.
 - Future capability rule: DG/GAC/RA/AI functionality that is not yet implemented remains backend-gated; after backend formal-close/readiness, its own bounded BPS integration slice is implemented and PASSed before continuing.
 - Next planned implementation target: `BPS-I00 — Canonical product server + shell foundation`. This planning milestone does not itself modify or authorize product code.
+
+
+## 2026-09-22 — Assistant-QA / local-UAT responsibility split locked
+
+- Result: BPS slice acceptance protocol amended so ChatGPT owns QA1→QA6 before any local operator handoff.
+- Final plan blob: `ec1b7e65c1eab9290e8d8a6923663e34996517a3`.
+- Protocol QA commit: `9d05647fd6495ff9486a1db9f234a5d1c33f375b`.
+- Protocol QA blob: `db8449c34bb83df8314d5f0bb39eeb1bd6eac60d`.
+- QA result: `OPEN_FINDINGS=0`, PASS.
+- Acceptance states: `PRE_LOCAL_PASS` requires assistant QA1→QA6 PASS; `FINAL_SLICE_PASS` additionally requires the user to run a slice-specific one-click PowerShell local-UAT script and return its exact-HEAD JSON report for adjudication.
+- Next script target after BPS-I00 implementation + QA1→QA6 PASS: `scripts/uiux/bps_i00_local_uat.ps1`.
+- This milestone changes planning/acceptance responsibility only and does not authorize BPS-I00 product-code implementation.
