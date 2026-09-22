@@ -1,0 +1,19 @@
+{
+  "schema": "G2E-P5A-D2S2-ONECLICK-LOCK-v1",
+  "qualified": true,
+  "qualified_candidate_sha": "7d81e183a9e1c895f610fa3c377b54fc0e3e413d",
+  "baseline_sha": "e1b1c2e64a8ee341974a5635b831d46cc4f01198",
+  "oneclick_blob": "1507b716645971ee60b0c2131973a953f98e7036",
+  "preflight_blob": "005bd3ff5f34ea60a05d15baa25a0d4f6e9341c3",
+  "test_blob": "a4aa31f4c52998b6eaff7c737740d5a9f2c84ecb",
+  "workflow_blob": "6823cfe52b4f7565c095bed3cf0f1edd202fffb2",
+  "workflow_run_id": 35672727732,
+  "workflow_job_id": 106572590013,
+  "artifact_id": 10671393590,
+  "artifact_digest": "sha256:92790a09dece5d24b4ff097a8cd6b879f94e4db536f1249e756108a7e56c8354",
+  "study_id": "p5a-d2s2-isolated-volume-root-read-successor",
+  "attempt_id": "p5a-d2s2-p5-fx-001-attempt-001",
+  "model_turn_executed": false,
+  "scientific_attempt_authorized": false,
+  "runtime_adapter_authorized": false
+}
