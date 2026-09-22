@@ -107,22 +107,26 @@ The BPS track is cross-wave. Each BPS item opens only when its backend dependenc
   - [ ] no reusable secret persists in browser/static artifacts;
   - [ ] browser UAT PASS.
 
-### BPS-P1 — Existing live-API product surfaces
+### BPS-P1 — Full pre-wave product-lineage browserization
 
 - **Complexity:** 4
-- **HARD dependencies:** BPS-P0; corresponding existing product APIs.
-- **Scope:** convert current implemented API capability into authoritative browser UI/UX.
+- **HARD dependencies:** BPS-P0; corresponding existing product APIs/services.
+- **Scope:** convert the **entire already-implemented product lineage from v0.5 through v0.8.5** into authoritative browser UI/UX. The current static v0.8.x pages are design/reference assets only and must be rewired to live APIs or replaced.
 - **Required surfaces:**
-  - [ ] tenant/workspace/project/member administration;
-  - [ ] project dashboard/lifecycle;
-  - [ ] Domain Registry;
-  - [ ] Skill Registry;
-  - [ ] orchestration/process inspector/live events;
-  - [ ] agent protocol/preflight/plan/execute/recovery/verify/handoff;
-  - [ ] approvals and audit;
-  - [ ] distributed runtime;
-  - [ ] plugin/GitHub integration configuration and SHA-safe change-set lifecycle;
+  - [ ] v0.5 production foundation diagnostics: runtime version, backend/database, object store/CAS, observability/provider status where inspectable;
+  - [ ] v0.6 tenant/workspace/project/member administration;
+  - [ ] v0.7 distributed runtime jobs/workers/leases/recovery visibility;
+  - [ ] v0.8 live project dashboard, approvals and failure/recovery;
+  - [ ] v0.8.1 project lifecycle + process inspector + phase/event history;
+  - [ ] v0.8.2 agent protocol/preflight/plan/execute/problem/recovery/verify/handoff/complete;
+  - [ ] v0.8.3 protocol-driven orchestration/live operational event state;
+  - [ ] v0.8.4 plugin/GitHub integration configuration and SHA-safe change-set lifecycle;
+  - [ ] v0.8.5 Domain Registry, Pilot visibility, Skill Registry/revisions/tool requirements/QA contracts;
+  - [ ] auth/session and current actor context;
+  - [ ] artifact/revision/evidence/checkpoint inspection for already-existing primitives where a browser read surface is meaningful;
   - [ ] system diagnostics/capability matrix;
+  - [ ] every pre-wave capability is classified LIVE, BACKEND_NO_API, API_NO_UI, or NOT_APPLICABLE with rationale;
+  - [ ] all existing static/localStorage product pages are either rewired to authoritative APIs or retired/replaced;
   - [ ] no browser-only simulation counts as state;
   - [ ] browser UAT PASS.
 
@@ -168,7 +172,7 @@ The BPS track is cross-wave. Each BPS item opens only when its backend dependenc
 - [ ] BPS-P2 PASS
 - [ ] BPS-P3 PASS
 - [ ] installed product starts canonical server
-- [ ] all currently implemented product capability is reachable through authoritative browser UI or explicitly marked NOT_APPLICABLE
+- [ ] all currently implemented capability across v0.5→v0.8.5 and DG-P0→DG-P10 is reachable through authoritative browser UI or explicitly marked NOT_APPLICABLE with rationale
 - [ ] browser state survives refresh because backend is authoritative
 - [ ] no static/localStorage simulation is counted as acceptance
 - [ ] operator-observed UAT evidence bound to exact product HEAD
@@ -1325,7 +1329,10 @@ BROWSER PRODUCT SURFACE CONTRACT
     spec commit f97f4f1d7f5e9ca5190be0b54e2da2f15e1b65e9
         ↓
 NEXT PLANNED PRODUCT MILESTONE
-    BPS-P0 → BPS-P1 → BPS-P2 → BPS-P3 → BPS-W0
+    BPS-P0
+      → BPS-P1 [v0.5→v0.8.5 live browserization]
+      → BPS-P2/P3 [DG-P0→P10 API + Documents UI]
+      → BPS-W0
         ↓
 ONLY AFTER BPS-W0 + separate authorization
     DG-P11
