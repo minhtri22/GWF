@@ -126,3 +126,12 @@ def test_a1_spec_is_pre_scientific_and_closed_set():
     assert "System Volume Information" in normalized
     assert "No other file or directory is admissible" in normalized
     assert "does not authorize" in normalized
+
+
+def test_a1_oneclick_and_preflight_share_evidence_filename_contract():
+    preflight = PREFLIGHT.read_text(encoding="utf-8")
+    oneclick = ONECLICK.read_text(encoding="utf-8")
+    expected = "P5A_D2S2_A1_LOCAL_PRETURN_PREFLIGHT.json"
+    assert expected in preflight
+    assert expected in oneclick
+    assert "P5A_D2S2_LOCAL_PRETURN_PREFLIGHT.json" not in oneclick
