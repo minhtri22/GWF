@@ -129,7 +129,7 @@ function Get-ResolverCandidates([string]$ExePath) {
 
     return [pscustomobject]@{
         canonical_exe = $canonicalExe
-        candidates = @($records)
+        candidates = $records.ToArray()
     }
 }
 
