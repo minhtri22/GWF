@@ -375,3 +375,15 @@ Rules:
 - QA blob: `2d4877e4064538dc40480db0715f0bd4b19e495e`.
 - Final QA count: `INITIAL_FINDINGS=42`, `CLOSED=42`, `OPEN=0`, `COUNT=0`.
 - Outcome: ambiguous UI terminology, missing process/document references, historical capability omissions, graph-boundary conflation, package-usage semantics, diagnostics coverage, and explicit browser/API gaps were reconciled. This milestone changes documentation only and does not authorize UI/API implementation.
+
+
+## 2026-09-22 — Incremental UI/UX execution sequence locked
+
+- Result: UI/UX implementation plan amended from coarse browserization blocks to one bounded pass-gated slice at a time.
+- Final plan blob: `c47c4e38b26033f1d9d94d70b48d2c91889e0c33`.
+- Plan QA commit: `61664d043f70020979005ab35c7466aef4531952`.
+- Plan QA blob: `db39ffea21cf5878977170b0a2df989cbd31a931`.
+- QA result: `OPEN_FINDINGS=0`, PASS.
+- Locked current sequence: `BPS-I00 → I01 → I02 → I03 → I04 → I05 → I06 → I07 → I08 → I09 → I10 → I11 → BPS-W0`, with each slice requiring implementation, QA/regression, exact-HEAD browser UAT/evidence, and PASS before the next slice opens.
+- Future capability rule: DG/GAC/RA/AI functionality that is not yet implemented remains backend-gated; after backend formal-close/readiness, its own bounded BPS integration slice is implemented and PASSed before continuing.
+- Next planned implementation target: `BPS-I00 — Canonical product server + shell foundation`. This planning milestone does not itself modify or authorize product code.
