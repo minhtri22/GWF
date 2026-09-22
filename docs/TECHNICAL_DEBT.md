@@ -111,3 +111,19 @@ The local warm-environment run is materially faster than the GitHub fresh Window
 The wrapper-captured `$LASTEXITCODE = -1` conflicts with the script's authoritative PASS report and completed PASS checks. This is tracked as part of TD-UAT-01 observability/exit-contract hardening: the PowerShell entry point should expose an explicit process exit contract (0 on success, nonzero on failure), and timing should be emitted per major phase.
 
 This evidence satisfies the user's pre-open local UAT gate. It does not itself authorize or redefine DG-P11.
+
+### Local UAT attempt — harness failure (2026-09-22 08:09 ICT)
+
+The first DG-P0..P10 acceptance-UAT attempt was **INVALID as product evidence**.
+
+Observed:
+
+- exact product HEAD remained `a09f79ae74a838d2c5998813560373c849669872`;
+- the research-domain baseline command itself returned PASS;
+- the UAT harness then failed before DG-P0..P10 execution because native command output was emitted into the PowerShell function return stream, so `$r` became a mixed array rather than the intended result object;
+- no `UAT_REPORT.json` was produced;
+- the wrapper's observed process exit code `0` was therefore also invalid as a harness success signal.
+
+This is a UAT-tooling defect, not a GWF runtime/scientific failure. The failed attempt is preserved and must not be counted as PASS or FAIL for DG-P0..P10.
+
+Remediation commit `00951921c6db3660dec1825ac1c00610efa38a53` isolates native output from the function return value, makes console labels Windows-codepage-safe, and forces harness exceptions to exit nonzero.
