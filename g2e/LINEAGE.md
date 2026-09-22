@@ -365,3 +365,17 @@
 - **No-rescue boundary:** D2-S4 MUST NOT be rerun.
 - **Formal adjudication:** `g2e/docs/P5A_D2S4_SCIENCE001_FORMAL_ADJUDICATION.md`
 - **Next:** evidence-only post-closure decomposition of the terminal failed record. Any future model-bearing work requires a new successor study and attempt identity after that decomposition.
+
+
+### G2E-P5A-D2-S4 — Post-closure terminal-failure decomposition
+
+- **Scientific status:** unchanged — FORMALLY CLOSED / INVALID / ATTEMPT CONSUMED / NO RETRY.
+- **Post-closure bundle SHA256:** `ad7aef6c621554791213635c802578c5cc0f94f8e2e12381b5e629fd2836be39`.
+- **Verification hash finding:** closed as governance transcription defect. The defective expected value had 63 hex characters; the actual 64-hex file hash `bf0e848c1eba9e8c0bf8a74da5fcf96dbe29898ec26d1ef91d21aca13a7be01b` matches the frozen top-level report.
+- **Sanitized protocol sequence:** `turn/started → item/started → item/completed → account/rateLimits/updated → thread/status/changed → error → turn/completed(failed)`.
+- **Bundle-level mechanism adjudication:** `UNRESOLVED_FROM_EXISTING_BUNDLE` because the sanitizer omitted mechanism-bearing `TurnError` fields (`message`, `codexErrorInfo`, `additionalDetails`, `willRetry`).
+- **Existing-local recovery:** justified from immutable Science-001 `codex-home` artifacts only.
+- **Recovery scope:** exact thread `01a0c9af-d509-7203-9608-06304738b12e` and turn `01a0c9af-d523-72f3-84fa-a575e91076b6`; sessions/archived_sessions/log + SQLite read-only; auth/config/credentials excluded.
+- **Recovery qualification:** run `35750732353` PASS — synthetic session JSONL error recovery, SQLite read-only recovery, secret-redaction, Windows PowerShell 5.1 and P1-P4.
+- **Recovery lock:** `g2e/docs/P5A_D2S4_PERSISTED_TURN_ERROR_RECOVERY_LOCK.json`.
+- **Next:** exactly one local read-only persisted-error collection. No D2-S5 execution is authorized until recovery identifies a concrete mechanism or returns `UNRESOLVED_FROM_EXISTING_LOCAL_EVIDENCE`.
