@@ -312,6 +312,8 @@ The user is not responsible for discovering ordinary code/API/UI defects by manu
 
 **Maps to:** UX-I0.
 
+- **Authorization:** `docs/BPS_I00_IMPLEMENTATION_AUTHORIZATION.md`, blob `366c338bfeac2e8b1fee3ec4ca45fb504c16dab5` — `AUTHORIZED_BOUNDED`.
+- **Implementation branch:** `feature/bps-i00-product-shell`.
 - **HARD dependencies:** DG-P10 formal-close; UI/UX QA `OPEN=0`.
 - **Scope only:**
   - canonical installed server/start-stop-restart path;
@@ -1797,30 +1799,30 @@ UI/UX ARCHITECTURE
     fixed spec blob f4000eac36f8c82826c73070234acd23f8ac72fd
         ↓
 NEXT IMPLEMENTATION PROGRAM
-    BPS-I00  Product server + shell
-        ↓ PASS
-    BPS-I01  Home
-        ↓ PASS
-    BPS-I02  Projects + Access
-        ↓ PASS
-    BPS-I03  Global Operations
-        ↓ PASS
-    BPS-I04  Project Overview
-        ↓ PASS
-    BPS-I05  Project Execution
-        ↓ PASS
-    BPS-I06  Packages
-        ↓ PASS
-    BPS-I07  GitHub
-        ↓ PASS
-    BPS-I08  Artifacts / Evidence
-        ↓ PASS
-    BPS-I09  DG-P0→P10 APIs
-        ↓ PASS
-    BPS-I10  Documents
-        ↓ PASS
-    BPS-I11  Relations / Lineage
-        ↓ PASS
+    BPS-I00  Product server + shell   [AUTHORIZED]
+        ↓ FINAL_SLICE_PASS
+    BPS-I01  Home                    [LOCKED]
+        ↓ FINAL_SLICE_PASS
+    BPS-I02  Projects + Access       [LOCKED]
+        ↓ FINAL_SLICE_PASS
+    BPS-I03  Global Operations       [LOCKED]
+        ↓ FINAL_SLICE_PASS
+    BPS-I04  Project Overview        [LOCKED]
+        ↓ FINAL_SLICE_PASS
+    BPS-I05  Project Execution       [LOCKED]
+        ↓ FINAL_SLICE_PASS
+    BPS-I06  Packages                [LOCKED]
+        ↓ FINAL_SLICE_PASS
+    BPS-I07  GitHub                  [LOCKED]
+        ↓ FINAL_SLICE_PASS
+    BPS-I08  Artifacts / Evidence    [LOCKED]
+        ↓ FINAL_SLICE_PASS
+    BPS-I09  DG-P0→P10 APIs          [LOCKED]
+        ↓ FINAL_SLICE_PASS
+    BPS-I10  Documents               [LOCKED]
+        ↓ FINAL_SLICE_PASS
+    BPS-I11  Relations / Lineage     [LOCKED]
+        ↓ FINAL_SLICE_PASS
     BPS-W0
         ↓
 separate DG-P11 authorization
@@ -1834,9 +1836,9 @@ next capability
 
 Current governance states:
 
-- **BPS-I00:** NEXT PLANNED IMPLEMENTATION SLICE / NOT YET IMPLEMENTED. Plan amendment alone does not modify product code.
+- **BPS-I00:** `AUTHORIZED_BOUNDED / NOT_STARTED`; authorization blob `366c338bfeac2e8b1fee3ec4ca45fb504c16dab5`. Implementation may begin only on `feature/bps-i00-product-shell` under root `AGENTS.md`.
 - **BPS-I01…I11:** LOCKED BEHIND PREVIOUS-SLICE `FINAL_SLICE_PASS`.
-- **BPS-W0:** blocked until BPS-I00…I11 all PASS.
+- **BPS-W0:** blocked until BPS-I00…I11 all reach `FINAL_SLICE_PASS`.
 - **DG-P11+:** NOT_STARTED / NOT_AUTHORIZED.
 - **DG-W3:** OPEN / NOT_EXECUTED.
 - **GAC-P0/P1:** PLANNED_BLOCKED until DG-W4 PASS.
