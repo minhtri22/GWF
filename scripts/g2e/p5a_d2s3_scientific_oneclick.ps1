@@ -86,6 +86,26 @@ function Get-WorkspaceRootClassification([string]$Root) {
     }
 }
 
+function Invoke-NativeCaptured([string]$FilePath, [string[]]$Arguments) {
+    $previousErrorActionPreference = $ErrorActionPreference
+    $output = @()
+    $exitCode = $null
+    try {
+        $ErrorActionPreference = "Continue"
+        $output = @(& $FilePath @Arguments 2>&1)
+        $exitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+
+    return [pscustomobject]@{
+        ExitCode = $exitCode
+        Output = $output
+        Text = (($output | Out-String).Trim())
+    }
+}
+
 function Write-JsonFile([string]$Path, $Object) {
     $json = $Object | ConvertTo-Json -Depth 20
     [IO.File]::WriteAllText(
@@ -118,6 +138,18 @@ function Invoke-InfrastructureSelfTest {
         $sampleObject = [pscustomobject]@{present = "ok"}
         if ((Get-OptionalProperty $sampleObject "missing" "fallback") -ne "fallback") {
             throw "SCIENCE_OPTIONAL_PROPERTY_SELFTEST_FAILED"
+        }
+
+        $python = (Get-Command python -ErrorAction Stop).Source
+        $native = Invoke-NativeCaptured -FilePath $python -Arguments @(
+            "-c",
+            "import sys; sys.stderr.write('G2E_NATIVE_STDERR_SENTINEL\\n'); sys.exit(7)"
+        )
+        if ($native.ExitCode -ne 7) {
+            throw "SCIENCE_NATIVE_CAPTURE_EXITCODE_SELFTEST_FAILED"
+        }
+        if ($native.Text -notmatch "G2E_NATIVE_STDERR_SENTINEL") {
+            throw "SCIENCE_NATIVE_CAPTURE_STDERR_SELFTEST_FAILED"
         }
 
         Write-Host "SCIENTIFIC_INFRASTRUCTURE_SELFTEST_PASS"
@@ -222,14 +254,14 @@ if ((Get-Sha256 $R2Evidence) -ne $ExpectedR2EvidenceSha256) { throw "R2_EVIDENCE
 if ($Lock.r2_report_sha256.ToUpperInvariant() -ne $ExpectedR2ReportSha256) { throw "LOCK_R2_REPORT_DRIFT" }
 if ($Lock.r2_evidence_sha256.ToUpperInvariant() -ne $ExpectedR2EvidenceSha256) { throw "LOCK_R2_EVIDENCE_DRIFT" }
 
-$LocalRoot = Join-Path $ProjectRoot "g2e\.local\P5A-D2S3-SCIENCE-001"
+$LocalRoot = Join-Path $ProjectRoot "g2e\.local\P5A-D2S3-SCIENCE-002"
 if (Test-Path -LiteralPath $LocalRoot) {
     throw "SCIENTIFIC_ROOT_ALREADY_EXISTS_NO_RETRY"
 }
 
 $VolumeDir = Join-Path $LocalRoot "volume"
-$CodexHome = Join-Path $LocalRoot "codex-home\science-001"
-$EvidenceDir = Join-Path $LocalRoot "evidence\science-001"
+$CodexHome = Join-Path $LocalRoot "codex-home\science-002"
+$EvidenceDir = Join-Path $LocalRoot "evidence\science-002"
 $ReportDir = Join-Path $LocalRoot "report"
 $VerificationDir = Join-Path $LocalRoot "verification"
 New-Item -ItemType Directory -Path $VolumeDir -Force | Out-Null
@@ -238,7 +270,7 @@ New-Item -ItemType Directory -Path $ReportDir -Force | Out-Null
 New-Item -ItemType Directory -Path $VerificationDir -Force | Out-Null
 
 $ReportPath = Join-Path $ReportDir "P5A_D2S3_SCIENTIFIC_EXECUTION_REPORT.json"
-$VhdxPath = Join-Path $VolumeDir "P5A-D2S3-SCIENCE-001-TASK.vhdx"
+$VhdxPath = Join-Path $VolumeDir "P5A-D2S3-SCIENCE-002-TASK.vhdx"
 $DiskpartScript = Join-Path $VolumeDir "create_science_vhdx.diskpart.txt"
 
 $Report = [ordered]@{
@@ -290,7 +322,7 @@ try {
             "select vdisk file=""$VhdxPath""",
             "attach vdisk",
             "create partition primary",
-            "format fs=ntfs quick label=G2ED2S3SCI",
+            "format fs=ntfs quick label=G2ED2S3S02",
             "assign letter=$DriveLetter"
         )
         [IO.File]::WriteAllLines($DiskpartScript, $diskpart, [Text.ASCIIEncoding]::new())
@@ -371,10 +403,11 @@ enabled = false
             "--execution-config-hash", $Lock.execution_config_hash,
             "--r2-evidence", $R2Evidence
         )
-        $RunnerOutput = & $PythonExe @RunnerArgs 2>&1
-        $RunnerExit = $LASTEXITCODE
+        $RunnerNative = Invoke-NativeCaptured -FilePath $PythonExe -Arguments $RunnerArgs
+        $RunnerOutput = $RunnerNative.Output
+        $RunnerExit = $RunnerNative.ExitCode
         $Report.runner_exit_code = $RunnerExit
-        if ($RunnerOutput) { Write-Host (($RunnerOutput | Out-String).Trim()) }
+        if ($RunnerNative.Text) { Write-Host $RunnerNative.Text }
 
         $RunnerEvidence = Join-Path $EvidenceDir "P5A_D2S3_SCIENTIFIC_RUNNER_EVIDENCE.json"
         $Marker = Join-Path $EvidenceDir "P5A_D2S3_TURN_START_SENT.marker"
@@ -413,10 +446,11 @@ enabled = false
                 "--execution-config-hash", $Lock.execution_config_hash,
                 "--output", $VerificationPath
             )
-            $VerifierOutput = & $PythonExe @VerifierArgs 2>&1
-            $VerifierExit = $LASTEXITCODE
+            $VerifierNative = Invoke-NativeCaptured -FilePath $PythonExe -Arguments $VerifierArgs
+            $VerifierOutput = $VerifierNative.Output
+            $VerifierExit = $VerifierNative.ExitCode
             $Report.verifier_exit_code = $VerifierExit
-            if ($VerifierOutput) { Write-Host (($VerifierOutput | Out-String).Trim()) }
+            if ($VerifierNative.Text) { Write-Host $VerifierNative.Text }
 
             if ($VerifierExit -ne 0 -or -not (Test-Path -LiteralPath $VerificationPath -PathType Leaf)) {
                 $Report.status = "SCIENTIFIC_EVIDENCE_INVALID"
@@ -436,7 +470,12 @@ enabled = false
             $Report.scientific_attempt_consumed = $false
             $Report.status = "SCIENTIFIC_DISPATCH_BLOCKED_NO_ATTEMPT_CONSUMED"
             if ([string]::IsNullOrWhiteSpace([string]$Report.diagnostic)) {
-                $Report.diagnostic = "PRE_DISPATCH_BLOCKED"
+                if ($RunnerNative.Text) {
+                    $Report.diagnostic = $RunnerNative.Text
+                }
+                else {
+                    $Report.diagnostic = "PRE_DISPATCH_BLOCKED"
+                }
             }
             if ($RunnerExit -eq 0) { $FinalExitCode = 1 } else { $FinalExitCode = $RunnerExit }
         }
