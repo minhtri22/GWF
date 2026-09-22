@@ -135,3 +135,9 @@ def test_a1_oneclick_and_preflight_share_evidence_filename_contract():
     assert expected in preflight
     assert expected in oneclick
     assert "P5A_D2S2_LOCAL_PRETURN_PREFLIGHT.json" not in oneclick
+
+
+def test_a1_does_not_consume_predecessor_report_path():
+    source = ONECLICK.read_text(encoding="utf-8")
+    assert "P5A_D2S2_A1_ONECLICK_REPORT.json" in source
+    assert "P5A_D2S2_ONECLICK_REPORT.json" not in source
