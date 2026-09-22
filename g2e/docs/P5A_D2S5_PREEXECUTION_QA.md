@@ -2,7 +2,7 @@
 
 ## Scope
 
-Final QA after D2-S5 implementation qualification and before the single local scientific execution.
+Final QA after D2-S5 verifier-identity repair and full zero-model requalification.
 
 ## Checks
 
@@ -15,6 +15,11 @@ Final QA after D2-S5 implementation qualification and before the single local sc
 - Exact OQ1 observability blob is bound.
 - Exact observable-client blob is bound.
 - Client verifies OQ1 by repository Git object identity cross-platform.
+- Runner binds final observable-client blob.
+- Admission binds final observable-client blob.
+- Verifier binds final observable-client blob `72c77c1...`.
+- Verifier binds exact OQ1 blob `b6d3c6fc...`.
+- The prior verifier blob `094809...` is superseded and cannot authorize execution.
 - Scientific wrapper/runner fail closed on dirty worktree.
 - Live synthetic `error` recording PASS.
 - Live synthetic failed `turn/completed` recording PASS.
@@ -32,6 +37,7 @@ Final QA after D2-S5 implementation qualification and before the single local sc
 - Windows PowerShell 5.1 / self-test / official D1 / P1.5 admission PASS.
 - Qualification executed no model-bearing turn.
 - Fresh local root is `P5A-D2S5-SCIENCE-001`.
+- Authoritative repaired qualification run is `35794109437`.
 
 ## Findings
 
