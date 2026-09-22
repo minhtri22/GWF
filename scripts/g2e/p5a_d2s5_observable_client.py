@@ -29,9 +29,14 @@ OBSERVABILITY_GIT_BLOB = "b6d3c6fcb671dd166893edd46388c8d69dca9105"
 
 
 def git_blob_sha1(path: Path) -> str:
-    data = path.read_bytes()
-    header = f"blob {len(data)}\0".encode("ascii")
-    return hashlib.sha1(header + data).hexdigest()
+    project_root = Path(__file__).resolve().parents[2]
+    relative = path.resolve().relative_to(project_root).as_posix()
+    return subprocess.check_output(
+        ["git", "-C", str(project_root), "rev-parse", f"HEAD:{relative}"],
+        text=True,
+        encoding="utf-8",
+        stderr=subprocess.STDOUT,
+    ).strip()
 
 
 def load_observability_module():
