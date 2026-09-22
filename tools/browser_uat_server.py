@@ -11,7 +11,7 @@ from gwr.api import create_app
 from gwr.runtime import GovernedWorkflowRuntime
 from gwr.utils import uid, utcnow
 
-ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_ROOT = Path.cwd()
 EXPECTED_HEAD = "a09f79ae74a838d2c5998813560373c849669872"
 
 HTML = """<!doctype html>
@@ -162,17 +162,17 @@ init();
 """
 
 
-def git_head() -> str:
+def git_head(root: Path) -> str:
     return subprocess.check_output(
-        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+        ["git", "rev-parse", "HEAD"], cwd=root, text=True
     ).strip()
 
 
-def build_runtime(db_path: Path):
+def build_runtime(root: Path, db_path: Path):
     if db_path.exists():
         db_path.unlink()
     rt = GovernedWorkflowRuntime(
-        str(ROOT / "domains" / "research.workflow.yaml"),
+        str(root / "domains" / "research.workflow.yaml"),
         str(db_path),
         auth_secret="browser-uat-local-secret-value-0123456789abcdef",
     )
@@ -196,21 +196,23 @@ def build_runtime(db_path: Path):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--repo-root", default=str(DEFAULT_ROOT))
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--expected-head", default=EXPECTED_HEAD)
     args = parser.parse_args()
 
-    actual = git_head()
+    root = Path(args.repo_root).resolve()
+    actual = git_head(root)
     if actual != args.expected_head:
         raise SystemExit(
             "HEAD mismatch: expected %s, found %s" % (args.expected_head, actual)
         )
 
-    root = ROOT / ".gwr" / "uat" / "browser"
-    root.mkdir(parents=True, exist_ok=True)
-    db_path = root / "browser-uat.db"
-    rt, project = build_runtime(db_path)
+    uat_root = root / ".gwr" / "uat" / "browser"
+    uat_root.mkdir(parents=True, exist_ok=True)
+    db_path = uat_root / "browser-uat.db"
+    rt, project = build_runtime(root, db_path)
     app = create_app(rt)
 
     coverage = [
