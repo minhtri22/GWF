@@ -260,8 +260,8 @@ if (Test-Path -LiteralPath $LocalRoot) {
 }
 
 $VolumeDir = Join-Path $LocalRoot "volume"
-$CodexHome = Join-Path $LocalRoot "codex-home\science-002"
-$EvidenceDir = Join-Path $LocalRoot "evidence\science-002"
+$CodexHome = Join-Path $LocalRoot "codex-home\science-001"
+$EvidenceDir = Join-Path $LocalRoot "evidence\science-001"
 $ReportDir = Join-Path $LocalRoot "report"
 $VerificationDir = Join-Path $LocalRoot "verification"
 New-Item -ItemType Directory -Path $VolumeDir -Force | Out-Null
