@@ -22,6 +22,7 @@ WEB = ROOT / "web"
 
 def make_runtime(tmp_path, monkeypatch):
     monkeypatch.setattr(HumanAuthService, "PASSWORD_ITERATIONS", 1_000)
+    monkeypatch.delenv("GWR_TEST_DATABASE_URL", raising=False)
     rt = GovernedWorkflowRuntime(
         str(ROOT / "domains" / "example.workflow.yaml"),
         str(tmp_path / "bps_i00.db"),
@@ -146,6 +147,7 @@ def test_i00_server_config_fails_closed_without_auth_secret(tmp_path, monkeypatc
 
 def test_i00_canonical_server_builds_real_runtime_with_bootstrap_login(tmp_path, monkeypatch):
     monkeypatch.setattr(HumanAuthService, "PASSWORD_ITERATIONS", 1_000)
+    monkeypatch.delenv("GWR_TEST_DATABASE_URL", raising=False)
     config = ServerConfig(
         repo_root=ROOT,
         domain_path=ROOT / "domains" / "example.workflow.yaml",
