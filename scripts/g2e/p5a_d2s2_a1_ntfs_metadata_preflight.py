@@ -138,6 +138,33 @@ def verify_profile(config_path: Path, workspace: Path) -> None:
         raise RuntimeError("PROFILE_NETWORK_DRIFT")
 
 
+
+def classify_workspace_root(workspace: Path) -> tuple[list[str], list[str], list[str]]:
+    workspace_entries = {p.name: p for p in workspace.iterdir()}
+    workspace_names = sorted(workspace_entries)
+    allowed_names = {"TASK.md", "input.json", "System Volume Information"}
+    unexpected_root_names = sorted(set(workspace_names) - allowed_names)
+    if unexpected_root_names:
+        raise RuntimeError(
+            f"WORKSPACE_UNEXPECTED_ROOT_ENTRIES:{unexpected_root_names}"
+        )
+
+    payload_names = sorted(
+        name for name, path in workspace_entries.items() if path.is_file()
+    )
+    if payload_names != ["TASK.md", "input.json"]:
+        raise RuntimeError(f"WORKSPACE_TASK_PAYLOAD_DRIFT:{payload_names}")
+
+    support_metadata_names: list[str] = []
+    svi = workspace_entries.get("System Volume Information")
+    if svi is not None:
+        if not svi.is_dir():
+            raise RuntimeError("SYSTEM_VOLUME_INFORMATION_NOT_DIRECTORY")
+        support_metadata_names.append("System Volume Information")
+
+    return payload_names, support_metadata_names, unexpected_root_names
+
+
 class RpcClient:
     def __init__(self, proc: subprocess.Popen[str], evidence_dir: Path):
         self.proc = proc
@@ -305,27 +332,9 @@ def main() -> int:
     if sha256_file(codex) != EXPECTED_HARNESS_SHA256:
         raise RuntimeError("HARNESS_HASH_DRIFT")
 
-    workspace_entries = {p.name: p for p in workspace.iterdir()}
-    workspace_names = sorted(workspace_entries)
-    allowed_names = {"TASK.md", "input.json", "System Volume Information"}
-    unexpected_root_names = sorted(set(workspace_names) - allowed_names)
-    if unexpected_root_names:
-        raise RuntimeError(
-            f"WORKSPACE_UNEXPECTED_ROOT_ENTRIES:{unexpected_root_names}"
-        )
-
-    payload_names = sorted(
-        name for name, path in workspace_entries.items() if path.is_file()
+    payload_names, support_metadata_names, unexpected_root_names = (
+        classify_workspace_root(workspace)
     )
-    if payload_names != ["TASK.md", "input.json"]:
-        raise RuntimeError(f"WORKSPACE_TASK_PAYLOAD_DRIFT:{payload_names}")
-
-    support_metadata_names = []
-    svi = workspace_entries.get("System Volume Information")
-    if svi is not None:
-        if not svi.is_dir():
-            raise RuntimeError("SYSTEM_VOLUME_INFORMATION_NOT_DIRECTORY")
-        support_metadata_names.append("System Volume Information")
 
     if sha256_file(workspace / "input.json") != EXPECTED_INPUT_SHA256:
         raise RuntimeError("INPUT_HASH_DRIFT")
