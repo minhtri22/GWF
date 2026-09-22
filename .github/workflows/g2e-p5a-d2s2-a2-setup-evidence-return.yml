@@ -1,0 +1,131 @@
+name: G2E P5A D2-S2 A2 Setup Evidence Return Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - "scripts/g2e/p5a_d2s2_a2_setup_evidence_return.ps1"
+      - "tests/g2e/test_p5a_d2s2_a2_setup_evidence_return.py"
+      - ".github/workflows/g2e-p5a-d2s2-a2-setup-evidence-return.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  a2-setup-evidence-return:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+      BASELINE_SHA: "5c08e25e6e5e9ebfe3217fc0bd5940cb26abf89d"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Verify bounded evidence-return diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$BASELINE_SHA^{commit}"
+          mapfile -t changed < <(git diff --name-only "$BASELINE_SHA"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            ".github/workflows/g2e-p5a-d2s2-a2-setup-evidence-return.yml"
+            "scripts/g2e/p5a_d2s2_a2_setup_evidence_return.ps1"
+            "tests/g2e/test_p5a_d2s2_a2_setup_evidence_return.py"
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for item in "${allowed[@]}"; do
+              if [[ "$path" == "$item" ]]; then ok=true; break; fi
+            done
+            if [[ "$ok" != true ]]; then
+              echo "Out-of-scope A2 evidence-return mutation: $path" >&2
+              exit 1
+            fi
+          done
+
+      - name: Parse PowerShell collector
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "scripts/g2e/p5a_d2s2_a2_setup_evidence_return.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -ne 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
+      - name: Run evidence-return qualification
+        run: pytest -q tests/g2e/test_p5a_d2s2_a2_setup_evidence_return.py
+
+      - name: Run P1 regression
+        run: pytest -q tests/g2e/test_p1_core_schemas.py
+
+      - name: Run P1.4 regression
+        run: pytest -q tests/g2e/test_p1_4_agent_binding.py
+
+      - name: Run P1.5 regression
+        run: pytest -q tests/g2e/test_p1_5_qualification_authority.py
+
+      - name: Run P2 regression
+        run: pytest -q tests/g2e/test_p2_deterministic_core.py
+
+      - name: Run P3 regression
+        run: pytest -q tests/g2e/test_p3_standalone_runtime.py
+
+      - name: Run P4 regression
+        run: pytest -q tests/g2e/test_p4_gwf_adapter.py
+
+      - name: Emit qualification report
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          report = {
+              "schema": "G2E-P5A-D2S2-A2-SETUP-EVIDENCE-RETURN-QUALIFICATION-v1",
+              "baseline_sha": "5c08e25e6e5e9ebfe3217fc0bd5940cb26abf89d",
+              "candidate_sha": git("rev-parse", "HEAD"),
+              "collector_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s2_a2_setup_evidence_return.ps1"),
+              "test_blob": git("rev-parse", "HEAD:tests/g2e/test_p5a_d2s2_a2_setup_evidence_return.py"),
+              "workflow_blob": git("rev-parse", "HEAD:.github/workflows/g2e-p5a-d2s2-a2-setup-evidence-return.yml"),
+              "spec_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S2_A2_SETUP_EVIDENCE_RETURN_SPEC.md"),
+              "blocker_adjudication_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S2_A2_WINDOWS_SANDBOX_SETUP_BLOCKER_ADJUDICATION.md"),
+              "bound_report_sha256": "2dd26dd7ce3a337307147c4be82da1f653ab76048abf3cba6bca7c0c8555c5d8",
+              "bound_evidence_sha256": "984f828c4796b77d7bd125d5e5a8421c04f9b496d9117b6f1f5003d9b8a1e2c3",
+              "adjudication": "EVIDENCE_RETURN_PASS_LOCAL_EXECUTION_REQUIRED",
+              "scientific_attempt_authorized": False,
+              "scientific_attempt_consumed": False,
+              "model_turn_executed": False,
+          }
+          Path("p5a_d2s2_a2_setup_evidence_return_qualification.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p5a-d2s2-a2-setup-evidence-return-qualification
+          path: p5a_d2s2_a2_setup_evidence_return_qualification.json
+          if-no-files-found: error
