@@ -1,6 +1,7 @@
 param(
     [string]$ProjectRoot = "",
-    [string]$PythonExe = ""
+    [string]$PythonExe = "",
+    [switch]$ConfigSerializationSelfTest
 )
 
 $ErrorActionPreference = "Stop"
@@ -26,6 +27,49 @@ function Get-Sha256([string]$Path) {
     return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToUpperInvariant()
 }
 
+function Convert-ToLfText([string]$Text) {
+    return $Text.Replace("`r`n", "`n").Replace("`r", "`n")
+}
+
+function Invoke-ConfigSerializationSelfTest {
+    $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("g2e-d2s3-config-" + [Guid]::NewGuid().ToString("N"))
+    $path = Join-Path $tempRoot "config.toml"
+    try {
+        New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
+        $sample = "alpha`r`nbeta`rgamma"
+        $normalized = (Convert-ToLfText $sample) + "`n"
+        [IO.File]::WriteAllText(
+            $path,
+            $normalized,
+            [Text.UTF8Encoding]::new($false)
+        )
+        $bytes = [IO.File]::ReadAllBytes($path)
+        if ($bytes.Length -lt 2) { throw "CONFIG_SERIALIZATION_SELFTEST_TOO_SHORT" }
+        if ($bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB) {
+            throw "CONFIG_SERIALIZATION_SELFTEST_BOM_PRESENT"
+        }
+        if ($bytes -contains 13) {
+            throw "CONFIG_SERIALIZATION_SELFTEST_CR_PRESENT"
+        }
+        if ($bytes[$bytes.Length - 1] -ne 10) {
+            throw "CONFIG_SERIALIZATION_SELFTEST_NO_TRAILING_LF"
+        }
+        if ($bytes[$bytes.Length - 2] -eq 10) {
+            throw "CONFIG_SERIALIZATION_SELFTEST_DOUBLE_TRAILING_LF"
+        }
+        $roundTrip = [Text.Encoding]::UTF8.GetString($bytes)
+        if ($roundTrip -ne "alpha`nbeta`ngamma`n") {
+            throw "CONFIG_SERIALIZATION_SELFTEST_CONTENT_MISMATCH"
+        }
+        Write-Host "CONFIG_SERIALIZATION_SELFTEST_PASS"
+    }
+    finally {
+        if (Test-Path -LiteralPath $tempRoot) {
+            Remove-Item -LiteralPath $tempRoot -Recurse -Force
+        }
+    }
+}
+
 function Write-JsonFile([string]$Path, $Object) {
     $json = $Object | ConvertTo-Json -Depth 16
     [IO.File]::WriteAllText(
@@ -42,6 +86,11 @@ function Get-FirstFreeDriveLetter {
         }
     }
     throw "NO_FREE_DRIVE_LETTER_R_TO_Z"
+}
+
+if ($ConfigSerializationSelfTest) {
+    Invoke-ConfigSerializationSelfTest
+    exit 0
 }
 
 if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
@@ -75,7 +124,7 @@ if (-not (Test-IsAdministrator)) {
 
 Set-Location $ProjectRoot
 
-$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_D2S3_PLATFORM_NO_TURN_PREFLIGHT_LOCK.json"
+$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_D2S3_PRETURN_CONFIG_SERIALIZATION_REPAIR_001_LOCK.json"
 if (-not (Test-Path -LiteralPath $LockPath -PathType Leaf)) {
     throw "PREFLIGHT_LOCK_MISSING:$LockPath"
 }
@@ -170,9 +219,9 @@ if ((Get-Sha256 $HelperExe) -ne $ExpectedHelperSha256) {
     throw "STAGED_HELPER_HASH_DRIFT"
 }
 
-$LocalRoot = Join-Path $ProjectRoot "g2e\.local\P5A-D2S3-PREFLIGHT"
+$LocalRoot = Join-Path $ProjectRoot "g2e\.local\P5A-D2S3-PREFLIGHT-R1"
 if (Test-Path -LiteralPath $LocalRoot) {
-    throw "D2S3_PREFLIGHT_ROOT_ALREADY_EXISTS:$LocalRoot"
+    throw "D2S3_PREFLIGHT_R1_ROOT_ALREADY_EXISTS:$LocalRoot"
 }
 
 $VolumeDir = Join-Path $LocalRoot "volume"
@@ -184,12 +233,12 @@ New-Item -ItemType Directory -Path $VolumeDir -Force | Out-Null
 New-Item -ItemType Directory -Path $CodexHome -Force | Out-Null
 New-Item -ItemType Directory -Path $ReportDir -Force | Out-Null
 
-$ReportJson = Join-Path $ReportDir "P5A_D2S3_PLATFORM_NO_TURN_REPORT.json"
-$VhdxPath = Join-Path $VolumeDir "P5A-D2S3-PREFLIGHT-TASK.vhdx"
+$ReportJson = Join-Path $ReportDir "P5A_D2S3_PLATFORM_NO_TURN_R1_REPORT.json"
+$VhdxPath = Join-Path $VolumeDir "P5A-D2S3-PREFLIGHT-R1-TASK.vhdx"
 $DiskpartScript = Join-Path $VolumeDir "create_vhdx.diskpart.txt"
 
 $Report = [ordered]@{
-    schema = "G2E-P5A-D2S3-PLATFORM-NO-TURN-REPORT-v1"
+    schema = "G2E-P5A-D2S3-PLATFORM-NO-TURN-R1-REPORT-v1"
     status = "STARTED"
     study_id = $StudyId
     attempt_id = $AttemptId
@@ -244,7 +293,7 @@ try {
             "select vdisk file=""$VhdxPath""",
             "attach vdisk",
             "create partition primary",
-            "format fs=ntfs quick label=G2ED2S3",
+            "format fs=ntfs quick label=G2ED2S3R1",
             "assign letter=$DriveLetter"
         )
         [IO.File]::WriteAllLines(
@@ -325,7 +374,7 @@ enabled = false
 "@
         [IO.File]::WriteAllText(
             $ConfigPath,
-            $config.Replace([Environment]::NewLine, [char]10) + [char]10,
+            (Convert-ToLfText $config) + "`n",
             [Text.UTF8Encoding]::new($false)
         )
 
