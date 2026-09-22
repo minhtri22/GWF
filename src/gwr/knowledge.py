@@ -67,6 +67,26 @@ class KnowledgeKernel:
     def set_validity_system(self, revision_id, state):
         if state not in VALIDITY: raise ValidationError("Invalid validity state")
         self.db.conn.execute("UPDATE revisions SET validity_state=? WHERE revision_id=?",(state,revision_id)); self.db.conn.commit()
+    def set_validity_system_audited(self, revision_id, state, reason_code, actor_id="SYSTEM"):
+        if state not in VALIDITY: raise ValidationError("Invalid validity state")
+        r=self.db.one("SELECT r.*,a.project_id FROM revisions r JOIN artifacts a ON a.artifact_id=r.artifact_id WHERE r.revision_id=?",(revision_id,))
+        if not r: raise NotFound("Revision not found")
+        before=r["validity_state"]
+        if before==state:
+            return {"revision_id":revision_id,"before":before,"after":state,"audit_event_id":None,"changed":False}
+        self.db.conn.execute("UPDATE revisions SET validity_state=? WHERE revision_id=?",(state,revision_id))
+        eid=self.gov.append_audit(
+            r["project_id"],
+            actor_id,
+            "REVISION_VALIDITY_RECONCILED",
+            "Revision",
+            revision_id,
+            before_version=before,
+            after_version=state,
+            reason_code=reason_code,
+        )
+        self.db.conn.commit()
+        return {"revision_id":revision_id,"before":before,"after":state,"audit_event_id":eid,"changed":True}
     def compute_impact(self, project_id, trigger_type, trigger_id, root_revision_id, apply=False):
         # links point downstream source -> upstream target; traverse rows whose target is current upstream revision
         q=deque([(root_revision_id,[root_revision_id])]); seen={root_revision_id}; affected=[]
