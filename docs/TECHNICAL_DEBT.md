@@ -127,3 +127,44 @@ Observed:
 This is a UAT-tooling defect, not a GWF runtime/scientific failure. The failed attempt is preserved and must not be counted as PASS or FAIL for DG-P0..P10.
 
 Remediation commit `00951921c6db3660dec1825ac1c00610efa38a53` isolates native output from the function return value, makes console labels Windows-codepage-safe, and forces harness exceptions to exit nonzero.
+
+
+## TD-UAT-02 — Live server / browser UAT readiness
+
+**State:** RECORDED / UAT HARNESS PROVIDED / PRODUCT GAP OPEN
+
+### User acceptance definition
+
+For this project, UAT means:
+
+```text
+install
+  -> start the actual GWF server
+  -> open a browser
+  -> interact with live backend state
+  -> inspect/operate delivered product capabilities
+```
+
+Pytest, gate scripts and source-level verification are implementation qualification, not user acceptance testing.
+
+### Formal-close product observations
+
+At DG-P10 formal-close HEAD `a09f79ae74a838d2c5998813560373c849669872`:
+
+- `src/gwr/api.py` provides a real FastAPI application factory;
+- the repository has no canonical production/local server launcher;
+- the installation dependency set does not include `uvicorn`;
+- `web/` is a static UAT/demo surface whose build metadata is explicitly non-authoritative;
+- existing product HTTP endpoints expose authentication, tenancy/projects, dashboards, lifecycle, agent protocol/recovery and related earlier product surfaces;
+- DG-P4 through DG-P10 document-governance services exist in the runtime but are not exposed as product HTTP endpoints, so they cannot yet receive browser-level product UAT without adding an actual product API/UI surface.
+
+### Bounded browser-UAT tooling
+
+Debt branch provides:
+
+- `tools/browser_uat_server.py` — starts the actual `create_app(runtime)` against a disposable local SQLite UAT database and overlays only a transparent `/uat` inspection page;
+- `tools/start_browser_uat.ps1` — verifies exact formal-close HEAD, installs `uvicorn` as UAT-only environment tooling if absent, starts localhost server and opens the browser.
+
+The overlay must not be treated as a replacement product UI. It identifies live versus NOT_EXPOSED surfaces explicitly.
+
+No DG-P11 implementation is authorized by this tooling.
