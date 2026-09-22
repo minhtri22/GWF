@@ -248,3 +248,14 @@ Rules:
 - Specification blob: `73e1d7c8c01ea954af2a65e1df1942b4f95738f3`.
 - Dependency: DG-P8 final formal-close HEAD `4a93e564adf52ae0dfdffabefaef32d431bbef6d`, final exact-head workflow `35622798852` PASS.
 - Outcome: relation target binding is part of canonical DocumentRelation state; VALIDATES/GENERATED_FROM/DERIVED_FROM/SUPERSEDES are pinned, MUST_ALIGN_WITH follows logical-current, and resolution is side-effect-free with no TraceLink projection.
+
+## 2026-09-23 — DG-P9 implementation qualification completed
+
+- Result: DG-P9 implementation qualification PASS.
+- Authorization HEAD: `52ae1ebded1f9a942cee55d6d2ce061b5bcb8290`.
+- Qualified implementation HEAD: `91e1ae66c3e50b1ae411090b6e74290ef464c9fe`.
+- Workflow: `35796204999` PASS.
+- SQLite evidence artifact: `10724460452`, digest `sha256:c420cf294ebb841a9ae58e29c5883949df82fa43853a68a03dd533d3d92858e2`.
+- PostgreSQL 17 evidence artifact: `10723854711`, digest `sha256:5045b161708a036073a3e508ec50b7cb8e58c727f27efa95dd12b444f1777faa`.
+- Outcome: canonical DocumentRelation target binding is implemented with one-time governed legacy binding, atomically bound new relations, exact DOCUMENT current/pinned resolution, fail-closed external targets, and zero TraceLink/impact/validity/Evidence side effects.
+- Formal close remains separate; DG-P10+ remain unopened.

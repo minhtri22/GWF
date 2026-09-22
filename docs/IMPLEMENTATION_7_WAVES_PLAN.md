@@ -402,40 +402,35 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P9 — Logical-current vs pinned-revision binding
 
 - **Complexity:** 3
-- **Status:** **PRE-IMPLEMENTATION QUALIFIED / IMPLEMENTATION NOT_STARTED**
+- **Status:** **IMPLEMENTATION QUALIFIED / FORMAL CLOSE NOT_STARTED**
 - **HARD dependencies:** DG-P8 — formally closed at final HEAD `4a93e564adf52ae0dfdffabefaef32d431bbef6d`.
 - **Frozen specification:** `docs/DG_P9_RELATION_TARGET_BINDING_SPEC.md`, commit `1a9f8737e36392c8a8db49b93c9371ceee16085f`, blob `73e1d7c8c01ea954af2a65e1df1942b4f95738f3`.
-- **Document QA:** `docs/DOCUMENT_QA_DG_P9_PREIMPLEMENTATION.md` — PASS.
-- **Governing document:** `docs/DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` §10.
-- **Persistence verdict:** no new table; future migration `0011_v086_dg_p9_relation_binding` may only extend `document_relations` with `target_binding_mode` and `target_revision_or_hash`.
-- **Legality verdict:** MUST_ALIGN_WITH current-only; SUPERSEDES/DERIVED_FROM/VALIDATES/GENERATED_FROM pinned-only; DEPENDS_ON/REFERENCES/IMPLEMENTS dual-mode.
-- **Pre-implementation checklist:**
-  - [x] `LOGICAL_CURRENT` and `PINNED_REVISION` distinct;
-  - [x] `VALIDATES` cannot float;
-  - [x] `GENERATED_FROM` exact identity preserved;
-  - [x] legacy P8 rows are not auto-backfilled;
-  - [x] one-time governed binding + no-rebind frozen;
-  - [x] DOCUMENT native current/pinned resolution frozen;
-  - [x] external targets fail closed absent qualified resolver;
+- **Authorization HEAD:** `52ae1ebded1f9a942cee55d6d2ce061b5bcb8290`.
+- **Qualified implementation HEAD:** `91e1ae66c3e50b1ae411090b6e74290ef464c9fe`.
+- **Qualified workflow:** `35796204999` PASS.
+- **SQLite evidence:** artifact `10724460452`, digest `sha256:c420cf294ebb841a9ae58e29c5883949df82fa43853a68a03dd533d3d92858e2`.
+- **PostgreSQL 17 evidence:** artifact `10723854711`, digest `sha256:5045b161708a036073a3e508ec50b7cb8e58c727f27efa95dd12b444f1777faa`.
+- **Persistence:** migration `0011_v086_dg_p9_relation_binding` extends `document_relations` only with `target_binding_mode` and `target_revision_or_hash`; no backfill and no new P9 table.
+- **Legality:** MUST_ALIGN_WITH current-only; SUPERSEDES/DERIVED_FROM/VALIDATES/GENERATED_FROM pinned-only; DEPENDS_ON/REFERENCES/IMPLEMENTS dual-mode.
+- **Implementation acceptance:**
+  - [x] bounded migration extends `document_relations` only;
+  - [x] no new P9 table;
+  - [x] legacy NULL binding preserved without default;
+  - [x] BIND_DOCUMENT_RELATION uses Proposal/Approval/Audit + optimistic versioning;
+  - [x] one-time bind / no-rebind;
+  - [x] new relation creation requires legal explicit binding;
+  - [x] relation legality matrix enforced;
+  - [x] native DOCUMENT resolver returns exact snapshot;
+  - [x] external unsupported resolver fails closed;
+  - [x] resolver is side-effect free;
   - [x] no TraceLink projection;
-  - [x] no impact/validity/Evidence side effect;
-  - [x] D9-F1..D9-F20 frozen;
-  - [x] QA PASS.
-- **Implementation acceptance remains open:**
-  - [ ] bounded migration extends `document_relations` only;
-  - [ ] no new P9 table;
-  - [ ] legacy NULL binding preserved without default;
-  - [ ] BIND_DOCUMENT_RELATION uses Proposal/Approval/Audit + optimistic versioning;
-  - [ ] new relation creation requires legal explicit binding;
-  - [ ] relation legality matrix enforced;
-  - [ ] native DOCUMENT resolver returns exact snapshot;
-  - [ ] external unsupported resolver fails closed;
-  - [ ] resolver is side-effect free;
-  - [ ] no TraceLink projection;
-  - [ ] D9-F1..D9-F20 PASS;
-  - [ ] P8/Knowledge/Trace regressions PASS;
-  - [ ] no DG-P10+ semantics;
-  - [ ] implementation QA PASS.
+  - [x] D9-F1..D9-F20 PASS SQLite/PostgreSQL;
+  - [x] P8/Knowledge/Trace/P4/P5/P6/P7 regressions PASS;
+  - [x] full regression PASS;
+  - [x] compile PASS;
+  - [x] implementation QA PASS;
+  - [x] no DG-P10+ semantics.
+- **Formal close:** NOT_STARTED; requires exact-head qualification of committed QA/handoff package and a separate close decision.
 
 ### DG-P10 — Change classification
 

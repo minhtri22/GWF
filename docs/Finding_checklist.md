@@ -1702,3 +1702,72 @@ DG-P10+                   = NOT_STARTED / NOT_AUTHORIZED
 DG-W3                     = OPEN / NOT_EXECUTED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ~~~
+
+## 63. DG-P9 bounded implementation qualification
+
+Implementation authorization HEAD:
+`52ae1ebded1f9a942cee55d6d2ce061b5bcb8290`
+
+Qualified implementation HEAD:
+`91e1ae66c3e50b1ae411090b6e74290ef464c9fe`
+
+Qualified workflow:
+`35796204999` PASS
+
+SQLite evidence:
+- artifact `10724460452`
+- digest `sha256:c420cf294ebb841a9ae58e29c5883949df82fa43853a68a03dd533d3d92858e2`
+
+PostgreSQL 17 evidence:
+- artifact `10723854711`
+- digest `sha256:5045b161708a036073a3e508ec50b7cb8e58c727f27efa95dd12b444f1777faa`
+
+Implementation review checklist:
+
+- [x] exact authorization HEAD preserved as implementation base.
+- [x] frozen spec blob unchanged.
+- [x] exactly one migration `0011_v086_dg_p9_relation_binding`.
+- [x] only `document_relations` extended.
+- [x] no legacy auto-backfill/default.
+- [x] no P9 binding table/cache/projection table.
+- [x] new relations require explicit legal binding.
+- [x] one-time `BIND_DOCUMENT_RELATION` uses Proposal/Approval/Audit.
+- [x] optimistic relation version enforced.
+- [x] no rebind.
+- [x] frozen relation-type legality matrix enforced.
+- [x] native DOCUMENT logical-current resolution exact.
+- [x] native DOCUMENT pinned resolution exact.
+- [x] historical pin remains resolvable after target advances.
+- [x] external target kinds fail closed without qualified resolver.
+- [x] resolution has zero TraceLink/impact/validity/Evidence/finding side effects.
+- [x] D9-F1..D9-F20 PASS SQLite.
+- [x] D9-F1..D9-F20 PASS PostgreSQL 17.
+- [x] P8 regressions PASS.
+- [x] P4/P5/P6/P7 + Knowledge/Trace regressions PASS.
+- [x] full regression PASS.
+- [x] compile PASS.
+- [x] no DG-P10+ implementation.
+- [x] no DG-W3 closure.
+- [x] no GAC/RA/G2E work.
+
+No implementation-specific scientific/governance finding was discovered.
+
+## 64. Current aggregate status after DG-P9 implementation qualification
+
+**OPEN = 0**
+
+All findings F-01 through F-115 remain resolved.
+
+~~~text
+DG-P8                     = FORMALLY_CLOSED
+DG-P9 specification       = FROZEN
+DG-P9 authorization gate  = PASS
+DG-P9 implementation      = QUALIFIED
+DG-P9 qualified HEAD      = 91e1ae66c3e50b1ae411090b6e74290ef464c9fe
+DG-P9 qualified run       = 35796204999 PASS
+DG-P9 formal close        = NOT_STARTED
+DG-P9 overall             = NOT_YET_FORMALLY_CLOSED
+DG-P10+                   = NOT_STARTED / NOT_AUTHORIZED
+DG-W3                     = OPEN / NOT_EXECUTED
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+~~~
