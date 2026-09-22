@@ -330,3 +330,11 @@ Rules:
 - PostgreSQL 17 artifact: `10671440727`, digest `sha256:3462c7e968e7abd9084cec124f0f18b351e35fa701bceb7f50d26a7bf4683e4e`.
 - Windows exact-head artifact: `10671293043`, digest `sha256:2130e5035a3a477a02e7caba1ecb66c0991f5514c6f871ab0671a79800b71dbf`.
 - Outcome: DG-P10 one-document change classification, workflow-scoped document mutation authority, GOV/FROZEN protection, and deterministic archive/version lineage planning are closed on the immutable final HEAD. DG-P11 remains unopened by this result.
+
+
+## 2026-09-22 — Browser Product Surface audit and contract locked
+
+- Result: cross-roadmap browser product surface audit completed and contract locked.
+- Locked specification commit: `f97f4f1d7f5e9ca5190be0b54e2da2f15e1b65e9`.
+- Locked specification blob: `91192e659ab0de84a176a63cef1b66d03eeec061`.
+- Outcome: browser acceptance is defined as installed product -> authoritative server -> browser -> authenticated HTTP -> authoritative state/audit. The contract covers existing live APIs, Documentation Governance, future DG-P11+, Shared Library/GAC, Reference Acquisition, and Agent Interoperability/Codex/MCP/Agent Pool/ARC, while prohibiting static/localStorage simulation from counting as product UAT.
