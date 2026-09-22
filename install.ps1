@@ -25,7 +25,7 @@ $DockerContainer = $null
 $OriginalPostgresUrl = $env:GWR_TEST_DATABASE_URL
 $TotalTimer = [Diagnostics.Stopwatch]::StartNew()
 $Timings = [ordered]@{}
-$LegacyQualificationRequested = @("SkipTests","SkipPostgres","RequirePostgres","SkipUat","PostgresUrl") | Where-Object { $PSBoundParameters.ContainsKey($_) }
+$LegacyQualificationRequested = @(@("SkipTests","SkipPostgres","RequirePostgres","SkipUat","PostgresUrl") | Where-Object { $PSBoundParameters.ContainsKey($_) })
 $QualificationMode = $Qualification.IsPresent -or ($LegacyQualificationRequested.Count -gt 0)
 
 function Write-Step([string]$Message) {
