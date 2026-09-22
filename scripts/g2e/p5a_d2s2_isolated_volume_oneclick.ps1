@@ -132,7 +132,7 @@ if ($LASTEXITCODE -ne 0) {
 
 $Head = (git rev-parse HEAD).Trim()
 if ($Head -ne $RemoteHead) {
-    throw "REMOTE_HEAD_CHECKOUT_MISMATCH:$Head:$RemoteHead"
+    throw "REMOTE_HEAD_CHECKOUT_MISMATCH:${Head}:${RemoteHead}"
 }
 
 if (git status --porcelain) {
