@@ -351,7 +351,7 @@ enabled = false
     $PreflightText = ($PreflightOutput | Out-String).Trim()
     Write-Host $PreflightText
 
-    $EvidenceFile = Join-Path $EvidenceDir "P5A_D2S2_LOCAL_PRETURN_PREFLIGHT.json"
+    $EvidenceFile = Join-Path $EvidenceDir "P5A_D2S2_A1_LOCAL_PRETURN_PREFLIGHT.json"
     if (Test-Path $EvidenceFile) {
         $Evidence = Get-Content -LiteralPath $EvidenceFile -Raw | ConvertFrom-Json
         $Report.preturn_gate_pass = [bool]$Evidence.preturn_gate_pass
