@@ -30,6 +30,19 @@ TARGET_KINDS = {
 
 RELATION_STATUSES = {"ACTIVE", "RETIRED"}
 
+BINDING_MODES = {"LOGICAL_CURRENT", "PINNED_REVISION"}
+
+BINDING_LEGALITY = {
+    "DEPENDS_ON": {"LOGICAL_CURRENT", "PINNED_REVISION"},
+    "REFERENCES": {"LOGICAL_CURRENT", "PINNED_REVISION"},
+    "MUST_ALIGN_WITH": {"LOGICAL_CURRENT"},
+    "SUPERSEDES": {"PINNED_REVISION"},
+    "DERIVED_FROM": {"PINNED_REVISION"},
+    "VALIDATES": {"PINNED_REVISION"},
+    "IMPLEMENTS": {"LOGICAL_CURRENT", "PINNED_REVISION"},
+    "GENERATED_FROM": {"PINNED_REVISION"},
+}
+
 DEFAULT_INVALIDATION_POLICIES = {
     "DEPENDS_ON": "REVIEW_ON_TARGET_CHANGE",
     "REFERENCES": "REFERENTIAL_INTEGRITY_ONLY",
@@ -43,13 +56,15 @@ DEFAULT_INVALIDATION_POLICIES = {
 
 DECLARE_ACTION = "DECLARE_DOCUMENT_RELATION"
 RETIRE_ACTION = "RETIRE_DOCUMENT_RELATION"
+BIND_ACTION = "BIND_DOCUMENT_RELATION"
 
 
 class DocumentRelationService:
-    """DG-P8 canonical semantic document-relation registry.
+    """Canonical semantic document relations with DG-P9 target binding.
 
-    This service intentionally does not create or mutate TraceLinks and does not
-    implement DG-P9 target binding semantics.
+    Binding is stored on DocumentRelation itself. Resolution is identity-only:
+    it does not create TraceLinks, ImpactSets, Evidence, findings, or mutate
+    Revision validity/lifecycle/authority state.
     """
 
     def __init__(self, db, knowledge, governance, project_governance):
@@ -115,6 +130,62 @@ class DocumentRelationService:
                 raise ValidationError("DOCUMENT target belongs to a different project")
         return target_ref
 
+    def _validate_binding(
+        self,
+        *,
+        project_id: str,
+        relation_type: str,
+        target_kind: str,
+        target_ref: str,
+        binding_mode: str,
+        target_revision_or_hash: str | None,
+    ) -> tuple[str, str | None]:
+        mode = self._enum(binding_mode, BINDING_MODES, "target_binding_mode")
+        if mode not in BINDING_LEGALITY[relation_type]:
+            raise ValidationError(
+                "Binding mode is not legal for relation type",
+                details={
+                    "relation_type": relation_type,
+                    "binding_mode": mode,
+                    "allowed": sorted(BINDING_LEGALITY[relation_type]),
+                },
+            )
+
+        if target_kind != "DOCUMENT":
+            raise ValidationError(
+                "No qualified target resolver for external target kind",
+                details={"target_kind": target_kind, "binding_mode": mode},
+            )
+
+        target = self.knowledge.get_artifact(target_ref)
+        if target["artifact_type"] != "governed_document":
+            raise ValidationError("DOCUMENT target must be a governed document")
+        if target["project_id"] != project_id:
+            raise ValidationError("DOCUMENT target belongs to a different project")
+
+        if mode == "LOGICAL_CURRENT":
+            if target_revision_or_hash not in {None, ""}:
+                raise ValidationError(
+                    "LOGICAL_CURRENT must not persist target_revision_or_hash"
+                )
+            return mode, None
+
+        exact = self._opaque_ref(
+            target_revision_or_hash,
+            "target_revision_or_hash",
+        )
+        revision = self.knowledge.get_revision(exact)
+        if revision["artifact_id"] != target_ref:
+            raise ValidationError(
+                "Pinned DOCUMENT revision does not belong to target_ref",
+                details={
+                    "target_ref": target_ref,
+                    "revision_id": exact,
+                    "revision_artifact_id": revision["artifact_id"],
+                },
+            )
+        return mode, exact
+
     def _policy(self, relation_type: str, invalidation_policy: str | None) -> str:
         if invalidation_policy is None:
             return DEFAULT_INVALIDATION_POLICIES[relation_type]
@@ -155,8 +226,6 @@ class DocumentRelationService:
         return [dict(row) for row in self.db.all(sql, tuple(params))]
 
     def _lock_project(self, project_id: str) -> None:
-        # SQLite Database.tx() uses BEGIN IMMEDIATE. PostgreSQL requires an
-        # explicit serialization point for service-level duplicate rejection.
         if getattr(self.db, "backend_name", "") == "postgresql":
             row = self.db.conn.execute(
                 "SELECT id FROM projects WHERE id=? FOR UPDATE",
@@ -201,6 +270,8 @@ class DocumentRelationService:
         target_ref: str,
         actor_id: str,
         *,
+        binding_mode: str | None = None,
+        target_revision_or_hash: str | None = None,
         invalidation_policy: str | None = None,
         required_approval_policy: str = "normative_research_change",
         idempotency_key: str | None = None,
@@ -214,17 +285,31 @@ class DocumentRelationService:
             target_kind=target_kind,
             target_ref=target_ref,
         )
+        if binding_mode is None:
+            raise ValidationError(
+                "New document relation requires explicit target_binding_mode"
+            )
+        binding_mode, target_revision_or_hash = self._validate_binding(
+            project_id=source["project_id"],
+            relation_type=relation_type,
+            target_kind=target_kind,
+            target_ref=target_ref,
+            binding_mode=binding_mode,
+            target_revision_or_hash=target_revision_or_hash,
+        )
         policy = self._policy(relation_type, invalidation_policy)
         if not self.gov.domain.approval_policy(required_approval_policy):
             raise ValidationError("Unknown relation approval policy")
         payload = {
-            "schema": "DG-P8-DOCUMENT-RELATION-v1",
+            "schema": "DG-P9-DOCUMENT-RELATION-v1",
             "project_id": source["project_id"],
             "source_document_id": source_document_id,
             "created_revision_id": revision["revision_id"],
             "relation_type": relation_type,
             "target_kind": target_kind,
             "target_ref": target_ref,
+            "target_binding_mode": binding_mode,
+            "target_revision_or_hash": target_revision_or_hash,
             "invalidation_policy": policy,
         }
         return self.gov.prepare_proposal(
@@ -238,6 +323,8 @@ class DocumentRelationService:
                     "relation_type": relation_type,
                     "target_kind": target_kind,
                     "target_ref": target_ref,
+                    "target_binding_mode": binding_mode,
+                    "target_revision_or_hash": target_revision_or_hash,
                 }
             ],
             payload,
@@ -281,7 +368,7 @@ class DocumentRelationService:
 
         with self.db.tx():
             self._lock_project(project_id)
-            source, current_revision = self._source_document(
+            _, current_revision = self._source_document(
                 source_document_id,
                 project_id=project_id,
             )
@@ -294,6 +381,14 @@ class DocumentRelationService:
                 source_document_id=source_document_id,
                 target_kind=target_kind,
                 target_ref=target_ref,
+            )
+            binding_mode, target_revision_or_hash = self._validate_binding(
+                project_id=project_id,
+                relation_type=relation_type,
+                target_kind=target_kind,
+                target_ref=target_ref,
+                binding_mode=payload.get("target_binding_mode"),
+                target_revision_or_hash=payload.get("target_revision_or_hash"),
             )
             duplicate = self.db.one(
                 "SELECT relation_id FROM document_relations "
@@ -316,7 +411,13 @@ class DocumentRelationService:
             relation_id = uid("drel")
             now = utcnow()
             self.db.conn.execute(
-                "INSERT INTO document_relations VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO document_relations("
+                "relation_id,project_id,source_document_id,relation_type,"
+                "target_kind,target_ref,invalidation_policy,status,"
+                "created_revision_id,create_proposal_id,retired_revision_id,"
+                "retired_by_proposal_id,version,created_at,updated_at,retired_at,"
+                "target_binding_mode,target_revision_or_hash"
+                ") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     relation_id,
                     project_id,
@@ -334,6 +435,8 @@ class DocumentRelationService:
                     now,
                     now,
                     None,
+                    binding_mode,
+                    target_revision_or_hash,
                 ),
             )
             self.gov.append_audit(
@@ -351,6 +454,8 @@ class DocumentRelationService:
                     "target_kind": target_kind,
                     "target_ref": target_ref,
                     "invalidation_policy": invalidation_policy,
+                    "target_binding_mode": binding_mode,
+                    "target_revision_or_hash": target_revision_or_hash,
                 },
             )
             self.db.conn.execute(
@@ -358,6 +463,213 @@ class DocumentRelationService:
                 (proposal_id,),
             )
         return self.get_relation(relation_id)
+
+    def prepare_binding(
+        self,
+        relation_id: str,
+        actor_id: str,
+        *,
+        expected_version: int,
+        binding_mode: str,
+        target_revision_or_hash: str | None = None,
+        required_approval_policy: str = "normative_research_change",
+        idempotency_key: str | None = None,
+    ) -> str:
+        relation = self._relation(relation_id)
+        if relation.get("target_binding_mode") is not None or relation.get(
+            "target_revision_or_hash"
+        ) is not None:
+            raise ValidationError("Document relation is already bound; rebinding is forbidden")
+        if relation["version"] != expected_version:
+            raise StaleVersion(
+                "Document relation version mismatch",
+                details={"expected": expected_version, "actual": relation["version"]},
+            )
+        mode, exact = self._validate_binding(
+            project_id=relation["project_id"],
+            relation_type=relation["relation_type"],
+            target_kind=relation["target_kind"],
+            target_ref=relation["target_ref"],
+            binding_mode=binding_mode,
+            target_revision_or_hash=target_revision_or_hash,
+        )
+        if not self.gov.domain.approval_policy(required_approval_policy):
+            raise ValidationError("Unknown relation approval policy")
+        payload = {
+            "schema": "DG-P9-DOCUMENT-RELATION-BIND-v1",
+            "project_id": relation["project_id"],
+            "relation_id": relation_id,
+            "source_document_id": relation["source_document_id"],
+            "relation_type": relation["relation_type"],
+            "target_kind": relation["target_kind"],
+            "target_ref": relation["target_ref"],
+            "expected_version": expected_version,
+            "target_binding_mode": mode,
+            "target_revision_or_hash": exact,
+        }
+        return self.gov.prepare_proposal(
+            relation["project_id"],
+            actor_id,
+            BIND_ACTION,
+            [{"kind": "DOCUMENT_RELATION", "relation_id": relation_id}],
+            payload,
+            required_approval_policy=required_approval_policy,
+            idempotency_key=idempotency_key,
+        )
+
+    def apply_approved_binding(
+        self,
+        proposal_id: str,
+        actor_id: str,
+    ) -> dict[str, Any]:
+        proposal, approval = self._approved_proposal(proposal_id, BIND_ACTION)
+        payload = self._proposal_payload(proposal)
+        project_id = payload.get("project_id")
+        self._authorize_commit(actor_id, project_id)
+
+        relation_id = self._opaque_ref(payload.get("relation_id"), "relation_id")
+        expected_version = int(payload.get("expected_version"))
+
+        with self.db.tx():
+            self._lock_project(project_id)
+            relation = self._relation(relation_id)
+            if relation["project_id"] != project_id:
+                raise ValidationError("Relation binding project mismatch")
+            if relation["version"] != expected_version:
+                raise StaleVersion(
+                    "Document relation version mismatch",
+                    details={"expected": expected_version, "actual": relation["version"]},
+                )
+            if relation.get("target_binding_mode") is not None or relation.get(
+                "target_revision_or_hash"
+            ) is not None:
+                raise ValidationError(
+                    "Document relation is already bound; rebinding is forbidden"
+                )
+            frozen = {
+                "source_document_id": payload.get("source_document_id"),
+                "relation_type": payload.get("relation_type"),
+                "target_kind": payload.get("target_kind"),
+                "target_ref": payload.get("target_ref"),
+            }
+            for field, expected in frozen.items():
+                if relation[field] != expected:
+                    raise ValidationError(
+                        "Frozen relation field changed before binding",
+                        details={"field": field, "expected": expected, "actual": relation[field]},
+                    )
+
+            mode, exact = self._validate_binding(
+                project_id=project_id,
+                relation_type=relation["relation_type"],
+                target_kind=relation["target_kind"],
+                target_ref=relation["target_ref"],
+                binding_mode=payload.get("target_binding_mode"),
+                target_revision_or_hash=payload.get("target_revision_or_hash"),
+            )
+            new_version = expected_version + 1
+            now = utcnow()
+            cur = self.db.conn.execute(
+                "UPDATE document_relations SET target_binding_mode=?,"
+                "target_revision_or_hash=?,version=?,updated_at=? "
+                "WHERE relation_id=? AND version=? "
+                "AND target_binding_mode IS NULL AND target_revision_or_hash IS NULL",
+                (
+                    mode,
+                    exact,
+                    new_version,
+                    now,
+                    relation_id,
+                    expected_version,
+                ),
+            )
+            if cur.rowcount != 1:
+                latest = self._relation(relation_id)
+                if latest.get("target_binding_mode") is not None:
+                    raise ValidationError(
+                        "Document relation is already bound; rebinding is forbidden"
+                    )
+                raise StaleVersion("Document relation changed concurrently")
+
+            self.gov.append_audit(
+                project_id,
+                actor_id,
+                "DOCUMENT_RELATION_BOUND",
+                "DocumentRelation",
+                relation_id,
+                before_version=str(expected_version),
+                after_version=str(new_version),
+                proposal_id=proposal_id,
+                approval_id=approval["approval_id"],
+                reason_code=mode,
+                metadata={
+                    "source_document_id": relation["source_document_id"],
+                    "relation_type": relation["relation_type"],
+                    "target_kind": relation["target_kind"],
+                    "target_ref": relation["target_ref"],
+                    "target_binding_mode": mode,
+                    "target_revision_or_hash": exact,
+                },
+            )
+            self.db.conn.execute(
+                "UPDATE proposals SET status='COMMITTED' WHERE proposal_id=?",
+                (proposal_id,),
+            )
+        return self.get_relation(relation_id)
+
+    def resolve_target(self, relation_id: str) -> dict[str, Any]:
+        relation = self._relation(relation_id)
+        mode = relation.get("target_binding_mode")
+        if mode is None:
+            raise ValidationError("Document relation is UNBOUND and cannot be resolved")
+        mode = self._enum(mode, BINDING_MODES, "target_binding_mode")
+        if mode not in BINDING_LEGALITY[relation["relation_type"]]:
+            raise ValidationError("Stored relation binding violates legality matrix")
+        if relation["target_kind"] != "DOCUMENT":
+            raise ValidationError(
+                "No qualified target resolver for external target kind",
+                details={"target_kind": relation["target_kind"], "binding_mode": mode},
+            )
+
+        target = self.knowledge.get_artifact(relation["target_ref"])
+        if target["artifact_type"] != "governed_document":
+            raise ValidationError("DOCUMENT target must be a governed document")
+        if target["project_id"] != relation["project_id"]:
+            raise ValidationError("DOCUMENT target belongs to a different project")
+        current_revision_id = target.get("current_revision_id")
+        if not current_revision_id:
+            raise ValidationError("DOCUMENT target has no current revision")
+
+        if mode == "LOGICAL_CURRENT":
+            if relation.get("target_revision_or_hash") is not None:
+                raise ValidationError(
+                    "LOGICAL_CURRENT relation contains a persisted exact target"
+                )
+            resolved = self.knowledge.get_revision(current_revision_id)
+            is_current = True
+        else:
+            exact = self._opaque_ref(
+                relation.get("target_revision_or_hash"),
+                "target_revision_or_hash",
+            )
+            resolved = self.knowledge.get_revision(exact)
+            if resolved["artifact_id"] != relation["target_ref"]:
+                raise ValidationError(
+                    "Pinned DOCUMENT revision does not belong to target_ref"
+                )
+            is_current = exact == current_revision_id
+
+        return {
+            "relation_id": relation_id,
+            "binding_mode": mode,
+            "target_document_id": relation["target_ref"],
+            "target_artifact_version": target["version"],
+            "resolved_revision_id": resolved["revision_id"],
+            "resolved_content_hash": resolved["content_hash"],
+            "resolved_at": utcnow(),
+            "is_current": is_current,
+            "current_revision_id": current_revision_id,
+        }
 
     def prepare_retirement(
         self,
@@ -376,7 +688,7 @@ class DocumentRelationService:
                 "Document relation version mismatch",
                 details={"expected": expected_version, "actual": relation["version"]},
             )
-        source, revision = self._source_document(
+        _, revision = self._source_document(
             relation["source_document_id"],
             project_id=relation["project_id"],
         )
@@ -476,6 +788,8 @@ class DocumentRelationService:
                     "relation_type": relation["relation_type"],
                     "target_kind": relation["target_kind"],
                     "target_ref": relation["target_ref"],
+                    "target_binding_mode": relation.get("target_binding_mode"),
+                    "target_revision_or_hash": relation.get("target_revision_or_hash"),
                 },
             )
             self.db.conn.execute(
@@ -497,6 +811,8 @@ class DocumentRelationService:
             raise NotFound("Proposal not found")
         if row["action"] == DECLARE_ACTION:
             return self.apply_approved_declaration(proposal_id, actor_id)
+        if row["action"] == BIND_ACTION:
+            return self.apply_approved_binding(proposal_id, actor_id)
         if row["action"] == RETIRE_ACTION:
             return self.apply_approved_retirement(proposal_id, actor_id)
-        raise ValidationError("Proposal action is not owned by DG-P8 relation service")
+        raise ValidationError("Proposal action is not owned by document relation service")
