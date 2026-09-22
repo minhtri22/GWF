@@ -149,18 +149,18 @@ def classify_workspace_root(workspace: Path) -> tuple[list[str], list[str], list
             f"WORKSPACE_UNEXPECTED_ROOT_ENTRIES:{unexpected_root_names}"
         )
 
-    payload_names = sorted(
-        name for name, path in workspace_entries.items() if path.is_file()
-    )
-    if payload_names != ["TASK.md", "input.json"]:
-        raise RuntimeError(f"WORKSPACE_TASK_PAYLOAD_DRIFT:{payload_names}")
-
     support_metadata_names: list[str] = []
     svi = workspace_entries.get("System Volume Information")
     if svi is not None:
         if not svi.is_dir():
             raise RuntimeError("SYSTEM_VOLUME_INFORMATION_NOT_DIRECTORY")
         support_metadata_names.append("System Volume Information")
+
+    payload_names = sorted(
+        name for name, path in workspace_entries.items() if path.is_file()
+    )
+    if payload_names != ["TASK.md", "input.json"]:
+        raise RuntimeError(f"WORKSPACE_TASK_PAYLOAD_DRIFT:{payload_names}")
 
     return payload_names, support_metadata_names, unexpected_root_names
 
