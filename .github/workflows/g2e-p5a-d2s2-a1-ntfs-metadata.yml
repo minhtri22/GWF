@@ -40,8 +40,7 @@ jobs:
           set -euo pipefail
           git cat-file -e "$BASELINE_SHA^{commit}"
           mapfile -t changed < <(git diff --name-only "$BASELINE_SHA"...HEAD)
-          printf '%s
-' "${changed[@]}"
+          printf '%s\\n' "${changed[@]}"
           allowed=(
             ".github/workflows/g2e-p5a-d2s2-a1-ntfs-metadata.yml"
             "scripts/g2e/p5a_d2s2_a1_ntfs_metadata_preflight.py"
