@@ -129,7 +129,7 @@ $manifest = [ordered]@{
 $ManifestPath = Join-Path $BundleRoot "P5A_D2S3_POSTCLOSURE_BUNDLE_MANIFEST.json"
 Write-JsonFile $ManifestPath $manifest
 
-Compress-Archive -LiteralPath (Join-Path $BundleRoot "*") -DestinationPath $ZipPath -CompressionLevel Optimal
+Compress-Archive -Path (Join-Path $BundleRoot "*") -DestinationPath $ZipPath -CompressionLevel Optimal
 
 Write-Host ""
 Write-Host "=== D2-S3 POST-CLOSURE EVIDENCE BUNDLE READY ==="
