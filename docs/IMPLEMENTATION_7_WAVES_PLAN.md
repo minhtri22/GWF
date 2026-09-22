@@ -512,7 +512,7 @@ The user is not responsible for discovering ordinary code/API/UI defects by manu
 
 **Maps to:** UX-I5 backend/API portion.
 
-- **HARD dependencies:** BPS-I08 PASS; DG-P0→DG-P10 formal-close evidence.
+- **HARD dependencies:** BPS-I08 FINAL_SLICE_PASS; DG-P0→DG-P10 formal-close evidence.
 - **Scope:** bounded HTTP exposure only for already-qualified DG-P0→P10 services.
 - **Required contracts:**
   - [ ] document register/enroll/revise with exact source identity;
