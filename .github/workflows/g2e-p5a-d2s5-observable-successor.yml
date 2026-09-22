@@ -22,7 +22,7 @@ jobs:
     timeout-minutes: 45
     env:
       PYTHONPATH: src
-      BASELINE_SHA: "66533f5da5d77461ba001d0b5e6b3d520299f7a6"
+      BASELINE_SHA: "7072539b2b63b1316b90c7ab270a6f8c84014473"
 
     steps:
       - uses: actions/checkout@v4
