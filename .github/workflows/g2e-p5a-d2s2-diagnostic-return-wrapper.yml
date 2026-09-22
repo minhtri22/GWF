@@ -7,6 +7,7 @@ on:
     paths:
       - "g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_SPEC.md"
       - "g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_RUNTIME_REPAIR_SPEC.md"
+      - "g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_NATIVE_STDERR_REPAIR_SPEC.md"
       - "scripts/g2e/p5a_d2s2_diagnostic_return_oneclick.ps1"
       - "tests/g2e/test_p5a_d2s2_diagnostic_return_wrapper.py"
       - ".github/workflows/g2e-p5a-d2s2-diagnostic-return-wrapper.yml"
@@ -20,7 +21,7 @@ jobs:
     timeout-minutes: 30
     env:
       PYTHONPATH: src
-      BASELINE_SHA: "c4129a4dc8c30d4bc97de2acbfcfd20d90e68762"
+      BASELINE_SHA: "3904b1261b7eceae2ef81b5038430bec1b79ea2e"
 
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +44,7 @@ jobs:
           printf '%s\n' "${changed[@]}"
           allowed=(
             ".github/workflows/g2e-p5a-d2s2-diagnostic-return-wrapper.yml"
-            "g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_RUNTIME_REPAIR_SPEC.md"
+            "g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_NATIVE_STDERR_REPAIR_SPEC.md"
             "scripts/g2e/p5a_d2s2_diagnostic_return_oneclick.ps1"
             "tests/g2e/test_p5a_d2s2_diagnostic_return_wrapper.py"
           )
@@ -77,6 +78,12 @@ jobs:
         shell: pwsh
         run: |
           ./scripts/g2e/p5a_d2s2_diagnostic_return_oneclick.ps1 -ProjectRoot "$PWD" -GitInvocationSelfTest
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Execute Git fetch stderr-path self-test
+        shell: pwsh
+        run: |
+          ./scripts/g2e/p5a_d2s2_diagnostic_return_oneclick.ps1 -ProjectRoot "$PWD" -GitFetchStderrSelfTest
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Run return-wrapper qualification
@@ -149,17 +156,17 @@ jobs:
               return subprocess.check_output(["git", *args], text=True).strip()
 
           report = {
-              "schema": "G2E-P5A-D2S2-DIAGNOSTIC-RETURN-WRAPPER-RUNTIME-REPAIR-QUALIFICATION-v1",
-              "baseline_sha": "c4129a4dc8c30d4bc97de2acbfcfd20d90e68762",
+              "schema": "G2E-P5A-D2S2-DIAGNOSTIC-RETURN-WRAPPER-NATIVE-STDERR-REPAIR-QUALIFICATION-v1",
+              "baseline_sha": "3904b1261b7eceae2ef81b5038430bec1b79ea2e",
               "candidate_sha": git("rev-parse", "HEAD"),
               "wrapper_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s2_diagnostic_return_oneclick.ps1"),
               "test_blob": git("rev-parse", "HEAD:tests/g2e/test_p5a_d2s2_diagnostic_return_wrapper.py"),
               "workflow_blob": git("rev-parse", "HEAD:.github/workflows/g2e-p5a-d2s2-diagnostic-return-wrapper.yml"),
-              "repair_spec_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_RUNTIME_REPAIR_SPEC.md"),
+              "native_stderr_repair_spec_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_NATIVE_STDERR_REPAIR_SPEC.md"),
               "frozen_d2s2_oneclick_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s2_isolated_volume_oneclick.ps1"),
               "frozen_d2s2_preflight_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s2_isolated_volume_preflight.py"),
               "frozen_diagnostic_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s2_elevation_bootstrap_diagnostic.ps1"),
-              "adjudication": "RETURN_WRAPPER_RUNTIME_REPAIR_PASS_LOCAL_EXECUTION_REQUIRED",
+              "adjudication": "RETURN_WRAPPER_NATIVE_STDERR_REPAIR_PASS_LOCAL_EXECUTION_REQUIRED",
               "scientific_attempt_authorized": False,
               "scientific_attempt_consumed": False,
               "model_turn_executed": False,
