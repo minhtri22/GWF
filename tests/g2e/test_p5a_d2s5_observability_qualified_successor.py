@@ -353,6 +353,9 @@ def test_verifier_accepts_matching_failed_turn_projection_and_rejects_missing_pr
 
 
 def test_verifier_remains_verdict_neutral_and_observability_is_evidence_integrity():
+    verifier = _load(VERIFIER, "d2s5_verifier_binding")
+    assert verifier.OBSERVABLE_CLIENT_GIT_BLOB == CLIENT_BLOB
+    assert verifier.OBSERVABILITY_GIT_BLOB == OBS_BLOB
     source = VERIFIER.read_text(encoding="utf-8")
     assert '"verifier_assigns_scientific_verdict": False' in source
     assert 'observability_checks["contract_valid"]' in source
