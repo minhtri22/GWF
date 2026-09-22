@@ -1,5 +1,7 @@
 # Governed Workflow Runtime (GWF)
 
+> **Mandatory BPS agent startup:** before any UI/UX / Browser Product Surface implementation or handoff, read the root `AGENTS.md` first. It is the canonical one-slice-at-a-time QA/local-UAT protocol; repository state and exact governing blobs override chat summaries.
+
 GWF is a domain-neutral governance and execution runtime for long-running AI/agent work.
 
 Its purpose is to make agent work **resumable, auditable, authority-aware and reproducible** even when the agent, model, machine or session changes. GWF treats plans, revisions, evidence, approvals, failures, QA, checkpoints and handoffs as governed runtime state rather than relying on chat history.

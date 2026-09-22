@@ -75,6 +75,8 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 
 **Purpose:** deliver the authoritative GWF browser product incrementally, one bounded user-visible slice at a time, while preserving all existing backend/governance semantics and the seven-wave backend roadmap.
 
+**Mandatory agent protocol:** root `AGENTS.md` MUST be read before any BPS implementation/handoff. It is the canonical QA1→QA6 / PRE_LOCAL_PASS / local-PS1 / FINAL_SLICE_PASS protocol.
+
 **Governing documents:**
 
 - `docs/BROWSER_PRODUCT_SURFACE_SPEC.md`;
