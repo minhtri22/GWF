@@ -105,12 +105,25 @@ def _relation(
     *,
     invalidation_policy=None,
 ):
+    if target_kind != "DOCUMENT":
+        raise AssertionError("P8 regression helper only declares native DOCUMENT targets after P9")
+    if relation_type == "MUST_ALIGN_WITH":
+        binding_mode = "LOGICAL_CURRENT"
+        target_revision_or_hash = None
+    elif relation_type in {"SUPERSEDES", "DERIVED_FROM", "VALIDATES", "GENERATED_FROM"}:
+        binding_mode = "PINNED_REVISION"
+        target_revision_or_hash = rt.knowledge.get_artifact(target_ref)["current_revision_id"]
+    else:
+        binding_mode = "LOGICAL_CURRENT"
+        target_revision_or_hash = None
     proposal = rt.document_relations.prepare_relation(
         source_document_id,
         relation_type,
         target_kind,
         target_ref,
         lead,
+        binding_mode=binding_mode,
+        target_revision_or_hash=target_revision_or_hash,
         invalidation_policy=invalidation_policy,
     )
     approval = _approve(rt, proposal, owner)
@@ -260,10 +273,10 @@ def test_d8_f9_stale_retirement_rejected(configured):
 def test_d8_f10_exact_duplicate_active_relation_rejected(configured):
     rt, _, owner, lead, d1, _, d2, _ = configured
     p1 = rt.document_relations.prepare_relation(
-        d1, "DEPENDS_ON", "DOCUMENT", d2, lead
+        d1, "DEPENDS_ON", "DOCUMENT", d2, lead, binding_mode="LOGICAL_CURRENT"
     )
     p2 = rt.document_relations.prepare_relation(
-        d1, "DEPENDS_ON", "DOCUMENT", d2, lead
+        d1, "DEPENDS_ON", "DOCUMENT", d2, lead, binding_mode="LOGICAL_CURRENT"
     )
     _approve(rt, p1, owner)
     _approve(rt, p2, owner)
@@ -281,6 +294,7 @@ def test_d8_f11_self_document_relation_rejected(configured):
             "DOCUMENT",
             d1,
             lead,
+            binding_mode="LOGICAL_CURRENT",
         )
 
 
@@ -301,24 +315,22 @@ def test_d8_f12_document_target_integrity(configured):
             "DOCUMENT",
             foreign_doc,
             lead,
+            binding_mode="LOGICAL_CURRENT",
         )
 
 
-def test_d8_f13_external_target_kind_preserved_without_binding_claim(configured):
-    rt, _, owner, lead, d1, _, _, _ = configured
-    row, _, _ = _relation(
-        rt,
-        d1,
-        "IMPLEMENTS",
-        "SCHEMA",
-        "schema://research/protocol-v1",
-        lead,
-        owner,
-    )
-    assert row["target_kind"] == "SCHEMA"
-    assert row["target_ref"] == "schema://research/protocol-v1"
-    assert "target_binding_mode" not in row
-    assert "target_revision_or_hash" not in row
+def test_d8_f13_external_target_vocabulary_preserved_and_p9_fails_closed(configured):
+    rt, _, _, lead, d1, _, _, _ = configured
+    assert "SCHEMA" in TARGET_KINDS
+    with pytest.raises(ValidationError):
+        rt.document_relations.prepare_relation(
+            d1,
+            "IMPLEMENTS",
+            "SCHEMA",
+            "schema://research/protocol-v1",
+            lead,
+            binding_mode="LOGICAL_CURRENT",
+        )
 
 
 def test_d8_f14_relation_semantics_remain_distinct(configured):
@@ -375,8 +387,8 @@ def test_d8_f16_validates_not_evidence_before_p9_binding(configured):
     )["n"]
     assert after == before
     assert row["invalidation_policy"] == "REQUIRES_PINNED_BINDING"
-    assert "target_binding_mode" not in row
-    assert "target_revision_or_hash" not in row
+    assert row["target_binding_mode"] == "PINNED_REVISION"
+    assert row["target_revision_or_hash"] is not None
 
 
 def test_d8_f17_generated_from_not_reproducibility_proof(configured):
