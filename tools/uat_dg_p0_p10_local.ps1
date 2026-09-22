@@ -23,8 +23,12 @@ function Invoke-NativeChecked {
 
     Write-Section $Name
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    & $FilePath @Arguments 2>&1 | Tee-Object -FilePath $LogPath
+    $commandOutput = @(& $FilePath @Arguments 2>&1)
     $code = $LASTEXITCODE
+    $commandOutput | Set-Content -Path $LogPath -Encoding UTF8
+    foreach ($line in $commandOutput) {
+        Write-Host $line
+    }
     $sw.Stop()
 
     $result = [ordered]@{
@@ -81,7 +85,7 @@ try {
     $Started = Get-Date
     $Results = New-Object System.Collections.Generic.List[object]
 
-    Write-Section "GWF LOCAL ACCEPTANCE UAT — DG-P0 THROUGH DG-P10"
+    Write-Section "GWF LOCAL ACCEPTANCE UAT - DG-P0 THROUGH DG-P10"
     Write-Host "repo=$RepoRoot"
     Write-Host "head=$ActualHead"
     Write-Host "python=$Python"
@@ -89,23 +93,23 @@ try {
 
     $commands = @(
         @{
-            Name = "BASELINE — research domain contract"
+            Name = "BASELINE - research domain contract"
             Args = @("tools/gwr_domain.py", "validate", "domains/research.workflow.yaml")
         },
         @{
-            Name = "BASELINE — software domain contract"
+            Name = "BASELINE - software domain contract"
             Args = @("tools/gwr_domain.py", "validate", "domains/software.workflow.yaml")
         },
         @{
-            Name = "BASELINE — CQG pilot contract"
+            Name = "BASELINE - CQG pilot contract"
             Args = @("tools/gwr_pilot.py", "validate", "pilots/cqg.research.yaml")
         },
         @{
-            Name = "BASELINE — GWF self-upgrade pilot contract"
+            Name = "BASELINE - GWF self-upgrade pilot contract"
             Args = @("tools/gwr_pilot.py", "validate", "pilots/gwf.self-upgrade.yaml")
         },
         @{
-            Name = "DG-P0..P3 — document ingress, validation and exact Git blob identity"
+            Name = "DG-P0..P3 - document ingress, validation and exact Git blob identity"
             Args = @("-m","pytest","-vv","--tb=short","-p","no:cacheprovider",
                 "tests/test_document_validation_p0.py",
                 "tests/test_document_validation_p1.py",
@@ -113,31 +117,31 @@ try {
                 "tests/test_dg_p3_git_blob_resolver.py")
         },
         @{
-            Name = "DG-P4 — stable document/revision identity and facade"
+            Name = "DG-P4 - stable document/revision identity and facade"
             Args = @("-m","pytest","-vv","--tb=short","-p","no:cacheprovider","tests/test_dg_p4_document_facade.py")
         },
         @{
-            Name = "DG-P5 — QA evidence and finding lifecycle"
+            Name = "DG-P5 - QA evidence and finding lifecycle"
             Args = @("-m","pytest","-vv","--tb=short","-p","no:cacheprovider","tests/test_dg_p5_qa_findings.py")
         },
         @{
-            Name = "DG-P6 — document lifecycle and validity"
+            Name = "DG-P6 - document lifecycle and validity"
             Args = @("-m","pytest","-vv","--tb=short","-p","no:cacheprovider","tests/test_dg_p6_lifecycle_validity.py")
         },
         @{
-            Name = "DG-P7 — document authority"
+            Name = "DG-P7 - document authority"
             Args = @("-m","pytest","-vv","--tb=short","-p","no:cacheprovider","tests/test_dg_p7_authority.py")
         },
         @{
-            Name = "DG-P8 — explicit document relations"
+            Name = "DG-P8 - explicit document relations"
             Args = @("-m","pytest","-vv","--tb=short","-p","no:cacheprovider","tests/test_dg_p8_relations.py")
         },
         @{
-            Name = "DG-P9 — relation binding and exact revision resolution"
+            Name = "DG-P9 - relation binding and exact revision resolution"
             Args = @("-m","pytest","-vv","--tb=short","-p","no:cacheprovider","tests/test_dg_p9_relations.py")
         },
         @{
-            Name = "DG-P10 — change classification, authority decision and lineage plan"
+            Name = "DG-P10 - change classification, authority decision and lineage plan"
             Args = @("-m","pytest","-vv","--tb=short","-p","no:cacheprovider","tests/test_dg_p10_change_classification.py")
         }
     )
@@ -156,7 +160,7 @@ try {
 
     if (($Results | Where-Object { $_.status -ne "PASS" }).Count -eq 0) {
         $GatePath = Join-Path $OutDir "DG_P10_UAT_GATE.json"
-        $r = Invoke-NativeChecked -Name "DG-P10 — bounded end-to-end governance gate" -FilePath $Python -Arguments @("tools/run_dg_p10_gate.py","--out",$GatePath) -LogPath (Join-Path $OutDir "99-DG-P10-bounded-gate.log")
+        $r = Invoke-NativeChecked -Name "DG-P10 - bounded end-to-end governance gate" -FilePath $Python -Arguments @("tools/run_dg_p10_gate.py","--out",$GatePath) -LogPath (Join-Path $OutDir "99-DG-P10-bounded-gate.log")
         $Results.Add($r)
     }
 
@@ -208,6 +212,11 @@ try {
         Write-Host "OVERALL=FAIL" -ForegroundColor Red
         exit 1
     }
+}
+catch {
+    Write-Host ""
+    Write-Host "UAT HARNESS ERROR: $($_.Exception.Message)" -ForegroundColor Red
+    exit 2
 }
 finally {
     Pop-Location
