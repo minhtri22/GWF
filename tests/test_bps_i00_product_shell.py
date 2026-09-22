@@ -171,7 +171,8 @@ def test_i00_canonical_server_builds_real_runtime_with_bootstrap_login(tmp_path,
         assert client.get("/ready").json()["ok"] is True
         info = client.get("/product/meta").json()
         assert info["server_mode"] == "canonical"
-        expected_backend = "postgresql" if os.environ.get("GWR_TEST_DATABASE_URL") else "sqlite"\n        assert info["backend"] == expected_backend
+        expected_backend = "postgresql" if os.environ.get("GWR_TEST_DATABASE_URL") else "sqlite"
+        assert info["backend"] == expected_backend
 
 
 def test_i00_windows_launcher_and_installer_contracts_are_explicit():
