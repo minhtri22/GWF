@@ -28,6 +28,7 @@ The following documents define the semantics used by this plan:
 - `docs/GOVERNED_ARTIFACT_CATALOG_SPEC.md` — GWF Shared Library catalog/publication/query substrate.
 - `docs/GOVERNED_ARTIFACT_CATALOG_INTEGRATION_BOUNDARIES.md` — ownership boundaries among GWF core, Documentation Governance, Reference Acquisition, GAC and G2E.
 - `docs/BROWSER_PRODUCT_SURFACE_SPEC.md` — locked browser information architecture, maturity states, authoritative-UAT boundary, and complete browser checklist across current and future capabilities.
+- `docs/UI_UX_PRODUCT_ARCHITECTURE_SPEC.md` — authoritative UI/UX information architecture, project-centered navigation, package usage, graph placement, dark/light/collapsible shell, and browser implementation/UAT flow.
 - `docs/Finding_doc.md` — reconciliation findings and closure checklist for the GAC/G2E Library integration.
 - `docs/FUTURE_NODE_AGENT_ORCHESTRATION_PARKING_LOT.md` — explicitly deferred node-level orchestration.
 - `docs/Finding_checklist.md` — cumulative resolved specification findings.

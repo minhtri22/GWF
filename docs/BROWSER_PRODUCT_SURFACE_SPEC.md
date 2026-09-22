@@ -49,6 +49,8 @@ The browser surface was reconciled against the active architecture/roadmap docum
 
 The governing dependency source for future work remains `docs/IMPLEMENTATION_7_WAVES_PLAN.md`.
 
+Detailed navigation, project workflow, Package Registry/usage, graph interaction, themes, and implementation flows are governed by `docs/UI_UX_PRODUCT_ARCHITECTURE_SPEC.md`.
+
 ## 4. Browser authority invariant
 
 Browser UAT is valid only when:
@@ -136,22 +138,27 @@ They must not remain fixture/localStorage simulations in a product-ready build.
 
 ### 5.3 Navigation and capability status
 
-The browser shell must contain top-level areas for:
+The browser shell follows the project-centered architecture frozen in `docs/UI_UX_PRODUCT_ARCHITECTURE_SPEC.md`.
 
-1. Home / Dashboard
-2. Organization / Access
-3. Projects
-4. Process / Runs
-5. Artifacts / Evidence
-6. Domains / Skills
-7. Approvals / Audit
-8. Distributed Runtime
-9. Integrations
-10. Documents
-11. Shared Library
-12. Reference Acquisition
-13. Agent Interoperability
-14. System / Diagnostics
+Global areas:
+
+1. Home
+2. Projects
+3. Operations — Runs / Approvals / Audit / Runtime
+4. Research — Packages (Domains / Skills / Usage) and future Reference Acquisition
+5. Shared Library — future GAC-backed cross-project capability
+6. Agents / Codex — future Agent Interoperability
+7. System — GitHub / Access / Diagnostics / Settings
+
+Project-scoped deep areas:
+
+1. Overview
+2. Execution
+3. Library — Documents / Artifacts / Evidence / future References
+4. Governance
+5. Configuration — Packages / GitHub / Agent Protocol / Members & Access / Settings
+
+Relations & Lineage is contextual to a selected project document/object; it is not a global/Home navigation item.
 
 Future-gated sections may appear only as clearly disabled/read-only capability status pages. They must not simulate successful actions.
 
