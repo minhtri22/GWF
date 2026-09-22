@@ -342,3 +342,26 @@
 - **Attempt-consumption boundary:** durable marker immediately before sole `turn/start` transport write.
 - **Lock:** `g2e/docs/P5A_D2S4_SCIENTIFIC_EXECUTION_LOCK.json`
 - **Next:** exactly one local D2-S4 scientific execution. No automatic retry after marker creation.
+
+
+### G2E-P5A-D2-S4 — Science-001 terminal INVALID
+
+- **Status:** FORMALLY CLOSED / TERMINAL INVALID / NO RETRY
+- **Study:** `p5a-d2s4-queue-safe-scientific-successor`
+- **Attempt:** `p5a-d2s4-p5-fx-001-attempt-001`
+- **Source HEAD:** `2f8e42454f87d0dbda0f4dbfa26f384fe822e2cc`
+- **Execution config:** `5a933057595e051884293a8f11917f95bed422399e55fd246932d09aeb627726`
+- **Top-level report SHA256:** `e98ee53c550e13dd42715c63ca6cbf887aa69396f50c90abc6637a54a3dc9536`
+- **Runner evidence SHA256:** `6e1ef9d48bf640a8a285370549771f76048e0280eaf121450f3fa6679c069f5d`
+- **Verification SHA256:** `bf0e848c1eba9e8c0bf8a74da5fcf96dbe29898ec26d1ef91d21aca13a7be01b`
+- **Observed dispatch:** `turn/start` sent and accepted; turn id `01a0c9af-d523-72f3-84fa-a575e91076b6`.
+- **Queue-safe mechanism result:** runner exit 0; turn reached terminal; timeout false. The D2-S3 uncaught-`queue.Empty` mechanism is therefore not the D2-S4 failure mechanism.
+- **Terminal status:** `failed`.
+- **Result:** absent.
+- **Frozen adjudication inputs:** attempt consumed=true; infrastructure/protocol failure=true; authority violation=false; retry budget=0; replacement attempt unauthorized.
+- **Scientific verdict:** `INVALID / TERMINAL_INVALID_SERVER_DECLARED_FAILED_TURN`.
+- **Capability consequence:** no promotion for `repository_read` or `repository_write`.
+- **Resource hygiene:** Science-001 VHDX dismounted and verified detached.
+- **No-rescue boundary:** D2-S4 MUST NOT be rerun.
+- **Formal adjudication:** `g2e/docs/P5A_D2S4_SCIENCE001_FORMAL_ADJUDICATION.md`
+- **Next:** evidence-only post-closure decomposition of the terminal failed record. Any future model-bearing work requires a new successor study and attempt identity after that decomposition.
