@@ -78,7 +78,7 @@ def test_staging_report_preserves_firewalls():
 
 def test_spec_forbids_global_install_mutation_and_science():
     normalized = " ".join(SPEC.read_text(encoding="utf-8").split())
-    assert "global Codex installation must not be modified" in normalized
+    assert "modify `%LOCALAPPDATA%\\Programs\\OpenAI\\Codex`" in normalized
     assert "execute `codex.exe`" in normalized
     assert "authorize or consume a scientific attempt" in normalized
     assert "actual end-to-end staging succeeds on a Windows GitHub runner" in normalized
