@@ -259,3 +259,15 @@ Rules:
 - PostgreSQL 17 evidence artifact: `10723854711`, digest `sha256:5045b161708a036073a3e508ec50b7cb8e58c727f27efa95dd12b444f1777faa`.
 - Outcome: canonical DocumentRelation target binding is implemented with one-time governed legacy binding, atomically bound new relations, exact DOCUMENT current/pinned resolution, fail-closed external targets, and zero TraceLink/impact/validity/Evidence side effects.
 - Formal close remains separate; DG-P10+ remain unopened.
+
+## 2026-09-23 — DG-P9 formal-close adjudication
+
+- Adjudication basis HEAD: `041b59ea3e4a1363df3bd4349aa97424061d6c76`.
+- Exact-head workflow: `35796638275` PASS.
+- SQLite artifact: `10724536102`, digest `sha256:eb7c80441605105b769da0ad227c9434c0d357aec2d67de6cdad2a6dd9e1075f`.
+- PostgreSQL 17 artifact: `10724685879`, digest `sha256:a1a5ae14fc6dfc870cb41105b8d3e22cc9402fa032abe405ea0bcdc80c05f0a7`.
+- Frozen DG-P9 spec blob remained `73e1d7c8c01ea954af2a65e1df1942b4f95738f3`.
+- Findings OPEN = 0.
+- Verdict: **DG-P9 FORMALLY_CLOSED**.
+- Closure-state commit is documentation-only and must itself pass the unchanged two-backend DG-P9 workflow on exact HEAD.
+- DG-P10+ remain NOT_STARTED / NOT_AUTHORIZED.

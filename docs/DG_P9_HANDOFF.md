@@ -140,15 +140,33 @@ Not implemented:
 DG-P8                     = PASS / FORMALLY_CLOSED
 DG-P9 specification       = FROZEN
 DG-P9 implementation      = QUALIFIED
-DG-P9 formal close        = NOT_STARTED
-DG-P9 overall             = NOT_YET_FORMALLY_CLOSED
+DG-P9 formal close        = PASS
+DG-P9 overall             = FORMALLY_CLOSED
 DG-P10+                   = NOT_STARTED / NOT_AUTHORIZED
 DG-W3                     = OPEN / NOT_EXECUTED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ```
 
-## 13. Next governance boundary
+## 13. Exact-handoff requalification
 
-The next allowed DG-P9 step is exact-head requalification of this committed QA/handoff package, followed by a separate formal-close decision.
+The committed QA/handoff package HEAD `041b59ea3e4a1363df3bd4349aa97424061d6c76` was requalified by workflow `35796638275` with both jobs completed SUCCESS.
 
-This handoff does not authorize DG-P10.
+SQLite:
+- artifact `10724536102`
+- digest `sha256:eb7c80441605105b769da0ad227c9434c0d357aec2d67de6cdad2a6dd9e1075f`
+
+PostgreSQL 17:
+- artifact `10724685879`
+- digest `sha256:a1a5ae14fc6dfc870cb41105b8d3e22cc9402fa032abe405ea0bcdc80c05f0a7`
+
+The workflow HEAD and both artifact HEADs exactly match `041b59ea3e4a1363df3bd4349aa97424061d6c76`.
+
+## 14. Formal-close adjudication
+
+All frozen DG-P9 acceptance, regression, backend-equivalence, provenance and no-later-wave criteria are satisfied.
+
+**DG-P9 status: FORMALLY_CLOSED.**
+
+The documentation-only closure commit must be requalified on its exact HEAD with the same two-backend DG-P9 workflow. That run is validation of the closure state, not authorization for DG-P10.
+
+DG-P10+ remain NOT_STARTED / NOT_AUTHORIZED.

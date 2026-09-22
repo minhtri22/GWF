@@ -1771,3 +1771,53 @@ DG-P10+                   = NOT_STARTED / NOT_AUTHORIZED
 DG-W3                     = OPEN / NOT_EXECUTED
 GAC                       = LOCKED_UNTIL_DG-W4_PASS
 ~~~
+
+## 65. DG-P9 formal-close adjudication
+
+Frozen adjudication basis:
+
+- exact QA/handoff HEAD `041b59ea3e4a1363df3bd4349aa97424061d6c76`;
+- exact-head workflow `35796638275` PASS;
+- SQLite artifact `10724536102`, digest `sha256:eb7c80441605105b769da0ad227c9434c0d357aec2d67de6cdad2a6dd9e1075f`;
+- PostgreSQL 17 artifact `10724685879`, digest `sha256:a1a5ae14fc6dfc870cb41105b8d3e22cc9402fa032abe405ea0bcdc80c05f0a7`;
+- frozen spec blob `73e1d7c8c01ea954af2a65e1df1942b4f95738f3`;
+- OPEN findings = 0.
+
+Formal-close adjudication checklist:
+
+- [x] branch HEAD matched adjudicated exact HEAD.
+- [x] workflow HEAD matched adjudicated exact HEAD.
+- [x] both artifact HEADs matched adjudicated exact HEAD.
+- [x] both artifact digests recorded and unexpired.
+- [x] SQLite D9 fixtures/gate PASS.
+- [x] PostgreSQL D9 fixtures/gate PASS.
+- [x] P8 regressions PASS on both backends.
+- [x] P4/P5/P6/P7 + Knowledge/Trace regressions PASS.
+- [x] full regression PASS.
+- [x] compile PASS.
+- [x] frozen specification blob unchanged.
+- [x] no outcome-driven repair.
+- [x] no open implementation finding.
+- [x] no DG-P10+ implementation.
+- [x] no DG-W3 closure.
+- [x] no GAC/RA/G2E work.
+
+**DG-P9 FORMAL-CLOSE ADJUDICATION: PASS**
+
+## 66. Aggregate status after DG-P9 formal close
+
+**OPEN = 0**
+
+~~~text
+DG-P8                     = FORMALLY_CLOSED
+DG-P9 specification       = FROZEN
+DG-P9 implementation      = QUALIFIED
+DG-P9 exact-handoff run   = 35796638275 PASS
+DG-P9 formal close        = PASS
+DG-P9 overall             = FORMALLY_CLOSED
+DG-P10+                   = NOT_STARTED / NOT_AUTHORIZED
+DG-W3                     = OPEN / NOT_EXECUTED
+GAC                       = LOCKED_UNTIL_DG-W4_PASS
+~~~
+
+The closure-state commit requires one final exact-head requalification with the unchanged DG-P9 two-backend workflow. This requirement does not open DG-P10.

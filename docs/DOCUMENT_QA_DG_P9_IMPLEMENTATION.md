@@ -212,3 +212,51 @@ Finding OPEN                                0
 **DG-P9 IMPLEMENTATION QUALIFICATION = PASS**
 
 Formal close is not performed by this QA step.
+
+## 12. Exact-handoff requalification
+
+The committed implementation QA/handoff package at exact HEAD:
+
+`041b59ea3e4a1363df3bd4349aa97424061d6c76`
+
+was requalified without runtime/spec changes by workflow:
+
+`35796638275` — PASS
+
+SQLite exact-head evidence:
+- artifact `10724536102`
+- digest `sha256:eb7c80441605105b769da0ad227c9434c0d357aec2d67de6cdad2a6dd9e1075f`
+
+PostgreSQL 17 exact-head evidence:
+- artifact `10724685879`
+- digest `sha256:a1a5ae14fc6dfc870cb41105b8d3e22cc9402fa032abe405ea0bcdc80c05f0a7`
+
+The run HEAD, branch HEAD and both artifact HEADs are identical.
+
+The frozen specification blob remains:
+`73e1d7c8c01ea954af2a65e1df1942b4f95738f3`.
+
+## 13. Formal-close adjudication
+
+Formal-close criteria:
+
+- exact committed QA/handoff HEAD requalified — PASS;
+- D9-F1..D9-F20 SQLite — PASS;
+- bounded SQLite DG-P9 gate — PASS;
+- P8/P4/P5/P6/P7/Knowledge/Trace regressions — PASS;
+- full repository regression — PASS;
+- compile — PASS;
+- D9-F1..D9-F20 PostgreSQL 17 — PASS;
+- P8 PostgreSQL regression — PASS;
+- bounded PostgreSQL DG-P9 gate/equivalence — PASS;
+- exact artifact identities/digests available — PASS;
+- frozen specification unchanged — PASS;
+- implementation finding OPEN count — 0;
+- DG-P10+ runtime/schema opened — NO;
+- DG-W3 closure attempted — NO.
+
+**DG-P9 FORMAL-CLOSE ADJUDICATION = PASS**
+
+DG-P9 is formally closed by this closure state, subject to the required exact closure-HEAD requalification of the documentation-only close commit.
+
+No DG-P10 authorization is implied.

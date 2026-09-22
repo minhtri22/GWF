@@ -402,35 +402,29 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 ### DG-P9 — Logical-current vs pinned-revision binding
 
 - **Complexity:** 3
-- **Status:** **IMPLEMENTATION QUALIFIED / FORMAL CLOSE NOT_STARTED**
+- **Status:** **FORMALLY_CLOSED**
 - **HARD dependencies:** DG-P8 — formally closed at final HEAD `4a93e564adf52ae0dfdffabefaef32d431bbef6d`.
 - **Frozen specification:** `docs/DG_P9_RELATION_TARGET_BINDING_SPEC.md`, commit `1a9f8737e36392c8a8db49b93c9371ceee16085f`, blob `73e1d7c8c01ea954af2a65e1df1942b4f95738f3`.
 - **Authorization HEAD:** `52ae1ebded1f9a942cee55d6d2ce061b5bcb8290`.
 - **Qualified implementation HEAD:** `91e1ae66c3e50b1ae411090b6e74290ef464c9fe`.
-- **Qualified workflow:** `35796204999` PASS.
-- **SQLite evidence:** artifact `10724460452`, digest `sha256:c420cf294ebb841a9ae58e29c5883949df82fa43853a68a03dd533d3d92858e2`.
-- **PostgreSQL 17 evidence:** artifact `10723854711`, digest `sha256:5045b161708a036073a3e508ec50b7cb8e58c727f27efa95dd12b444f1777faa`.
-- **Persistence:** migration `0011_v086_dg_p9_relation_binding` extends `document_relations` only with `target_binding_mode` and `target_revision_or_hash`; no backfill and no new P9 table.
-- **Legality:** MUST_ALIGN_WITH current-only; SUPERSEDES/DERIVED_FROM/VALIDATES/GENERATED_FROM pinned-only; DEPENDS_ON/REFERENCES/IMPLEMENTS dual-mode.
-- **Implementation acceptance:**
-  - [x] bounded migration extends `document_relations` only;
-  - [x] no new P9 table;
-  - [x] legacy NULL binding preserved without default;
-  - [x] BIND_DOCUMENT_RELATION uses Proposal/Approval/Audit + optimistic versioning;
-  - [x] one-time bind / no-rebind;
-  - [x] new relation creation requires legal explicit binding;
-  - [x] relation legality matrix enforced;
-  - [x] native DOCUMENT resolver returns exact snapshot;
-  - [x] external unsupported resolver fails closed;
-  - [x] resolver is side-effect free;
-  - [x] no TraceLink projection;
-  - [x] D9-F1..D9-F20 PASS SQLite/PostgreSQL;
-  - [x] P8/Knowledge/Trace/P4/P5/P6/P7 regressions PASS;
+- **Implementation workflow:** `35796204999` PASS.
+- **Committed QA/handoff HEAD:** `041b59ea3e4a1363df3bd4349aa97424061d6c76`.
+- **Exact-handoff workflow:** `35796638275` PASS.
+- **SQLite exact-handoff evidence:** artifact `10724536102`, digest `sha256:eb7c80441605105b769da0ad227c9434c0d357aec2d67de6cdad2a6dd9e1075f`.
+- **PostgreSQL 17 exact-handoff evidence:** artifact `10724685879`, digest `sha256:a1a5ae14fc6dfc870cb41105b8d3e22cc9402fa032abe405ea0bcdc80c05f0a7`.
+- **Persistence:** migration `0011_v086_dg_p9_relation_binding` extends `document_relations` only; no backfill and no new P9 table.
+- **Formal-close acceptance:**
+  - [x] all implementation acceptance criteria PASS;
+  - [x] exact committed QA/handoff HEAD requalified;
+  - [x] SQLite/PostgreSQL exact-head artifact identities recorded;
+  - [x] P8 and earlier-wave regressions PASS;
   - [x] full regression PASS;
   - [x] compile PASS;
-  - [x] implementation QA PASS;
+  - [x] frozen specification unchanged;
+  - [x] OPEN findings = 0;
   - [x] no DG-P10+ semantics.
-- **Formal close:** NOT_STARTED; requires exact-head qualification of committed QA/handoff package and a separate close decision.
+- **Formal-close adjudication:** PASS.
+- **Closure-state rule:** requalify the documentation-only closure commit on its exact HEAD with the unchanged DG-P9 workflow; no DG-P10 authorization is implied.
 
 ### DG-P10 — Change classification
 
