@@ -355,3 +355,12 @@ Rules:
 - Final Browser Product Surface spec commit: `7b5d5c1ee7a4b95011d3f9896cd2f4dda5bcdaca`, blob `7ce32bc163c36b37f7cae04e9e47274a61918120`.
 - Final implementation-plan commit: `98374fe0473294e0c1838563f109233953c486bc`, blob `f5606c95658733ef2db18a44a78b2c54c16353ba`.
 - Outcome: BPS-W0 now requires authoritative browser coverage for the implemented v0.5→v0.8.5 product lineage plus DG-P0→DG-P10; legacy static/localStorage views must be rewired to authoritative APIs or retired/replaced before browser readiness can PASS.
+
+
+## 2026-09-22 — Complete GWF UI/UX product architecture locked
+
+- Result: complete project-centered UI/UX implementation contract and QA PASS.
+- Architecture commit: `e09af22c50505aa8c3e6a80da8b48dcc87452e8c`.
+- UI/UX architecture blob: `fccfb9c1263ccb28ff31588aec4db9e68e0bfab4`.
+- UI/UX QA blob: `bb830e6ef21a57903c872391ebde2d09e9394b32`.
+- Outcome: Home is locked as the operational command dashboard; project work is organized through Overview / Execution / Library / Governance / Configuration; Relations & Lineage is contextual to a selected project document; Package Registry and two-way package↔project usage are specified; GitHub is the only current LIVE external plugin family; dark/light modes, collapsible navigation, full v0.5→v0.8.5 browserization, DG-P0→DG-P10 browser coverage, and real install→server→browser UAT are part of the implementation contract.
