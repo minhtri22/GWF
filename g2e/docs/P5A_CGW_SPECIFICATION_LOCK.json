@@ -1,0 +1,40 @@
+{
+  "schema": "G2E-P5A-CGW-SPECIFICATION-LOCK-v1",
+  "status": "SPECIFICATION_ONLY_NO_MODEL_EXECUTION",
+  "workstream": "p5a-cgw-codex-chatgpt-web-bridge-qualification",
+  "g2e_base": {
+    "repository": "minhtri22/GWF",
+    "branch": "feature/g2e-framework",
+    "commit": "065960bbe764337da7bca60b9dd0c451e62fa2e4"
+  },
+  "bridge_reference": {
+    "repository": "miuuyy/codex-chatgpt-web",
+    "branch": "main",
+    "reviewed_commit": "eaf4f09ae92d4dc4429fa597b0861663138f08f8",
+    "package_metadata_at_reviewed_commit": "5.0.8",
+    "runtime_build_hash_required_before_qualification": true
+  },
+  "route": {
+    "id": "p5a-cgw",
+    "canonical_official_route_replaced": false,
+    "official_codex_is_execution_authority": true,
+    "bridge_role": "transport_and_inference_mediation_only",
+    "chatgpt_web_role": "inference_surface_only",
+    "silent_fallback_forbidden": true,
+    "cross_credit_to_p5a_official_forbidden": true
+  },
+  "specification_documents": [
+    "g2e/docs/P5A_CGW_ORIGIN_AND_SCOPE.md",
+    "g2e/docs/P5A_CGW_TRUST_AUTHORITY_OBSERVABILITY_SPEC.md",
+    "g2e/docs/P5A_CGW_ZERO_MODEL_QUALIFICATION_PLAN.md"
+  ],
+  "current_authorization": {
+    "implementation": false,
+    "zero_model_qualification_execution": false,
+    "browser_model_turn": false,
+    "scientific_attempt": false,
+    "comparative_study": false
+  },
+  "next_gate": "BOUNDED_IMPLEMENTATION_PLUS_ZERO_MODEL_SYNTHETIC_QUALIFICATION",
+  "attempt_identity_assigned": false
+}

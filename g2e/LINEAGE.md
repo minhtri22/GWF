@@ -473,3 +473,21 @@
 - **Qualification model turn:** none; scientific attempt remains unconsumed.
 - **Lock:** `P5A_D2S5_SCIENTIFIC_EXECUTION_LOCK.json` v2.
 - **Next:** exactly one local D2-S5 scientific execution; retry budget remains zero after durable marker creation.
+
+
+### G2E-P5A-CGW — Codex / ChatGPT Web Bridge Specification Workstream
+
+- **Status:** SPECIFICATION-ONLY / BOUNDED / NO MODEL EXECUTION / NO FUNCTIONAL CLAIM.
+- **Workstream:** `p5a-cgw-codex-chatgpt-web-bridge-qualification`.
+- **Branch:** `research/p5a-cgw-specification`.
+- **GWF base:** `feature/g2e-framework@065960bbe764337da7bca60b9dd0c451e62fa2e4`.
+- **Reviewed bridge source:** `miuuyy/codex-chatgpt-web@eaf4f09ae92d4dc4429fa597b0861663138f08f8`; package metadata at reviewed source `5.0.8`.
+- **Canonical-route rule:** P5A official Codex remains the canonical/reference route and is not replaced, rescued or credited by P5A-CGW.
+- **Official-lane status:** D2 official remains separate; its next admissible infrastructure direction is quota admission. This branch does not authorize or implement that work.
+- **Execution-authority invariant:** G2E authorizes the attempt; official Codex remains the execution authority for local task actions; `codex-chatgpt-web` is transport/inference mediation only; ChatGPT Web is the inference surface only.
+- **No hidden executor:** the bridge may not widen sandbox/approval/tool authority, execute local side effects independently of Codex, become a second planner/router, or issue G2E verdicts.
+- **No silent fallback:** official/native fallback, model substitution, bridge-mode substitution and legacy-connector substitution are forbidden within a frozen attempt.
+- **Evidence separation:** P5A-CGW route-specific evidence cannot promote P5A official capabilities; official-route evidence cannot silently promote P5A-CGW.
+- **Specification artifacts:** `P5A_CGW_ORIGIN_AND_SCOPE.md`, `P5A_CGW_TRUST_AUTHORITY_OBSERVABILITY_SPEC.md`, `P5A_CGW_ZERO_MODEL_QUALIFICATION_PLAN.md`, `P5A_CGW_SPECIFICATION_LOCK.json`.
+- **Current authorization:** implementation=false; zero-model qualification execution=false; browser/model turn=false; scientific attempt=false; comparative study=false.
+- **Next:** separately authorize bounded implementation + zero-model/synthetic qualification. Only a PASS of that macro-gate may permit preregistration and exact locking of the first model-bearing P5A-CGW attempt.
