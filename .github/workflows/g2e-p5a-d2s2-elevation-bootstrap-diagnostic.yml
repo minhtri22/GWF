@@ -1,0 +1,157 @@
+name: G2E P5A D2-S2 Elevation Bootstrap Diagnostic Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - "g2e/docs/P5A_D2S2_ELEVATION_BOOTSTRAP_DIAGNOSTIC_SPEC.md"
+      - "scripts/g2e/p5a_d2s2_elevation_bootstrap_diagnostic.ps1"
+      - "tests/g2e/test_p5a_d2s2_elevation_bootstrap_diagnostic.py"
+      - ".github/workflows/g2e-p5a-d2s2-elevation-bootstrap-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  p5a-d2s2-elevation-bootstrap-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+      BASELINE_SHA: "4f61aff2aff5da6a75d696cf758968bcbd697c74"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Verify bounded diagnostic diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$BASELINE_SHA^{commit}"
+          mapfile -t changed < <(git diff --name-only "$BASELINE_SHA"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            ".github/workflows/g2e-p5a-d2s2-elevation-bootstrap-diagnostic.yml"
+            "g2e/docs/P5A_D2S2_ELEVATION_BOOTSTRAP_DIAGNOSTIC_SPEC.md"
+            "scripts/g2e/p5a_d2s2_elevation_bootstrap_diagnostic.ps1"
+            "tests/g2e/test_p5a_d2s2_elevation_bootstrap_diagnostic.py"
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for item in "${allowed[@]}"; do
+              if [[ "$path" == "$item" ]]; then ok=true; break; fi
+            done
+            if [[ "$ok" != true ]]; then
+              echo "Out-of-scope D2-S2 diagnostic mutation: $path" >&2
+              exit 1
+            fi
+          done
+
+      - name: Parse PowerShell diagnostic
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "scripts/g2e/p5a_d2s2_elevation_bootstrap_diagnostic.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -ne 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
+      - name: Run diagnostic static qualification
+        run: pytest -q tests/g2e/test_p5a_d2s2_elevation_bootstrap_diagnostic.py
+
+      - name: Re-run frozen D2-S2 static qualification
+        run: pytest -q tests/g2e/test_p5a_d2s2_isolated_volume_preflight.py
+
+      - name: Run P1 regression
+        run: pytest -q tests/g2e/test_p1_core_schemas.py
+
+      - name: Run P1.4 regression
+        run: pytest -q tests/g2e/test_p1_4_agent_binding.py
+
+      - name: Run P1.5 regression
+        run: pytest -q tests/g2e/test_p1_5_qualification_authority.py
+
+      - name: Run P2 regression
+        run: pytest -q tests/g2e/test_p2_deterministic_core.py
+
+      - name: Run P3 regression
+        run: pytest -q tests/g2e/test_p3_standalone_runtime.py
+
+      - name: Run P4 regression
+        run: pytest -q tests/g2e/test_p4_gwf_adapter.py
+
+      - name: Prove zero-science diagnostic surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          script="scripts/g2e/p5a_d2s2_elevation_bootstrap_diagnostic.ps1"
+          forbidden=(
+            '"turn/start"'
+            'windowsSandbox/setupStart'
+            'thread/start'
+            'diskpart'
+            'create vdisk'
+            'attach vdisk'
+            'result.json'
+          )
+          for token in "${forbidden[@]}"; do
+            if grep -Fi "$token" "$script"; then
+              echo "Forbidden scientific/execution token in diagnostic: $token" >&2
+              exit 1
+            fi
+          done
+
+      - name: Emit diagnostic qualification report
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          report = {
+              "schema": "G2E-P5A-D2S2-ELEVATION-BOOTSTRAP-DIAGNOSTIC-QUALIFICATION-v1",
+              "baseline_sha": "4f61aff2aff5da6a75d696cf758968bcbd697c74",
+              "candidate_sha": git("rev-parse", "HEAD"),
+              "diagnostic_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s2_elevation_bootstrap_diagnostic.ps1"),
+              "test_blob": git("rev-parse", "HEAD:tests/g2e/test_p5a_d2s2_elevation_bootstrap_diagnostic.py"),
+              "workflow_blob": git("rev-parse", "HEAD:.github/workflows/g2e-p5a-d2s2-elevation-bootstrap-diagnostic.yml"),
+              "spec_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S2_ELEVATION_BOOTSTRAP_DIAGNOSTIC_SPEC.md"),
+              "frozen_d2s2_oneclick_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s2_isolated_volume_oneclick.ps1"),
+              "frozen_d2s2_preflight_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s2_isolated_volume_preflight.py"),
+              "adjudication": "DIAGNOSTIC_IMPLEMENTATION_PASS_LOCAL_EXECUTION_REQUIRED",
+              "model_turn_executed": False,
+              "scientific_attempt_consumed": False,
+              "scientific_attempt_authorized": False,
+          }
+          Path("p5a_d2s2_elevation_bootstrap_diagnostic_qualification.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p5a-d2s2-elevation-bootstrap-diagnostic-qualification
+          path: p5a_d2s2_elevation_bootstrap_diagnostic_qualification.json
+          if-no-files-found: error
