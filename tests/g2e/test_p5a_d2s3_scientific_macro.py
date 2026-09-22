@@ -116,7 +116,8 @@ def test_runner_has_exactly_one_scientific_turn_start_and_marker_precedes_send()
     assert marker_index < send_index
     assert 'evidence["scientific_attempt_consumed"] = True' in source[marker_index:send_index]
     assert "R2_AUTHORIZATION_PREDICATE_FAILED" in source
-    assert source.count('"permissions": PROFILE_ID') == 1
+    assert source.count('"permissions": profile_id') == 1
+    assert source.count('"permissions": PROFILE_ID') == 0
     assert '"sandboxPolicy"' not in source
     assert "TURN_TIMEOUT_S = 90.0" in source
 
@@ -181,6 +182,6 @@ def test_macro_spec_freezes_single_attempt_and_no_rescue():
     text = " ".join(SPEC.read_text(encoding="utf-8").split())
     assert "retry budget: zero" in text.lower()
     assert "Exactly one scientific request is allowed." in text
-    assert "marker creation prospectively consumes the single attempt" in text
+    assert "marker creation prospectively consumes the single attempt" in text.lower()
     assert "No automatic retry." in text
     assert "verifier does not assign the scientific verdict" in text
