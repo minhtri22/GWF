@@ -1,5 +1,6 @@
 param(
-    [string]$ProjectRoot = ""
+    [string]$ProjectRoot = "",
+    [switch]$GitInvocationSelfTest
 )
 
 $ErrorActionPreference = "Stop"
@@ -14,17 +15,33 @@ function Write-Json([string]$Path, $Object) {
     [IO.File]::WriteAllText($Path, $json + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
 }
 
-function Invoke-Git([string]$Root, [string[]]$Args) {
-    $out = & git -C $Root @Args 2>&1
+function Invoke-Git(
+    [string]$Root,
+    [string[]]$GitArgs
+) {
+    if ($null -eq $GitArgs -or $GitArgs.Count -eq 0) {
+        throw "GIT_ARGUMENT_VECTOR_EMPTY"
+    }
+
+    $out = & git -C $Root @GitArgs 2>&1
     $code = $LASTEXITCODE
     if ($code -ne 0) {
-        throw "GIT_FAILED[$code]: git -C $Root $($Args -join ' ') :: $((($out | Out-String).Trim()))"
+        throw "GIT_FAILED[$code]: git -C $Root $($GitArgs -join ' ') :: $((($out | Out-String).Trim()))"
     }
     return (($out | Out-String).Trim())
 }
 
 if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
     $ProjectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
+}
+
+if ($GitInvocationSelfTest) {
+    $inside = Invoke-Git -Root $ProjectRoot -GitArgs @("rev-parse", "--is-inside-work-tree")
+    if ($inside.Trim().ToLowerInvariant() -ne "true") {
+        throw "GIT_INVOCATION_SELFTEST_FAILED:$inside"
+    }
+    Write-Host "GIT_INVOCATION_SELFTEST_PASS"
+    exit 0
 }
 
 $InvocationStart = [DateTime]::UtcNow
@@ -43,9 +60,9 @@ New-Item -ItemType Directory -Path $ReturnDir -Force | Out-Null
 New-Item -ItemType Directory -Path $ArchiveDir -Force | Out-Null
 
 Write-Host "Fetching exact qualified branch state..."
-Invoke-Git $ProjectRoot @("fetch", "--prune", "origin", "feature/g2e-framework") | Out-Null
-Invoke-Git $ProjectRoot @("switch", "--detach", "origin/feature/g2e-framework") | Out-Null
-$Head = (Invoke-Git $ProjectRoot @("rev-parse", "HEAD")).ToLowerInvariant()
+Invoke-Git -Root $ProjectRoot -GitArgs @("fetch", "--prune", "origin", "feature/g2e-framework") | Out-Null
+Invoke-Git -Root $ProjectRoot -GitArgs @("switch", "--detach", "origin/feature/g2e-framework") | Out-Null
+$Head = (Invoke-Git -Root $ProjectRoot -GitArgs @("rev-parse", "HEAD")).ToLowerInvariant()
 
 Write-Host "HEAD: $Head"
 
