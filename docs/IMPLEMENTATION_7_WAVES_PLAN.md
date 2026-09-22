@@ -1138,7 +1138,7 @@ BPS-W1 may be used later as an aggregate product-release gate requiring the appl
 - [ ] research-lock bypass fixture fails
 - [ ] bounded migration pilot produces no silent authority assignment
 - [ ] GAC-P3 remains optional and does not block minimum Shared Library readiness.
-- [ ] **Product sequencing rule:** GAC-P1 or DG-GAC-W5 alone does not start GAC browser implementation. Continue to GAC-PCG, then Codex readiness, then BPS-GAC/BPS-CODEX.
+- [ ] **Product sequencing rule:** GAC-P1 or DG-GAC-W5 alone does not start GAC browser implementation. Continue until `GAC-PCG PASS`; then execute and PASS `BPS-GAC` before proceeding to later backend/product slices. Codex has its own later `AI-CODEX-G0 → BPS-CODEX` loop.
 
 ---
 
@@ -1382,7 +1382,7 @@ BPS-W1 may be used later as an aggregate product-release gate requiring the appl
   - [ ] failure/retry/reassignment evidence reconstructable;
   - [ ] QA PASS.
 - **AI-P1 status:** preferred before AI-P2 but not a hard architectural dependency for this gate. If AI-P1 is absent, MCP surfaces remain explicitly unavailable.
-- **Product handoff:** PASS opens the final UI/UX integration stage BPS-GAC + BPS-CODEX.
+- **Product handoff:** PASS opens only `BPS-CODEX`. `BPS-GAC` is independently opened by `GAC-PCG PASS` and must not wait for Codex.
 
 ### AI-P3 — Governed MCP mutation surface
 
@@ -1487,31 +1487,56 @@ BPS-I00 → I01 → I02 → I03 → I04 → I05
                                 ▼
                               DG-P11
                                 │
-                 backend PASS / formal-close
-                                │
                                 ▼
                             BPS-DG11
                                 │
                                 ▼
-                         next backend item
+                              DG-W3
                                 │
-                 ...same backend→UI loop...
+                DG-P12/P13 backend formal-close
+                                │
+                                ▼
+                         BPS-DG12-13
+                                │
+                                ▼
+                  DG-P14/P15/P16 + bounded UI returns
                                 │
                                 ▼
                               DG-W4
                                 │
-                 GAC / RA / AI backend roadmap
+                                ▼
+          GAC-P0 → GAC-P1 → GAC-P2A → GAC-P4A
                                 │
-             ┌──────────────────┼──────────────────┐
-             ▼                  ▼                  ▼
-          GAC-PCG          RA readiness       AI-CODEX-G0
-             │                  │                  │
-             ▼                  ▼                  ▼
-          BPS-GAC            BPS-RA           BPS-CODEX
-             │                  │                  │
-             └────────── individual PASS ─────────┘
+                                ▼
+                           DG-GAC-W5
+                                │
+                                ▼
+                           RA-P0 → RA-P1
+                                │
+                                ▼
+                            GAC-P2B
+                                │
+                                ▼
+                             GAC-PCG
+                                │
+                                ▼
+                             BPS-GAC
+                                │
+                                ▼
+                               AI-P0
+                                │
+                                ▼
+                          AI-P2 / Codex
+                                │
+                                ▼
+                          AI-CODEX-G0
+                                │
+                                ▼
+                           BPS-CODEX
 
-No functional UI is prebuilt for a backend capability that is still PLANNED_BLOCKED.
+RA-P2…RA-P6 / RA-GAC-W6 continue under their own backend dependencies.
+When the minimum browser-relevant RA backend gate is formally closed, open BPS-RA,
+PASS it, then continue. No functional future UI is prebuilt before backend readiness.
 ```
 
 GAC-P3 optional search adapters and GAC-P4B G2E consumer qualification are trigger-based and non-blocking for the minimum Shared Library / Reference Acquisition gates.
