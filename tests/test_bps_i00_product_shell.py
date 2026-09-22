@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+from datetime import datetime, timezone
+import json
 import os
 import socket
 import subprocess
 import sys
+import time
+import urllib.request
 
 import pytest
 from fastapi.testclient import TestClient
@@ -225,72 +229,117 @@ def test_i00_windows_launcher_and_installer_contracts_are_explicit():
     assert 'if ($QualificationMode -and -not $SkipUat)' in installer
 
 
-@pytest.mark.skipif(sys.platform != "win32", reason="canonical PowerShell lifecycle test is Windows-only")
-def test_i00_windows_launcher_lifecycle_does_not_kill_unrelated_process(tmp_path):
-    launcher = ROOT / "scripts" / "gwf_server.ps1"
+def test_i00_canonical_server_subprocess_reaches_ready(tmp_path):
     env = os.environ.copy()
     env.update({
-        "GWR_AUTH_SECRET": "windows-lifecycle-secret-0123456789abcdef",
-        "GWR_BOOTSTRAP_USERNAME": "uat-operator",
-        "GWR_BOOTSTRAP_PASSWORD": "uat-operator-password",
-        "GWR_DATABASE_URL": str(tmp_path / "launcher.db"),
+        "GWR_AUTH_SECRET": "subprocess-server-secret-0123456789abcdef",
+        "GWR_DATABASE_URL": str(tmp_path / "server-subprocess.db"),
         "GWR_OBJECT_STORE_ROOT": str(tmp_path / "objects"),
         "GWR_OBSERVABILITY_PATH": str(tmp_path / "events.jsonl"),
     })
+    env.pop("GWR_TEST_DATABASE_URL", None)
 
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]
 
-    base = [
-        "pwsh",
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        str(launcher),
-        "-RepoRoot",
-        str(ROOT),
-        "-Port",
-        str(port),
-    ]
-
-    def run_launcher(action: str, *, check: bool = True, timeout: int = 45):
-        return subprocess.run(
-            base + ["-Action", action],
-            cwd=ROOT,
-            env=env,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            check=check,
-            timeout=timeout,
-        )
-
-    unrelated = None
+    proc = subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "gwr.server",
+            "--repo-root",
+            str(ROOT),
+            "--host",
+            "127.0.0.1",
+            "--port",
+            str(port),
+        ],
+        cwd=ROOT,
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
     try:
-        started = run_launcher("start")
-        assert "GWF_SERVER=RUNNING" in started.stdout
-
-        status = run_launcher("status", timeout=20)
-        assert "GWF_SERVER=READY" in status.stdout
-
-        restarted = run_launcher("restart", timeout=45)
-        assert "GWF_SERVER=STOPPED" in restarted.stdout
-        assert "GWF_SERVER=RUNNING" in restarted.stdout
-
-        unrelated = subprocess.Popen(
-            [sys.executable, "-c", "import time; time.sleep(60)"],
-            cwd=ROOT,
-        )
-        stopped = run_launcher("stop", timeout=20)
-        assert "GWF_SERVER=STOPPED" in stopped.stdout
-        assert unrelated.poll() is None
+        deadline = time.monotonic() + 20
+        ready = None
+        while time.monotonic() < deadline:
+            if proc.poll() is not None:
+                raise AssertionError(f"canonical server exited early with code {proc.returncode}")
+            try:
+                with urllib.request.urlopen(f"http://127.0.0.1:{port}/ready", timeout=1) as response:
+                    ready = json.loads(response.read().decode("utf-8"))
+                if ready.get("ok") is True:
+                    break
+            except Exception:
+                time.sleep(0.2)
+        assert ready is not None and ready["ok"] is True
+        assert ready["core_health"] == "HEALTHY"
     finally:
-        try:
-            run_launcher("stop", check=False, timeout=20)
-        except subprocess.TimeoutExpired:
-            pass
-        if unrelated is not None and unrelated.poll() is None:
+        if proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait(timeout=5)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="PowerShell ownership guard is Windows-only")
+def test_i00_windows_launcher_refuses_to_stop_or_restart_unrelated_process(tmp_path):
+    launcher = ROOT / "scripts" / "gwf_server.ps1"
+    repo_root = tmp_path / "launcher-root"
+    state_dir = repo_root / ".gwr" / "server"
+    state_dir.mkdir(parents=True)
+
+    unrelated = subprocess.Popen(
+        [sys.executable, "-c", "import time; time.sleep(60)"],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        metadata = {
+            "schema": "GWF-SERVER-PROCESS-v1",
+            "pid": unrelated.pid,
+            "process_started_at": datetime.now(timezone.utc).isoformat(),
+            "repo_root": str(repo_root),
+            "git_head": "test",
+            "host": "127.0.0.1",
+            "port": 8765,
+            "stdout": str(state_dir / "server.stdout.log"),
+            "stderr": str(state_dir / "server.stderr.log"),
+            "recorded_at": datetime.now(timezone.utc).isoformat(),
+        }
+        pid_path = state_dir / "server-process.json"
+        pid_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+        base = [
+            "pwsh",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(launcher),
+            "-RepoRoot",
+            str(repo_root),
+        ]
+
+        for action in ("stop", "restart"):
+            result = subprocess.run(
+                base + ["-Action", action],
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                timeout=15,
+            )
+            assert result.returncode != 0
+            assert "Refusing to operate" in result.stdout
+            assert unrelated.poll() is None
+            pid_path.write_text(json.dumps(metadata), encoding="utf-8")
+    finally:
+        if unrelated.poll() is None:
             unrelated.terminate()
             unrelated.wait(timeout=10)
+
