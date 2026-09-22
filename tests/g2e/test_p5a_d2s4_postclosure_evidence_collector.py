@@ -69,3 +69,22 @@ def test_decomposition_spec_forbids_retry_and_execution():
     assert "send any RPC" in normalized
     assert "authorize a replacement D2-S4 attempt" in normalized
     assert "terminal turn with status `failed`" in normalized
+
+
+def test_verification_hash_mismatch_is_preserved_not_silently_accepted_or_dropped():
+    source = SCRIPT.read_text(encoding="utf-8")
+    assert "VERIFICATION_HASH_DRIFT" not in source
+    assert "$ActualVerificationSha256 = Get-Sha256 $Verification" in source
+    assert "$VerificationHashMatch = ($ActualVerificationSha256 -eq $ExpectedVerificationSha256)" in source
+    assert "verification_identity = [ordered]@{" in source
+    assert 'finding = if ($VerificationHashMatch) { $null } else { "VERIFICATION_HASH_MISMATCH_PRESERVED" }' in source
+    assert "expected_sha256" in source
+    assert "actual_sha256" in source
+    assert "hash_match" in source
+    assert 'P5A_D2S4_SCIENTIFIC_VERIFICATION.json' in source
+
+
+def test_primary_frozen_sources_still_fail_closed_on_hash_drift():
+    source = SCRIPT.read_text(encoding="utf-8")
+    assert 'throw "TOP_REPORT_HASH_DRIFT"' in source
+    assert 'throw "RUNNER_EVIDENCE_HASH_DRIFT"' in source
