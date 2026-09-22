@@ -1,0 +1,136 @@
+name: G2E P5A D2-S2 A2 Sandbox State Return Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - "scripts/g2e/p5a_d2s2_a2_sandbox_state_return.ps1"
+      - "tests/g2e/test_p5a_d2s2_a2_sandbox_state_return.py"
+      - ".github/workflows/g2e-p5a-d2s2-a2-sandbox-state-return.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  a2-sandbox-state-return:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+      BASELINE_SHA: "47381efbc7a1cd326b998438c1a5e184d134f0fc"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Verify bounded sandbox-state diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$BASELINE_SHA^{commit}"
+          mapfile -t changed < <(git diff --name-only "$BASELINE_SHA"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            ".github/workflows/g2e-p5a-d2s2-a2-sandbox-state-return.yml"
+            "scripts/g2e/p5a_d2s2_a2_sandbox_state_return.ps1"
+            "tests/g2e/test_p5a_d2s2_a2_sandbox_state_return.py"
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for item in "${allowed[@]}"; do
+              if [[ "$path" == "$item" ]]; then ok=true; break; fi
+            done
+            if [[ "$ok" != true ]]; then
+              echo "Out-of-scope A2 sandbox-state mutation: $path" >&2
+              exit 1
+            fi
+          done
+
+      - name: Parse PowerShell collector
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "scripts/g2e/p5a_d2s2_a2_sandbox_state_return.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -ne 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
+      - name: Execute sanitization self-test
+        shell: pwsh
+        run: |
+          ./scripts/g2e/p5a_d2s2_a2_sandbox_state_return.ps1 -SanitizationSelfTest
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run sandbox-state qualification
+        run: pytest -q tests/g2e/test_p5a_d2s2_a2_sandbox_state_return.py
+
+      - name: Run P1 regression
+        run: pytest -q tests/g2e/test_p1_core_schemas.py
+
+      - name: Run P1.4 regression
+        run: pytest -q tests/g2e/test_p1_4_agent_binding.py
+
+      - name: Run P1.5 regression
+        run: pytest -q tests/g2e/test_p1_5_qualification_authority.py
+
+      - name: Run P2 regression
+        run: pytest -q tests/g2e/test_p2_deterministic_core.py
+
+      - name: Run P3 regression
+        run: pytest -q tests/g2e/test_p3_standalone_runtime.py
+
+      - name: Run P4 regression
+        run: pytest -q tests/g2e/test_p4_gwf_adapter.py
+
+      - name: Emit qualification report
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          report = {
+              "schema": "G2E-P5A-D2S2-A2-SANDBOX-STATE-RETURN-QUALIFICATION-v1",
+              "baseline_sha": "47381efbc7a1cd326b998438c1a5e184d134f0fc",
+              "candidate_sha": git("rev-parse", "HEAD"),
+              "collector_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s2_a2_sandbox_state_return.ps1"),
+              "test_blob": git("rev-parse", "HEAD:tests/g2e/test_p5a_d2s2_a2_sandbox_state_return.py"),
+              "workflow_blob": git("rev-parse", "HEAD:.github/workflows/g2e-p5a-d2s2-a2-sandbox-state-return.yml"),
+              "spec_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S2_A2_SANDBOX_STATE_RETURN_SPEC.md"),
+              "adjudication_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S2_A2_SETUP_EVIDENCE_RETURN_ADJUDICATION.md"),
+              "bound_setup_evidence_return_sha256": "6f1f178aac74037ed8ab1661b5b98beef5871f0cde0456237a52afd84fb23ceb",
+              "adjudication": "SANDBOX_STATE_RETURN_PASS_LOCAL_EXECUTION_REQUIRED",
+              "scientific_attempt_authorized": False,
+              "scientific_attempt_consumed": False,
+              "model_turn_executed": False,
+          }
+          Path("p5a_d2s2_a2_sandbox_state_return_qualification.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p5a-d2s2-a2-sandbox-state-return-qualification
+          path: p5a_d2s2_a2_sandbox_state_return_qualification.json
+          if-no-files-found: error
