@@ -38,7 +38,7 @@ def test_git_helper_does_not_collide_with_powershell_automatic_args():
     source = WRAPPER.read_text(encoding="utf-8")
     assert "[string[]]$GitArgs" in source
     assert "[string[]]$Args" not in source
-    assert "@GitArgs" in source
+    assert '$allArgs = @("-C", $Root) + $GitArgs' in source
     assert "@Args" not in source
     assert "GIT_ARGUMENT_VECTOR_EMPTY" in source
     assert "System.Diagnostics.ProcessStartInfo" in source
