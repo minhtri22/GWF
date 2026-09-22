@@ -1,0 +1,63 @@
+name: DG-P4 Document Facade Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["v0.8.6-dg-p4-document-facade"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  dg-p4-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: DG-P4 D4-F1 through D4-F15
+        run: python -m pytest -q tests/test_dg_p4_document_facade.py
+
+      - name: Real GitHub document facade smoke
+        run: >-
+          python tools/run_dg_p4_gate.py
+          --repository "${{ github.repository }}"
+          --commit "${{ github.sha }}"
+          --path "docs/DG_P4_DOCUMENT_FACADE_SPEC.md"
+          --expected-repository-id "1374857546"
+          --out evidence/dg-p4/DG_P4_GATE.json
+
+      - name: Assert DG-P4 gate
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('evidence/dg-p4/DG_P4_GATE.json', encoding='utf-8'))
+          assert d['status']=='PASS', d
+          assert all(d['checks'].values()), d
+          PY
+
+      - name: Full regression
+        run: python -m pytest -q
+
+      - name: Compile
+        run: python -m compileall -q src tests tools
+
+      - name: Upload DG-P4 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gwr-dg-p4-evidence
+          path: evidence/dg-p4/DG_P4_GATE.json
