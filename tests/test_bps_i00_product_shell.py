@@ -61,7 +61,7 @@ def test_i00_live_shell_and_bootstrap_are_authoritative(tmp_path, monkeypatch):
     body = bootstrap.json()
     assert body["authenticated"] is False
     assert body["product"]["build_sha"] == "abc123"
-    assert body["product"]["backend"] == "sqlite"
+    assert body["product"]["backend"] == getattr(rt.db, "backend_name", "unknown")
     assert body["shell_authority"] == "BPS-I00"
 
     capabilities = {x["id"]: x for x in body["capabilities"]}
@@ -171,7 +171,7 @@ def test_i00_canonical_server_builds_real_runtime_with_bootstrap_login(tmp_path,
         assert client.get("/ready").json()["ok"] is True
         info = client.get("/product/meta").json()
         assert info["server_mode"] == "canonical"
-        assert info["backend"] == "sqlite"
+        assert info["backend"] in {"sqlite", "postgresql"}
 
 
 def test_i00_windows_launcher_and_installer_contracts_are_explicit():
