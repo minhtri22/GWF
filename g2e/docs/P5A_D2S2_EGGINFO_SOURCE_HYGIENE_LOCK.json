@@ -1,0 +1,21 @@
+{
+  "schema": "G2E-P5A-D2S2-EGGINFO-SOURCE-HYGIENE-LOCK-v1",
+  "qualified": true,
+  "baseline_sha": "54950e2c4f476d205523a378f20adb6e4d01ea02",
+  "qualified_candidate_sha": "421b0e497f934a8e587f3d8184bdf55e8d2a74f9",
+  "gitignore_blob": "1630293e4e7246971de89c7b77e4b6e28001f1b3",
+  "test_blob": "8fdded9cf98b4c612460376b2e6e40033e0ee7d0",
+  "workflow_blob": "b06978fb3b1fefec1d49fa440976ad2f6e18f95a",
+  "spec_blob": "2e49e751e107dc26978f4abe49a3597115f66fd3",
+  "frozen_d2s2_oneclick_blob": "1507b716645971ee60b0c2131973a953f98e7036",
+  "frozen_d2s2_preflight_blob": "005bd3ff5f34ea60a05d15baa25a0d4f6e9341c3",
+  "workflow_run_id": 35676034607,
+  "workflow_job_id": 106582651504,
+  "artifact_id": 10672824431,
+  "artifact_digest": "sha256:294aa5a84ddcf0894448b5d954ca5e3d9d2c942c6c3bbe7abd82b999e0430c11",
+  "adjudication": "SOURCE_HYGIENE_PASS_LOCAL_DIAGNOSTIC_REQUIRED",
+  "scientific_attempt_authorized": false,
+  "scientific_attempt_consumed": false,
+  "model_turn_executed": false,
+  "next_gate": "RERUN_QUALIFIED_ELEVATION_BOOTSTRAP_DIAGNOSTIC"
+}
