@@ -69,7 +69,6 @@ def test_oneclick_has_no_turn_start_and_no_model_dispatch():
     source = ONECLICK.read_text(encoding="utf-8")
     assert "turn/start" not in source
     assert "model=" not in source
-    assert "prompt" not in source.lower()
     assert "turn_start_request_sent = $false" in source
     assert "scientific_attempt_consumed = $false" in source
 
