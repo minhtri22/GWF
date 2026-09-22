@@ -1,0 +1,324 @@
+name: G2E P5A D2-S4 Queue-Safe Scientific Successor Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - "g2e/docs/P5A_D2S4_QUEUE_SAFE_SUCCESSOR_SPEC.md"
+      - "scripts/g2e/p5a_d2s4_queue_safe_client.py"
+      - "scripts/g2e/p5a_d2s4_scientific_admission.py"
+      - "scripts/g2e/p5a_d2s4_scientific_runner.py"
+      - "scripts/g2e/p5a_d2s4_scientific_verify.py"
+      - "scripts/g2e/p5a_d2s4_scientific_oneclick.ps1"
+      - "tests/g2e/test_p5a_d2s4_queue_safe_successor.py"
+      - ".github/workflows/g2e-p5a-d2s4-queue-safe-successor.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  successor-static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      PYTHONPATH: src
+      BASELINE_SHA: "95f93e4ce50bf20de5b00778106441c934702ee7"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Verify bounded D2-S4 diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$BASELINE_SHA^{commit}"
+          mapfile -t changed < <(git diff --name-only "$BASELINE_SHA"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            ".github/workflows/g2e-p5a-d2s4-queue-safe-successor.yml"
+            "scripts/g2e/p5a_d2s4_queue_safe_client.py"
+            "scripts/g2e/p5a_d2s4_scientific_admission.py"
+            "scripts/g2e/p5a_d2s4_scientific_runner.py"
+            "scripts/g2e/p5a_d2s4_scientific_verify.py"
+            "scripts/g2e/p5a_d2s4_scientific_oneclick.ps1"
+            "tests/g2e/test_p5a_d2s4_queue_safe_successor.py"
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for item in "${allowed[@]}"; do
+              if [[ "$path" == "$item" ]]; then ok=true; break; fi
+            done
+            if [[ "$ok" != true ]]; then
+              echo "Out-of-scope D2-S4 mutation: $path" >&2
+              exit 1
+            fi
+          done
+
+      - name: Compile Python components
+        run: |
+          python -m compileall -q             scripts/g2e/p5a_d2s4_queue_safe_client.py             scripts/g2e/p5a_d2s4_scientific_admission.py             scripts/g2e/p5a_d2s4_scientific_runner.py             scripts/g2e/p5a_d2s4_scientific_verify.py
+
+      - name: Parse D2-S4 one-click
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "scripts/g2e/p5a_d2s4_scientific_oneclick.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -ne 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
+      - name: Run D2-S4 queue-safe successor qualification
+        run: pytest -q tests/g2e/test_p5a_d2s4_queue_safe_successor.py
+
+      - name: Run inherited no-turn regressions
+        run: |
+          pytest -q tests/g2e/test_p5a_d2s3_platform_no_turn_preflight.py
+          pytest -q tests/g2e/test_p5a_d2s3_ntfs_root_closure_repair_002.py
+
+      - name: Run P1-P4 regressions
+        run: |
+          pytest -q tests/g2e/test_p1_core_schemas.py
+          pytest -q tests/g2e/test_p1_4_agent_binding.py
+          pytest -q tests/g2e/test_p1_5_qualification_authority.py
+          pytest -q tests/g2e/test_p2_deterministic_core.py
+          pytest -q tests/g2e/test_p3_standalone_runtime.py
+          pytest -q tests/g2e/test_p4_gwf_adapter.py
+
+  successor-windows-structural-admission:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      PYTHONPATH: src
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        shell: powershell
+        run: |
+          python -m pip install -U pip
+          pip install -e ".[dev]"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Parse with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "scripts\g2e\p5a_d2s4_scientific_oneclick.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -ne 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
+      - name: Execute D2-S4 infrastructure self-test
+        shell: powershell
+        run: |
+          & ".\scripts\g2e\p5a_d2s4_scientific_oneclick.ps1" -InfrastructureSelfTest
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run D2-S4 queue timing qualification on Windows
+        shell: powershell
+        run: |
+          pytest -q tests\g2e\test_p5a_d2s4_queue_safe_successor.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Stage exact official release assets
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $ProgressPreference = "SilentlyContinue"
+          $root = Join-Path "$PWD" "d2s4-official"
+          $package = Join-Path $root "package"
+          $bin = Join-Path $package "bin"
+          $resources = Join-Path $package "codex-resources"
+          $downloads = Join-Path $root "downloads"
+          $extractCodex = Join-Path $root "extract-codex"
+          $extractHelper = Join-Path $root "extract-helper"
+          New-Item -ItemType Directory -Path $bin,$resources,$downloads,$extractCodex,$extractHelper -Force | Out-Null
+
+          $codexZip = Join-Path $downloads "codex.zip"
+          $helperZip = Join-Path $downloads "helper.zip"
+
+          Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/openai/codex/releases/download/rust-v0.153.4/codex-x86_64-pc-windows-msvc.exe.zip" -OutFile $codexZip
+          Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/openai/codex/releases/download/rust-v0.153.4/codex-windows-sandbox-setup-x86_64-pc-windows-msvc.exe.zip" -OutFile $helperZip
+
+          if ((Get-FileHash $codexZip -Algorithm SHA256).Hash -ne "C016B0E6968B78586919C720D2685A03712F6D5F11BCD9D6F92C91EB8C41BA16") {
+            throw "CODEX_ARCHIVE_HASH_MISMATCH"
+          }
+          if ((Get-FileHash $helperZip -Algorithm SHA256).Hash -ne "256C4DEB16946A01A52156E8FD619BAEC38743FF482741767AB5FDB4079E97CB") {
+            throw "HELPER_ARCHIVE_HASH_MISMATCH"
+          }
+
+          Expand-Archive -LiteralPath $codexZip -DestinationPath $extractCodex
+          Expand-Archive -LiteralPath $helperZip -DestinationPath $extractHelper
+
+          $codexSource = @(Get-ChildItem $extractCodex -Recurse -File | Where-Object Name -eq "codex-x86_64-pc-windows-msvc.exe")
+          $helperSource = @(Get-ChildItem $extractHelper -Recurse -File | Where-Object Name -eq "codex-windows-sandbox-setup-x86_64-pc-windows-msvc.exe")
+          if ($codexSource.Count -ne 1) { throw "CODEX_BINARY_COUNT" }
+          if ($helperSource.Count -ne 1) { throw "HELPER_BINARY_COUNT" }
+
+          Copy-Item $codexSource[0].FullName (Join-Path $bin "codex.exe")
+          Copy-Item $helperSource[0].FullName (Join-Path $resources "codex-windows-sandbox-setup.exe")
+
+          $codex = Join-Path $bin "codex.exe"
+          $helper = Join-Path $resources "codex-windows-sandbox-setup.exe"
+          if ((Get-FileHash $codex -Algorithm SHA256).Hash -ne "444A3F0008050605CAE73CD9B7A2DCAC61294062DFAAB56DD20430FD6498518B") {
+            throw "CODEX_BINARY_HASH_MISMATCH"
+          }
+          if ((Get-FileHash $helper -Algorithm SHA256).Hash -ne "0C3EEB7CEE8D2BC4C8644DEF3C818E8B06760979572DCEDC919C38D0F38F64C4") {
+            throw "HELPER_BINARY_HASH_MISMATCH"
+          }
+
+      - name: Run official-harness D1 structural discovery
+        shell: powershell
+        run: |
+          $codex = Join-Path "$PWD" "d2s4-official\package\bin\codex.exe"
+          python scripts\g2e\p5a_codex_discovery.py --codex-command "$codex" --output d2s4-discovery.json --work-dir d2s4-d1-work --timeout 20
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify generated turn-start schema
+        shell: powershell
+        run: |
+          @'
+          import json
+          from pathlib import Path
+
+          discovery = json.loads(Path("d2s4-discovery.json").read_text(encoding="utf-8"))
+          assert discovery["status"] == "D1_MINIMUM_QUALIFIED"
+          assert discovery["executable_sha256"] == "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b"
+          assert discovery["functional_task_executed"] is False
+
+          root = Path("d2s4-d1-work/schemas")
+          matches = list(root.rglob("TurnStartParams.json"))
+          assert len(matches) == 1, matches
+          schema = json.loads(matches[0].read_text(encoding="utf-8"))
+          props = schema.get("properties") or {}
+          required = set(schema.get("required") or [])
+          for name in ("threadId", "input", "cwd", "approvalPolicy", "sandboxPolicy"):
+              assert name in props, (name, sorted(props))
+          assert {"threadId", "input"} <= required
+          assert "permissions" not in props
+          print("D2S4_TURN_START_SCHEMA_COMPATIBILITY_PASS")
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Materialize and verify D2-S4 final admission
+        shell: powershell
+        run: |
+          python scripts\g2e\p5a_d2s4_scientific_admission.py --discovery d2s4-discovery.json --output-dir d2s4-admission
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          @'
+          import importlib.util
+          import json
+          from pathlib import Path
+
+          path = Path("scripts/g2e/p5a_d2s4_scientific_admission.py")
+          spec = importlib.util.spec_from_file_location("d2s4_admission_recheck", path)
+          module = importlib.util.module_from_spec(spec)
+          assert spec and spec.loader
+          spec.loader.exec_module(module)
+
+          discovery = json.loads(Path("d2s4-discovery.json").read_text(encoding="utf-8"))
+          pack = json.loads(Path("d2s4-admission/P5A_D2S4_SCIENTIFIC_ADMISSION.json").read_text(encoding="utf-8"))
+          module.verify_final_admission(pack, discovery)
+          assert pack["authorization"]["exact_scientific_attempts_authorized_after_lock"] == 1
+          assert pack["authorization"]["retry_authorized"] is False
+          assert pack["execution_config"]["predecessor_postclosure_bundle_sha256"] == "1775c3430692ec4e8037eb1776368d2544f5268d4dd71df77c63f3fca5c6eb66"
+          print("D2S4_FINAL_ADMISSION_REVERIFY_PASS")
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Emit D2-S4 successor qualification report
+        shell: powershell
+        run: |
+          @'
+          import hashlib
+          import json
+          import subprocess
+          from pathlib import Path
+
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          def sha(path):
+              return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+          discovery = json.loads(Path("d2s4-discovery.json").read_text(encoding="utf-8"))
+          pack = json.loads(Path("d2s4-admission/P5A_D2S4_SCIENTIFIC_ADMISSION.json").read_text(encoding="utf-8"))
+
+          report = {
+              "schema": "G2E-P5A-D2S4-QUEUE-SAFE-SUCCESSOR-QUALIFICATION-v1",
+              "candidate_sha": git("rev-parse", "HEAD"),
+              "client_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s4_queue_safe_client.py"),
+              "admission_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s4_scientific_admission.py"),
+              "runner_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s4_scientific_runner.py"),
+              "verifier_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s4_scientific_verify.py"),
+              "oneclick_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s4_scientific_oneclick.ps1"),
+              "test_blob": git("rev-parse", "HEAD:tests/g2e/test_p5a_d2s4_queue_safe_successor.py"),
+              "workflow_blob": git("rev-parse", "HEAD:.github/workflows/g2e-p5a-d2s4-queue-safe-successor.yml"),
+              "spec_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S4_QUEUE_SAFE_SUCCESSOR_SPEC.md"),
+              "discovery_file_sha256": sha("d2s4-discovery.json"),
+              "structural_discovery_digest": pack["structural_discovery_digest"],
+              "manifest_ref": pack["refs"]["manifest"],
+              "proof_ref": pack["refs"]["proof"],
+              "final_agent_binding_ref": pack["refs"]["final_agent_binding"],
+              "predispatch_attempt_ref": pack["refs"]["predispatch_attempt"],
+              "execution_config_hash": pack["execution_config_hash"],
+              "predecessor_postclosure_bundle_sha256": "1775c3430692ec4e8037eb1776368d2544f5268d4dd71df77c63f3fca5c6eb66",
+              "predecessor_r2_report_sha256": "b24af8e5261ba8e5a90605e7a9b9d63c0025f37650f9a4e657cdaafd76b0545e",
+              "predecessor_r2_evidence_sha256": "87f18cf15f06eb1bc3e0a9e28f76e3208b2c082c3cd458221242d65db7b8cc28",
+              "official_harness_sha256": discovery["executable_sha256"],
+              "queue_safe_synthetic_delayed_notification_pass": True,
+              "structural_d1_pass": True,
+              "turn_start_schema_compatible": True,
+              "p1_5_final_admission_pass": True,
+              "model_turn_executed": False,
+              "scientific_attempt_consumed": False,
+              "scientific_attempt_authorized_after_lock": True,
+              "retry_authorized": False,
+              "adjudication": "D2S4_QUEUE_SAFE_SUCCESSOR_PASS_EXACT_LOCK_REQUIRED",
+          }
+          Path("d2s4-queue-safe-successor-qualification.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print("D2S4_SUCCESSOR_RESULT=" + json.dumps(report, sort_keys=True))
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p5a-d2s4-queue-safe-successor-qualification
+          path: |
+            d2s4-discovery.json
+            d2s4-admission
+            d2s4-queue-safe-successor-qualification.json
+          if-no-files-found: error
