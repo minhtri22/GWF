@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -20,9 +21,9 @@ def test_bps_i00_local_uat_script_contract():
     assert 'git_head_end' in text
     assert 'working_tree_clean_at_start' in text
     assert 'BPS-I00_LOCAL_UAT_REPORT.json' in text
-    assert r'.local\BPS-I00\evidence' in text
+    assert r'.local\\BPS-I00\\evidence' in text
     assert 'install.ps1' in text
-    assert r'scripts\gwf_server.ps1' in text
+    assert r'scripts\\gwf_server.ps1' in text
     assert '/ready' in text
     assert '/browser/auth/login' in text
     assert '/browser/auth/me' in text
@@ -51,9 +52,12 @@ def test_bps_i00_local_uat_script_parses_on_windows():
     assert shell, "PowerShell executable is required on Windows"
     parser = (
         "$tokens=$null; $errors=$null; "
+        "$path=$env:BPS_I00_UAT_SCRIPT; "
         "[System.Management.Automation.Language.Parser]::ParseFile("
-        "$args[0],[ref]$tokens,[ref]$errors) | Out-Null; "
+        "$path,[ref]$tokens,[ref]$errors) | Out-Null; "
         "if($errors.Count -gt 0){"
         "$errors | ForEach-Object { Write-Error $_.Message }; exit 1 }; exit 0"
     )
-    subprocess.run([shell, "-NoProfile", "-Command", parser, str(SCRIPT)], cwd=ROOT, check=True)
+    env = os.environ.copy()
+    env["BPS_I00_UAT_SCRIPT"] = str(SCRIPT)
+    subprocess.run([shell, "-NoProfile", "-Command", parser], cwd=ROOT, env=env, check=True)
