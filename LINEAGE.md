@@ -347,3 +347,11 @@ Rules:
 - Final amended plan blob: `722b887a4a10466baa97122151a74a769432876c`.
 - Plan QA commit: `324c60b3dfc03d8aa4dd38b0e412cef222ff594b`.
 - Outcome: product sequencing is locked as authoritative UI/UX for current implemented capability first; then Documentation Governance completion to DG-W4; then GAC product-core completion; then Codex backend readiness; then GAC + Codex integration into authoritative browser UI/UX and operator browser UAT. The seven-wave architecture is preserved and no implementation item is authorized merely by this planning milestone.
+
+
+## 2026-09-22 — Browser readiness scope locked to full implemented product lineage
+
+- Result: Browser Product Surface scope re-audited and corrected to cover all implemented product capability, not only the seven-wave roadmap.
+- Final Browser Product Surface spec commit: `7b5d5c1ee7a4b95011d3f9896cd2f4dda5bcdaca`, blob `7ce32bc163c36b37f7cae04e9e47274a61918120`.
+- Final implementation-plan commit: `98374fe0473294e0c1838563f109233953c486bc`, blob `f5606c95658733ef2db18a44a78b2c54c16353ba`.
+- Outcome: BPS-W0 now requires authoritative browser coverage for the implemented v0.5→v0.8.5 product lineage plus DG-P0→DG-P10; legacy static/localStorage views must be rewired to authoritative APIs or retired/replaced before browser readiness can PASS.
