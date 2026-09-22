@@ -455,3 +455,21 @@
 - **Execution lock:** `g2e/docs/P5A_D2S5_SCIENTIFIC_EXECUTION_LOCK.json`.
 - **Pre-execution QA:** count=0.
 - **Next:** exactly one local D2-S5 scientific execution. No automatic retry after marker creation.
+
+
+### G2E-P5A-D2-S5 — Verifier Identity Repair / Requalification
+
+- **Status:** PASS / SUPERSEDES PRIOR D2-S5 EXECUTION LOCK.
+- **Finding:** the prior qualified verifier blob `094809a2edbb1d1d9a207d53644f9f8f8cb89bb6` still bound obsolete observable-client identity `57f5b3e0...`, while runner/admission bound final client `72c77c1...`. A real execution would therefore fail evidence identity admission despite a correct client.
+- **Scientific effect:** none; the finding was detected before D2-S5 model execution and before attempt consumption.
+- **Repair:** verifier now binds final observable-client blob `72c77c1fbd1e2c20881723f18ef2f1435ded2b2b`; synthetic qualification explicitly asserts verifier client/OQ1 identities.
+- **Authoritative qualified candidate:** `2b37ade5dab3f13a55192b674d2531ca4876676b`.
+- **Qualification workflow:** `35794109437`.
+- **Linux job:** `106969254830` — PASS.
+- **Windows job:** `106969254628` — PASS.
+- **Artifact:** `10722927391`; digest `sha256:a959761219fe55806b3a1cb959e52e9a537cb3aa3e07174b4c39e1011c0c4421`.
+- **Execution config:** unchanged `27bf768c7189fc630d04bcc98d8c854c1409151ab42e3ea466c10128aca36240`.
+- **Verifier:** authoritative blob `91b30c10c0626a82989c6f8091155b63d784fa41`.
+- **Qualification model turn:** none; scientific attempt remains unconsumed.
+- **Lock:** `P5A_D2S5_SCIENTIFIC_EXECUTION_LOCK.json` v2.
+- **Next:** exactly one local D2-S5 scientific execution; retry budget remains zero after durable marker creation.
