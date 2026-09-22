@@ -1,0 +1,23 @@
+{
+  "schema": "G2E-P5A-D2S2-ELEVATION-BOOTSTRAP-DIAGNOSTIC-LOCK-v1",
+  "qualified": true,
+  "baseline_sha": "4f61aff2aff5da6a75d696cf758968bcbd697c74",
+  "qualified_candidate_sha": "7b0463644a02482c5595c78ecd1f8bf0e165a16e",
+  "diagnostic_blob": "90b3f9d834974d62b0b8b6e1966705e680d164bc",
+  "test_blob": "b0c1e5995aca47bdeaca5168d8405e1b635e10a7",
+  "workflow_blob": "bb87b08839327bf1cbf62335c270a767d8452483",
+  "spec_blob": "baab6eb25d9d367d6145e75f386ecf339b28d45b",
+  "frozen_d2s2_oneclick_blob": "1507b716645971ee60b0c2131973a953f98e7036",
+  "frozen_d2s2_preflight_blob": "005bd3ff5f34ea60a05d15baa25a0d4f6e9341c3",
+  "workflow_run_id": 35675420178,
+  "workflow_job_id": 106580822244,
+  "artifact_id": 10672618551,
+  "artifact_digest": "sha256:488cf33ea9b3bab8c06f2e99d32efbc0a62229cb7d66600574cfbc76c359726a",
+  "adjudication": "DIAGNOSTIC_IMPLEMENTATION_PASS_LOCAL_EXECUTION_REQUIRED",
+  "report_json": "g2e/.local/P5A-D2S2-BOOTSTRAP/report/P5A_D2S2_ELEVATION_BOOTSTRAP_REPORT.json",
+  "report_md": "g2e/.local/P5A-D2S2-BOOTSTRAP/report/P5A_D2S2_ELEVATION_BOOTSTRAP_REPORT.md",
+  "model_turn_executed": false,
+  "scientific_attempt_consumed": false,
+  "scientific_attempt_authorized": false,
+  "runtime_adapter_authorized": false
+}
