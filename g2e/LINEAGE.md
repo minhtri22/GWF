@@ -427,3 +427,31 @@
 - **Local root if later authorized:** `g2e/.local/P5A-D2S5-SCIENCE-001`.
 - **Current model execution authorization:** FALSE.
 - **Next:** bounded D2-S5 implementation + zero-model qualification; only an exact post-qualification lock may authorize one local model-bearing attempt.
+
+
+### G2E-P5A-D2-S5 — Implementation / Zero-Model Qualification PASS
+
+- **Status:** QUALIFIED / EXACT EXECUTION LOCKED / ONE LOCAL SCIENTIFIC ATTEMPT AUTHORIZED.
+- **Study:** `p5a-d2s5-observability-qualified-functional-successor`.
+- **Attempt:** `p5a-d2s5-p5-fx-001-attempt-001`.
+- **Qualified candidate:** `85e5312c032225a317c3116ba9150bf325af4b23`.
+- **Qualification workflow:** `35791102414`.
+- **Linux:** bounded diff, compile/parser, live-recorder tests, OQ1 tests, inherited queue-safe regression, P1-P4 PASS.
+- **Windows:** PowerShell 5.1 parser, wrapper self-test, live-recorder/OQ1 tests, exact official D1 structural discovery and P1.5 admission PASS.
+- **Execution config:** `27bf768c7189fc630d04bcc98d8c854c1409151ab42e3ea466c10128aca36240`.
+- **Observable client:** `72c77c1fbd1e2c20881723f18ef2f1435ded2b2b`.
+- **OQ1 observability:** `b6d3c6fcb671dd166893edd46388c8d69dca9105`.
+- **Runner:** `259224a53aac7b79d0607360ba496d07503ef38d`.
+- **Verifier:** `094809a2edbb1d1d9a207d53644f9f8f8cb89bb6`.
+- **Admission:** `a37e78d28bf9cc59b0e9ee5dc2b41c659e316f92`.
+- **One-click:** `175ff9e22a912c4c1a20d66ddc41ff41a36d7077`.
+- **Portability repair:** OQ1 identity now binds repository Git object identity rather than checkout byte representation; final candidate passes Linux + Windows.
+- **Scientific task:** exact P5-FX-001 unchanged.
+- **Timeout:** 90 seconds.
+- **Retry budget:** 0.
+- **Attempt-consumption boundary:** durable marker immediately before sole `turn/start` transport write.
+- **Qualification model turn:** none.
+- **Local root:** `g2e/.local/P5A-D2S5-SCIENCE-001`.
+- **Execution lock:** `g2e/docs/P5A_D2S5_SCIENTIFIC_EXECUTION_LOCK.json`.
+- **Pre-execution QA:** count=0.
+- **Next:** exactly one local D2-S5 scientific execution. No automatic retry after marker creation.
