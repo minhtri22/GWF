@@ -152,9 +152,9 @@ def test_verifier_never_assigns_scientific_verdict():
 
 def test_oneclick_is_one_shot_and_cleanup_non_bypassable():
     source = ONECLICK.read_text(encoding="utf-8")
-    assert "P5A-D2S3-SCIENCE-001" in source
+    assert "P5A-D2S3-SCIENCE-002" in source
     assert "SCIENTIFIC_ROOT_ALREADY_EXISTS_NO_RETRY" in source
-    assert "P5A_D2S3_SCIENTIFIC_EXECUTION_LOCK.json" in source
+    assert "P5A_D2S3_SCIENTIFIC_PREDISPATCH_REPAIR_001_LOCK.json" in source
     assert "retry_authorized" in source
     assert "automatic_retry_authorized" in source
 
