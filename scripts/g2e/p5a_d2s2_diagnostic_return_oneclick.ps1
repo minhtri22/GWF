@@ -1,6 +1,7 @@
 param(
     [string]$ProjectRoot = "",
-    [switch]$GitInvocationSelfTest
+    [switch]$GitInvocationSelfTest,
+    [switch]$GitFetchStderrSelfTest
 )
 
 $ErrorActionPreference = "Stop"
@@ -15,6 +16,50 @@ function Write-Json([string]$Path, $Object) {
     [IO.File]::WriteAllText($Path, $json + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
 }
 
+function Quote-NativeArgument([string]$Value) {
+    if ($null -eq $Value -or $Value.Length -eq 0) {
+        return '""'
+    }
+    if ($Value -notmatch '[\s"]') {
+        return $Value
+    }
+
+    $sb = New-Object System.Text.StringBuilder
+    [void]$sb.Append('"')
+    $backslashes = 0
+
+    foreach ($ch in $Value.ToCharArray()) {
+        if ($ch -eq '\') {
+            $backslashes++
+            continue
+        }
+
+        if ($ch -eq '"') {
+            if ($backslashes -gt 0) {
+                [void]$sb.Append(('\' * (($backslashes * 2) + 1)))
+            }
+            else {
+                [void]$sb.Append('\')
+            }
+            [void]$sb.Append('"')
+            $backslashes = 0
+            continue
+        }
+
+        if ($backslashes -gt 0) {
+            [void]$sb.Append(('\' * $backslashes))
+            $backslashes = 0
+        }
+        [void]$sb.Append($ch)
+    }
+
+    if ($backslashes -gt 0) {
+        [void]$sb.Append(('\' * ($backslashes * 2)))
+    }
+    [void]$sb.Append('"')
+    return $sb.ToString()
+}
+
 function Invoke-Git(
     [string]$Root,
     [string[]]$GitArgs
@@ -23,12 +68,48 @@ function Invoke-Git(
         throw "GIT_ARGUMENT_VECTOR_EMPTY"
     }
 
-    $out = & git -C $Root @GitArgs 2>&1
-    $code = $LASTEXITCODE
-    if ($code -ne 0) {
-        throw "GIT_FAILED[$code]: git -C $Root $($GitArgs -join ' ') :: $((($out | Out-String).Trim()))"
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = "git"
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+
+    $allArgs = @("-C", $Root) + $GitArgs
+    if ($psi.PSObject.Properties.Name -contains "ArgumentList") {
+        foreach ($arg in $allArgs) {
+            [void]$psi.ArgumentList.Add([string]$arg)
+        }
     }
-    return (($out | Out-String).Trim())
+    else {
+        $psi.Arguments = (($allArgs | ForEach-Object { Quote-NativeArgument ([string]$_) }) -join " ")
+    }
+
+    $proc = New-Object System.Diagnostics.Process
+    $proc.StartInfo = $psi
+
+    try {
+        if (-not $proc.Start()) {
+            throw "GIT_PROCESS_START_FAILED"
+        }
+
+        $stdoutTask = $proc.StandardOutput.ReadToEndAsync()
+        $stderrTask = $proc.StandardError.ReadToEndAsync()
+
+        $proc.WaitForExit()
+        $stdout = $stdoutTask.Result
+        $stderr = $stderrTask.Result
+        $code = $proc.ExitCode
+    }
+    finally {
+        $proc.Dispose()
+    }
+
+    if ($code -ne 0) {
+        throw "GIT_FAILED[$code]: git -C $Root $($GitArgs -join ' ') :: STDOUT=$($stdout.Trim()) :: STDERR=$($stderr.Trim())"
+    }
+
+    return $stdout.Trim()
 }
 
 if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
@@ -41,6 +122,18 @@ if ($GitInvocationSelfTest) {
         throw "GIT_INVOCATION_SELFTEST_FAILED:$inside"
     }
     Write-Host "GIT_INVOCATION_SELFTEST_PASS"
+    exit 0
+}
+
+if ($GitFetchStderrSelfTest) {
+    Invoke-Git -Root $ProjectRoot -GitArgs @(
+        "fetch",
+        "--dry-run",
+        "--verbose",
+        "origin",
+        "feature/g2e-framework"
+    ) | Out-Null
+    Write-Host "GIT_FETCH_STDERR_SELFTEST_PASS"
     exit 0
 }
 
