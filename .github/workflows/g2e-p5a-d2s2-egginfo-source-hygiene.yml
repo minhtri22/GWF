@@ -1,0 +1,139 @@
+name: G2E P5A D2-S2 Egg-Info Source Hygiene Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - ".gitignore"
+      - "g2e/docs/P5A_D2S2_EGGINFO_SOURCE_HYGIENE_REPAIR_SPEC.md"
+      - "tests/g2e/test_p5a_d2s2_egginfo_source_hygiene.py"
+      - ".github/workflows/g2e-p5a-d2s2-egginfo-source-hygiene.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  p5a-d2s2-egginfo-source-hygiene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+      BASELINE_SHA: "54950e2c4f476d205523a378f20adb6e4d01ea02"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Verify bounded repair diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$BASELINE_SHA^{commit}"
+          mapfile -t changed < <(git diff --name-only "$BASELINE_SHA"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            ".gitignore"
+            ".github/workflows/g2e-p5a-d2s2-egginfo-source-hygiene.yml"
+            "g2e/docs/P5A_D2S2_EGGINFO_SOURCE_HYGIENE_REPAIR_SPEC.md"
+            "tests/g2e/test_p5a_d2s2_egginfo_source_hygiene.py"
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for item in "${allowed[@]}"; do
+              if [[ "$path" == "$item" ]]; then ok=true; break; fi
+            done
+            if [[ "$ok" != true ]]; then
+              echo "Out-of-scope D2-S2 source hygiene mutation: $path" >&2
+              exit 1
+            fi
+          done
+
+      - name: Run source hygiene qualification
+        run: pytest -q tests/g2e/test_p5a_d2s2_egginfo_source_hygiene.py
+
+      - name: Re-run frozen D2-S2 static qualification
+        run: pytest -q tests/g2e/test_p5a_d2s2_isolated_volume_preflight.py
+
+      - name: Run P1 regression
+        run: pytest -q tests/g2e/test_p1_core_schemas.py
+
+      - name: Run P1.4 regression
+        run: pytest -q tests/g2e/test_p1_4_agent_binding.py
+
+      - name: Run P1.5 regression
+        run: pytest -q tests/g2e/test_p1_5_qualification_authority.py
+
+      - name: Run P2 regression
+        run: pytest -q tests/g2e/test_p2_deterministic_core.py
+
+      - name: Run P3 regression
+        run: pytest -q tests/g2e/test_p3_standalone_runtime.py
+
+      - name: Run P4 regression
+        run: pytest -q tests/g2e/test_p4_gwf_adapter.py
+
+      - name: Verify generated egg-info is ignored after editable install
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d src/governed_workflow_runtime.egg-info
+          git check-ignore -q src/governed_workflow_runtime.egg-info/PKG-INFO
+          if git status --porcelain --untracked-files=all | grep -F 'src/governed_workflow_runtime.egg-info/'; then
+            echo "Generated egg-info still dirties Git worktree" >&2
+            exit 1
+          fi
+
+      - name: Verify frozen D2-S2 execution blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:scripts/g2e/p5a_d2s2_isolated_volume_oneclick.ps1)" = "1507b716645971ee60b0c2131973a953f98e7036"
+          test "$(git rev-parse HEAD:scripts/g2e/p5a_d2s2_isolated_volume_preflight.py)" = "005bd3ff5f34ea60a05d15baa25a0d4f6e9341c3"
+
+      - name: Emit source hygiene qualification report
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          report = {
+              "schema": "G2E-P5A-D2S2-EGGINFO-SOURCE-HYGIENE-QUALIFICATION-v1",
+              "baseline_sha": "54950e2c4f476d205523a378f20adb6e4d01ea02",
+              "candidate_sha": git("rev-parse", "HEAD"),
+              "gitignore_blob": git("rev-parse", "HEAD:.gitignore"),
+              "test_blob": git("rev-parse", "HEAD:tests/g2e/test_p5a_d2s2_egginfo_source_hygiene.py"),
+              "workflow_blob": git("rev-parse", "HEAD:.github/workflows/g2e-p5a-d2s2-egginfo-source-hygiene.yml"),
+              "spec_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S2_EGGINFO_SOURCE_HYGIENE_REPAIR_SPEC.md"),
+              "frozen_d2s2_oneclick_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s2_isolated_volume_oneclick.ps1"),
+              "frozen_d2s2_preflight_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s2_isolated_volume_preflight.py"),
+              "adjudication": "SOURCE_HYGIENE_PASS_LOCAL_DIAGNOSTIC_REQUIRED",
+              "scientific_attempt_authorized": False,
+              "scientific_attempt_consumed": False,
+              "model_turn_executed": False,
+          }
+          Path("p5a_d2s2_egginfo_source_hygiene_qualification.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p5a-d2s2-egginfo-source-hygiene-qualification
+          path: p5a_d2s2_egginfo_source_hygiene_qualification.json
+          if-no-files-found: error
