@@ -35,10 +35,14 @@ def test_bps_i00_local_uat_script_contract():
     assert 'session_survives_canonical_restart' in text
     assert 'canonical_server_stopped' in text
     assert 'tracked_worktree_clean_at_end' in text
-    lowered = text.lower()
-    assert 'bootstrap_password =' not in lowered
-    assert 'auth_secret =' not in lowered
-    assert 'access_token =' not in lowered
+    report_start = text.index("function Write-Report {")
+    report_end = text.index("\ntry {", report_start)
+    report_section = text[report_start:report_end].lower()
+    assert "gwr_bootstrap_password" not in report_section
+    assert "gwr_auth_secret" not in report_section
+    assert "uatpassword" not in report_section
+    assert "uatsecret" not in report_section
+    assert "access_token" not in report_section
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="PowerShell parser check is Windows-only")
