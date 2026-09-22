@@ -1,0 +1,171 @@
+name: G2E P5A D2-S2 Diagnostic Return Wrapper Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - "g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_SPEC.md"
+      - "scripts/g2e/p5a_d2s2_diagnostic_return_oneclick.ps1"
+      - "tests/g2e/test_p5a_d2s2_diagnostic_return_wrapper.py"
+      - ".github/workflows/g2e-p5a-d2s2-diagnostic-return-wrapper.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  p5a-d2s2-diagnostic-return-wrapper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+      BASELINE_SHA: "3f845c8e2f7521dd3d7f092b7dc4c94269d047f3"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Verify bounded provenance-wrapper diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$BASELINE_SHA^{commit}"
+          mapfile -t changed < <(git diff --name-only "$BASELINE_SHA"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            ".github/workflows/g2e-p5a-d2s2-diagnostic-return-wrapper.yml"
+            "g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_SPEC.md"
+            "scripts/g2e/p5a_d2s2_diagnostic_return_oneclick.ps1"
+            "tests/g2e/test_p5a_d2s2_diagnostic_return_wrapper.py"
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for item in "${allowed[@]}"; do
+              if [[ "$path" == "$item" ]]; then ok=true; break; fi
+            done
+            if [[ "$ok" != true ]]; then
+              echo "Out-of-scope D2-S2 return-wrapper mutation: $path" >&2
+              exit 1
+            fi
+          done
+
+      - name: Parse PowerShell return wrapper
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "scripts/g2e/p5a_d2s2_diagnostic_return_oneclick.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -ne 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
+      - name: Run return-wrapper qualification
+        run: pytest -q tests/g2e/test_p5a_d2s2_diagnostic_return_wrapper.py
+
+      - name: Re-run elevation diagnostic qualification
+        run: pytest -q tests/g2e/test_p5a_d2s2_elevation_bootstrap_diagnostic.py
+
+      - name: Re-run egg-info hygiene qualification
+        run: pytest -q tests/g2e/test_p5a_d2s2_egginfo_source_hygiene.py
+
+      - name: Re-run frozen D2-S2 static qualification
+        run: pytest -q tests/g2e/test_p5a_d2s2_isolated_volume_preflight.py
+
+      - name: Run P1 regression
+        run: pytest -q tests/g2e/test_p1_core_schemas.py
+
+      - name: Run P1.4 regression
+        run: pytest -q tests/g2e/test_p1_4_agent_binding.py
+
+      - name: Run P1.5 regression
+        run: pytest -q tests/g2e/test_p1_5_qualification_authority.py
+
+      - name: Run P2 regression
+        run: pytest -q tests/g2e/test_p2_deterministic_core.py
+
+      - name: Run P3 regression
+        run: pytest -q tests/g2e/test_p3_standalone_runtime.py
+
+      - name: Run P4 regression
+        run: pytest -q tests/g2e/test_p4_gwf_adapter.py
+
+      - name: Prove return wrapper is zero-science
+        shell: bash
+        run: |
+          set -euo pipefail
+          script="scripts/g2e/p5a_d2s2_diagnostic_return_oneclick.ps1"
+          forbidden=(
+            '"turn/start"'
+            'windowsSandbox/setupStart'
+            'thread/start'
+            'diskpart'
+            'create vdisk'
+            'attach vdisk'
+          )
+          for token in "${forbidden[@]}"; do
+            if grep -Fi "$token" "$script"; then
+              echo "Forbidden scientific/execution token in return wrapper: $token" >&2
+              exit 1
+            fi
+          done
+
+      - name: Verify frozen D2-S2 execution blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:scripts/g2e/p5a_d2s2_isolated_volume_oneclick.ps1)" = "1507b716645971ee60b0c2131973a953f98e7036"
+          test "$(git rev-parse HEAD:scripts/g2e/p5a_d2s2_isolated_volume_preflight.py)" = "005bd3ff5f34ea60a05d15baa25a0d4f6e9341c3"
+          test "$(git rev-parse HEAD:scripts/g2e/p5a_d2s2_elevation_bootstrap_diagnostic.ps1)" = "90b3f9d834974d62b0b8b6e1966705e680d164bc"
+
+      - name: Emit return-wrapper qualification report
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          report = {
+              "schema": "G2E-P5A-D2S2-DIAGNOSTIC-RETURN-WRAPPER-QUALIFICATION-v1",
+              "baseline_sha": "3f845c8e2f7521dd3d7f092b7dc4c94269d047f3",
+              "candidate_sha": git("rev-parse", "HEAD"),
+              "wrapper_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s2_diagnostic_return_oneclick.ps1"),
+              "test_blob": git("rev-parse", "HEAD:tests/g2e/test_p5a_d2s2_diagnostic_return_wrapper.py"),
+              "workflow_blob": git("rev-parse", "HEAD:.github/workflows/g2e-p5a-d2s2-diagnostic-return-wrapper.yml"),
+              "spec_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_SPEC.md"),
+              "frozen_d2s2_oneclick_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s2_isolated_volume_oneclick.ps1"),
+              "frozen_d2s2_preflight_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s2_isolated_volume_preflight.py"),
+              "frozen_diagnostic_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s2_elevation_bootstrap_diagnostic.ps1"),
+              "adjudication": "RETURN_WRAPPER_PASS_LOCAL_EXECUTION_REQUIRED",
+              "scientific_attempt_authorized": False,
+              "scientific_attempt_consumed": False,
+              "model_turn_executed": False,
+          }
+          Path("p5a_d2s2_diagnostic_return_wrapper_qualification.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p5a-d2s2-diagnostic-return-wrapper-qualification
+          path: p5a_d2s2_diagnostic_return_wrapper_qualification.json
+          if-no-files-found: error
