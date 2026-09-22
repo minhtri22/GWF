@@ -178,8 +178,9 @@ The BPS track is cross-wave. Each BPS item opens only when its backend dependenc
 ### BPS-GAC — Shared Library / GAC browser integration
 
 - **Complexity:** 4
-- **HARD dependencies:** GAC-P1; BPS-P0.
-- **Minimum scope after GAC core is qualified:**
+- **HARD dependencies:** GAC-PCG; BPS-P0.
+- **ORDERING dependency:** AI-CODEX-G0. This is the user-selected product sequence: finish GAC product core, then Codex, then integrate both into UI/UX.
+- **Scope after GAC product core and Codex readiness are qualified:**
   - [ ] catalog entry list/detail;
   - [ ] exact subject identity and publication state;
   - [ ] publish/withdraw/supersede where authorized;
@@ -188,12 +189,13 @@ The BPS track is cross-wave. Each BPS item opens only when its backend dependenc
   - [ ] access intersection and source validity observation;
   - [ ] PARTIAL/backend failure visibly distinct from zero results;
   - [ ] browser UAT PASS.
-- **Expansion dependencies:** GAC-P2A adds ObjectRef surfaces; GAC-P2B adds external immutable-reference surfaces; GAC-P3 search UI appears only if that optional adapter is actually opened.
+- **Included by GAC-PCG:** GAC-P2A ObjectRef and GAC-P2B external immutable-reference readiness.
+- **Optional expansion:** GAC-P3 search UI appears only if that optional adapter is actually opened; GAC-P4B G2E consumer UI appears only after its external trigger.
 
 ### BPS-CODEX — Codex interoperability browser integration
 
 - **Complexity:** 4
-- **HARD dependencies:** AI-P0, AI-P2, BPS-P0.
+- **HARD dependencies:** AI-CODEX-G0; BPS-P0.
 - **Acceptance checklist:**
   - [ ] Codex harness configuration uses opaque connection identity rather than raw reusable credentials;
   - [ ] repository/workspace/tool capability scope visible;
@@ -206,9 +208,9 @@ The BPS track is cross-wave. Each BPS item opens only when its backend dependenc
 
 ### BPS-W1 — GAC + Codex product-integration gate
 
+- [ ] GAC-PCG PASS
+- [ ] AI-CODEX-G0 PASS
 - [ ] BPS-GAC PASS
-- [ ] AI-P0 PASS
-- [ ] AI-P2 Codex adapter PASS
 - [ ] BPS-CODEX PASS
 - [ ] Shared Library and Codex are authoritative live browser surfaces
 - [ ] no credential leakage
@@ -869,8 +871,8 @@ The BPS track is cross-wave. Each BPS item opens only when its backend dependenc
 - [ ] code↔docs change creates review obligation
 - [ ] research-lock bypass fixture fails
 - [ ] bounded migration pilot produces no silent authority assignment
-- [ ] **Product sequencing handoff:** after GAC-P1 is qualified, BPS-GAC becomes eligible; the Shared Library must be integrated into browser UI before it is presented as user-ready.
-- [ ] GAC-P3 remains optional and does not block minimum browser Shared Library readiness.
+- [ ] GAC-P3 remains optional and does not block minimum Shared Library readiness.
+- [ ] **Product sequencing rule:** GAC-P1 or DG-GAC-W5 alone does not start GAC browser implementation. Continue to GAC-PCG, then Codex readiness, then BPS-GAC/BPS-CODEX.
 
 ---
 
@@ -934,6 +936,29 @@ The BPS track is cross-wave. Each BPS item opens only when its backend dependenc
   - [ ] Reference Acquisition provenance is referenced, not duplicated;
   - [ ] mutable URL alone fails eligibility;
   - [ ] QA PASS.
+
+### GAC-PCG — GAC Product Core Completion Gate
+
+**Purpose:** define “GAC complete” for the product sequence without making optional search or G2E consumer integration mandatory.
+
+- **HARD dependencies:** DG-GAC-W5, GAC-P2B.
+- **Completion checklist:**
+  - [ ] GAC-P0 PASS;
+  - [ ] GAC-P1 PASS;
+  - [ ] GAC-P2A PASS;
+  - [ ] GAC-P4A PASS;
+  - [ ] GAC-P2B PASS;
+  - [ ] deterministic metadata Shared Library query works;
+  - [ ] ObjectRef subject publication/resolution works;
+  - [ ] external immutable-reference publication/resolution works with Reference Acquisition provenance;
+  - [ ] publication/query authority and access intersection proven;
+  - [ ] backend/index failure cannot masquerade as zero results;
+  - [ ] exact subject/catalog/query identities reconstructable;
+  - [ ] GAC-P3 optional search adapter is explicitly NON-BLOCKING;
+  - [ ] GAC-P4B G2E consumer fixture is explicitly NON-BLOCKING;
+  - [ ] QA PASS.
+
+**Product handoff:** GAC-PCG PASS satisfies the user-selected “complete GAC” milestone. It opens the Codex sequencing step, not browser GAC implementation. Browser integration waits until AI-CODEX-G0.
 
 ### RA-P2 — GitHub/source-code acquisition adapter
 
@@ -1041,7 +1066,7 @@ The BPS track is cross-wave. Each BPS item opens only when its backend dependenc
 
 - **Complexity:** 3
 - **HARD dependencies:** existing GWF execution/audit primitives.
-- **ORDERING dependency:** RA-GAC-W6; sequencing choice, not an architectural requirement.
+- **ORDERING dependency:** GAC-PCG; user-selected product sequencing choice, not an architectural requirement. Remaining Reference Acquisition work may continue independently after the minimum RA-P1 dependency needed by GAC-P2B.
 - **Governing document:** `docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md` §§5, 14–18.
 - **Checklist:**
   - [ ] executor status distinct from GWF gate PASS;
@@ -1066,7 +1091,7 @@ The BPS track is cross-wave. Each BPS item opens only when its backend dependenc
 - **Complexity:** 4
 - **HARD dependencies:** AI-P0.
 - **ORDERING dependencies:** AI-P1 preferred because ChatGPT/operator-facing path is planned first; current product sequencing places Codex after governed GAC/Shared Library readiness.
-- **Product-surface handoff:** AI-P2 PASS opens BPS-CODEX; Codex is not user-ready until its authoritative browser configuration/execution surface passes BPS-CODEX.
+- **Product-surface handoff:** AI-P2 contributes to AI-CODEX-G0. Codex is not user-ready until AI-CODEX-G0 and the later BPS-CODEX authoritative browser surface pass.
 - **Governing document:** `docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md` §§2.1, 6, 19.
 - **Checklist:**
   - [ ] native harness/session value preserved;
@@ -1074,6 +1099,24 @@ The BPS track is cross-wave. Each BPS item opens only when its backend dependenc
   - [ ] result normalized to execution envelope;
   - [ ] harness cannot self-complete GWF node;
   - [ ] QA PASS.
+
+### AI-CODEX-G0 — Codex Backend Readiness Gate
+
+**Purpose:** define “Codex implemented” before any browser configuration/execution UI is built.
+
+- **HARD dependencies:** AI-P0, AI-P2.
+- **Completion checklist:**
+  - [ ] AgentExecutionEnvelope/trace identity qualified;
+  - [ ] Codex native session/thread identity attributable;
+  - [ ] workspace/repository/tools attributable;
+  - [ ] exact frozen input/binding/evidence identity retained;
+  - [ ] executor success remains distinct from GWF PASS/completion;
+  - [ ] no raw reusable secret persistence;
+  - [ ] harness cannot self-complete GWF node;
+  - [ ] failure/retry/reassignment evidence reconstructable;
+  - [ ] QA PASS.
+- **AI-P1 status:** preferred before AI-P2 but not a hard architectural dependency for this gate. If AI-P1 is absent, MCP surfaces remain explicitly unavailable.
+- **Product handoff:** PASS opens the final UI/UX integration stage BPS-GAC + BPS-CODEX.
 
 ### AI-P3 — Governed MCP mutation surface
 
@@ -1184,18 +1227,16 @@ DG-P0..DG-P10 [FORMALLY CLOSED]
         │                  │
   DG enforcement     GAC-P0 → GAC-P1 → GAC-P2A
                            │
-                           ├────────→ BPS-GAC
-                           │
                            ▼
                        DG-GAC-W5
                            │
-                           ▼
-                 Reference Acquisition
-                    + GAC query bridge
-                    + GAC-P2B external refs
+                    RA-P0 → RA-P1
                            │
                            ▼
-                       RA-GAC-W6
+                       GAC-P2B
+                           │
+                           ▼
+                        GAC-PCG
                            │
                            ▼
                          AI-P0
@@ -1204,11 +1245,16 @@ DG-P0..DG-P10 [FORMALLY CLOSED]
                     AI-P1     AI-P2 Codex
                                 │
                                 ▼
-                           BPS-CODEX
-                                │
-                     BPS-GAC ───┤
+                         AI-CODEX-G0
+                         ┌──────┴──────┐
+                         ▼             ▼
+                     BPS-GAC      BPS-CODEX
+                         └──────┬──────┘
                                 ▼
                              BPS-W1
+
+RA-P2..RA-P6 and RA-GAC-W6 remain a separate research-integration path
+and no longer order-block Codex after GAC-PCG.
 ```
 
 GAC-P3 optional search adapters and GAC-P4B G2E consumer qualification are trigger-based and non-blocking for the minimum Shared Library / Reference Acquisition gates.
@@ -1288,15 +1334,17 @@ DG-W3 → DG-P12..P16 → DG-W4
         ↓
 GAC-P0 → GAC-P1 → GAC-P2A → GAC-P4A
         ↓
-Shared Library browser integration (BPS-GAC)
+DG-GAC-W5
         ↓
-DG-GAC-W5 / RA-GAC-W6 program completion
+RA-P0 → RA-P1 → GAC-P2B
         ↓
-AI-P0
+GAC-PCG  [GAC PRODUCT CORE COMPLETE]
         ↓
-AI-P2 Codex
+AI-P0 → AI-P2 Codex
         ↓
-BPS-CODEX
+AI-CODEX-G0  [CODEX BACKEND READY]
+        ↓
+BPS-GAC + BPS-CODEX
         ↓
 BPS-W1
 ```
@@ -1307,8 +1355,10 @@ Current governance states:
 - **DG-P11+:** NOT_STARTED / NOT_AUTHORIZED.
 - **DG-W3:** OPEN / NOT_EXECUTED.
 - **GAC-P0/P1:** PLANNED_BLOCKED until DG-W4 PASS.
-- **Codex AI-P2:** PLANNED_BLOCKED until AI-P0 PASS and explicit AI implementation authorization; sequencing is after governed GAC/Shared Library readiness.
-- **BPS-GAC/BPS-CODEX:** PLANNED_BLOCKED until their backend dependencies pass.
+- **GAC-PCG:** PLANNED_BLOCKED until DG-GAC-W5 and GAC-P2B PASS.
+- **Codex AI-P2:** PLANNED_BLOCKED until GAC-PCG sequencing handoff, AI-P0 PASS, and explicit AI implementation authorization.
+- **AI-CODEX-G0:** PLANNED_BLOCKED until AI-P0 + AI-P2 PASS.
+- **BPS-GAC/BPS-CODEX:** PLANNED_BLOCKED until GAC-PCG + AI-CODEX-G0 satisfy the final UI/UX integration sequence.
 
 The product-priority sequence is now explicit:
 
