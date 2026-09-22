@@ -19,6 +19,7 @@ Only:
 - `scripts/g2e/p5a_d2s3_scientific_runner.py`;
 - `scripts/g2e/p5a_d2s3_scientific_oneclick.ps1`;
 - repair qualification test/workflow;
+- existing scientific macro test only to rebind the expected fresh local root/repair-lock names while preserving all semantic assertions;
 - repair specification/lock.
 
 ## Required runner repair
