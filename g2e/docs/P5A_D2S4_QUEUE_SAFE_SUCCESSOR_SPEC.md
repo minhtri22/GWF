@@ -15,7 +15,7 @@ Predecessor:
 - attempt:
   `p5a-d2s4-p5-fx-001-attempt-001`
 - permission profile:
-  `g2e_p5a_d2s4`
+  `g2e_p5a_d2s3` (exact previously qualified infrastructure policy; reused intentionally to avoid a second mechanism change)
 
 D2-S3 attempt identity MUST NOT be reused.
 
@@ -61,6 +61,12 @@ Preferred implementation:
 This preserves existing `wait_for_id`, `wait_for_notification`, and `wait_for_turn` semantics.
 
 No task/model/result/adjudication tuning is permitted.
+
+## 3.1 Runtime authorization model
+
+D2-S4 does not require a separate user-run no-turn preflight. The single local invocation MUST execute the same fresh control-plane checks before the attempt-consumption marker. Failure before the marker leaves the D2-S4 attempt unconsumed.
+
+Historical D2-S3 R2 evidence may be used only as predecessor provenance, not as D2-S4 attempt authorization.
 
 ## 4. Structural rebind
 
