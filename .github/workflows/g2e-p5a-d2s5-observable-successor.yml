@@ -249,7 +249,7 @@ jobs:
           config = pack["execution_config"]
           assert pack["study_id"] == "p5a-d2s5-observability-qualified-functional-successor"
           assert pack["attempt_id"] == "p5a-d2s5-p5-fx-001-attempt-001"
-          assert config["observable_client_git_blob"] == "57f5b3e0a1ac13f7722d7bfe244a100bfeb08504"
+          assert config["observable_client_git_blob"] == "72c77c1fbd1e2c20881723f18ef2f1435ded2b2b"
           assert config["observability_git_blob"] == "b6d3c6fcb671dd166893edd46388c8d69dca9105"
           assert config["turn_timeout_seconds"] == 90
           assert config["max_invalid_replacement_attempts"] == 0
