@@ -1,0 +1,22 @@
+{
+  "schema": "G2E-P5A-D2S2-DIAGNOSTIC-RETURN-WRAPPER-LOCK-v1",
+  "qualified": true,
+  "baseline_sha": "3f845c8e2f7521dd3d7f092b7dc4c94269d047f3",
+  "qualified_candidate_sha": "1f2694444f4d91153ca972fa2a4abb2898e13dff",
+  "wrapper_blob": "644abe3f40949a74df63126be11d28012e782baf",
+  "test_blob": "1f23c09370b5ab395afde487ea55fcafcea4cc61",
+  "workflow_blob": "fbfc0011fb9c1133b5e6d49f6fc9835c7625b70d",
+  "spec_blob": "c5c4cb885122539f96b436700c6b8487d0ae4e2a",
+  "frozen_d2s2_oneclick_blob": "1507b716645971ee60b0c2131973a953f98e7036",
+  "frozen_d2s2_preflight_blob": "005bd3ff5f34ea60a05d15baa25a0d4f6e9341c3",
+  "frozen_diagnostic_blob": "90b3f9d834974d62b0b8b6e1966705e680d164bc",
+  "workflow_run_id": 35677493612,
+  "workflow_job_id": 106586956715,
+  "artifact_id": 10673846953,
+  "artifact_digest": "sha256:3c46054042fe1460a675119cfcdd90d6e181c43a13c7292c9e1e657a76b7f4c6",
+  "adjudication": "RETURN_WRAPPER_PASS_LOCAL_EXECUTION_REQUIRED",
+  "scientific_attempt_authorized": false,
+  "scientific_attempt_consumed": false,
+  "model_turn_executed": false,
+  "next_gate": "ONE_FRESH_LOCAL_RETURN_WRAPPER_EXECUTION"
+}
