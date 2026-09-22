@@ -428,7 +428,7 @@ def main() -> int:
             "id": 1,
             "params": {
                 "clientInfo": {
-                    "name": "g2e_p5a_d2s3_a2_preflight",
+                    "name": "g2e_p5a_d2s4_platform_preflight",
                     "title": "G2E P5A D2-S4 Platform Preflight",
                     "version": "1.0.0",
                 },
