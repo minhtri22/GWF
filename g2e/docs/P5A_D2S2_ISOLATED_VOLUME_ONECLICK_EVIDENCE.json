@@ -1,0 +1,54 @@
+{
+  "schema": "G2E-P5A-D2S2-ISOLATED-VOLUME-ONECLICK-EVIDENCE-v1",
+  "status": "IMPLEMENTATION_PASS_LOCAL_EXECUTION_REQUIRED",
+  "qa_baseline_sha": "e1b1c2e64a8ee341974a5635b831d46cc4f01198",
+  "qualified_candidate_sha": "7d81e183a9e1c895f610fa3c377b54fc0e3e413d",
+  "workflow_run_id": 35672727732,
+  "workflow_job_id": 106572590013,
+  "artifact_id": 10671393590,
+  "artifact_digest": "sha256:92790a09dece5d24b4ff097a8cd6b879f94e4db536f1249e756108a7e56c8354",
+  "blobs": {
+    "oneclick": "1507b716645971ee60b0c2131973a953f98e7036",
+    "preflight": "005bd3ff5f34ea60a05d15baa25a0d4f6e9341c3",
+    "tests": "a4aa31f4c52998b6eaff7c737740d5a9f2c84ecb",
+    "workflow": "6823cfe52b4f7565c095bed3cf0f1edd202fffb2"
+  },
+  "study_id": "p5a-d2s2-isolated-volume-root-read-successor",
+  "attempt_id": "p5a-d2s2-p5-fx-001-attempt-001",
+  "fixture": {
+    "input_sha256": "a176454229feef1ce8bd7eab1ea79fbfeff07c229c88123edf862fea9160eef6",
+    "task_sha256": "4c4aba6a82d540440dfef725b2568afdef4be3b26c3e4e84e2b34c54e6dd460e"
+  },
+  "local_execution": {
+    "vhdx_size_mib": 128,
+    "drive_letter_order": [
+      "R",
+      "S",
+      "T",
+      "U",
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z"
+    ],
+    "root_read_confined_to_isolated_volume": true,
+    "exact_result_write": true,
+    "network_enabled": false,
+    "json_report": "g2e/.local/P5A-D2S2/report/P5A_D2S2_ONECLICK_REPORT.json",
+    "markdown_report": "g2e/.local/P5A-D2S2/report/P5A_D2S2_ONECLICK_REPORT.md"
+  },
+  "regressions": {
+    "p1": "PASS",
+    "p1_4": "PASS",
+    "p1_5": "PASS",
+    "p2": "PASS",
+    "p3": "PASS",
+    "p4": "PASS"
+  },
+  "no_turn_dispatch_token": true,
+  "model_turn_executed": false,
+  "scientific_attempt_authorized": false,
+  "runtime_adapter_authorized": false,
+  "next_gate": "ONE_FRESH_LOCAL_D2S2_ISOLATED_VOLUME_NO_TURN_PREFLIGHT"
+}
