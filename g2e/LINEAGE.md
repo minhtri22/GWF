@@ -319,3 +319,26 @@
 - **No-rescue boundary:** D2-S3 MUST NOT be rerun, repaired into a replacement attempt, or granted timeout/protocol/harness rescue after consumption.
 - **Formal adjudication:** `g2e/docs/P5A_D2S3_SCIENCE002_FORMAL_ADJUDICATION.md`
 - **Next:** evidence-only post-closure protocol-failure decomposition. Any future model-bearing work requires a new successor study and attempt identity after that decomposition.
+
+
+### G2E-P5A-D2-S4 — Queue-Safe Scientific Successor
+
+- **Status:** QUALIFIED / ONE LOCAL SCIENTIFIC INVOCATION AUTHORIZED
+- **Study:** `p5a-d2s4-queue-safe-scientific-successor`
+- **Attempt:** `p5a-d2s4-p5-fx-001-attempt-001`
+- **Predecessor:** D2-S3 terminal INVALID / attempt consumed / no retry.
+- **Post-closure mechanism:** `CLIENT_QUEUE_OR_READER_FAILURE` / `UNCAUGHT_QUEUE_EMPTY_IN_RPC_CLIENT_NEXT_MESSAGE`.
+- **Evidence basis:** post-closure bundle SHA256 `1775c3430692ec4e8037eb1776368d2544f5268d4dd71df77c63f3fca5c6eb66`.
+- **Sole mechanism repair:** queue-safe client normalizes bounded-poll `queue.Empty` to `TimeoutError`; task/model/result/authority/timeout/retry semantics unchanged.
+- **Official Codex SHA-256:** `444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b`
+- **Official helper SHA-256:** `0c3eeb7cee8d2bc4c8644def3c818e8b06760979572dcedc919c38d0f38f64c4`
+- **Queue-safe client blob:** `b861f9fdb2f4af5d30961bb307aa6f943e07964d`
+- **Runner blob:** `6d804429e8ab6a9881013149efd08051a7cbb7e4`
+- **One-click blob:** `65317fa036472a29be4dd18449bdc35a8eb472e4`
+- **Execution config:** `5a933057595e051884293a8f11917f95bed422399e55fd246932d09aeb627726`
+- **Qualification run:** `35744866806` — Linux synthetic queue/inherited/P1-P4 PASS; Windows PowerShell 5.1 + official-harness D1 + turn-start schema + P1.5 final admission PASS.
+- **Synthetic discriminating test:** terminal notification arriving after >2 seconds and multiple empty one-second polls is consumed successfully.
+- **Retry budget:** 0.
+- **Attempt-consumption boundary:** durable marker immediately before sole `turn/start` transport write.
+- **Lock:** `g2e/docs/P5A_D2S4_SCIENTIFIC_EXECUTION_LOCK.json`
+- **Next:** exactly one local D2-S4 scientific execution. No automatic retry after marker creation.
