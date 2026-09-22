@@ -60,14 +60,14 @@ if (-not (Test-IsAdministrator)) {
     Write-Host "Administrator elevation is required to dismount D2-S2 VHDX images."
     Write-Host "A UAC prompt will open. No Codex/App Server/model turn is executed."
 
-    $args = @(
+    $ElevatedArgs = @(
         "-NoProfile",
         "-ExecutionPolicy", "Bypass",
         "-File", $ThisScript,
         "-ProjectRoot", $ProjectRoot
     )
 
-    $p = Start-Process -FilePath "powershell.exe" -Verb RunAs -ArgumentList $args -Wait -PassThru
+    $p = Start-Process -FilePath "powershell.exe" -Verb RunAs -ArgumentList $ElevatedArgs -Wait -PassThru
 
     if (Test-Path -LiteralPath $ReportDir -PathType Container) {
         $latest = Get-ChildItem -LiteralPath $ReportDir -Filter "P5A_D2S2_VHDX_CLEANUP_*.json" -File |
