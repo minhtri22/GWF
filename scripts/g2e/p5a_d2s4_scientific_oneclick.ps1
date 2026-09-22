@@ -179,7 +179,7 @@ if ([string]::IsNullOrWhiteSpace($PythonExe)) {
 
 $ThisScript = $MyInvocation.MyCommand.Path
 if (-not (Test-IsAdministrator)) {
-    Write-Host "Administrator elevation is required for the D2-S3 scientific isolated VHDX."
+    Write-Host "Administrator elevation is required for the D2-S4 scientific isolated VHDX."
     Write-Host "A UAC prompt will open. This invocation may consume the one authorized scientific attempt."
 
     $ElevatedArgs = @(
@@ -365,7 +365,7 @@ default_permissions = "$ProfileId"
 sandbox = "elevated"
 
 [permissions.$ProfileId]
-description = "G2E P5A D2-S3 scientific isolated-volume authority"
+description = "G2E P5A D2-S4 scientific isolated-volume authority"
 
 [permissions.$ProfileId.filesystem]
 ":root" = "read"
@@ -534,7 +534,7 @@ finally {
 # PROTECTED_SCIENTIFIC_VHDX_BODY_END
 
 Write-Host ""
-Write-Host "=== D2-S3 SCIENTIFIC EXECUTION COMPLETE ==="
+Write-Host "=== D2-S4 SCIENTIFIC EXECUTION COMPLETE ==="
 Write-Host "STATUS       : $($Report.status)"
 Write-Host "ATTEMPT USED : $($Report.scientific_attempt_consumed)"
 Write-Host "TURN SENT    : $($Report.turn_start_request_sent)"
