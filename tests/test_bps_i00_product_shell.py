@@ -27,6 +27,8 @@ def make_runtime(tmp_path, monkeypatch):
         str(ROOT / "domains" / "example.workflow.yaml"),
         str(tmp_path / "bps_i00.db"),
         auth_secret="i" * 64,
+        object_store_root=tmp_path / "objects",
+        observability_path=tmp_path / "events.jsonl",
     )
     actor = rt.governance.create_actor("HUMAN", "operator", [], [])
     rt.auth.register_human(actor, "operator", "operator-password-long")
@@ -78,6 +80,31 @@ def test_i00_live_shell_and_bootstrap_are_authoritative(tmp_path, monkeypatch):
     assert ready.json()["ok"] is True
     assert ready.json()["core_health"] == "HEALTHY"
     assert ready.json()["build_sha"] == "abc123"
+    assert ready.json()["checks"] == {
+        "database": "PASS",
+        "migrations": "PASS",
+        "object_store": "PASS",
+        "observability": "PASS",
+    }
+    rt.close()
+
+
+
+
+def test_i00_ready_degrades_when_object_store_verification_fails(tmp_path, monkeypatch):
+    rt, _ = make_runtime(tmp_path, monkeypatch)
+    client = TestClient(app_for(rt))
+    monkeypatch.setattr(rt.object_store, "verify", lambda _sha: False)
+
+    ready = client.get("/ready")
+    assert ready.status_code == 503
+    body = ready.json()
+    assert body["ok"] is False
+    assert body["core_health"] == "DEGRADED"
+    assert body["reason"] == "object_store_probe_failed"
+    assert body["checks"]["database"] == "PASS"
+    assert body["checks"]["migrations"] == "PASS"
+    assert body["checks"]["object_store"] == "FAIL"
     rt.close()
 
 
@@ -135,6 +162,7 @@ def test_i00_shell_javascript_contains_only_presentation_local_storage():
     assert "access_token" not in js
     assert "localStorage.setItem(THEME_KEY" in js
     assert "localStorage.setItem(SIDEBAR_KEY" in js
+    assert 'const enabled = item.state === "LIVE_FOUNDATION";' in js
 
 
 def test_i00_server_config_fails_closed_without_auth_secret(tmp_path, monkeypatch):
