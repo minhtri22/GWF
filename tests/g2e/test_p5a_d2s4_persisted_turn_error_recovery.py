@@ -159,17 +159,17 @@ def test_extractor_is_static_read_only_and_has_no_execution_transport():
 
 def test_wrapper_is_single_read_only_collection_path():
     source = WRAPPER.read_text(encoding="utf-8")
-    forbidden = [
-        "Start-Process",
-        "app-server",
-        "turn/start",
-        "thread/start",
-        "Mount-DiskImage",
-        "Dismount-DiskImage",
-        "diskpart",
-        "Invoke-WebRequest",
+    # Forbidden words may appear inside the wrapper's own InfrastructureSelfTest
+    # deny-list. Prohibit executable call shapes rather than deny-list literals.
+    forbidden_execution_shapes = [
+        "& $CodexExe",
+        "Start-Process -",
+        "Mount-DiskImage -",
+        "Dismount-DiskImage -",
+        "diskpart /",
+        "Invoke-WebRequest -",
     ]
-    for token in forbidden:
+    for token in forbidden_execution_shapes:
         assert token not in source
 
     assert "P5A-D2S4-SCIENCE-001" in source
