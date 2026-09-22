@@ -4,17 +4,19 @@
 
 **Document status:** implementation plan / phased authorization map.
 
-**Planning lineage:** original 7-wave plan committed on `docs/reference-agent-interop-specs`; this revision reconciles the plan with the Governed Artifact Catalog / G2E Shared Library documentation on `docs/governed-artifact-catalog-pack`.
+**Planning lineage:** original 7-wave plan committed on `docs/reference-agent-interop-specs`; later revisions reconciled Governed Artifact Catalog / G2E Shared Library, Documentation Governance implementation evidence, and the locked Browser Product Surface contract.
 
-This plan converts the approved specification set into an ordered implementation roadmap optimized for **lower complexity first without violating hard dependencies**.
+This plan converts the approved specification set into an ordered implementation roadmap optimized for **product-usable governed capability without violating hard dependencies**. Runtime semantics, authoritative HTTP contracts, and browser product surfaces are treated as one delivery chain rather than postponing UI/UX to the end.
 
-DG-P0 has formal-closed on implementation head `ef322ff0618b83fbfaef40b096cb43f5193d8db0`; exact-head workflow `35560831581` passed.
+Current implementation frontier:
 
-DG-P1 has formal-closed on implementation head `385016bf6d0c3df512bae6fa8776cca32eac83ee`; exact implementation workflow `35563206375` passed.
-
-DG-P2 implementation has qualified on head `eb71f30916cca08e7df418e1ffbc2e91eca91a13`; workflow `35564566332` passed after preserving failed qualification run `35564490278`.
-
-DG-P3 received explicit human authorization after DG-P2 formal-close. Its pre-implementation specification is frozen at commit `f8d18e55d17344f10c0eb45c9d8beb3df6eea279`, exact blob `e005776db28d57ce1276b07475b9a7f7a5b6be97`, and the bound document QA passes. **DG-P3 implementation remains NOT_STARTED in this revision.**
+- DG-P0 through DG-P10: completed/formally closed according to their recorded closure evidence.
+- DG-P10 final formal-close HEAD: `a09f79ae74a838d2c5998813560373c849669872`.
+- DG-P10 final exact-head workflow: `35671227699` PASS.
+- Browser Product Surface contract: locked at commit `f97f4f1d7f5e9ca5190be0b54e2da2f15e1b65e9`, blob `91192e659ab0de84a176a63cef1b66d03eeec061`.
+- DG-P11+ remain unopened until separately authorized.
+- GAC core remains hard-blocked by DG-W4.
+- Codex remains hard-blocked by AI-P0 and separate implementation authorization; its roadmap sequencing remains after the governed Shared Library/GAC program unless explicitly amended again.
 
 ## 2. Governing documents
 
@@ -25,6 +27,7 @@ The following documents define the semantics used by this plan:
 - `docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md` — harness vs Agent Pool, bindings, execution envelope, transport/governance boundary.
 - `docs/GOVERNED_ARTIFACT_CATALOG_SPEC.md` — GWF Shared Library catalog/publication/query substrate.
 - `docs/GOVERNED_ARTIFACT_CATALOG_INTEGRATION_BOUNDARIES.md` — ownership boundaries among GWF core, Documentation Governance, Reference Acquisition, GAC and G2E.
+- `docs/BROWSER_PRODUCT_SURFACE_SPEC.md` — locked browser information architecture, maturity states, authoritative-UAT boundary, and complete browser checklist across current and future capabilities.
 - `docs/Finding_doc.md` — reconciliation findings and closure checklist for the GAC/G2E Library integration.
 - `docs/FUTURE_NODE_AGENT_ORCHESTRATION_PARKING_LOT.md` — explicitly deferred node-level orchestration.
 - `docs/Finding_checklist.md` — cumulative resolved specification findings.
@@ -46,7 +49,7 @@ Each implementation item has one integer **priority complexity**. When an earlie
 
 Priority rule:
 
-> Among work items whose **HARD** dependencies are satisfied, select the lowest-complexity item first. **ORDERING** dependencies preserve roadmap sequence but are not architectural prerequisites. **OPTIONAL** dependencies may improve the item but do not block it.
+> **HARD dependencies always dominate.** Within the admissible set, the active product sequencing policy is: (1) make already-implemented capability usable through authoritative browser UI/UX; (2) continue Documentation Governance to DG-W4; (3) complete governed GAC/Shared Library readiness; (4) implement the Codex interoperability path through its required AI foundation; (5) integrate GAC and Codex into the authoritative browser UI/UX and run browser UAT. **ORDERING** dependencies preserve roadmap sequence but are not architectural prerequisites. **OPTIONAL** dependencies may improve an item but do not block it.
 
 ## 4. Dependency types
 
@@ -62,6 +65,155 @@ Planning control identities:
 - **EXTERNAL** — external tool/service capability that must be revalidated before implementation.
 
 Every completed item must record exact dependency revisions/evidence used. A dependency named only by logical ID is insufficient for handoff; its evidence package must resolve to exact commit/blob/run identities.
+
+---
+
+# Cross-wave Browser Product Surface Track — BPS
+
+**Purpose:** make every governed capability user-operable through the authoritative product surface without creating an eighth wave or duplicating backend semantics.
+
+**Governing document:** `docs/BROWSER_PRODUCT_SURFACE_SPEC.md`.
+
+**Track invariant:**
+
+```text
+qualified runtime semantics
+        ↓
+authoritative product API
+        ↓
+authoritative browser UI/UX
+        ↓
+operator-observed browser UAT
+```
+
+Static fixtures, demo JSON, browser `localStorage`, generated mocks, or UAT-only overlays do not satisfy product acceptance.
+
+The BPS track is cross-wave. Each BPS item opens only when its backend dependencies are qualified; it does not bypass any DG/GAC/RA/AI gate.
+
+### BPS-P0 — Product server + live browser shell
+
+- **Complexity:** 3
+- **HARD dependencies:** DG-P10 final exact-head closure; locked Browser Product Surface contract.
+- **Scope:** canonical installed server lifecycle and shared live browser shell.
+- **Acceptance checklist:**
+  - [ ] `install.ps1` produces a runnable product environment without requiring a UAT-only dependency injection;
+  - [ ] canonical start/stop/restart command exists;
+  - [ ] server readiness/health is visible;
+  - [ ] exact product version/Git SHA/backend identity visible;
+  - [ ] login/session UI uses the real authentication API;
+  - [ ] navigation shell reserves all product areas from the locked browser contract;
+  - [ ] future-gated areas display explicit disabled maturity state and cannot simulate authoritative actions;
+  - [ ] browser refresh reconstructs state from backend;
+  - [ ] no reusable secret persists in browser/static artifacts;
+  - [ ] browser UAT PASS.
+
+### BPS-P1 — Existing live-API product surfaces
+
+- **Complexity:** 4
+- **HARD dependencies:** BPS-P0; corresponding existing product APIs.
+- **Scope:** convert current implemented API capability into authoritative browser UI/UX.
+- **Required surfaces:**
+  - [ ] tenant/workspace/project/member administration;
+  - [ ] project dashboard/lifecycle;
+  - [ ] Domain Registry;
+  - [ ] Skill Registry;
+  - [ ] orchestration/process inspector/live events;
+  - [ ] agent protocol/preflight/plan/execute/recovery/verify/handoff;
+  - [ ] approvals and audit;
+  - [ ] distributed runtime;
+  - [ ] plugin/GitHub integration configuration and SHA-safe change-set lifecycle;
+  - [ ] system diagnostics/capability matrix;
+  - [ ] no browser-only simulation counts as state;
+  - [ ] browser UAT PASS.
+
+### BPS-P2 — Artifact/Revision/Evidence + DG-P0..P10 product API
+
+- **Complexity:** 4
+- **HARD dependencies:** BPS-P0; DG-P0..DG-P10 formal-close evidence.
+- **Scope:** expose already-qualified backend semantics through bounded authoritative HTTP contracts before browser UI is added.
+- **Acceptance checklist:**
+  - [ ] artifact/revision/evidence/checkpoint read contracts;
+  - [ ] validator evidence/findings read contracts;
+  - [ ] Document facade/revision/history contracts;
+  - [ ] QA/finding lifecycle contracts;
+  - [ ] lifecycle/validity contracts;
+  - [ ] authority claim contracts;
+  - [ ] relation + relation-binding contracts;
+  - [ ] P10 classification/mutation-authority/archive-plan contracts;
+  - [ ] mutating endpoints preserve the same authority/idempotency/audit semantics as native services;
+  - [ ] no P11 source mutation is introduced;
+  - [ ] API QA PASS.
+
+### BPS-P3 — DG-P0..P10 Documents browser surface
+
+- **Complexity:** 4
+- **HARD dependencies:** BPS-P2.
+- **Acceptance checklist:**
+  - [ ] Documents navigation/list/detail;
+  - [ ] exact logical document/revision/source identity;
+  - [ ] validator/QA/finding views;
+  - [ ] lifecycle and validity visibly separate;
+  - [ ] authority claims and collision state;
+  - [ ] typed relations and direction;
+  - [ ] LOGICAL_CURRENT vs PINNED_REVISION binding;
+  - [ ] P10 declared/effective class, escalation, workflow mode and mutation-authority decision;
+  - [ ] deterministic archive/version lineage preview;
+  - [ ] explicit notice that P10 does not execute source mutation;
+  - [ ] browser UAT PASS.
+
+### BPS-W0 — Current-capability browser readiness gate
+
+- [ ] BPS-P0 PASS
+- [ ] BPS-P1 PASS
+- [ ] BPS-P2 PASS
+- [ ] BPS-P3 PASS
+- [ ] installed product starts canonical server
+- [ ] all currently implemented product capability is reachable through authoritative browser UI or explicitly marked NOT_APPLICABLE
+- [ ] browser state survives refresh because backend is authoritative
+- [ ] no static/localStorage simulation is counted as acceptance
+- [ ] operator-observed UAT evidence bound to exact product HEAD
+
+**Sequencing decision:** BPS-W0 is the next product-readiness milestone before new DG-P11 implementation is promoted. Passing BPS-W0 does not itself authorize DG-P11.
+
+### BPS-GAC — Shared Library / GAC browser integration
+
+- **Complexity:** 4
+- **HARD dependencies:** GAC-P1; BPS-P0.
+- **Minimum scope after GAC core is qualified:**
+  - [ ] catalog entry list/detail;
+  - [ ] exact subject identity and publication state;
+  - [ ] publish/withdraw/supersede where authorized;
+  - [ ] deterministic metadata query;
+  - [ ] query execution/catalog snapshot identity;
+  - [ ] access intersection and source validity observation;
+  - [ ] PARTIAL/backend failure visibly distinct from zero results;
+  - [ ] browser UAT PASS.
+- **Expansion dependencies:** GAC-P2A adds ObjectRef surfaces; GAC-P2B adds external immutable-reference surfaces; GAC-P3 search UI appears only if that optional adapter is actually opened.
+
+### BPS-CODEX — Codex interoperability browser integration
+
+- **Complexity:** 4
+- **HARD dependencies:** AI-P0, AI-P2, BPS-P0.
+- **Acceptance checklist:**
+  - [ ] Codex harness configuration uses opaque connection identity rather than raw reusable credentials;
+  - [ ] repository/workspace/tool capability scope visible;
+  - [ ] execution/locality/network/privacy/authority constraints visible;
+  - [ ] GWF execution identity and Codex session/thread identity both visible;
+  - [ ] AgentExecutionEnvelope attributable;
+  - [ ] Codex executor success remains visibly distinct from GWF gate PASS/completion;
+  - [ ] execution/evidence trace inspectable;
+  - [ ] browser UAT PASS.
+
+### BPS-W1 — GAC + Codex product-integration gate
+
+- [ ] BPS-GAC PASS
+- [ ] AI-P0 PASS
+- [ ] AI-P2 Codex adapter PASS
+- [ ] BPS-CODEX PASS
+- [ ] Shared Library and Codex are authoritative live browser surfaces
+- [ ] no credential leakage
+- [ ] exact identities and audit/evidence preserved end-to-end
+- [ ] operator-observed browser UAT PASS
 
 ---
 
@@ -717,6 +869,8 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 - [ ] code↔docs change creates review obligation
 - [ ] research-lock bypass fixture fails
 - [ ] bounded migration pilot produces no silent authority assignment
+- [ ] **Product sequencing handoff:** after GAC-P1 is qualified, BPS-GAC becomes eligible; the Shared Library must be integrated into browser UI before it is presented as user-ready.
+- [ ] GAC-P3 remains optional and does not block minimum browser Shared Library readiness.
 
 ---
 
@@ -911,7 +1065,8 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 
 - **Complexity:** 4
 - **HARD dependencies:** AI-P0.
-- **ORDERING dependency:** AI-P1 preferred because ChatGPT/operator-facing path is planned first.
+- **ORDERING dependencies:** AI-P1 preferred because ChatGPT/operator-facing path is planned first; current product sequencing places Codex after governed GAC/Shared Library readiness.
+- **Product-surface handoff:** AI-P2 PASS opens BPS-CODEX; Codex is not user-ready until its authoritative browser configuration/execution surface passes BPS-CODEX.
 - **Governing document:** `docs/V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md` §§2.1, 6, 19.
 - **Checklist:**
   - [ ] native harness/session value preserved;
@@ -1003,42 +1158,57 @@ Revisit only when one of its explicit triggers occurs.
 # 6. Cross-wave dependency summary
 
 ```text
-PLAN-QA
-  ↓
-DG-P0  [COMPLETED]
-  ├──→ DG-P1
-  ├──→ DG-P2
-  └──→ DG-P3
-          ↓
-        DG-P4
-          ↓
-        DG-P5
-          ↓
-        DG-P6
-          ↓
-     authority/relations/change-set
-          ↓
-      impact + STALE
-          ↓
-   no-silent-cascade
-          ↓
-        DG-W4
-          ↓
-   ┌──────┴──────────────┐
-   │                     │
-DG enforcement       GAC-P0 → GAC-P1 → GAC-P2A
-   │                     │
-   └──────────┬──────────┘
-              ↓
-          DG-GAC-W5
-              ↓
-  Reference Acquisition
-      + GAC query bridge
-      + GAC-P2B external refs
-              ↓
-          RA-GAC-W6
-              ↓ [ORDERING]
- Agent Interoperability v0.8.7
+DG-P0..DG-P10 [FORMALLY CLOSED]
+          │
+          ▼
+ BPS-P0 → BPS-P1
+    │        │
+    └→ BPS-P2 → BPS-P3
+                 │
+                 ▼
+               BPS-W0
+                 │
+                 ▼
+              DG-P11
+                 │
+                 ▼
+               DG-W3
+                 │
+                 ▼
+          DG-P12..DG-P16
+                 │
+                 ▼
+               DG-W4
+                 │
+        ┌────────┴─────────┐
+        │                  │
+  DG enforcement     GAC-P0 → GAC-P1 → GAC-P2A
+                           │
+                           ├────────→ BPS-GAC
+                           │
+                           ▼
+                       DG-GAC-W5
+                           │
+                           ▼
+                 Reference Acquisition
+                    + GAC query bridge
+                    + GAC-P2B external refs
+                           │
+                           ▼
+                       RA-GAC-W6
+                           │
+                           ▼
+                         AI-P0
+                      ┌────┴────┐
+                      ▼         ▼
+                    AI-P1     AI-P2 Codex
+                                │
+                                ▼
+                           BPS-CODEX
+                                │
+                     BPS-GAC ───┤
+                                ▼
+                             BPS-W1
 ```
 
 GAC-P3 optional search adapters and GAC-P4B G2E consumer qualification are trigger-based and non-blocking for the minimum Shared Library / Reference Acquisition gates.
@@ -1086,63 +1256,74 @@ No item may be marked complete with unresolved required handoff fields.
 - [ ] exact revision/SHA evidence is preserved;
 - [ ] research-lock semantics cannot be relaxed by documentation tooling;
 - [ ] current failed/negative evidence is not erased by rerun;
-- [ ] every wave exit gate must PASS before an ORDERING-dependent later wave is promoted to active work.
+- [ ] every wave exit gate must PASS before an ORDERING-dependent later wave is promoted to active work;
+- [ ] qualified backend capability is not called product-ready until its required authoritative browser surface/UAT gate passes;
+- [ ] static/localStorage/demo behavior never counts as authoritative browser acceptance;
+- [ ] future-gated GAC/RA/AI controls may be shown disabled for roadmap visibility but must not simulate successful operations;
+- [ ] BPS work reuses backend semantics and must not create a parallel authority/state model.
 
 # 9. Current authorization frontier
 
 At this implementation state:
 
 ```text
-DG-P5 — QA run + finding persistence
-      PASS / FORMALLY CLOSED
-      final closure HEAD 58a4cf5f0ca33ca8e15513eb07234dc575b097bc
-      final exact-head run 35585295768 PASS
-       ↓
-DG-P6 — Lifecycle + validity mapping
-      PASS / FORMALLY CLOSED
-      handoff HEAD d25454481f0d972c83225e10d3d09b1bb997faf9
-      exact-head run 35598699495 PASS
-       ↓
-DG-W2 — Wave 2 exit gate
-      PASS / FORMALLY CLOSED
-      handoff HEAD be02cdd7eaeadc0534631f15fbe183ddb4b6c7f3
-      exact-head run 35603196674 PASS
-       ↓
-Wave 3 — Semantic Documentation Governance
-      DEPENDENCY UNLOCKED
-       ↓
-DG-P7 — Authority claims + duplicate-authority detection
-      PASS / FORMALLY CLOSED
-      final closure HEAD cf143d959b338e8d77811f5b2b79789ccbbb20aa
-      final exact-head run 35611830804 PASS
-       ↓
-DG-P8 — Typed document relations
-      PASS / FORMALLY CLOSED
-      final closure HEAD 4a93e564adf52ae0dfdffabefaef32d431bbef6d
-      final exact-head run 35622798852 PASS
-       ↓
-DG-P9 — Logical-current vs pinned-revision binding
-      PASS / FORMALLY CLOSED
-      final closure HEAD 7a081bd8f1f2218859963e304230a8904f56a6eb
-      final exact-head run 35629863163 PASS
-       ↓
-DG-P10 — Change classification
-      AMENDMENT-1 SPEC FROZEN
-      IMPLEMENTATION QUALIFIED / PASS
-      qualified HEAD cc5ec5dc15cf28f7960ddf90a409de7578effe53
-      workflow 35645249596 PASS
-      HANDOFF HEAD 83d7d5c3fcf6a4d4d182af93244bf6e3e1228382
-      handoff workflow 35647135853 PASS
-      FORMAL-CLOSE STATE COMMITTED
-      FINAL EXACT-HEAD WORKFLOW REQUIRED
-       ↓
-STOP
-
-DG-P11+ = NOT_STARTED / NOT_AUTHORIZED
+DG-P0..DG-P10
+    PASS / FORMALLY CLOSED
+        ↓
+DG-P10 FINAL EXACT-HEAD
+    HEAD a09f79ae74a838d2c5998813560373c849669872
+    run 35671227699 PASS
+        ↓
+BROWSER PRODUCT SURFACE CONTRACT
+    LOCKED
+    spec commit f97f4f1d7f5e9ca5190be0b54e2da2f15e1b65e9
+        ↓
+NEXT PLANNED PRODUCT MILESTONE
+    BPS-P0 → BPS-P1 → BPS-P2 → BPS-P3 → BPS-W0
+        ↓
+ONLY AFTER BPS-W0 + separate authorization
+    DG-P11
+        ↓
+DG-W3 → DG-P12..P16 → DG-W4
+        ↓
+GAC-P0 → GAC-P1 → GAC-P2A → GAC-P4A
+        ↓
+Shared Library browser integration (BPS-GAC)
+        ↓
+DG-GAC-W5 / RA-GAC-W6 program completion
+        ↓
+AI-P0
+        ↓
+AI-P2 Codex
+        ↓
+BPS-CODEX
+        ↓
+BPS-W1
 ```
 
-DG-P9 is formally closed at final exact closure evidence. The explicitly authorized DG-P10 pre-implementation specification/dependency qualification has passed.
+Current governance states:
 
-DG-P10 bounded implementation and committed handoff have both requalified on SQLite, PostgreSQL 17 and Windows one-click UAT. Formal-close state is now committed; only the final workflow on the exact formal-close HEAD remains as closure confirmation. DG-P11+ remain unopened. DG-W3 remains OPEN / NOT_EXECUTED.
+- **BPS-P0:** PLANNED / NOT_IMPLEMENTED. This plan amendment does not itself authorize code.
+- **DG-P11+:** NOT_STARTED / NOT_AUTHORIZED.
+- **DG-W3:** OPEN / NOT_EXECUTED.
+- **GAC-P0/P1:** PLANNED_BLOCKED until DG-W4 PASS.
+- **Codex AI-P2:** PLANNED_BLOCKED until AI-P0 PASS and explicit AI implementation authorization; sequencing is after governed GAC/Shared Library readiness.
+- **BPS-GAC/BPS-CODEX:** PLANNED_BLOCKED until their backend dependencies pass.
 
-GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.
+The product-priority sequence is now explicit:
+
+```text
+authoritative UI/UX for current capability
+        ↓
+complete Documentation Governance dependency chain
+        ↓
+complete governed GAC / Shared Library readiness
+        ↓
+implement Codex interoperability foundation + adapter
+        ↓
+integrate GAC + Codex into authoritative UI/UX
+        ↓
+operator browser UAT
+```
+
+This sequencing changes roadmap priority, not hard dependency semantics.
