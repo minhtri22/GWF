@@ -1,5 +1,6 @@
 param(
-    [string]$ProjectRoot = ""
+    [string]$ProjectRoot = "",
+    [switch]$SanitizationSelfTest
 )
 
 $ErrorActionPreference = "Stop"
@@ -34,7 +35,8 @@ function Sanitize-Text(
         $out = $out.Replace($UserProfile, "<USERPROFILE>")
     }
     if (-not [string]::IsNullOrWhiteSpace($Username)) {
-        $out = $out -replace "(?i)(?<=\\|/)" + [regex]::Escape($Username) + "(?=\\|/)", "<USER>"
+        $pattern = "(?i)(?<=\\|/)" + [regex]::Escape($Username) + "(?=\\|/)"
+        $out = [regex]::Replace($out, $pattern, "<USER>")
     }
     return $out
 }
@@ -46,6 +48,17 @@ function Write-JsonFile([string]$Path, $Object) {
         $json + [Environment]::NewLine,
         [Text.UTF8Encoding]::new($false)
     )
+}
+
+if ($SanitizationSelfTest) {
+    $sample = "D:\\WORK\\ROOT\\x C:\\Users\\Alice\\secret D:\\Else\\Alice\\y"
+    $actual = Sanitize-Text $sample "D:\\WORK\\ROOT" "C:\\Users\\Alice" "Alice"
+    $expected = "<PROJECT_ROOT>\\x <USERPROFILE>\\secret D:\\Else\\<USER>\\y"
+    if ($actual -ne $expected) {
+        throw "SANITIZATION_SELFTEST_FAILED:$actual"
+    }
+    Write-Host "SANITIZATION_SELFTEST_PASS"
+    exit 0
 }
 
 if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
