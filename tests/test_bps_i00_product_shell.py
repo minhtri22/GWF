@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
+import socket
+import subprocess
+import sys
 
 import pytest
 from fastapi.testclient import TestClient
@@ -177,7 +181,7 @@ def test_i00_windows_launcher_and_installer_contracts_are_explicit():
 
     assert 'ValidateSet("start","stop","restart","status","foreground")' in launcher
     assert "process_started_at" in launcher
-    assert "gwr\.server" in launcher
+    assert r"gwr\.server" in launcher
     assert "GWR_AUTH_SECRET must be set to at least 32 bytes" in launcher
     assert "uvicorn>=0.30,<1" in pyproject
     assert 'gwr-server = "gwr.server:main"' in pyproject
@@ -188,3 +192,99 @@ def test_i00_windows_launcher_and_installer_contracts_are_explicit():
     assert "timings_seconds = $Timings" in installer
     assert 'if ($QualificationMode -and -not $SkipTests)' in installer
     assert 'if ($QualificationMode -and -not $SkipUat)' in installer
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="canonical PowerShell lifecycle test is Windows-only")
+def test_i00_windows_launcher_lifecycle_does_not_kill_unrelated_process(tmp_path):
+    launcher = ROOT / "scripts" / "gwf_server.ps1"
+    env = os.environ.copy()
+    env.update({
+        "GWR_AUTH_SECRET": "windows-lifecycle-secret-0123456789abcdef",
+        "GWR_BOOTSTRAP_USERNAME": "uat-operator",
+        "GWR_BOOTSTRAP_PASSWORD": "uat-operator-password",
+        "GWR_DATABASE_URL": str(tmp_path / "launcher.db"),
+        "GWR_OBJECT_STORE_ROOT": str(tmp_path / "objects"),
+        "GWR_OBSERVABILITY_PATH": str(tmp_path / "events.jsonl"),
+    })
+
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        port = sock.getsockname()[1]
+
+    base = [
+        "pwsh",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        str(launcher),
+        "-RepoRoot",
+        str(ROOT),
+        "-Port",
+        str(port),
+    ]
+
+    unrelated = None
+    try:
+        started = subprocess.run(
+            base + ["-Action", "start"],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=True,
+        )
+        assert "GWF_SERVER=RUNNING" in started.stdout
+
+        status = subprocess.run(
+            base + ["-Action", "status"],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=True,
+        )
+        assert "GWF_SERVER=READY" in status.stdout
+
+        restarted = subprocess.run(
+            base + ["-Action", "restart"],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=True,
+        )
+        assert "GWF_SERVER=STOPPED" in restarted.stdout
+        assert "GWF_SERVER=RUNNING" in restarted.stdout
+
+        unrelated = subprocess.Popen(
+            [sys.executable, "-c", "import time; time.sleep(60)"],
+            cwd=ROOT,
+        )
+        stopped = subprocess.run(
+            base + ["-Action", "stop"],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=True,
+        )
+        assert "GWF_SERVER=STOPPED" in stopped.stdout
+        assert unrelated.poll() is None
+    finally:
+        subprocess.run(
+            base + ["-Action", "stop"],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+        )
+        if unrelated is not None and unrelated.poll() is None:
+            unrelated.terminate()
+            unrelated.wait(timeout=10)
