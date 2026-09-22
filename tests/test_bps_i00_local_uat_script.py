@@ -20,9 +20,9 @@ def test_bps_i00_local_uat_script_contract():
     assert 'git_head_end' in text
     assert 'working_tree_clean_at_start' in text
     assert 'BPS-I00_LOCAL_UAT_REPORT.json' in text
-    assert '.local\\\\BPS-I00\\\\evidence' in text
+    assert r'.local\BPS-I00\evidence' in text
     assert 'install.ps1' in text
-    assert 'scripts\\\\gwf_server.ps1' in text
+    assert r'scripts\gwf_server.ps1' in text
     assert '/ready' in text
     assert '/browser/auth/login' in text
     assert '/browser/auth/me' in text
