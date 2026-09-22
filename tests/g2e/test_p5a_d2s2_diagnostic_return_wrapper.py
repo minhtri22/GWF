@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[2]
 WRAPPER = ROOT / "scripts" / "g2e" / "p5a_d2s2_diagnostic_return_oneclick.ps1"
 SPEC = ROOT / "g2e" / "docs" / "P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_SPEC.md"
 REPAIR_SPEC = ROOT / "g2e" / "docs" / "P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_RUNTIME_REPAIR_SPEC.md"
+NATIVE_STDERR_REPAIR_SPEC = ROOT / "g2e" / "docs" / "P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_NATIVE_STDERR_REPAIR_SPEC.md"
 
 
 def test_wrapper_is_zero_science_and_delegates_only_to_qualified_diagnostic():
@@ -40,13 +41,24 @@ def test_git_helper_does_not_collide_with_powershell_automatic_args():
     assert "@GitArgs" in source
     assert "@Args" not in source
     assert "GIT_ARGUMENT_VECTOR_EMPTY" in source
+    assert "System.Diagnostics.ProcessStartInfo" in source
+    assert "$psi.RedirectStandardOutput = $true" in source
+    assert "$psi.RedirectStandardError = $true" in source
+    assert "$proc.ExitCode" in source
+    assert "& git -C $Root" not in source
 
 
-def test_git_invocation_selftest_executes_real_helper_only():
+def test_git_invocation_selftests_execute_real_helper_only():
     source = WRAPPER.read_text(encoding="utf-8")
     assert "[switch]$GitInvocationSelfTest" in source
+    assert "[switch]$GitFetchStderrSelfTest" in source
     assert 'Invoke-Git -Root $ProjectRoot -GitArgs @("rev-parse", "--is-inside-work-tree")' in source
+    assert '"--dry-run"' in source
+    assert '"--verbose"' in source
+    assert "-RequireStderr" in source
+    assert "GIT_STDERR_SELFTEST_EXPECTED_NONEMPTY" in source
     assert "GIT_INVOCATION_SELFTEST_PASS" in source
+    assert "GIT_FETCH_STDERR_SELFTEST_PASS" in source
 
 
 def test_wrapper_archives_prior_report_and_uses_unique_return_name():
@@ -86,3 +98,11 @@ def test_runtime_repair_spec_is_zero_science_and_names_root_cause():
     assert "rename the helper array parameter from `$Args` to `$GitArgs`" in normalized
     assert "D2-S2 scientific attempt remains NOT AUTHORIZED and NOT CONSUMED" in normalized
     assert "A PASS authorizes only one fresh local execution" in normalized
+
+
+def test_native_stderr_repair_spec_names_windows_powershell_failure_mode():
+    normalized = " ".join(NATIVE_STDERR_REPAIR_SPEC.read_text(encoding="utf-8").split())
+    assert "NativeCommandError" in normalized
+    assert "System.Diagnostics.Process" in normalized
+    assert "native stderr present + exit 0" in normalized
+    assert "scientific attempt remains NOT AUTHORIZED and NOT CONSUMED" in normalized
