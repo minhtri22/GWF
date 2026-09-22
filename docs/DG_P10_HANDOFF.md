@@ -175,3 +175,55 @@ Formal close requires:
 6. rerun on final closure HEAD.
 
 DG-P11+ remain unopened throughout formal close.
+
+
+## 13. Exact-handoff requalification
+
+The committed DG-P10 handoff HEAD `83d7d5c3fcf6a4d4d182af93244bf6e3e1228382` was requalified with the same SQLite/PostgreSQL/Windows workflow.
+
+Workflow:
+- `35647135853` PASS
+
+SQLite:
+- artifact `10661015045`
+- digest `sha256:7fec878f784105e86c9cfed2b4dd888b35cb43e19e83a6e3e91a9ddb5aaeb2ce`
+
+PostgreSQL 17:
+- artifact `10660019330`
+- digest `sha256:3128253537083b65604c898b80bbf9b08717461280ce24158b69ed1ef523b7ae`
+
+Windows one-click/UAT:
+- artifact `10661103663`
+- digest `sha256:4f5eec01b8b269d2e92e0b9cd19a9dc18637ce4987b787e36d33c654769b2444`
+
+The exact committed handoff HEAD again passed:
+
+- D10-F1..D10-F20 on SQLite;
+- bounded DG-P10 gate;
+- P4/P5/P7/P8/P9 targeted regressions;
+- full repository regression;
+- compile;
+- D10/gate on PostgreSQL 17;
+- Windows one-click installation;
+- full Windows repository tests;
+- Windows UAT report assertions and evidence upload.
+
+No runtime/spec/test semantics changed after implementation qualification.
+
+## 14. Formal-close state
+
+DG-P10 now satisfies the formal-close prerequisites at the committed handoff HEAD.
+
+This formal-close state does **not** authorize DG-P11.
+
+A final exact-head workflow on the formal-close commit is required as closure confirmation.
+
+```text
+DG-P10 implementation QA       = PASS
+DG-P10 exact-handoff requal     = PASS
+Finding OPEN                   = 0
+DG-P10 formal-close state       = COMMITTED
+DG-P11+                         = NOT_STARTED / NOT_AUTHORIZED
+DG-W3                           = OPEN / NOT_EXECUTED
+GAC                             = LOCKED_UNTIL_DG-W4_PASS
+```

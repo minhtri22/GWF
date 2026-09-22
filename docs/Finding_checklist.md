@@ -2077,3 +2077,23 @@ DG-P11+                      = NOT_STARTED / NOT_AUTHORIZED
 DG-W3                        = OPEN / NOT_EXECUTED
 GAC                          = LOCKED_UNTIL_DG-W4_PASS
 ```
+
+
+## 74. DG-P10 exact-handoff requalification and formal-close state
+
+```text
+handoff HEAD                    = 83d7d5c3fcf6a4d4d182af93244bf6e3e1228382
+handoff workflow                = 35647135853 PASS
+SQLite artifact                 = 10661015045
+SQLite digest                   = sha256:7fec878f784105e86c9cfed2b4dd888b35cb43e19e83a6e3e91a9ddb5aaeb2ce
+PostgreSQL artifact             = 10660019330
+PostgreSQL digest               = sha256:3128253537083b65604c898b80bbf9b08717461280ce24158b69ed1ef523b7ae
+Windows UAT artifact            = 10661103663
+Windows UAT digest              = sha256:4f5eec01b8b269d2e92e0b9cd19a9dc18637ce4987b787e36d33c654769b2444
+Finding OPEN                    = 0
+DG-P10 exact-handoff requal     = PASS
+DG-P10 formal-close state       = COMMITTING
+DG-P11+                         = NOT_STARTED / NOT_AUTHORIZED
+```
+
+All negative evidence remains preserved. No new finding was opened by exact-handoff requalification.

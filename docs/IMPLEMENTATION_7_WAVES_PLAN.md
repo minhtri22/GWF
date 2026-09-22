@@ -1131,7 +1131,10 @@ DG-P10 — Change classification
       IMPLEMENTATION QUALIFIED / PASS
       qualified HEAD cc5ec5dc15cf28f7960ddf90a409de7578effe53
       workflow 35645249596 PASS
-      FORMAL CLOSE PENDING EXACT-HANDOFF REQUALIFICATION
+      HANDOFF HEAD 83d7d5c3fcf6a4d4d182af93244bf6e3e1228382
+      handoff workflow 35647135853 PASS
+      FORMAL-CLOSE STATE COMMITTED
+      FINAL EXACT-HEAD WORKFLOW REQUIRED
        ↓
 STOP
 
@@ -1140,6 +1143,6 @@ DG-P11+ = NOT_STARTED / NOT_AUTHORIZED
 
 DG-P9 is formally closed at final exact closure evidence. The explicitly authorized DG-P10 pre-implementation specification/dependency qualification has passed.
 
-DG-P10 bounded implementation is qualified on SQLite, PostgreSQL 17 and Windows one-click UAT at exact HEAD `cc5ec5dc15cf28f7960ddf90a409de7578effe53`. Formal close still requires committed handoff requalification and final exact-head closure evidence. DG-P11+ remain unopened. DG-W3 remains OPEN / NOT_EXECUTED.
+DG-P10 bounded implementation and committed handoff have both requalified on SQLite, PostgreSQL 17 and Windows one-click UAT. Formal-close state is now committed; only the final workflow on the exact formal-close HEAD remains as closure confirmation. DG-P11+ remain unopened. DG-W3 remains OPEN / NOT_EXECUTED.
 
 GAC implementation remains blocked until **DG-W4 PASS**, as specified in Wave 5.

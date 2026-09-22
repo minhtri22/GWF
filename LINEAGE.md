@@ -302,3 +302,14 @@ Rules:
 - PostgreSQL evidence artifact: `10659608214`, digest `sha256:c6d2a39ffcbe7c9701c717e14f2911f5a03a3cf22f1873c85325b7c051bcdf03`.
 - Windows one-click/UAT artifact: `10660730609`, digest `sha256:a7337a7c96120612ce47547532ac427eaf51ff11d5e9bb983a4f34295f0e0139`.
 - Outcome: one-document change classification, workflow-scoped AUTO/HUMAN_APPROVE mutation authority, GOV/FROZEN protection and deterministic version/archive lineage planning are qualified without changing recovery semantics or executing DG-P11 source mutation.
+
+
+
+## 2026-09-22 — DG-P10 formally closed
+
+- Formal-close basis: implementation-qualified HEAD `cc5ec5dc15cf28f7960ddf90a409de7578effe53`, workflow `35645249596` PASS.
+- Exact committed handoff HEAD: `83d7d5c3fcf6a4d4d182af93244bf6e3e1228382`, workflow `35647135853` PASS.
+- Handoff SQLite artifact: `10661015045`, digest `sha256:7fec878f784105e86c9cfed2b4dd888b35cb43e19e83a6e3e91a9ddb5aaeb2ce`.
+- Handoff PostgreSQL 17 artifact: `10660019330`, digest `sha256:3128253537083b65604c898b80bbf9b08717461280ce24158b69ed1ef523b7ae`.
+- Handoff Windows UAT artifact: `10661103663`, digest `sha256:4f5eec01b8b269d2e92e0b9cd19a9dc18637ce4987b787e36d33c654769b2444`.
+- Outcome: DG-P10 change classification, workflow-scoped document mutation authority, GOV/FROZEN protection and deterministic archive/version lineage planning are formally closed. Concrete source mutation remains DG-P11 and is not authorized by this closure.
