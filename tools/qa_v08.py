@@ -69,11 +69,20 @@ def main():
         checks.append({"name": "authenticated_exact_hash_rejection", "pass": decision["decision"] == "REJECTED"})
         rt.close()
 
-    data = json.loads((ROOT / "web" / "demo-data.json").read_text(encoding="utf-8"))
-    primary = data["projects"][0]
-    checks.append({"name": "uat_fixture_approval", "pass": bool(primary["approvals"])})
-    checks.append({"name": "uat_fixture_failure_recovery", "pass": bool(primary["failures"])})
-    checks.append({"name": "uat_fixture_distributed", "pass": bool(primary["distributed"]["jobs"])})
+    html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+    js = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    checks.append({
+        "name": "browser_shell_present",
+        "pass": "Governed Knowledge Studio" in html and "BPS-I00" in html,
+    })
+    checks.append({
+        "name": "browser_shell_uses_live_backend_contract",
+        "pass": all(marker in js for marker in ("/browser/bootstrap", "/browser/auth/login", "/browser/auth/me")),
+    })
+    checks.append({
+        "name": "legacy_static_uat_state_absent",
+        "pass": all(marker not in js for marker in ("demo-data.json", "gwr-uat-domains", "gwr-uat-projects")),
+    })
 
     errors = [c for c in checks if not c["pass"]]
     result = {"version": "0.8.0", "backend": backend, "status": "PASS" if not errors else "FAIL", "checks": checks, "errors": errors}

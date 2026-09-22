@@ -1,0 +1,9 @@
+{
+  "schema": "DG-P0-TOOLCHAIN-v1",
+  "validator_id": "markdownlint-cli2",
+  "package": "markdownlint-cli2",
+  "version": "0.23.3",
+  "node_engine": ">=22",
+  "revalidated_at": "2026-09-21",
+  "source": "https://github.com/DavidAnson/markdownlint-cli2"
+}

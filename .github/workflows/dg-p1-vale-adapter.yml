@@ -1,0 +1,84 @@
+name: DG-P1 Vale Terminology Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["v0.8.6-dg-p1-vale-adapter"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  dg-p1-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python test dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Install exact Vale release and verify checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="3.22.0"
+          BASE="https://github.com/vale-cli/vale/releases/download/v${VERSION}"
+          cd /tmp
+          curl -fsSLo "vale_${VERSION}_Linux_64-bit.tar.gz" "${BASE}/vale_${VERSION}_Linux_64-bit.tar.gz"
+          curl -fsSLo "vale_${VERSION}_checksums.txt" "${BASE}/vale_${VERSION}_checksums.txt"
+          grep "vale_${VERSION}_Linux_64-bit.tar.gz" "vale_${VERSION}_checksums.txt" | sha256sum -c -
+          mkdir -p /tmp/vale-bin
+          tar -xzf "vale_${VERSION}_Linux_64-bit.tar.gz" -C /tmp/vale-bin
+          chmod +x /tmp/vale-bin/vale
+          echo "/tmp/vale-bin" >> "$GITHUB_PATH"
+          /tmp/vale-bin/vale --version
+
+      - name: DG-P1 unit tests
+        run: python -m pytest -q tests/test_document_validation_p1.py
+
+      - name: Real Vale terminology smoke gate
+        run: >-
+          python tools/run_dg_p1_gate.py
+          --executable /tmp/vale-bin/vale
+          --out evidence/dg-p1/DG_P1_GATE.json
+
+      - name: Assert P1 gate
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('evidence/dg-p1/DG_P1_GATE.json', encoding='utf-8'))
+          assert d['status']=='PASS', d
+          assert d['toolchain']['version']=='3.22.0', d
+          assert d['checks']['real_version_observed'] is True, d
+          assert d['checks']['config_bundle_hash_recorded'] is True, d
+          assert d['checks']['valid_fixture_pass'] is True, d
+          assert d['checks']['terminology_drift_detected'] is True, d
+          assert d['checks']['matched_source_redacted'] is True, d
+          assert d['checks']['source_not_mutated'] is True, d
+          PY
+
+      - name: Bounded regression
+        run: >-
+          python -m pytest -q
+          tests/test_document_validation_p0.py
+          tests/test_v084_github_plugin_sha_qa.py
+          tests/test_v085_domain_skills.py
+
+      - name: Compile
+        run: python -m compileall -q src tests tools
+
+      - name: Upload DG-P1 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gwr-dg-p1-evidence
+          path: evidence/dg-p1/DG_P1_GATE.json

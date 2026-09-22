@@ -1,0 +1,8 @@
+extends: substitution
+message: "Use '%s' instead of '%s'."
+level: error
+ignorecase: false
+swap:
+  'ARC fallback layer': 'ARC Agent Pool / Worker Fabric transport'
+  'GAC Evidence Library': 'GWF Governed Artifact Catalog'
+  'GWF library database': 'GWF Governed Artifact Catalog'

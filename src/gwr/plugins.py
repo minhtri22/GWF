@@ -173,10 +173,16 @@ class PluginConnectionService:
         if connection["status"] != "ACTIVE":
             raise ValidationError("Cannot attach adapter to inactive connection")
         if connection["plugin_type"] == "github":
-            required = ("get_branch_head", "get_file", "commit_files", "get_commit")
-            missing = [name for name in required if not callable(getattr(adapter, name, None))]
+            caps = set(connection["capabilities"])
+            required = {"get_branch_head", "get_file", "get_commit"}
+            if caps.intersection({"CONTENT_WRITE", "WORKFLOW_WRITE"}):
+                required.add("commit_files")
+            missing = sorted(name for name in required if not callable(getattr(adapter, name, None)))
             if missing:
-                raise ValidationError("GitHub adapter is incomplete", details={"missing": missing})
+                raise ValidationError(
+                    "GitHub adapter is incomplete for connection capabilities",
+                    details={"missing": missing, "capabilities": sorted(caps)},
+                )
         self._adapters[connection_id] = adapter
 
     def attach_github_rest_adapter(self, connection_id: str, credential_resolver, **adapter_options):
