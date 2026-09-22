@@ -396,3 +396,34 @@
 - **Recovery result:** `g2e/docs/P5A_D2S4_PERSISTED_TURN_ERROR_RECOVERY_RESULT.md`
 - **Stop decision:** `g2e/docs/P5A_D2_TERMINAL_STOP_DECISION.md`
 - **Future direction if reopened:** a separately identified observability/instrumentation adequacy program, qualified before any model-bearing task.
+
+
+### G2E-P5A-CODEX-OQ1 — Terminal Error Observability Qualification
+
+- **Status:** PASS / LOCKED / ZERO-MODEL.
+- **Purpose:** qualify privacy-safe mechanism evidence for Codex terminal failures before any new functional successor.
+- **Qualified candidate:** `bc06d9b75736407fc68018c6d5b81965c756e2bc`.
+- **Observability blob:** `b6d3c6fcb671dd166893edd46388c8d69dca9105`.
+- **Exact upstream:** `openai/codex@3d2ee51ca2d5db578f328aa75e20aa22c0197c9a`.
+- **Preserved mechanism fields:** `TurnError.message`, `codexErrorInfo`, `additionalDetails`, `willRetry`, bounded misalignment fields, turn/thread identity and terminal status.
+- **Privacy:** Bearer/API-key/token-like values, secret-bearing object keys and recognizable user-home paths are redacted; raw field/protocol hashes and lengths remain available for integrity.
+- **Exact protocol compatibility:** source and JSON schema blobs verified against frozen upstream identities.
+- **Qualification run:** `35789231154` — Linux exact-protocol/privacy/P1-P4 PASS; Windows zero-model tests PASS.
+- **Artifact:** `10721262192`, digest `sha256:6ca1242dac89398430b164a4392a47e0b5d8419150f40734f566322c48beda26`.
+- **Model execution during OQ1:** none.
+- **Governance scope correction:** P5A Codex adapter remains OPEN; D2-S4 remains immutable INVALID/consumed/no-retry. The earlier terminal-stop decision is superseded only in scope: no model-bearing successor until observability PASS.
+- **Lock:** `g2e/docs/P5A_CODEX_OBSERVABILITY_QUALIFICATION_LOCK.json`.
+- **Result:** `g2e/docs/P5A_CODEX_OBSERVABILITY_QUALIFICATION_RESULT.md`.
+
+### G2E-P5A-D2-S5 — Observability-Qualified Functional Successor Design
+
+- **Status:** PREREGISTERED / DESIGN QA PASS / IMPLEMENTATION QUALIFICATION REQUIRED.
+- **Study:** `p5a-d2s5-observability-qualified-functional-successor`.
+- **Attempt:** `p5a-d2s5-p5-fx-001-attempt-001`.
+- **Scientific task:** exact P5-FX-001 unchanged.
+- **Execution semantics:** official harness/helper, authority, queue-safe polling, 90 s timeout, zero retry and marker-before-send unchanged.
+- **Sole prospective measurement change:** bind exact OQ1 observability blob `b6d3c6fcb671dd166893edd46388c8d69dca9105` into the live protocol recorder.
+- **Failed-turn semantics:** still INVALID; observability supplies mechanism evidence only and cannot rescue outcome.
+- **Local root if later authorized:** `g2e/.local/P5A-D2S5-SCIENCE-001`.
+- **Current model execution authorization:** FALSE.
+- **Next:** bounded D2-S5 implementation + zero-model qualification; only an exact post-qualification lock may authorize one local model-bearing attempt.
