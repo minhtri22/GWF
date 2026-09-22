@@ -4,7 +4,7 @@
 
 **State:** AUDITED / SURFACE CONTRACT LOCKED / IMPLEMENTATION NOT AUTHORIZED BY THIS DOCUMENT
 
-This document defines the browser-facing product surface that GWF must eventually expose for the capabilities already implemented or prospectively frozen in the current seven-wave roadmap.
+This document defines the browser-facing product surface that GWF must expose across the **entire implemented product lineage**, not only the current seven-wave roadmap. The baseline includes pre-wave product foundations (v0.5 through v0.8.5), Documentation Governance DG-P0..P10, and prospectively frozen later DG/GAC/RA/AI capabilities.
 
 It does not itself authorize runtime, API, schema, UI, adapter, catalog, reference-acquisition, MCP, ARC, Codex, Claude, Gemini, or routing implementation.
 
@@ -74,6 +74,36 @@ Every browser feature must declare one of these states:
 - `NOT_APPLICABLE` — intentionally no browser action is required.
 
 Only `LIVE` surfaces count toward browser UAT acceptance.
+
+## 4A. Pre-seven-wave product-lineage coverage contract
+
+The Browser Product Surface is not a UI layer only for the seven-wave Documentation/GAC/Agent roadmap.
+
+BPS-W0 must audit and surface every user/operator-relevant capability already implemented before the current seven-wave plan:
+
+| Product lineage | Capability family | Browser obligation |
+| --- | --- | --- |
+| v0.5 Production Foundation | database/backend identity, CAS/object storage, provider failover, observability | system/diagnostic visibility; operational controls only where a governed user action exists |
+| v0.6 Identity / Multi-tenancy | tenant, workspace, project scopes, memberships, authorization | full authoritative browser administration |
+| v0.7 Distributed Runtime | jobs, workers, leases, recovery/capacity state | full authoritative runtime visibility |
+| v0.8 Research Product Alpha | dashboard, approvals, failure/recovery, project read model | replace static fixture UI with live API-backed UI |
+| v0.8.1 Lifecycle / Process Inspector | rename/archive/restore, lifecycle, process/phase/event inspection | full authoritative browser UI |
+| v0.8.2 Project Governance / Agent Protocol | settings, protocol, plan, step, problem, recovery, verify, handoff, complete | full authoritative browser UI |
+| v0.8.3 Orchestrator Integration | protocol-driven orchestration and live operational events | live browser inspection and execution state |
+| v0.8.4 GitHub Plugin / SHA-safe QA | plugin connection, repository binding, change-set preflight/execute/verify | full integration configuration and governed action UI |
+| v0.8.5 Domain / Skill maturity | research/software domain packages, skill packages/revisions, tool requirements, QA contract | full live registry/configuration UI |
+| DG-P0..DG-P10 | Documentation Governance | bounded API exposure plus full document-governance browser UI |
+
+Infrastructure-only mechanisms are **not automatically required to have mutation controls**. They are still required to have browser-visible status/identity where operationally meaningful. A capability may be marked `NOT_APPLICABLE` only when a written rationale shows that no human/operator browser action or inspection surface is needed.
+
+The legacy static `web/` implementation is therefore a **design/reference asset only**. Its existing views must either:
+
+1. be rewired to authoritative product APIs; or
+2. be replaced by an equivalent live browser surface.
+
+They must not remain fixture/localStorage simulations in a product-ready build.
+
+---
 
 ## 5. Global browser shell checklist
 
@@ -685,20 +715,26 @@ Major implemented areas already eligible for browser product work:
 
 Browser implementation must follow backend maturity, not visual convenience.
 
-### Surface tranche A — live existing APIs
+### Surface tranche A — authoritative browserization of the existing product lineage
+
+This tranche covers **all already-implemented pre-wave product capability from v0.5 through v0.8.5**, not only endpoints introduced near the seven-wave roadmap.
 
 May be implemented without inventing new domain semantics:
 
-1. auth/session;
-2. tenant/workspace/project/member administration;
-3. dashboard/project lifecycle;
-4. domain/skill registry;
-5. process/orchestration/event views;
-6. agent protocol/recovery/handoff;
-7. approvals/audit;
-8. distributed runtime;
-9. GitHub/plugin configuration;
-10. system diagnostics.
+1. product server lifecycle, runtime/backend/object-store/observability diagnostics;
+2. auth/session;
+3. tenant/workspace/project/member administration;
+4. dashboard/project lifecycle;
+5. domain/pilot/skill registry;
+6. process/orchestration/event views;
+7. agent protocol/recovery/handoff;
+8. approvals/audit;
+9. distributed runtime;
+10. GitHub/plugin configuration;
+11. artifact/revision/evidence/checkpoint inspection where existing primitives already support it;
+12. capability/status matrix identifying any remaining BACKEND_NO_API/API_NO_UI/NOT_APPLICABLE item.
+
+Existing static pages are not grandfathered as acceptable product surfaces; they must be connected to live APIs or replaced.
 
 ### Surface tranche B — expose already-implemented backend services
 
