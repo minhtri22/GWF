@@ -202,7 +202,7 @@ def _provenance(discovery_digest: str) -> Provenance:
             f"predecessor-r2-report-sha256:{R2_REPORT_SHA256}",
             f"predecessor-r2-evidence-sha256:{R2_EVIDENCE_SHA256}",
             f"predecessor-postclosure-bundle-sha256:{PREDECESSOR_POSTCLOSURE_BUNDLE_SHA256}",
-            f"queue-safe-client-git-blob:{OBSERVABLE_CLIENT_GIT_BLOB}",
+            f"observable-client-git-blob:{OBSERVABLE_CLIENT_GIT_BLOB}",
         ),
         derivation=(
             "Prospective D2-S5 structural manifest, proof and P1.5 admission; "
@@ -484,7 +484,7 @@ def build_final_admission(discovery: dict) -> dict:
         allowed_read_paths=READ_PATHS,
         allowed_write_paths=WRITE_PATHS,
         qualification_lineage_ref=(
-            "g2e/docs/P5A_D2S5_SCIENTIFIC_EXECUTION_MACRO_SPEC.md"
+            "g2e/docs/P5A_D2S5_OBSERVABILITY_QUALIFIED_SUCCESSOR_PREIMPLEMENTATION.md"
         ),
     )
 
