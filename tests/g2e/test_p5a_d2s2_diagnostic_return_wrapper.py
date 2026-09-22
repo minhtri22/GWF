@@ -6,6 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 WRAPPER = ROOT / "scripts" / "g2e" / "p5a_d2s2_diagnostic_return_oneclick.ps1"
 SPEC = ROOT / "g2e" / "docs" / "P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_SPEC.md"
+REPAIR_SPEC = ROOT / "g2e" / "docs" / "P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_RUNTIME_REPAIR_SPEC.md"
 
 
 def test_wrapper_is_zero_science_and_delegates_only_to_qualified_diagnostic():
@@ -27,9 +28,25 @@ def test_wrapper_is_zero_science_and_delegates_only_to_qualified_diagnostic():
 
 def test_wrapper_fetches_and_detaches_exact_remote_branch():
     source = WRAPPER.read_text(encoding="utf-8")
-    assert '@("fetch", "--prune", "origin", "feature/g2e-framework")' in source
-    assert '@("switch", "--detach", "origin/feature/g2e-framework")' in source
-    assert '@("rev-parse", "HEAD")' in source
+    assert '-GitArgs @("fetch", "--prune", "origin", "feature/g2e-framework")' in source
+    assert '-GitArgs @("switch", "--detach", "origin/feature/g2e-framework")' in source
+    assert '-GitArgs @("rev-parse", "HEAD")' in source
+
+
+def test_git_helper_does_not_collide_with_powershell_automatic_args():
+    source = WRAPPER.read_text(encoding="utf-8")
+    assert "[string[]]$GitArgs" in source
+    assert "[string[]]$Args" not in source
+    assert "@GitArgs" in source
+    assert "@Args" not in source
+    assert "GIT_ARGUMENT_VECTOR_EMPTY" in source
+
+
+def test_git_invocation_selftest_executes_real_helper_only():
+    source = WRAPPER.read_text(encoding="utf-8")
+    assert "[switch]$GitInvocationSelfTest" in source
+    assert 'Invoke-Git -Root $ProjectRoot -GitArgs @("rev-parse", "--is-inside-work-tree")' in source
+    assert "GIT_INVOCATION_SELFTEST_PASS" in source
 
 
 def test_wrapper_archives_prior_report_and_uses_unique_return_name():
@@ -61,3 +78,11 @@ def test_spec_keeps_return_wrapper_non_scientific():
     assert "NOT AUTHORIZED and NOT CONSUMED" in normalized
     assert "report provenance/return-path problem" in normalized
     assert "does not authorize the D2-S2 isolated-volume preflight" in normalized
+
+
+def test_runtime_repair_spec_is_zero_science_and_names_root_cause():
+    normalized = " ".join(REPAIR_SPEC.read_text(encoding="utf-8").split())
+    assert "PowerShell's automatic variable `$args`" in normalized
+    assert "rename the helper array parameter from `$Args` to `$GitArgs`" in normalized
+    assert "D2-S2 scientific attempt remains NOT AUTHORIZED and NOT CONSUMED" in normalized
+    assert "A PASS authorizes only one fresh local execution" in normalized
