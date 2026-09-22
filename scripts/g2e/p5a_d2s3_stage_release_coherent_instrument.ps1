@@ -55,14 +55,14 @@ function Assert-FileIdentity(
 
     $hash = Get-Sha256 $Path
     if ($hash -ne $ExpectedSha256) {
-        throw "$($Label)_HASH_MISMATCH:$hash:$ExpectedSha256"
+        throw "$($Label)_HASH_MISMATCH:$($hash):$($ExpectedSha256)"
     }
 }
 
 function Get-ExactlyOneFile([string]$Root, [string]$Name) {
     $matches = @(Get-ChildItem -LiteralPath $Root -Recurse -File | Where-Object { $_.Name -eq $Name })
     if ($matches.Count -ne 1) {
-        throw "EXPECTED_EXACTLY_ONE_FILE:$Name:$($matches.Count)"
+        throw "EXPECTED_EXACTLY_ONE_FILE:$($Name):$($matches.Count)"
     }
     return $matches[0].FullName
 }
