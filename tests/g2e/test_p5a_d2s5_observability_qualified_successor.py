@@ -20,7 +20,7 @@ ONECLICK = ROOT / "scripts" / "g2e" / "p5a_d2s5_scientific_oneclick.ps1"
 SPEC = ROOT / "g2e" / "docs" / "P5A_D2S5_OBSERVABILITY_QUALIFIED_SUCCESSOR_PREIMPLEMENTATION.md"
 
 OBS_BLOB = "b6d3c6fcb671dd166893edd46388c8d69dca9105"
-CLIENT_BLOB = "57f5b3e0a1ac13f7722d7bfe244a100bfeb08504"
+CLIENT_BLOB = "72c77c1fbd1e2c20881723f18ef2f1435ded2b2b"
 
 
 def _load(path: Path, name: str):
