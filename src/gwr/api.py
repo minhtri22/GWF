@@ -11,6 +11,8 @@ from .utils import parse_json
 from .product import ProjectDashboardService
 import asyncio
 import json
+import os
+import tempfile
 import yaml
 from pathlib import Path
 
@@ -432,26 +434,89 @@ def create_app(
 
     @app.get('/ready')
     def ready():
+        checks: dict[str, str] = {}
         try:
             runtime.db.one("SELECT 1")
+            checks["database"] = "PASS"
             migrations = runtime.db.migrations.status() if getattr(runtime.db, "migrations", None) else {"pending": []}
             pending = list(migrations.get("pending") or [])
+            checks["migrations"] = "PASS" if not pending else "FAIL"
             if pending:
                 return JSONResponse(
                     status_code=503,
-                    content={"ok": False, "core_health": "DEGRADED", "reason": "pending_migrations", "pending_migrations": pending},
+                    content={
+                        "ok": False,
+                        "core_health": "DEGRADED",
+                        "reason": "pending_migrations",
+                        "checks": checks,
+                        "pending_migrations": pending,
+                    },
                 )
-            return {
-                "ok": True,
-                "core_health": "HEALTHY",
-                "backend": getattr(runtime.db, "backend_name", "unknown"),
-                "build_sha": resolved_product_info["build_sha"],
-            }
         except Exception:
+            checks["database"] = "FAIL"
             return JSONResponse(
                 status_code=503,
-                content={"ok": False, "core_health": "UNHEALTHY", "reason": "database_probe_failed"},
+                content={"ok": False, "core_health": "UNHEALTHY", "reason": "database_probe_failed", "checks": checks},
             )
+
+        if runtime.object_store is None:
+            checks["object_store"] = "FAIL"
+            return JSONResponse(
+                status_code=503,
+                content={"ok": False, "core_health": "DEGRADED", "reason": "object_store_not_configured", "checks": checks},
+            )
+        try:
+            probe = runtime.object_store.put_bytes(
+                b"GWF_BPS_I00_READINESS_PROBE_V1",
+                content_type="application/vnd.gwf.readiness-probe",
+            )
+            if not runtime.object_store.verify(probe.sha256):
+                raise RuntimeError("object-store hash verification failed")
+            checks["object_store"] = "PASS"
+        except Exception:
+            checks["object_store"] = "FAIL"
+            return JSONResponse(
+                status_code=503,
+                content={"ok": False, "core_health": "DEGRADED", "reason": "object_store_probe_failed", "checks": checks},
+            )
+
+        observer_path = getattr(runtime.observer, "path", None)
+        if observer_path is None:
+            checks["observability"] = "FAIL"
+            return JSONResponse(
+                status_code=503,
+                content={"ok": False, "core_health": "DEGRADED", "reason": "observability_not_configured", "checks": checks},
+            )
+        temp_path = None
+        try:
+            observer_parent = Path(observer_path).parent
+            observer_parent.mkdir(parents=True, exist_ok=True)
+            fd, temp_path = tempfile.mkstemp(prefix="gwr-ready-", dir=str(observer_parent))
+            os.close(fd)
+            Path(temp_path).write_bytes(b"gwr-observability-ready")
+            Path(temp_path).unlink()
+            temp_path = None
+            runtime.observer.metrics()
+            checks["observability"] = "PASS"
+        except Exception:
+            if temp_path:
+                try:
+                    Path(temp_path).unlink(missing_ok=True)
+                except Exception:
+                    pass
+            checks["observability"] = "FAIL"
+            return JSONResponse(
+                status_code=503,
+                content={"ok": False, "core_health": "DEGRADED", "reason": "observability_probe_failed", "checks": checks},
+            )
+
+        return {
+            "ok": True,
+            "core_health": "HEALTHY",
+            "backend": getattr(runtime.db, "backend_name", "unknown"),
+            "build_sha": resolved_product_info["build_sha"],
+            "checks": checks,
+        }
 
     @app.get('/projects/{project_id}/audit')
     def audit(project_id: str, authorization: str | None = Header(default=None)):
