@@ -80,3 +80,34 @@ DG-P10 formal closure = unchanged
 ### Pre-open user UAT gate
 
 Before any DG-P11 amendment or implementation, the user will pull the exact DG-P10 formal-close HEAD and run local one-click UAT to provide real local evidence.
+
+
+### Local UAT evidence — 2026-09-22
+
+User local checkout:
+
+- repository path: `D:\WORK\RESEARCH\4.GWF`;
+- exact DG-P10 formal-close HEAD: `a09f79ae74a838d2c5998813560373c849669872`;
+- working tree before UAT: clean;
+- Python: 3.12.10;
+- runtime version: 0.8.5.
+
+Observed local run:
+
+- wall-clock elapsed: `00:03:27`;
+- install report: PASS;
+- research/software domain validation: PASS;
+- pilot validation: PASS;
+- compileall: PASS;
+- full local pytest suite: PASS;
+- bounded DG-P10 gate: PASS;
+- PostgreSQL local qualification: SKIPPED because no DSN/Docker was available;
+- DG-P10 gate verified no DG-P11 change set, no P10 table and no Revision side effect.
+
+Interpretation:
+
+The local warm-environment run is materially faster than the GitHub fresh Windows runner (~18m17s for the same monolithic one-click step), but the architecture debt remains valid because default installation still executes the full repository regression suite and bounded governance gate. Runtime depends strongly on cache/environment state, and the step remains opaque as an installation surface.
+
+The wrapper-captured `$LASTEXITCODE = -1` conflicts with the script's authoritative PASS report and completed PASS checks. This is tracked as part of TD-UAT-01 observability/exit-contract hardening: the PowerShell entry point should expose an explicit process exit contract (0 on success, nonzero on failure), and timing should be emitted per major phase.
+
+This evidence satisfies the user's pre-open local UAT gate. It does not itself authorize or redefine DG-P11.
