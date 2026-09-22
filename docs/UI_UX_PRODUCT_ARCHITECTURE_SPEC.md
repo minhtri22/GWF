@@ -167,7 +167,7 @@ Default density: professional/compact, not spreadsheet-dense.
 
 Provide consistent spacing and no arbitrary one-off layouts.
 
-Recommended desktop geometry:
+Baseline desktop geometry:
 
 - expanded sidebar: ~260 px;
 - collapsed sidebar rail: ~68 px;
@@ -240,7 +240,7 @@ At the current implementation frontier:
 Must include:
 
 - tenant/workspace context;
-- global search when supported;
+- command/navigation palette; resource filtering/search follows the bounded search contract in §34A.2;
 - current environment/runtime indicator;
 - notifications/attention count;
 - theme toggle;
@@ -284,7 +284,7 @@ Columns:
 - Current stage/phase;
 - Active run/execution;
 - Activity state;
-- Responsible actor/executor when attributable;
+- Current actor/executor using the deterministic identity rule in §34A.2;
 - Last authoritative event;
 - Attention status.
 
@@ -367,7 +367,7 @@ select tenant/workspace
   -> Project Overview
 ```
 
-No package or domain revision should silently float after creation if the backend contract pins it.
+No package or domain revision may silently float after creation. `DomainRegistryService.pin_project` accepts only a PUBLISHED Domain revision and the project binding is immutable; no upgrade action appears until an explicit governed upgrade flow exists.
 
 ---
 
@@ -412,7 +412,7 @@ The Project Overview answers:
 - lifecycle/status;
 - current orchestration/phase;
 - active run/execution;
-- current executor/actor when attributable;
+- current actor/executor using the deterministic identity rule in §34A.2;
 - pending approvals;
 - failures/recovery;
 - latest handoff;
@@ -489,7 +489,7 @@ Show:
 
 ### 9.4 Live activity
 
-Use SSE/event API where available.
+Use `/product/phases/{phase_execution_id}/events/stream`; reconnect with `Last-Event-ID`. If SSE transport fails, show `Live stream unavailable` and use the authoritative GET event list.
 
 Browser refresh must reconstruct state from the backend.
 
@@ -580,7 +580,7 @@ Show exact revision history:
 - revision number/version;
 - payload/source hash;
 - created/activated time;
-- source path/blob/commit where applicable;
+- source path/blob/commit for GitHub-backed revisions; otherwise show the exact source-kind identity returned by the backend;
 - QA status for that exact revision;
 - supersession/archive relationship when implemented.
 
@@ -672,7 +672,7 @@ For an edge show:
 - active/retired;
 - creation provenance;
 - binding mode;
-- exact pinned revision/hash where applicable;
+- exact target revision/hash whenever `target_binding_mode=PINNED_REVISION`; never show a pinned hash for `LOGICAL_CURRENT`;
 - current resolution;
 - failure state.
 
@@ -685,7 +685,7 @@ Suggested convention:
 - dashed edge: `LOGICAL_CURRENT`;
 - solid edge + lock marker: `PINNED_REVISION`.
 
-The exact legend is implementation-defined but cannot hide the semantic difference.
+Binding legend is fixed: dashed edge = `LOGICAL_CURRENT`; solid edge plus lock marker = `PINNED_REVISION`. The edge inspector also prints the binding-mode text.
 
 ### 12.5 Modes
 
@@ -742,7 +742,7 @@ Display:
 
 ### 13.3 Checkpoints
 
-Where applicable:
+For every checkpoint record returned by a phase/run inspection or resume flow, show:
 
 - checkpoint ID;
 - run/workunit;
@@ -898,7 +898,7 @@ Show:
 
 ## 16. Global Package Registry
 
-Use the product term **Packages**, not “Installed Apps”.
+Use the product term **Packages**, not “Installed Apps”. Domain revisions own `DRAFT|VALIDATED|PUBLISHED`; Skill revisions must show only lifecycle/state fields actually persisted by the Skill Registry and must not inherit a fake PUBLISHED state.
 
 Global path:
 
@@ -988,7 +988,7 @@ Label usage basis:
 
 Package usage is a read projection.
 
-Preferred implementation:
+Required implementation:
 
 - derive from `project_domain_bindings`;
 - `domain_skill_bindings`;
@@ -1471,7 +1471,7 @@ Inspector becomes drawer; tables reduce noncritical columns.
 
 Sidebar collapses by default; graph becomes canvas + drawer; high-risk mutations remain usable but should not hide exact identity.
 
-Mobile is not the primary expert-work surface. Read/approve/inspect may be supported, but dense graph/document-authoring workflows are desktop-first.
+Mobile (<768 px) is outside UX-W0 acceptance for graph/document-authoring/configuration. It must still support login, Home, project/run status, approval inspection/decision and diagnostics. Desktop is required for dense governance and graph work.
 
 ---
 
@@ -1636,6 +1636,251 @@ A static or localStorage simulation is UAT INVALID.
 | Impact graph | — | Document/Impact | PLANNED_BLOCKED | not required for UX-W0 |
 
 ---
+
+
+## 34A. QA closure — normative traceability and exact semantics
+
+This section is normative and resolves any earlier generic wording in this document. If a preceding sentence is less specific than this section, this section controls implementation.
+
+### 34A.1 Source precedence
+
+UI semantics must be traced in this order:
+
+1. current qualified runtime/service/storage behavior;
+2. formally closed milestone specification/handoff for that capability;
+3. `docs/IMPLEMENTATION_7_WAVES_PLAN.md` for dependency/authorization order;
+4. `docs/BROWSER_PRODUCT_SURFACE_SPEC.md` for browser authority/maturity;
+5. this document for navigation and presentation.
+
+Core references:
+
+| Capability | Governing docs | Primary source |
+| --- | --- | --- |
+| Gate/Decision/Failure/PIVOT/Recovery/Checkpoint | `HANDOFF_V0.2.md`, `IMPLEMENTATION_QA_V0.2.md` | `decision.py`, `execution.py`, `knowledge.py`, `research_orchestrator.py` |
+| Retrieval + verifier provenance | `HANDOFF_V0.3.md`, `V0.4_HARDENING_REPORT.md`, `IMPLEMENTATION_QA_V0.4.md` | `retrieval.py`, `provider_chain.py`, `stat_verifier.py`, `tabular_verifier.py` |
+| Development data foundation | `DATA_FOUNDATION_V0.4.1.md`, `HANDOFF_V0.5.md` | `datasets.py` + benchmark tooling |
+| Production foundation | `V0.5_PRODUCTION_FOUNDATION.md` | DB/migrations/CAS/provider/observability modules |
+| Identity/multitenancy | `V0.6_IDENTITY_MULTITENANCY.md`, `HANDOFF_V0.6.md` | `auth.py`, `tenancy.py` |
+| Distributed runtime | `V0.7_DISTRIBUTED_RUNTIME.md`, `HANDOFF_V0.7.md` | `distributed.py` |
+| Product dashboard | `V0.8_RESEARCH_PRODUCT_ALPHA.md`, `HANDOFF_V0.8.md` | `product.py`, `api.py` |
+| Lifecycle/process/domain | `V0.8.1_PRODUCT_LIFECYCLE_PROCESS_INSPECTOR.md` | project/process/domain services |
+| Agent protocol/skills | `V0.8.2_PROJECT_GOVERNANCE_AGENT_PROTOCOL.md` | `agent_protocol.py` |
+| Orchestrator/SSE/handoff | `v0.8.3-orchestrator-integration.md` | orchestrator/protocol/API |
+| GitHub | `v0.8.4-github-plugin-sha-qa.md`, `GITHUB_SHA_QA_STANDARD.md` | plugin/GitHub services |
+| Domain/Skill maturity | `DOMAIN_SKILL_AUDIT_V0.8.5.md` | domain/skill services |
+| Documentation Governance | `DOCUMENTATION_INTEGRITY_GOVERNANCE_SPEC.md` + DG-P0…P10 specs | `document_*.py` |
+| GAC / Shared Library | `GOVERNED_ARTIFACT_CATALOG_SPEC.md` | future gated |
+| Reference Acquisition | `V0.8.6_REFERENCE_ACQUISITION_SPEC.md` | future gated |
+| Agent Interoperability | `V0.8.7_AGENT_INTEROPERABILITY_FOUNDATION.md` | future gated |
+
+### 34A.2 Deterministic product terminology
+
+**Project lifecycle** is exactly `ACTIVE | ARCHIVING | ARCHIVED`, owned by `ProjectGovernanceService`.
+
+**Project execution activity** is derived separately:
+
+- `EXECUTING`: any project run is RUNNING, or latest orchestration is RUNNING, or a distributed job is LEASED/RUNNING;
+- `PAUSED`: no EXECUTING condition and latest orchestration is PAUSED;
+- `QUEUED`: no EXECUTING/PAUSED condition and a distributed job is READY;
+- `IDLE`: none of the above.
+
+The UI must never equate lifecycle `ACTIVE` with “agent active”.
+
+**Current actor/executor** before AI-P0 is the latest authoritative actor_id from the current phase/protocol/event when present; otherwise `SYSTEM` or `—`. It is not labeled “Agent”. After AI-P0, external executor identity comes only from AgentExecutionEnvelope/binding identity.
+
+**Attention item** is one unresolved authoritative record ID from: PENDING_APPROVAL proposal; unresolved FailureRecord; WAITING_HUMAN protocol recovery proposal; GitHub ChangeSet STALE/VERIFICATION_FAILED; and, only after DG browser APIs are LIVE, current DocumentFinding/effective BLOCKED document. Count records by stable ID, not project count.
+
+**Core health** is categorical `HEALTHY | DEGRADED | UNHEALTHY | UNKNOWN`. UX-W0 must not invent uptime percentages. Required probes are server readiness, DB connectivity/migration state, CAS/object-store verification, and observability sink state. External GitHub/provider health is separate.
+
+**Workflow phases** are never hard-coded as a generic Idea→Design→Execute flow. Labels/order come from the project's exact pinned Domain Package and persisted orchestration.
+
+**Search** before a governed cross-project search exists is a command/navigation palette plus page-scoped authoritative filtering. Cross-project artifact/document search opens only through a qualified bounded search API or GAC.
+
+**Zero results** are shown only after a successful complete query. Unauthorized, failed, partial, stale and blocked states each render distinctly.
+
+### 34A.3 Home exact semantics
+
+Home is operational only; no document/knowledge graph.
+
+Required KPI definitions:
+
+- Total Projects = authorized projects under selected scope;
+- Lifecycle Active = projects whose lifecycle is exactly ACTIVE;
+- Executing Now = projects whose execution activity is EXECUTING;
+- Running Runs = runs whose runtime_status is RUNNING;
+- Pending Approvals = visible proposals with status PENDING_APPROVAL;
+- Attention Required = §34A.2 attention-item count;
+- Core Health = categorical §34A.2 state.
+
+The Executing Projects table must show project ID/name, lifecycle, execution activity, exact Domain revision, orchestration ID, phase-execution ID/domain phase label, current actor/executor, running run ID, latest event timestamp and attention count.
+
+UX-I1 must add an authorized read-only `HomeSummary` projection returning these aggregates plus `generated_at` and exact build identity. It owns no authoritative state.
+
+### 34A.4 Complete Project Execution coverage
+
+Project Execution must expose the existing v0.2→v0.8.3 state, not only Agent Protocol.
+
+For a selected phase/run show:
+
+- orchestration ID/status/generation/outcome/pivot count;
+- phase history and previous attempts;
+- WorkUnit ID/type/status, input revisions, output contracts, preconditions, required gates/authorities, executor selector, execution/retry/recovery policy and conflict keys;
+- Run ID/attempt/runtime status, produced revisions/evidence, exit metadata;
+- Gate ID/type/policy version/scope/required inputs/evidence/result `PASS|FAIL|BLOCKED`/violation codes/evaluated refs;
+- Decision type exactly `CONTINUE|RETRY|REVISE_CURRENT|REVISE_UPSTREAM|REPLAN|ESCALATE|ABORT|WAIT`;
+- FailureRecord identity/class/stage/ref/revision/failed gate/evidence/severity/signature/root/resume/status;
+- LoopGuard signature count/limit and retry-block state;
+- PIVOT generation/history and affected/invalidation state;
+- persisted ImpactSet/RecoveryPlan and resume target;
+- full Checkpoint state: active/completed workunits, stage labels, valid/dirty/stale revisions, blocking failures, pending decisions/approvals, resume candidates and runtime metadata;
+- Agent Protocol LOAD→PREFLIGHT→PLAN→EXECUTE→VERIFY→HANDOFF→COMPLETE, loaded Skill revision/hash, effective recovery hierarchy, prior-handoff identity/hash and events.
+
+SSE uses `/product/phases/{phase_execution_id}/events/stream`, preserves event IDs and reconnects with `Last-Event-ID`.
+
+### 34A.5 Three graph families are separate
+
+1. **Failure/Recovery graph** — source: `ProjectDashboardService.failure_graph`; root/context: project/failure; edges Failure→Root and Failure→RecoveryPlan→Resume.
+2. **Artifact Trace/Impact graph** — source: `KnowledgeKernel` trace links and persisted ImpactSet; root: exact artifact revision; edges use trace relation/strength/invalidation/propagation semantics.
+3. **Document Relations/Lineage graph** — source: `DocumentRelationService`; root: selected governed document; P8/P9 current backend; Document Impact remains future DG-P12/P13.
+
+A shared canvas primitive is allowed, but queries, edge semantics, legends and inspectors remain separate.
+
+### 34A.6 Retrieval/provider and verifier evidence
+
+Current v0.3–v0.5 paper/web retrieval is execution evidence, not future Reference Acquisition.
+
+When persisted, render operation/query, ordered provider attempts, provider ID, success/failure/error, timing, source URL/identity/hash, cache/fallback provenance, degraded state, and failed-primary attempts preserved before later success.
+
+Independent statistical/tabular verifier evidence renders verifier type/version, independent-process flag, input SHA-256, result SHA-256, worker/process identity when persisted, thresholds/spec and verdict/hash-mismatch failure.
+
+These remain evidence/diagnostic views, not top-level SaaS integrations.
+
+### 34A.7 Artifact, ObjectRef and existing impact coverage
+
+Project Library must expose Artifact stable ID/type/logical key/lifecycle/version/current revision/revision history/producer/content hash/validity/provenance, ObjectRef content type/size/hash and CAS verification, Evidence identity/type/trust/subjects/payload/freshness/producer, and Checkpoint linkage.
+
+Existing KnowledgeKernel Artifact Trace/Impact is current backend capability and is not the future DG Document Impact.
+
+### 34A.8 Documentation Governance actions P3→P10
+
+UX-I5 must add bounded service-backed HTTP contracts for:
+
+- P3/P4 register/enroll and revise document using exact source identity/current expectations;
+- P5 QA records and finding transitions: resolution-pending, reopen, verify-resolved, prepare/apply waiver, transition history;
+- P6 legal lifecycle transition, inspect state and validity reconciliation;
+- P7 PRIMARY/COMPOSED authority prepare/apply, collision inspection, retirement and authority-key scan;
+- P8 relation declaration/apply/list/retire;
+- P9 relation binding/apply/resolve;
+- P10 classification with exact base revision, proposed active path/content, declared class, QA refs and phase context; show effective class/escalation/mutation-authority/archive-version plan. P10 never mutates source.
+
+Current relation types are exactly `DEPENDS_ON|REFERENCES|MUST_ALIGN_WITH|SUPERSEDES|DERIVED_FROM|VALIDATES|IMPLEMENTS|GENERATED_FROM`.
+
+Target kinds are `DOCUMENT|SOURCE_CODE|SCHEMA|API|WORKFLOW|DATASET|STUDY_LOCK|OTHER_ARTIFACT`. Non-document targets are typed terminal/opaque nodes; Set as root is enabled only for navigable governed-document targets.
+
+Document graph default is root=selected document, depth=1, ACTIVE relations, incoming+outgoing, maximum 25 rendered neighbors plus deterministic overflow list/paging.
+
+### 34A.9 Package semantics and reverse usage
+
+Domain package/project usage comes from `project_domain_bindings` and exact immutable PUBLISHED Domain revision.
+
+Skill usage has two bases:
+
+- `CONFIGURED`: reachable from pinned Domain/workunit binding;
+- `OBSERVED`: exact Skill revision loaded by a phase execution.
+
+Package→Projects and Project→Packages are read projections only; no mutable duplicate usage table.
+
+Current HTTP API lacks complete Skill list/get and Package Usage read endpoints; UX-I3 must add them.
+
+### 34A.10 Distributed-runtime browser boundary
+
+Runtime UI shows jobs/status, workers referenced by visible jobs, lease expiry, attempts, capacities/capabilities, required resources, conflict reservations, abandoned attempt/run history, recovery/requeue and project/run linkage.
+
+UX-W0 is read-only for worker administration. Browser UI does not expose register_worker, heartbeat_worker, set_worker_status, lease grant/heartbeat or effect-commit mutation because those are worker/runtime protocol operations without an authenticated browser-admin contract.
+
+### 34A.11 GitHub exact boundary
+
+GitHub is the only current plugin family.
+
+Plugin capabilities are exactly `REPO_READ|CONTENT_WRITE|WORKFLOW_WRITE|PULL_REQUEST_WRITE|MERGE_PULL_REQUEST`.
+
+The UI displays assigned capabilities but exposes actions only for implemented service operations. Capability presence alone must not invent PR/merge buttons.
+
+UX implementation must add reload-safe repository-binding list/detail and adapter-readiness reads because the current API is insufficient for authoritative refresh.
+
+### 34A.12 Production diagnostics
+
+Diagnostics must expose bounded read projections for:
+
+- exact product/build SHA/runtime;
+- DB backend/connectivity;
+- migration IDs/checksums/status from `MigrationManager.status`;
+- CAS/object-store read/write/hash-verification probe;
+- observer type/sink/latest event/available metric keys;
+- provider failover operational provenance when provider-event persistence is enabled;
+- GitHub adapter state separately from core health;
+- browser capability maturity matrix.
+
+### 34A.13 Explicit HTTP/API obligations
+
+Current missing browser contracts that must be added rather than faked:
+
+1. session revoke/logout over `HumanAuthService.revoke`;
+2. authorized tenant/workspace/member list projections;
+3. HomeSummary;
+4. cross-project Runs/Approvals/Audit/Runtime aggregation;
+5. Skill package/revision list/detail;
+6. Package Usage configured/observed reverse lookup;
+7. GitHub repository-binding list/detail/adapter-readiness;
+8. Artifact/Revision/ObjectRef/Evidence reads;
+9. Gate/Decision/ImpactSet/RecoveryPlan reads;
+10. production diagnostics;
+11. DG-P0→P10 service-backed APIs;
+12. Document Relations graph/list resolution.
+
+Frontend must never query DB directly.
+
+### 34A.14 Explicit source-module UI classification
+
+| Module family | UI obligation |
+| --- | --- |
+| auth/tenancy | DIRECT_UI |
+| knowledge | PROJECT_CONTEXT: Artifact/Revision/Trace/Impact/Validity |
+| decision | PROJECT_CONTEXT: Gates/Decisions/Failure/LoopGuard/Recovery |
+| execution | PROJECT_CONTEXT: WorkUnit/Run/Evidence/Checkpoint |
+| orchestrators | PROJECT_CONTEXT: process/phase/handoff lineage |
+| retrieval/provider_chain | PROJECT_CONTEXT + DIAGNOSTIC_READONLY provenance |
+| statistical/tabular verifier workers | evidence renderer only; no menu |
+| datasets + benchmark/demo executors | NOT_APPLICABLE direct production menu; resulting runtime evidence stays visible |
+| DB/migrations/observability | DIAGNOSTIC_READONLY |
+| object_store | DIAGNOSTIC_READONLY + artifact ObjectRef detail |
+| domain/domain_sdk/domain_registry | DIRECT_UI Packages |
+| agent_protocol | DIRECT_UI Skills + Project Execution/Configuration |
+| distributed | DIRECT_UI read; worker mutation NOT_APPLICABLE browser action |
+| product/process_inspector | DIRECT_UI Home/Project/Execution |
+| project_governance | DIRECT_UI lifecycle |
+| plugins/GitHub | DIRECT_UI GitHub only |
+| document_* P0→P10 | DIRECT_UI project Documents/Governance |
+| errors/utils/package internals | no standalone UI; map to typed error states |
+
+Development DatasetRegistry is explicitly NOT_APPLICABLE as a production operator data module. It is development/reliability foundation; any dataset-derived project artifacts/evidence appear through normal governed Library/Execution surfaces.
+
+### 34A.15 Historical capability closure
+
+UX-W0 coverage includes:
+
+- v0.2 Gate/Decision/Failure/PIVOT/Recovery/Checkpoint;
+- v0.3 retrieval provenance;
+- v0.4 authenticated approval and independent verifier evidence;
+- v0.4.1 dataset foundation explicitly classified NOT_APPLICABLE direct UI;
+- v0.5 DB/migrations/CAS/provider/observability diagnostics;
+- v0.6 Access/multitenancy;
+- v0.7 distributed runtime;
+- v0.8→v0.8.5 product surfaces;
+- DG-P0→DG-P10 Documents.
+
+Nothing implemented is considered covered merely because a generic “summary” card exists.
+
 
 ## 35. Non-goals
 
