@@ -338,3 +338,12 @@ Rules:
 - Locked specification commit: `f97f4f1d7f5e9ca5190be0b54e2da2f15e1b65e9`.
 - Locked specification blob: `91192e659ab0de84a176a63cef1b66d03eeec061`.
 - Outcome: browser acceptance is defined as installed product -> authoritative server -> browser -> authenticated HTTP -> authoritative state/audit. The contract covers existing live APIs, Documentation Governance, future DG-P11+, Shared Library/GAC, Reference Acquisition, and Agent Interoperability/Codex/MCP/Agent Pool/ARC, while prohibiting static/localStorage simulation from counting as product UAT.
+
+
+## 2026-09-22 — UI/UX → GAC → Codex product sequence locked
+
+- Result: seven-wave implementation plan amended and QA PASS.
+- Final amended plan commit: `c907ca90e156f6ff63668296ac5631adc7dd5103`.
+- Final amended plan blob: `722b887a4a10466baa97122151a74a769432876c`.
+- Plan QA commit: `324c60b3dfc03d8aa4dd38b0e412cef222ff594b`.
+- Outcome: product sequencing is locked as authoritative UI/UX for current implemented capability first; then Documentation Governance completion to DG-W4; then GAC product-core completion; then Codex backend readiness; then GAC + Codex integration into authoritative browser UI/UX and operator browser UAT. The seven-wave architecture is preserved and no implementation item is authorized merely by this planning milestone.
