@@ -77,3 +77,34 @@ UI/UX current capability
 ```
 
 Implementation remains unopened until each item receives its required bounded authorization.
+
+
+## 8. Full historical product-lineage browser coverage amendment
+
+The Browser Product Surface scope was re-audited after identifying a wording risk that could be read as limiting UI/UX work to the seven-wave roadmap.
+
+Final amended identities:
+
+- Browser Product Surface spec commit: `7b5d5c1ee7a4b95011d3f9896cd2f4dda5bcdaca`
+- Browser Product Surface spec blob: `7ce32bc163c36b37f7cae04e9e47274a61918120`
+- Implementation plan commit: `98374fe0473294e0c1838563f109233953c486bc`
+- Implementation plan blob: `f5606c95658733ef2db18a44a78b2c54c16353ba`
+
+Re-audit checks:
+
+1. BPS scope explicitly covers the entire implemented product lineage, not only seven-wave items: PASS.
+2. v0.5 Production Foundation diagnostic visibility is included: PASS.
+3. v0.6 Identity/Multi-tenancy browser administration is included: PASS.
+4. v0.7 Distributed Runtime is included: PASS.
+5. v0.8 Research Product Alpha static views must become live: PASS.
+6. v0.8.1 Lifecycle/Process Inspector is included: PASS.
+7. v0.8.2 Agent Protocol is included: PASS.
+8. v0.8.3 Orchestrator Integration/live events are included: PASS.
+9. v0.8.4 GitHub plugin/configuration is included: PASS.
+10. v0.8.5 Domain/Skill surfaces are included: PASS.
+11. Existing static/localStorage views cannot be grandfathered through BPS-W0: PASS.
+12. BPS-W0 requires v0.5→v0.8.5 plus DG-P0→DG-P10 browser coverage or explicit NOT_APPLICABLE rationale: PASS.
+13. Exactly seven numbered waves remain: PASS.
+14. No Wave 8 introduced: PASS.
+
+**RE-AUDIT VERDICT: PASS — FULL PRODUCT-LINEAGE BROWSER COVERAGE LOCKED.**
