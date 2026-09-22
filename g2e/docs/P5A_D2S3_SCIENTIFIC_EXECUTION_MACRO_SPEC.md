@@ -109,9 +109,11 @@ Exactly one scientific request is allowed. It must use the frozen v2 TurnStartPa
 - input = one text UserInput containing exact TASK.md text
 - cwd = isolated scientific volume root
 - approvalPolicy = never
-- permissions = g2e_p5a_d2s3
 
-It MUST NOT send sandboxPolicy together with permissions.
+The permission profile is bound prospectively at thread/start and must remain active for the thread.
+The exact official stable generated TurnStartParams schema does not expose turn-level permissions.
+Therefore scientific turn/start MUST omit both permissions and sandboxPolicy and inherit the already
+validated thread profile.
 
 The official generated TurnStartParams schema must be checked on CI before authorization.
 

@@ -590,7 +590,6 @@ def main() -> int:
                 ],
                 "cwd": str(workspace),
                 "approvalPolicy": "never",
-                "permissions": PROFILE_ID,
             },
         }
 

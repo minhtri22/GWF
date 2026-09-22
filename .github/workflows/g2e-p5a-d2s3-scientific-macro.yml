@@ -225,13 +225,10 @@ jobs:
           schema = json.loads(matches[0].read_text(encoding="utf-8"))
           props = schema.get("properties") or {}
           required = set(schema.get("required") or [])
-          for name in ("threadId", "input", "cwd", "approvalPolicy", "permissions", "sandboxPolicy"):
+          for name in ("threadId", "input", "cwd", "approvalPolicy", "sandboxPolicy"):
               assert name in props, (name, sorted(props))
           assert {"threadId", "input"} <= required
-
-          text = json.dumps(schema, sort_keys=True)
-          assert "permissions" in text
-          assert "sandboxPolicy" in text
+          assert "permissions" not in props
           print("TURN_START_SCHEMA_COMPATIBILITY_PASS")
           '@ | python -
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

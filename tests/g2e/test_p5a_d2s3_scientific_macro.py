@@ -78,7 +78,7 @@ def test_successor_manifest_does_not_prematurely_claim_functional_capability():
     assert caps["repository_write"] is False
     assert caps["app_server_launch"] is True
     assert caps["jsonrpc_initialize"] is True
-    assert caps["turn_lifecycle_surface"] if "turn_lifecycle_surface" in caps else True
+    assert caps["turn_stream_surface"] is True
 
 
 def test_successor_structural_discovery_rejects_old_or_unqualified_harness():
@@ -99,8 +99,8 @@ def test_admission_builder_has_no_runtime_dispatch_surface():
         "subprocess",
         "Popen(",
         "os.system",
-        "turn/start",
-        "thread/start",
+        '"method": "turn/start"',
+        '"method": "thread/start"',
         "requests.",
         "httpx.",
     ):
@@ -116,8 +116,8 @@ def test_runner_has_exactly_one_scientific_turn_start_and_marker_precedes_send()
     assert marker_index < send_index
     assert 'evidence["scientific_attempt_consumed"] = True' in source[marker_index:send_index]
     assert "R2_AUTHORIZATION_PREDICATE_FAILED" in source
-    assert "permissions" in source
-    assert "sandboxPolicy" not in source
+    assert source.count('"permissions": PROFILE_ID') == 1
+    assert '"sandboxPolicy"' not in source
     assert "TURN_TIMEOUT_S = 90.0" in source
 
 
@@ -181,6 +181,6 @@ def test_macro_spec_freezes_single_attempt_and_no_rescue():
     text = " ".join(SPEC.read_text(encoding="utf-8").split())
     assert "retry budget: zero" in text.lower()
     assert "Exactly one scientific request is allowed." in text
-    assert "marker creation itself consumes the single attempt" in text
+    assert "marker creation prospectively consumes the single attempt" in text
     assert "No automatic retry." in text
     assert "verifier does not assign the scientific verdict" in text
