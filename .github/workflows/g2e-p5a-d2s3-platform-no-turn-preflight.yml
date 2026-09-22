@@ -1,0 +1,179 @@
+name: G2E P5A D2-S3 Platform No-Turn Preflight Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feature/g2e-framework"]
+    paths:
+      - "scripts/g2e/p5a_d2s3_platform_no_turn_preflight.py"
+      - "scripts/g2e/p5a_d2s3_platform_no_turn_oneclick.ps1"
+      - "tests/g2e/test_p5a_d2s3_platform_no_turn_preflight.py"
+      - ".github/workflows/g2e-p5a-d2s3-platform-no-turn-preflight.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  preflight-static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+      BASELINE_SHA: "8b5cbada9117b01f48d03ab8af1dfae4b77a7221"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Verify bounded D2-S3 preflight diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$BASELINE_SHA^{commit}"
+          mapfile -t changed < <(git diff --name-only "$BASELINE_SHA"...HEAD)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            ".github/workflows/g2e-p5a-d2s3-platform-no-turn-preflight.yml"
+            "scripts/g2e/p5a_d2s3_platform_no_turn_preflight.py"
+            "scripts/g2e/p5a_d2s3_platform_no_turn_oneclick.ps1"
+            "tests/g2e/test_p5a_d2s3_platform_no_turn_preflight.py"
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for item in "${allowed[@]}"; do
+              if [[ "$path" == "$item" ]]; then ok=true; break; fi
+            done
+            if [[ "$ok" != true ]]; then
+              echo "Out-of-scope D2-S3 preflight mutation: $path" >&2
+              exit 1
+            fi
+          done
+
+      - name: Compile Python preflight
+        run: python -m compileall -q scripts/g2e/p5a_d2s3_platform_no_turn_preflight.py
+
+      - name: Parse PowerShell one-click
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "scripts/g2e/p5a_d2s3_platform_no_turn_oneclick.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -ne 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
+      - name: Run D2-S3 preflight qualification
+        run: pytest -q tests/g2e/test_p5a_d2s3_platform_no_turn_preflight.py
+
+      - name: Run P1 regression
+        run: pytest -q tests/g2e/test_p1_core_schemas.py
+
+      - name: Run P1.4 regression
+        run: pytest -q tests/g2e/test_p1_4_agent_binding.py
+
+      - name: Run P1.5 regression
+        run: pytest -q tests/g2e/test_p1_5_qualification_authority.py
+
+      - name: Run P2 regression
+        run: pytest -q tests/g2e/test_p2_deterministic_core.py
+
+      - name: Run P3 regression
+        run: pytest -q tests/g2e/test_p3_standalone_runtime.py
+
+      - name: Run P4 regression
+        run: pytest -q tests/g2e/test_p4_gwf_adapter.py
+
+      - name: Emit preflight qualification report
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          report = {
+              "schema": "G2E-P5A-D2S3-PLATFORM-NO-TURN-QUALIFICATION-v1",
+              "baseline_sha": "8b5cbada9117b01f48d03ab8af1dfae4b77a7221",
+              "candidate_sha": git("rev-parse", "HEAD"),
+              "oneclick_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s3_platform_no_turn_oneclick.ps1"),
+              "preflight_blob": git("rev-parse", "HEAD:scripts/g2e/p5a_d2s3_platform_no_turn_preflight.py"),
+              "test_blob": git("rev-parse", "HEAD:tests/g2e/test_p5a_d2s3_platform_no_turn_preflight.py"),
+              "workflow_blob": git("rev-parse", "HEAD:.github/workflows/g2e-p5a-d2s3-platform-no-turn-preflight.yml"),
+              "spec_blob": git("rev-parse", "HEAD:g2e/docs/P5A_D2S3_PLATFORM_NO_TURN_PREFLIGHT_SPEC.md"),
+              "expected_staging_report_sha256": "21dedde191d144ad561af7e78903fce73990d8ffbb6d8bb701a34eb95e336c76",
+              "expected_codex_sha256": "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b",
+              "expected_helper_sha256": "0c3eeb7cee8d2bc4c8644def3c818e8b06760979572dcedc919c38d0f38f64c4",
+              "turn_start_authorized": False,
+              "scientific_attempt_authorized": False,
+              "scientific_attempt_consumed": False,
+              "model_turn_executed": False,
+              "adjudication": "PREFLIGHT_IMPLEMENTATION_PASS_LOCAL_EXECUTION_REQUIRED",
+          }
+          Path("p5a_d2s3_platform_no_turn_qualification.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p5a-d2s3-platform-no-turn-qualification
+          path: p5a_d2s3_platform_no_turn_qualification.json
+          if-no-files-found: error
+
+  preflight-windows-parser:
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "scripts\g2e\p5a_d2s3_platform_no_turn_oneclick.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -ne 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
+      - name: Verify required disk image cmdlets exist
+        shell: powershell
+        run: |
+          foreach ($name in @("Get-DiskImage", "Dismount-DiskImage")) {
+            if (-not (Get-Command $name -ErrorAction SilentlyContinue)) {
+              throw "MISSING_REQUIRED_CMDLET:$name"
+            }
+          }
+          if (-not (Get-Command diskpart.exe -ErrorAction SilentlyContinue)) {
+            throw "MISSING_DISKPART"
+          }
+
+      - name: Compile Python preflight on Windows
+        shell: powershell
+        run: |
+          python -m compileall -q scripts\g2e\p5a_d2s3_platform_no_turn_preflight.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
