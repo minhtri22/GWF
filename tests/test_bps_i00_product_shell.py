@@ -227,39 +227,27 @@ def test_i00_windows_launcher_lifecycle_does_not_kill_unrelated_process(tmp_path
         str(port),
     ]
 
+    def run_launcher(action: str, *, check: bool = True, timeout: int = 45):
+        return subprocess.run(
+            base + ["-Action", action],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=check,
+            timeout=timeout,
+        )
+
     unrelated = None
     try:
-        started = subprocess.run(
-            base + ["-Action", "start"],
-            cwd=ROOT,
-            env=env,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            check=True,
-        )
+        started = run_launcher("start")
         assert "GWF_SERVER=RUNNING" in started.stdout
 
-        status = subprocess.run(
-            base + ["-Action", "status"],
-            cwd=ROOT,
-            env=env,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            check=True,
-        )
+        status = run_launcher("status", timeout=20)
         assert "GWF_SERVER=READY" in status.stdout
 
-        restarted = subprocess.run(
-            base + ["-Action", "restart"],
-            cwd=ROOT,
-            env=env,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            check=True,
-        )
+        restarted = run_launcher("restart", timeout=45)
         assert "GWF_SERVER=STOPPED" in restarted.stdout
         assert "GWF_SERVER=RUNNING" in restarted.stdout
 
@@ -267,27 +255,14 @@ def test_i00_windows_launcher_lifecycle_does_not_kill_unrelated_process(tmp_path
             [sys.executable, "-c", "import time; time.sleep(60)"],
             cwd=ROOT,
         )
-        stopped = subprocess.run(
-            base + ["-Action", "stop"],
-            cwd=ROOT,
-            env=env,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            check=True,
-        )
+        stopped = run_launcher("stop", timeout=20)
         assert "GWF_SERVER=STOPPED" in stopped.stdout
         assert unrelated.poll() is None
     finally:
-        subprocess.run(
-            base + ["-Action", "stop"],
-            cwd=ROOT,
-            env=env,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            check=False,
-        )
+        try:
+            run_launcher("stop", check=False, timeout=20)
+        except subprocess.TimeoutExpired:
+            pass
         if unrelated is not None and unrelated.poll() is None:
             unrelated.terminate()
             unrelated.wait(timeout=10)
