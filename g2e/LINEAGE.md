@@ -677,3 +677,14 @@
 - **Artifact:** `10736286845`; digest `sha256:3cfcf3246b8c184e23b22ed955e4431c2250706dfe27d1f7909bc46559fa7d36`; report SHA256 `3ab56f958730a97c994cf985e6913b25348cc1cb5702c239321d3a833f987942`.
 - **One-click blob:** `baed223096c349ffe19e6242259c26d2b3e69076`.
 - **Scientific contract:** unchanged; retry remains zero; preflight-only required before sole live dispatch.
+
+
+### G2E-P5A-CGW — P5-FX-001 final adjudication / spent closure
+
+- **Attempt:** `p5a-cgw-v4-p5-fx-001-attempt-001`.
+- **V2R6 live execution:** durable marker created; sole `turn/start` sent and accepted; attempt consumed.
+- **Execution outcome:** turn timed out without terminal completion; no result; live MCP/browser route evidence not admitted.
+- **Frozen metrics:** attribution=1; mutation_scope=1; evidence_integrity=0; executor/result metrics null.
+- **Final verdict:** `INVALID — SPENT`.
+- **Not FAIL:** no completed execution and no substantive task metric equal to 0.
+- **Governance:** retry=0; same attempt may not be rerun or rearmed; V4-001 and V4-002 preserved; future continuation requires a new preregistered attempt or separately governed infrastructure study.

@@ -1,0 +1,77 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-FINAL-ADJUDICATION-v1",
+  "status": "SPENT_INVALID",
+  "verdict": "INVALID",
+  "study_id": "p5a-cgw-v4-p5-fx-001-functional-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-attempt-001",
+  "execution_lock": "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R6",
+  "execution_head": "319c82584f481315a8dc21de41f886553605279d",
+  "attempt_state": {
+    "consumed": true,
+    "durable_marker_present": true,
+    "turn_start_request_sent": true,
+    "turn_start_accepted": true,
+    "retry_budget": 0,
+    "replacement_attempt_authorized": false
+  },
+  "observed_execution": {
+    "oneclick_exit_code": 0,
+    "runner_exit_code": 0,
+    "verifier_exit_code": 0,
+    "report_status": "FUNCTIONAL_EVIDENCE_READY_FOR_ADJUDICATION",
+    "verification_sha256": "78579f68a74378a4f9257f30a46b44c4c7f530b9fb196baf42ae2acb38ce93e0",
+    "turn_terminal": false,
+    "terminal_status": null,
+    "turn_timeout": true,
+    "result_exists": false,
+    "live_mcp_roundtrip_admitted": false,
+    "authority_violation": true,
+    "infrastructure_or_protocol_failure": true,
+    "unexpected_server_request_count": 0
+  },
+  "metrics": {
+    "executor_completed": null,
+    "result_schema_valid": null,
+    "result_values_correct": null,
+    "mutation_scope_valid": 1,
+    "attempt_attribution_valid": 1,
+    "evidence_integrity_valid": 0
+  },
+  "adjudication_reason": {
+    "pass_rejected": [
+      "all six frozen P5-FX-001 metrics are not equal to 1",
+      "evidence_integrity_valid is 0",
+      "live MCP/browser route evidence was not admitted",
+      "no result.json exists"
+    ],
+    "substantive_fail_rejected": [
+      "execution did not reach terminal completed state",
+      "executor_completed is null",
+      "result_schema_valid and result_values_correct are null rather than substantive zeros",
+      "frozen FAIL rule requires a structurally valid attributable completed execution with a substantive task metric equal to 0"
+    ],
+    "invalid_selected": [
+      "attempt was consumed under the frozen durable-marker rule",
+      "turn timed out after turn/start acceptance",
+      "turn_terminal is false",
+      "infrastructure_or_protocol_failure is true",
+      "live route evidence is incomplete",
+      "evidence integrity is not valid"
+    ]
+  },
+  "cleanup": {
+    "vhdx_cleanup": "DISMOUNTED",
+    "cleanup_error": null
+  },
+  "governance": {
+    "attempt_is_spent": true,
+    "rerun_forbidden": true,
+    "same_attempt_rearm_forbidden": true,
+    "same_lock_replacement_forbidden": true,
+    "predecessor_root": "g2e/.local/P5A-CGW-FX001-V4-001",
+    "final_execution_root": "g2e/.local/P5A-CGW-FX001-V4-002",
+    "evidence_roots_preserve": true,
+    "next_program_status": "CLOSED_SPENT_INVALID",
+    "future_work_requires_new_preregistered_attempt_or_separate_infrastructure_study": true
+  }
+}
