@@ -159,3 +159,26 @@ I11 -> M10
 ```
 
 BPS-I00 keeps its name because it is the shared shell/routing foundation.
+
+## 9. Amendment — screen-level Fast Lane
+
+The user-approved execution unit for ordinary browser development is now the **screen**, not the whole module.
+
+`docs/BPS_SCREEN_FAST_LANE.md` governs execution:
+
+```text
+READ DOCS
+ -> CHECKLIST
+ -> IMPLEMENT
+ -> SELF-QA
+ -> COUNT=0
+ -> USER P/F UAT
+ -> SCREEN_PASS
+ -> NEXT SCREEN
+```
+
+BPS-M01…M10 remain architectural ownership groupings. `MODULE_FINAL_PASS` is no longer required between ordinary screens.
+
+A module/screen returns to strict governance only when it crosses backend/schema/authority/security/scientific-evidence/API-contract/destructive-mutation boundaries.
+
+BPS-W0 remains useful as a later cross-screen integration check, but it must not slow ordinary sequential screen delivery.

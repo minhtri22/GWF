@@ -2207,3 +2207,35 @@ USER_LOCAL_UAT           = PENDING_ROUTING
 FINAL_SLICE_PASS         = NO
 BPS-M01                  = LOCKED
 ```
+
+## 78. BPS-I00 final local UAT and Fast Lane transition
+
+### F-151 — RESOLVED
+
+- **Evidence:** returned local report schema `GWF-BPS-I00-LOCAL-UAT-v1`, SHA-256 `cdf921e0855a3d14e12af2611726f7cc21dcb39c45afdf2a1897e04501a024d4`.
+- **Exact identity:** start/end HEAD both `29f3622fab6937ef275cbbf226a10c49f0ee56f7`.
+- **Machine result:** 49/49 PASS.
+- **Operator result:** M01…M14 = 14/14 PASS.
+- **Observed coverage:** visual shell, authentication/session persistence, themes, sidebar reflow, semantic icons, route clicks, Planned routes, Back/Forward, reload/deep-link restoration, LIVE Diagnostics, absence of fake module content, logout.
+- **Final result:** `BPS-I00 = FINAL_SLICE_PASS`.
+- **Status:** RESOLVED.
+
+### F-152 — RESOLVED
+
+- **Finding:** per-module PRE_LOCAL/exact-head/formal-close ceremony is too costly for ordinary browser-screen iteration.
+- **Resolution:** adopt `BPS-SCREEN-FAST-LANE-v1`: reread screen documents → checklist → implementation → self-QA → `COUNT=0` → user P/F UAT → `SCREEN_PASS` → next screen.
+- **Safety boundary:** backend/schema/authority/security/scientific-evidence/API-contract/destructive-mutation work still uses strict governance.
+- **Status:** RESOLVED.
+
+### Current BPS state
+
+```text
+BPS-I00                = FINAL_SLICE_PASS
+BPS_SCREEN_FAST_LANE   = ACTIVE
+NEXT_SCREEN            = HOME
+HOME_OWNER             = BPS-M01
+HOME_DOC_REVIEW        = REQUIRED_BEFORE_CODE
+HOME_CHECKLIST         = NOT_YET_FROZEN
+OPEN_FINDINGS          = 0
+COUNT                  = 0
+```

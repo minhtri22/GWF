@@ -331,3 +331,24 @@ Stop implementation and return to governance if:
 - scope must expand materially beyond the authorization.
 
 Do not silently broaden the slice.
+
+## 16. Browser screen Fast Lane override
+
+For ordinary Browser Product Surface screen work, `docs/BPS_SCREEN_FAST_LANE.md` is the current execution protocol and supersedes the per-module PRE_LOCAL / exact-head / formal-close ceremony in §§4, 6–12 where those sections conflict with the Fast Lane.
+
+The invariant is now:
+
+```text
+read screen documents
+ -> freeze checklist
+ -> implement
+ -> assistant self-QA
+ -> checklist COUNT=0
+ -> user UAT with P/F
+ -> SCREEN_PASS
+ -> next screen
+```
+
+Backend-before-UI, no-fake-data, authoritative-state, auth/security, exact identity, and stop conditions remain fully in force.
+
+If implementation crosses a strict-mode trigger defined in `docs/BPS_SCREEN_FAST_LANE.md`, stop Fast Lane and return to the stricter governance path before mutation.

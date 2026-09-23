@@ -1736,3 +1736,36 @@ only then BPS-M01 may open
 ```
 
 The recovery must preserve canonical server/auth semantics and must not implement later functional slices merely because their approved future visual composition appears in the baseline.
+
+## BPS screen Fast Lane override
+
+Effective 2026-09-23, ordinary Browser Product Surface delivery uses `docs/BPS_SCREEN_FAST_LANE.md`.
+
+Per-screen execution is:
+
+```text
+read relevant documents
+ -> write checklist
+ -> implement
+ -> assistant self-QA
+ -> checklist COUNT=0
+ -> user final UAT using P/F
+ -> SCREEN_PASS
+ -> next screen
+```
+
+This supersedes the heavier requirement to perform PRE_LOCAL/exact-head/formal-close ceremony for every ordinary BPS module/screen.
+
+Strict governance remains mandatory for backend/schema/authority/security/scientific-evidence/API-contract/destructive-mutation changes.
+
+### Current browser frontier
+
+```text
+BPS-I00 shell + routing foundation = FINAL_SLICE_PASS
+NEXT SCREEN                        = Home
+ARCHITECTURAL OWNER                = BPS-M01
+NEXT REQUIRED ACTION               = reread Home-related docs and freeze Home checklist
+HOME IMPLEMENTATION                = NOT_STARTED under Fast Lane
+```
+
+No Home code is authorized from memory alone; document reread + checklist comes first.

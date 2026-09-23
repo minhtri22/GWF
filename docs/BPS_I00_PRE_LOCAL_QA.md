@@ -273,3 +273,35 @@ USER_LOCAL_UAT         = PENDING_ROUTING
 FINAL_SLICE_PASS       = NO
 BPS-M01                = LOCKED
 ```
+
+## Final local-UAT adjudication
+
+Returned Windows UAT evidence:
+
+```text
+REPORT_SCHEMA       = GWF-BPS-I00-LOCAL-UAT-v1
+REPORT_SHA256       = cdf921e0855a3d14e12af2611726f7cc21dcb39c45afdf2a1897e04501a024d4
+EXPECTED_HEAD       = 29f3622fab6937ef275cbbf226a10c49f0ee56f7
+GIT_HEAD_START      = 29f3622fab6937ef275cbbf226a10c49f0ee56f7
+GIT_HEAD_END        = 29f3622fab6937ef275cbbf226a10c49f0ee56f7
+MACHINE_CHECKS      = 49/49 PASS
+MANUAL_UAT          = 14/14 PASS
+FATAL_ERROR         = null
+FINAL_LOCAL_VERDICT = PASS
+SERVER_STOPPED      = PASS
+TRACKED_CLEAN_END   = PASS
+```
+
+Adjudication:
+
+```text
+VISUAL_UI_UX_APPROVAL = PASS
+ROUTING               = PASS
+BACK_FORWARD           = PASS
+RELOAD_DEEP_LINK       = PASS
+DIAGNOSTICS_LIVE       = PASS
+NO_FAKE_MODULE_DATA    = PASS
+BPS-I00                = FINAL_SLICE_PASS
+```
+
+BPS-I00 is closed as the shell/routing foundation. Subsequent ordinary browser screens use `docs/BPS_SCREEN_FAST_LANE.md`.
