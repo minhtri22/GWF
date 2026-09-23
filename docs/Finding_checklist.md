@@ -2170,3 +2170,40 @@ PRE_LOCAL_PASS        = INVALIDATED_ROUTE_GAP
 BPS-I00_ROUTING_REPAIR= AUTHORIZED_BOUNDED
 BPS-M01               = LOCKED
 ```
+
+## 77. BPS-I00 routing implementation qualification
+
+### F-149 — MEDIUM — RESOLVED
+
+- **Negative evidence:** routing implementation HEAD `d789fdbf14c49438d17d945faa2edf190a92eb38`, DG-P10 workflow `35837281009`.
+- **Observed outcome:** router/deep-link implementation and new UAT checks were present, but full regression/Windows qualification failed at `test_bps_i00_local_uat_script_contract`.
+- **Failure signature:** test expected literal `route_http_home`; the PowerShell harness correctly builds route check names dynamically via `("route_http_" + $entry.Key)`.
+- **Root cause:** test-contract assertion mismatch. It did not indicate a route, runtime, authority or visual defect.
+- **Repair:** assert the frozen `$routeChecks` table, exact Home route and dynamic check-name expression instead of a non-existent literal.
+- **Verification:** exact candidate `fc42c3a5c871a79ef7ed1d0f68fce76635c3b484`; DG-P10 run `35837603192` PASS across Linux full regression/compile, PostgreSQL and Windows; v0.8.5 run `35837603233` PASS across Linux and Windows installer.
+- **Status:** RESOLVED.
+
+### F-150 — MEDIUM — RESOLVED
+
+- **Finding:** after adopting `BPS-M01…M10`, the lower dependency/current-state summaries in `IMPLEMENTATION_7_WAVES_PLAN.md` still displayed the superseded `BPS-I01…I11` sequence as current execution state.
+- **Resolution:** replace those current summaries with BPS-I00 → M01…M10 → W0, retain Ixx only as historical mapping, and keep W0 integration-only.
+- **Status:** RESOLVED.
+
+### BPS-I00 routing QA adjudication
+
+```text
+ROUTING_GOVERNANCE_HEAD = 0188edfb4423e6805f81c61713f0989ad4f7d858
+ROUTING_CANDIDATE_HEAD  = fc42c3a5c871a79ef7ed1d0f68fce76635c3b484
+QA1                     = PASS
+QA2                     = PASS
+QA3                     = PASS
+QA4                     = PASS
+QA5                     = PASS
+QA6                     = PASS
+ROUTING_MATRIX           = 22/22 PASS
+Finding OPEN             = 0
+PRE_LOCAL_PASS           = PASS
+USER_LOCAL_UAT           = PENDING_ROUTING
+FINAL_SLICE_PASS         = NO
+BPS-M01                  = LOCKED
+```

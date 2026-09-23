@@ -341,12 +341,12 @@ The user is not responsible for discovering ordinary code/API/UI defects by manu
   - [x] full-shell System/Light/Dark parity PASS under assistant QA6;
   - [x] expanded ~260 px / collapsed ~68 px sidebar with true workspace reflow PASS under assistant QA6;
   - [x] semantic icons + descriptive collapsed labels/maturity context PASS under assistant QA6;
-  - [ ] top-level routes are clickable and restore through Back/Forward/reload;
-  - [ ] locked/planned routes render truthful route-specific surfaces without fake module data/actions;
-  - [ ] `/app/system/diagnostics` renders LIVE foundation identity/health;
+  - [x] top-level routes are clickable and restore through Back/Forward/reload under assistant QA;
+  - [x] locked/planned routes render truthful route-specific surfaces without fake module data/actions;
+  - [x] `/app/system/diagnostics` renders LIVE foundation identity/health;
   - [x] future items visibly `PLANNED`/`LOCKED` and non-actionable;
   - [x] no reusable credential stored in static/browser state;
-  - [ ] exact-head browser UAT PASS — visual UI/UX approved; navigation/product-flow UAT not yet approved.
+  - [ ] exact-head browser UAT PASS — assistant QA1→QA6 PASS; user navigation/product-flow UAT pending.
 
 ### BPS-M01…M10 — isolated module execution
 
@@ -1478,19 +1478,24 @@ Revisit only when one of its explicit triggers occurs.
 DG-P0..DG-P10 [FORMALLY CLOSED]
           │
           ▼
-BPS-I00 → I01 → I02 → I03 → I04 → I05
-                                │
-                                ▼
-                    I06 → I07 → I08
-                                │
-                                ▼
-                    I09 → I10 → I11
-                                │
-                                ▼
-                              BPS-W0
-                                │
-                                ▼
-                  separate DG-P11 authorization
+       BPS-I00
+  shell + routing foundation
+          │ FINAL_SLICE_PASS
+          ▼
+BPS-M01 → M02 → M03 → M04 → M05
+                          │
+                          ▼
+              M06 → M07 → M08
+                          │
+                          ▼
+                    M09 → M10
+                          │
+                          ▼
+                        BPS-W0
+                 integration-only round
+                          │
+                          ▼
+              separate DG-P11 authorization
                                 │
                                 ▼
                               DG-P11
@@ -1608,49 +1613,40 @@ DG-P0..DG-P10
         ↓
 UI/UX ARCHITECTURE
     QA PASS / OPEN=0
-    fixed spec blob f4000eac36f8c82826c73070234acd23f8ac72fd
+    visual baseline v1.1 APPROVED
         ↓
-NEXT IMPLEMENTATION PROGRAM
-    BPS-I00  Product server + shell   [AUTHORIZED]
-        ↓ FINAL_SLICE_PASS
-    BPS-I01  Home                    [LOCKED]
-        ↓ FINAL_SLICE_PASS
-    BPS-I02  Projects + Access       [LOCKED]
-        ↓ FINAL_SLICE_PASS
-    BPS-I03  Global Operations       [LOCKED]
-        ↓ FINAL_SLICE_PASS
-    BPS-I04  Project Overview        [LOCKED]
-        ↓ FINAL_SLICE_PASS
-    BPS-I05  Project Execution       [LOCKED]
-        ↓ FINAL_SLICE_PASS
-    BPS-I06  Packages                [LOCKED]
-        ↓ FINAL_SLICE_PASS
-    BPS-I07  GitHub                  [LOCKED]
-        ↓ FINAL_SLICE_PASS
-    BPS-I08  Artifacts / Evidence    [LOCKED]
-        ↓ FINAL_SLICE_PASS
-    BPS-I09  DG-P0→P10 APIs          [LOCKED]
-        ↓ FINAL_SLICE_PASS
-    BPS-I10  Documents               [LOCKED]
-        ↓ FINAL_SLICE_PASS
-    BPS-I11  Relations / Lineage     [LOCKED]
-        ↓ FINAL_SLICE_PASS
-    BPS-W0
+BPS-I00
+    shell + auth + theme + sidebar + navigable route skeleton
+    assistant QA1→QA6 = PASS
+    PRE_LOCAL_PASS = PASS
+    user routing UAT = PENDING
+    FINAL_SLICE_PASS = NO
+        ↓ only after FINAL_SLICE_PASS
+BPS-M01 Home                  [LOCKED]
+BPS-M02 Projects + Access     [LOCKED]
+BPS-M03 Operations            [LOCKED]
+BPS-M04 Project Workspace     [LOCKED]
+BPS-M05 Execution + Recovery  [LOCKED]
+BPS-M06 Research / Packages   [LOCKED]
+BPS-M07 System / GitHub       [LOCKED]
+BPS-M08 Project Library       [LOCKED]
+BPS-M09 Documents             [LOCKED]
+BPS-M10 Document Relations    [LOCKED]
+        ↓ after all MODULE_FINAL_PASS
+BPS-W0 cross-module wiring     [BLOCKED]
         ↓
 separate DG-P11 authorization
         ↓
 future backend capability
         ↓ formal-close
-bounded UI integration slice
-        ↓ PASS
-next capability
+bounded UI integration
 ```
 
 Current governance states:
 
-- **BPS-I00:** `PRE_LOCAL_PASS / FINAL_SLICE_PASS=NO / USER_LOCAL_UAT_PENDING`; bounded UI-conformance recovery completed QA1→QA6 against approved baseline v1.1. The only authorized next action is exact-head local UAT through `scripts/uiux/bps_i00_local_uat.ps1`; BPS-I01 remains locked.
-- **BPS-I01…I11:** LOCKED BEHIND PREVIOUS-SLICE `FINAL_SLICE_PASS`.
-- **BPS-W0:** blocked until BPS-I00…I11 all reach `FINAL_SLICE_PASS`.
+- **BPS-I00:** `PRE_LOCAL_PASS / FINAL_SLICE_PASS=NO / USER_ROUTING_UAT_PENDING`; visual approval is retained and bounded routing repair has passed assistant QA1→QA6. The only authorized next action is exact-head local UAT through `scripts/uiux/bps_i00_local_uat.ps1`.
+- **BPS-M01…M10:** `LOCKED`; only BPS-M01 may be authorized after BPS-I00 `FINAL_SLICE_PASS`.
+- **BPS-W0:** `BLOCKED` until BPS-I00 FINAL_SLICE_PASS and BPS-M01…M10 all reach `MODULE_FINAL_PASS / FROZEN_FOR_INTEGRATION`.
 - **DG-P11+:** NOT_STARTED / NOT_AUTHORIZED.
 - **DG-W3:** OPEN / NOT_EXECUTED.
 - **GAC-P0/P1:** PLANNED_BLOCKED until DG-W4 PASS.
@@ -1661,11 +1657,15 @@ Current governance states:
 The product-priority sequence is now explicit:
 
 ```text
-finish one current UI slice
+finish BPS-I00 foundation
         ↓
-PASS + freeze evidence
+FINAL_SLICE_PASS
         ↓
-next current UI slice
+unlock one product module
+        ↓
+MODULE_FINAL_PASS + freeze
+        ↓
+next product module
         ↓
 ...
         ↓
@@ -1732,7 +1732,7 @@ new exact-head local UAT
         ↓
 FINAL_SLICE_PASS
         ↓
-only then BPS-I01 may open
+only then BPS-M01 may open
 ```
 
 The recovery must preserve canonical server/auth semantics and must not implement later functional slices merely because their approved future visual composition appears in the baseline.

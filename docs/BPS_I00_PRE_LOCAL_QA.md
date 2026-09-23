@@ -1,6 +1,28 @@
 # BPS-I00 — PRE_LOCAL QA1→QA6 Report
 
-## Status
+## Current routing-repair status
+
+```text
+PROGRAM                    = BPS-I00 ROUTING_RECOVERY
+ROUTING_GOVERNANCE_HEAD    = 0188edfb4423e6805f81c61713f0989ad4f7d858
+ROUTING_IMPLEMENTATION_HEAD= d789fdbf14c49438d17d945faa2edf190a92eb38
+ROUTING_CANDIDATE_HEAD     = fc42c3a5c871a79ef7ed1d0f68fce76635c3b484
+APPROVED_VISUAL_BASELINE   = GWF-UI-BASELINE-v1.1 / RETAINED
+QA1                        = PASS
+QA2                        = PASS
+QA3                        = PASS
+QA4                        = PASS
+QA5                        = PASS
+QA6                        = PASS
+PRE_LOCAL_PASS             = PASS
+FINAL_SLICE_PASS           = NO
+USER_LOCAL_UAT             = PENDING_ROUTING
+BPS-M01                    = LOCKED
+```
+
+This is the current assistant-owned verdict. It authorizes only exact-head BPS-I00 local UAT; it does not open BPS-M01.
+
+## Historical visual-recovery status (superseded by routing finding)
 
 ```text
 PROGRAM                    = BPS-I00 UI_CONFORMANCE_RECOVERY
@@ -142,3 +164,112 @@ NEXT = bounded BPS-I00 routing repair
 ```
 
 Positive visual/theme/sidebar/auth/runtime evidence is retained and regression-checked after routing repair.
+
+## Routing repair QA1→QA6 requalification
+
+### QA1 — Scope completeness — PASS
+
+Exact governance base: `0188edfb4423e6805f81c61713f0989ad4f7d858`.
+
+Routing candidate: `fc42c3a5c871a79ef7ed1d0f68fce76635c3b484`.
+
+Changed implementation/harness files are bounded to:
+
+- `src/gwr/api.py` — capability route metadata + canonical `/app/*` shell deep-link fallback;
+- `web/index.html` — locked-route and diagnostics route containers;
+- `web/app.js` — SPA router/history/route rendering;
+- `web/styles.css` — locked-route presentation only;
+- `tests/test_bps_i00_product_shell.py`;
+- `tests/test_bps_i00_local_uat_script.py`;
+- `scripts/uiux/bps_i00_local_uat.ps1`.
+
+No Home KPI, Project data/action, Operations data, Package Registry data, Project Library, Documents/Reader, Relations graph, GAC/RA/Agents functionality was opened.
+
+### QA2 — Functional routing correctness — PASS
+
+Verified:
+
+- authoritative bootstrap exposes exact `route`, `state`, and owning `slice/module`;
+- top-level nav remains clickable for `SKELETON_LOCKED` and `PLANNED_BLOCKED`;
+- navigation uses `history.pushState`;
+- browser `popstate` restores selected route/nav surface;
+- direct recognized `/app/*` deep links return the canonical shell;
+- reload resolves route from `window.location.pathname`;
+- locked/planned routes render route title, exact path, owner and maturity;
+- `/app/system/diagnostics` is the only I00 LIVE foundation route and retains real product/health identity.
+
+### QA3 — Authoritative-state correctness — PASS
+
+Route metadata comes from `/browser/bootstrap`; health from `/ready`; identity/session from `/browser/auth/me`. Browser persistence remains presentation-only theme/sidebar state. No product module entity/count/activity is synthesized in locked/planned surfaces.
+
+### QA4 — Governance/security correctness — PASS
+
+HumanAuthService-backed session and HttpOnly/SameSite behavior are unchanged. Route availability does not imply module authorization. No mutation endpoint or later-module API is called by the I00 router. Locked/planned pages expose only public shell maturity/owner/path metadata.
+
+### QA5 — automated/regression qualification — PASS
+
+Preserved negative evidence:
+
+- first routing implementation HEAD `d789fdbf14c49438d17d945faa2edf190a92eb38`;
+- workflow `35837281009` failed because `tests/test_bps_i00_local_uat_script.py` expected literal `route_http_home`, while the script intentionally generated `route_http_<key>` dynamically from the frozen route table;
+- the failure was a test-contract assertion mismatch, not router/runtime behavior.
+
+Bounded repair HEAD: `fc42c3a5c871a79ef7ed1d0f68fce76635c3b484`.
+
+Exact-head qualification:
+
+- DG-P10 workflow `35837603192` PASS: Linux targeted/full regression PASS, compile PASS, PostgreSQL PASS, Windows one-click PASS;
+- SQLite artifact `10739872984`, digest `sha256:ce1d67cd51fe12cfafe177932a0f3117bfc9c887e7301c40f27f1430e8262b80`;
+- PostgreSQL artifact `10739159328`, digest `sha256:3f918567dc7bbd0e10d2ab5c72d2a9269c2cbe99386d83bda9464b34dac190d3`;
+- Windows artifact `10741452906`, digest `sha256:7bdf6cfe888cccb2b4aff48a80791dff098d21ea93a8ecadc3a5de22392ad5d0`;
+- v0.8.5 workflow `35837603233` PASS: Linux gate PASS + Windows installer PASS;
+- Linux evidence artifact `10740455330`, digest `sha256:983c80fa3de3fc3f99af84ad5bd40a3f73d0ba6a317de324a50cdc0d9319b6cb`;
+- Windows install artifact `10740277696`, digest `sha256:77c681130fe36ac86970749ad45c1f78e0aa1f9e5d2676209190992fce544222`.
+
+Historical DG-P8/DG-W2 frozen-gate failures remain unrelated and are not counted as positive routing evidence.
+
+### QA6 — UI/UX + navigation contract — PASS
+
+The already user-approved visual baseline is retained. Routing repair does not restyle the shell.
+
+Deterministic exact-candidate routing matrix:
+
+```text
+bootstrap routes/module ids       PASS
+SKELETON_LOCKED/PLANNED states   PASS
+deep-link shell adapter          PASS
+semantic clickable nav           PASS
+History pushState                PASS
+popstate Back/Forward            PASS
+reload route restore             PASS
+selected nav / aria-current      PASS
+route-specific locked surface    PASS
+Diagnostics LIVE foundation      PASS
+authoritative bootstrap/ready    PASS
+no Documents/Relations/Reader    PASS
+no Project API/data              PASS
+no fake KPI/count/activity       PASS
+260→68 workspace reflow          PASS
+full-shell Light/Dark tokens     PASS
+targeted route tests             PASS
+UAT machine route checks         PASS
+UAT Back/Forward prompt          PASS
+UAT reload prompt                PASS
+UAT Diagnostics prompt           PASS
+UAT no-fake-data prompt          PASS
+TOTAL                            22/22
+FAILED                           0
+```
+
+The local script now requires operator verification of click navigation, canonical route changes, Back/Forward, reload on `/app/projects`, planned routes, LIVE Diagnostics and absence of fake module content.
+
+## Current PRE_LOCAL verdict
+
+```text
+VISUAL_UI_UX_APPROVAL = RETAINED
+QA1→QA6               = PASS
+PRE_LOCAL_PASS         = PASS
+USER_LOCAL_UAT         = PENDING_ROUTING
+FINAL_SLICE_PASS       = NO
+BPS-M01                = LOCKED
+```
