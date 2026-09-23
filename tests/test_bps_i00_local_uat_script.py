@@ -48,6 +48,16 @@ def test_bps_i00_local_uat_script_contract():
     assert "access_token" not in report_section
 
 
+def test_bps_i00_local_uat_server_launcher_runs_inline_not_child_process():
+    text = SCRIPT.read_text(encoding="utf-8")
+    assert 'function Invoke-LoggedServerLauncher {' in text
+    assert '& $ServerLauncher -Action $Action -RepoRoot $RepoRoot -Port $Port *>&1' in text
+    assert 'Invoke-LoggedServerLauncher -Action "start"' in text
+    assert 'Invoke-LoggedServerLauncher -Action "restart"' in text
+    assert 'Invoke-LoggedServerLauncher -Action "stop"' in text
+    assert 'Invoke-LoggedPowerShell -ScriptPath $ServerLauncher' not in text
+
+
 def test_bps_i00_local_uat_captures_launcher_host_information_stream():
     text = SCRIPT.read_text(encoding="utf-8")
     assert '$preStatus = & $ServerLauncher -Action status -RepoRoot $RepoRoot -Port $Port *>&1' in text

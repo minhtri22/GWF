@@ -94,6 +94,13 @@ function Invoke-LoggedPowerShell {
     if ($code -ne 0) { throw "Command failed with exit code ${code}: $ScriptPath $($Arguments -join ' ')" }
 }
 
+function Invoke-LoggedServerLauncher {
+    param([string]$Action,[string]$LogPath)
+    & $ServerLauncher -Action $Action -RepoRoot $RepoRoot -Port $Port *>&1 |
+        Tee-Object -FilePath $LogPath -Append |
+        Out-Host
+}
+
 function Wait-Ready {
     param([int]$Attempts = 60)
     for ($i=0; $i -lt $Attempts; $i++) {
@@ -189,7 +196,7 @@ try {
         throw "A canonical GWF server is already registered for this repo. Refusing to stop or reuse a process not started by this UAT run."
     }
 
-    Invoke-LoggedPowerShell -ScriptPath $ServerLauncher -Arguments @("-Action","start","-RepoRoot",$RepoRoot,"-Port","$Port") -LogPath $LauncherLog
+    Invoke-LoggedServerLauncher -Action "start" -LogPath $LauncherLog
     $ServerStartedByScript = $true
     $EvidencePaths.Add($LauncherLog)
 
@@ -232,7 +239,7 @@ try {
     Add-Check "presentation_storage_only" (($appJs -match "gwr-ui-theme") -and ($appJs -match "gwr-ui-sidebar")) "theme/sidebar preference keys present"
 
     Write-Host "Step 4/6 - restart/session persistence" -ForegroundColor Cyan
-    Invoke-LoggedPowerShell -ScriptPath $ServerLauncher -Arguments @("-Action","restart","-RepoRoot",$RepoRoot,"-Port","$Port") -LogPath $LauncherLog
+    Invoke-LoggedServerLauncher -Action "restart" -LogPath $LauncherLog
     $ReadyState = Wait-Ready
     $MeAfterRestart = Invoke-RestMethod -Uri "$BaseUrl/browser/auth/me" -WebSession $MachineSession -TimeoutSec 5
     Add-Check "session_survives_canonical_restart" ($MeAfterRestart.actor_id -eq $me.actor_id) $MeAfterRestart.actor_id
@@ -267,7 +274,7 @@ try {
     Add-Check "post_browser_ready" ($postReady.ok -eq $true) $postReady
     Add-Check "post_browser_head_exact" ($postMeta.build_sha -eq $HeadStart) $postMeta.build_sha
 
-    Invoke-LoggedPowerShell -ScriptPath $ServerLauncher -Arguments @("-Action","stop","-RepoRoot",$RepoRoot,"-Port","$Port") -LogPath $LauncherLog
+    Invoke-LoggedServerLauncher -Action "stop" -LogPath $LauncherLog
     $ServerStartedByScript = $false
     $stopped = & $ServerLauncher -Action status -RepoRoot $RepoRoot -Port $Port *>&1
     Add-Check "canonical_server_stopped" (($stopped -join [Environment]::NewLine) -match "GWF_SERVER=STOPPED") ($stopped -join [Environment]::NewLine)
