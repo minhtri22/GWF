@@ -380,8 +380,8 @@ def test_runner_has_one_consumption_boundary_and_one_turn_start():
 
 def test_oneclick_requires_v2_dispatch_lock_and_zero_retry_shape():
     source = ONECLICK.read_text(encoding="utf-8")
-    assert "P5A_CGW_FX001_EXECUTION_LOCK_V2R1.json" in source
-    assert "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R1" in source
+    assert "P5A_CGW_FX001_EXECUTION_LOCK_V2R2.json" in source
+    assert "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R2" in source
     assert "dispatch_authorized" in source
     assert "max_dispatches" in source
     assert "PREDISPATCH_ADMISSION_BLOCKED" in source
@@ -426,6 +426,37 @@ def test_oneclick_ignores_noncritical_untracked_outputs_but_fails_closed_on_sour
         ".github/workflows/shadow.yml",
     ):
         assert any(dangerous.lower().startswith(p.lower()) for p in critical)
+
+
+
+def test_oneclick_preflight_is_before_uac_and_has_no_consumption_side_effects():
+    source = ONECLICK.read_text(encoding="utf-8")
+    preflight_banner = source.index("=== P5A-CGW PRE-UAC PREFLIGHT ===")
+    preflight_only = source.index("if ($PreflightOnly)")
+    uac = source.index("if (-not (Test-IsAdministrator))")
+    local_root_create = source.index("New-Item -ItemType Directory -Path $VolumeDir,$CodexHome,$ReportDir,$VerificationDir")
+    assert preflight_banner < preflight_only < uac < local_root_create
+    assert "PREFLIGHT_ONLY: PASS" in source
+    assert "-CgwBinary" in source
+    assert "-BridgeHome" in source
+    assert "-LauncherData" in source
+    assert "UAC_HANDOFF_ERROR" in source
+    assert "ELEVATED_CHILD_EXIT_CODE" in source
+
+
+def test_oneclick_preflight_resolves_and_checks_local_dependencies_before_uac():
+    source = ONECLICK.read_text(encoding="utf-8")
+    uac = source.index("if (-not (Test-IsAdministrator))")
+    for token in (
+        "Assert-ExecutionSourceClean $ProjectRoot",
+        'if ((Get-Sha256 $CodexExe) -ne $ExpectedCodexSha)',
+        'if ((Get-Sha256 $CgwBinary) -ne $ExpectedCgwSha)',
+        'if ((Get-Sha256 $SourceInput) -ne $ExpectedInputSha)',
+        'if ((Get-Sha256 $SourceTask) -ne $ExpectedTaskSha)',
+        'if (-not (Test-Path -LiteralPath $DefaultAuth -PathType Leaf))',
+        'if (Test-Path -LiteralPath $LocalRoot)',
+    ):
+        assert source.index(token) < uac, token
 
 
 def test_implementation_does_not_change_normative_execution_config():

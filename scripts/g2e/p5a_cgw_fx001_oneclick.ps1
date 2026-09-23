@@ -2,8 +2,11 @@ param(
     [string]$ProjectRoot = "",
     [string]$PythonExe = "",
     [string]$CodexExe = "",
+    [string]$CgwBinary = "",
     [string]$BridgeHome = "",
-    [string]$LauncherData = ""
+    [string]$LauncherData = "",
+    [switch]$ElevatedChild,
+    [switch]$PreflightOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -89,35 +92,16 @@ if ([string]::IsNullOrWhiteSpace($CodexExe)) {
     $CodexExe = (Get-Command codex -ErrorAction Stop).Source
 }
 $ThisScript = $MyInvocation.MyCommand.Path
-if (-not (Test-IsAdministrator)) {
-    Write-Host "Administrator elevation is required for the isolated P5A-CGW VHDX."
-    $ElevatedArgs = @(
-        "-NoProfile",
-        "-ExecutionPolicy", "Bypass",
-        "-File", $ThisScript,
-        "-ProjectRoot", $ProjectRoot,
-        "-PythonExe", $PythonExe,
-        "-CodexExe", $CodexExe
-    )
-    if (-not [string]::IsNullOrWhiteSpace($BridgeHome)) {
-        $ElevatedArgs += @("-BridgeHome", $BridgeHome)
-    }
-    if (-not [string]::IsNullOrWhiteSpace($LauncherData)) {
-        $ElevatedArgs += @("-LauncherData", $LauncherData)
-    }
-    $p = Start-Process -FilePath "powershell.exe" -Verb RunAs -ArgumentList $ElevatedArgs -Wait -PassThru
-    exit $p.ExitCode
-}
 Set-Location $ProjectRoot
 
-$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_CGW_FX001_EXECUTION_LOCK_V2R1.json"
+$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_CGW_FX001_EXECUTION_LOCK_V2R2.json"
 $AdmissionScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_admission.py"
 $RunnerScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_runner.py"
 $VerifierScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_verify.py"
 
 if (-not (Test-Path -LiteralPath $LockPath)) { throw "DISPATCH_LOCK_V2_MISSING" }
 $Lock = Get-Content -LiteralPath $LockPath -Raw | ConvertFrom-Json
-if ($Lock.status -ne "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R1") { throw "DISPATCH_LOCK_STATUS_INVALID" }
+if ($Lock.status -ne "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R2") { throw "DISPATCH_LOCK_STATUS_INVALID" }
 if ($Lock.authorization.dispatch_authorized -ne $true) { throw "DISPATCH_NOT_AUTHORIZED" }
 if ($Lock.authorization.max_dispatches -ne 1) { throw "DISPATCH_CARDINALITY_DRIFT" }
 if ($Lock.attempt_id -ne $AttemptId) { throw "ATTEMPT_ID_DRIFT" }
@@ -151,22 +135,82 @@ if (-not (Test-Path -LiteralPath $LauncherLog)) { throw "CGW_LAUNCHER_LOG_NOT_FO
 $BridgeObject = Get-Content -LiteralPath $BridgeConfig -Raw | ConvertFrom-Json
 if ([string]$BridgeObject.host -ne "127.0.0.1" -or [int]$BridgeObject.port -ne 17841) { throw "CGW_LOOPBACK_ROUTE_DRIFT" }
 
-$CgwBinary = $null
-try {
-    $InstallRegistry = "HKCU:\Software\d1a6026a-6210-588e-9a2b-da3936f94e02"
-    $InstallLocation = [string](Get-ItemPropertyValue -LiteralPath $InstallRegistry -Name "InstallLocation")
-    $Candidate = Join-Path $InstallLocation "Codex Web GPT.exe"
-    if (Test-Path -LiteralPath $Candidate) { $CgwBinary = $Candidate }
-} catch {}
-if (-not $CgwBinary) {
+if ([string]::IsNullOrWhiteSpace($CgwBinary)) {
+    try {
+        $InstallRegistry = "HKCU:\Software\d1a6026a-6210-588e-9a2b-da3936f94e02"
+        $InstallLocation = [string](Get-ItemPropertyValue -LiteralPath $InstallRegistry -Name "InstallLocation")
+        $Candidate = Join-Path $InstallLocation "Codex Web GPT.exe"
+        if (Test-Path -LiteralPath $Candidate) { $CgwBinary = $Candidate }
+    } catch {}
+}
+if ([string]::IsNullOrWhiteSpace($CgwBinary)) {
     $Candidate = [string]@($BridgeObject.runtimeCommand)[0]
     if (-not (Test-Path -LiteralPath $Candidate)) { throw "CGW_BINARY_NOT_FOUND" }
     $CgwBinary = $Candidate
 }
+if (-not (Test-Path -LiteralPath $CgwBinary -PathType Leaf)) { throw "CGW_BINARY_NOT_FOUND" }
 if ((Get-Sha256 $CgwBinary) -ne $ExpectedCgwSha) { throw "CGW_BINARY_HASH_DRIFT" }
 
 $LocalRoot = Join-Path $ProjectRoot "g2e\.local\P5A-CGW-FX001-V4-001"
 if (Test-Path -LiteralPath $LocalRoot) { throw "FUNCTIONAL_ROOT_ALREADY_EXISTS_FAIL_CLOSED" }
+
+$SourceFixture = Join-Path $ProjectRoot "g2e\.local\P5A-D2S1\execution\P5-FX-001"
+$SourceInput = Join-Path $SourceFixture "input.json"
+$SourceTask = Join-Path $SourceFixture "TASK.md"
+if ((Get-Sha256 $SourceInput) -ne $ExpectedInputSha) { throw "SOURCE_INPUT_HASH_DRIFT" }
+if ((Get-Sha256 $SourceTask) -ne $ExpectedTaskSha) { throw "SOURCE_TASK_HASH_DRIFT" }
+
+$DefaultAuth = Join-Path $env:USERPROFILE ".codex\auth.json"
+if (-not (Test-Path -LiteralPath $DefaultAuth -PathType Leaf)) { throw "DEFAULT_AUTH_MISSING" }
+
+Write-Host ""
+Write-Host "=== P5A-CGW PRE-UAC PREFLIGHT ===" -ForegroundColor Cyan
+Write-Host "STATUS: PASS"
+Write-Host ("LOCK: " + $Lock.status)
+Write-Host ("ATTEMPT: " + $AttemptId)
+Write-Host ("PYTHON: " + $PythonExe)
+Write-Host ("CODEX: " + $CodexExe)
+Write-Host ("CGW: " + $CgwBinary)
+Write-Host ("BRIDGE_HOME: " + $BridgeHome)
+Write-Host ("LAUNCHER_DATA: " + $LauncherData)
+Write-Host "ATTEMPT_CONSUMED: False"
+Write-Host "MODEL_TURN_SENT: False"
+
+if ($PreflightOnly) {
+    Write-Host "PREFLIGHT_ONLY: PASS — no UAC, no VHDX, no LocalRoot, no marker, no model turn." -ForegroundColor Yellow
+    return
+}
+
+if (-not (Test-IsAdministrator)) {
+    Write-Host ""
+    Write-Host "Administrator elevation is required for the isolated P5A-CGW VHDX."
+    $ElevatedArgs = @(
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File", $ThisScript,
+        "-ProjectRoot", $ProjectRoot,
+        "-PythonExe", $PythonExe,
+        "-CodexExe", $CodexExe,
+        "-CgwBinary", $CgwBinary,
+        "-BridgeHome", $BridgeHome,
+        "-LauncherData", $LauncherData,
+        "-ElevatedChild"
+    )
+    try {
+        $p = Start-Process -FilePath "powershell.exe" -Verb RunAs -ArgumentList $ElevatedArgs -Wait -PassThru
+    } catch {
+        Write-Host ("UAC_HANDOFF_ERROR: " + $_.Exception.Message) -ForegroundColor Red
+        throw
+    }
+    if ($p.ExitCode -ne 0) {
+        Write-Host ("ELEVATED_CHILD_EXIT_CODE: " + $p.ExitCode) -ForegroundColor Red
+    }
+    exit $p.ExitCode
+}
+
+if (-not $ElevatedChild) {
+    Write-Host "RUNNING_ALREADY_ELEVATED_WITHOUT_HANDOFF: accepted; exact preflight passed." -ForegroundColor Yellow
+}
 
 $VolumeDir = Join-Path $LocalRoot "volume"
 $CodexHome = Join-Path $LocalRoot "codex-home"
