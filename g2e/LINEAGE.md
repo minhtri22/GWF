@@ -545,3 +545,17 @@
 - **Authorization boundary:** no model turn, ChatGPT browser submission, MCP invocation, scientific attempt, P5A official fallback or A/B comparison.
 - **After fresh Q0b PASS:** formal-close zero-model qualification first; functional attempt remains unauthorized until separately preregistered/locked.
 - **Lock:** `g2e/docs/P5A_CGW_Q0B_RUNTIME_ALIGNMENT_LOCK.json`.
+
+
+### G2E-P5A-CGW — Runtime target correction to v4.0.7
+
+- **Status:** TARGET CORRECTION FROZEN / v5.0.8 ALIGNMENT AUTHORIZATION REVOKED BEFORE MUTATION.
+- **Operator phase target:** installed `codex-chatgpt-web v4.0.7`; v5.0.8 is not to be used in this phase.
+- **Prior alignment invocation:** fail-closed at `QUIT_CODEX_WEB_GPT_BEFORE_RUNTIME_ALIGNMENT`; no installer/runtime mutation occurred.
+- **Exact v4.0.7 tag:** `425092367f5cbfa33a071e460dbd72215bf0b9fa` -> source commit `b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494`.
+- **Authority source check:** v4.0.7 already states Codex remains sandbox/approval/tool authority, bridge is not a second planner/router, active outer-turn tool registry bounds MCP, and `Codex Native` is legacy/non-fallback.
+- **No retroactive PASS:** existing local Q0b evidence remains pending read-only re-adjudication; target correction alone cannot promote it.
+- **Revoked:** `p5a_cgw_q0b_align_runtime_5_0_8.ps1` local authorization.
+- **Next:** bounded exact-v4.0.7 source/contract zero-model qualification, then read-only re-adjudication of existing local Q0b evidence if that qualification passes.
+- **Still closed:** model-bearing functional attempt and P5A official A/B.
+- **Correction record:** `g2e/docs/P5A_CGW_RUNTIME_TARGET_CORRECTION_V4_0_7.md` / `.json`.
