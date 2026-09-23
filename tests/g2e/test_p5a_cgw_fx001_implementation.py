@@ -459,6 +459,12 @@ def test_oneclick_preflight_resolves_and_checks_local_dependencies_before_uac():
         assert source.index(token) < uac, token
 
 
+
+def test_oneclick_is_ascii_only_for_windows_powershell_51_parser_safety():
+    source = ONECLICK.read_text(encoding="utf-8")
+    assert all(ord(ch) < 128 for ch in source)
+
+
 def test_implementation_does_not_change_normative_execution_config():
     config = json.loads(EXEC_CONFIG.read_text(encoding="utf-8"))
     assert config["route"]["model_slug"] == "chatgpt-web/high"

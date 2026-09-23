@@ -177,7 +177,7 @@ Write-Host "ATTEMPT_CONSUMED: False"
 Write-Host "MODEL_TURN_SENT: False"
 
 if ($PreflightOnly) {
-    Write-Host "PREFLIGHT_ONLY: PASS — no UAC, no VHDX, no LocalRoot, no marker, no model turn." -ForegroundColor Yellow
+    Write-Host "PREFLIGHT_ONLY: PASS - no UAC, no VHDX, no LocalRoot, no marker, no model turn." -ForegroundColor Yellow
     return
 }
 
