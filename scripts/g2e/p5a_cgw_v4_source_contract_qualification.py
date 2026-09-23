@@ -135,7 +135,8 @@ def verify_v4_source_contract(root: Path) -> dict[str, Any]:
         "The bridge transports decisions; it does not add a second planner, semantic router, or fallback",
         "The pre-v4 `Codex Native` connector is treated as legacy and is never selected as a fallback.",
         "Responses and health listeners bind to `127.0.0.1` only.",
-        "UI drift fails the turn; it never chooses another model, starts another transport, or returns a fabricated success.",
+        "UI drift fails the turn; it never chooses another model, starts another",
+        "transport, or returns a fabricated success.",
     ):
         _require_fragment(security, fragment, "V4_AUTHORITY_CONTRACT")
 
