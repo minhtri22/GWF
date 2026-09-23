@@ -168,3 +168,238 @@ Debt branch provides:
 The overlay must not be treated as a replacement product UI. It identifies live versus NOT_EXPOSED surfaces explicitly.
 
 No DG-P11 implementation is authorized by this tooling.
+
+## TD-UX-03 — Source preview, isolated execution and explainable experiment replay
+
+**State:** RECORDED / NOT_IMPLEMENTED  
+**Scope opened:** NO  
+**Implementation authorization:** NONE  
+**Sequencing:** after the approved/frozen UI/UX visual baseline; exact BPS/product slice to be separately specified and authorized.
+
+### Product intent
+
+GWF is not only a place to launch research experiments. It must also let an operator inspect, understand and replay the source artifacts that produced research results.
+
+The future product surface therefore needs three linked capabilities:
+
+```text
+source artifact
+    -> preview
+    -> isolated execution
+    -> explainable replay
+    -> stdout/stderr/evidence/artifacts
+```
+
+The initial source-execution scope should prioritize PowerShell and Python experiment code. Additional text/source types may be previewable without execution when separately qualified.
+
+### Source preview contract
+
+The UI should support governed preview of source artifacts such as:
+
+- PowerShell `.ps1`;
+- Python `.py`;
+- Markdown/text;
+- JSON/YAML/configuration;
+- experiment logs and evidence snippets.
+
+Preview must preserve exact source identity:
+
+- artifact/document ID where applicable;
+- exact revision;
+- content/source hash;
+- originating repository/path when governed;
+- line numbers;
+- syntax-aware rendering for supported source languages.
+
+Preview is read-only unless a separately governed source-editing capability is authorized.
+
+### Isolated execution contract
+
+Source execution must not run implicitly in the browser process or directly mutate the host research environment.
+
+A future sandbox runner should provide:
+
+- disposable per-run execution environment;
+- Python virtual environment and/or stronger isolation as required by the threat model;
+- exact interpreter/runtime identity;
+- dependency lock/fingerprint;
+- bounded CPU/memory/time;
+- controlled filesystem mounts;
+- explicit writable output directory;
+- network disabled by default unless the experiment contract authorizes it;
+- stdout/stderr capture;
+- exit code and failure classification;
+- produced artifact/evidence capture;
+- environment and source hashes bound to the run;
+- cleanup without deleting preserved evidence.
+
+The exact isolation mechanism (venv, process sandbox, container, VM, or a tiered combination) is intentionally **not frozen by this debt record**. It requires a separate security/runtime specification before implementation.
+
+### Explainable experiment authoring requirement
+
+Experiment code written or materially rewritten by an AI must contain human-readable explanatory annotations sufficient for replay.
+
+At minimum, each experiment-level function or logical execution unit should have an authoring-time explanation describing:
+
+- what the function does;
+- why it exists in the experiment;
+- important inputs;
+- expected outputs/side effects;
+- assumptions or invariants that materially affect interpretation.
+
+For Python this may be represented by docstrings/comments; for PowerShell by function-adjacent help/comments. A later specification may define a structured annotation format, but this debt item does not freeze syntax.
+
+AI-generated explanation text is **descriptive metadata**, not scientific evidence and not a substitute for code, tests, provenance, or measured outcomes.
+
+### Static function/comment manifest
+
+Before execution, the runner should statically extract a manifest from the exact source revision.
+
+Minimum conceptual fields:
+
+```text
+source_hash
+file_path
+function_id
+function_name
+language
+start_line
+end_line
+explanation/comment
+parent/module context
+```
+
+Extraction must use language-aware parsing rather than regex-only inference for supported languages:
+
+- Python AST for Python;
+- PowerShell AST/parser for PowerShell.
+
+If a required experiment function has no usable explanation, the UI must report that absence explicitly. It must not fabricate a replay explanation after the fact and present it as if it existed in the executed source.
+
+### Runtime execution events
+
+The sandbox runner should emit bounded execution events for experiment-owned functions/logical units, for example:
+
+```text
+FUNCTION_ENTER
+FUNCTION_EXIT
+FUNCTION_ERROR
+```
+
+Each event should bind at least:
+
+- run/execution identity;
+- exact source hash;
+- function ID/name;
+- source line span;
+- timestamp/order;
+- call/parent context where available;
+- status;
+- stdout/stderr/evidence offsets or references.
+
+Instrumentation should focus on governed experiment-owned code. It should not automatically trace every third-party/library function.
+
+### Explainable replay UX
+
+During live execution or later replay, the browser should synchronize:
+
+```text
+execution timeline
+      |
+      +--> active function
+      +--> highlighted source lines
+      +--> authoring-time explanation/comment
+      +--> inputs/context summary
+      +--> stdout/stderr
+      +--> produced evidence/artifacts
+      +--> exit/failure state
+```
+
+When execution reaches a function, the operator should be able to see:
+
+- function name;
+- source file and line range;
+- the exact explanatory comment/docstring extracted from the executed source revision;
+- current execution state;
+- previous/next experiment-level steps;
+- relevant output/evidence generated at that point.
+
+Replay must distinguish clearly between:
+
+1. **source-authored explanation** — text present in the executed revision;
+2. **runtime facts** — measured events/output/evidence;
+3. **later AI interpretation** — optional analysis generated after execution.
+
+These three layers must never be silently conflated.
+
+### Reproducibility and governance
+
+A replayable run should bind:
+
+```text
+source revision/hash
++ function/comment manifest hash
++ sandbox/environment identity
++ dependency identity
++ inputs/configuration
++ execution-event stream
++ outputs/evidence
+```
+
+A later edit to comments/docstrings must not rewrite the historical explanation shown for an already completed run. Historical replay resolves against the exact executed source revision and manifest.
+
+### UI direction
+
+The future source workspace should extend the approved Document/Artifact preview model rather than create a separate developer console.
+
+Expected conceptual layout:
+
+```text
+Source / artifact list
+        |
+        +---------------- Source Preview ----------------+
+        | line numbers + syntax + active-line highlight |
+        +-----------------------------------------------+
+        |
+        +-- Inspector / Replay
+              Preview
+              Functions
+              Execution
+              Output
+              Evidence
+              History
+```
+
+A function navigator should list function names and explanations. During execution/replay the currently active function is highlighted and its explanation is visible without requiring the user to read the entire file.
+
+### Acceptance intent
+
+A future implementation must prove at least:
+
+- exact source revision is previewed;
+- Python and PowerShell supported-source parsing is deterministic;
+- experiment-level functions receive stable manifest identities;
+- missing authoring explanations are surfaced, not silently invented;
+- sandbox execution cannot silently mutate the host environment;
+- runtime events resolve back to exact source/function spans;
+- live execution and historical replay show the same frozen source-authored explanation for the same run;
+- function-enter/exit/error state is visible to the operator;
+- stdout/stderr and generated artifacts/evidence remain linked to the relevant run/function context;
+- historical replay remains valid after the working copy changes;
+- no AI explanation is presented as measured scientific evidence.
+
+### Explicit non-scope of this debt record
+
+This record does **not** authorize:
+
+- sandbox/runtime implementation;
+- arbitrary code execution from the browser;
+- host shell execution;
+- source editing;
+- automatic dependency installation from untrusted code;
+- unrestricted network access;
+- hidden chain-of-thought capture/display;
+- BPS-I01 or later-slice opening;
+- any change to current scientific/governance results.
+
+This item is a frozen product-direction/debt record only. Detailed security model, execution protocol, annotation schema, APIs, UI slice and qualification gates require separate specification and authorization.

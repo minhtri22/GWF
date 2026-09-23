@@ -1870,3 +1870,33 @@ for each newly qualified backend capability:
 ```
 
 This sequencing changes roadmap priority, not hard dependency semantics.
+
+# 10. Future product debt parking lot — source preview and explainable sandbox replay
+
+The following product direction is recorded but **not authorized for implementation**:
+
+```text
+approved/frozen UI visual baseline
+        ↓
+future bounded specification
+        ↓
+source artifact preview
+        ↓
+isolated PowerShell/Python execution
+        ↓
+function/comment manifest
+        ↓
+live execution timeline
+        ↓
+historical explainable replay
+```
+
+Canonical debt record:
+
+- `docs/TECHNICAL_DEBT.md` → `TD-UX-03 — Source preview, isolated execution and explainable experiment replay`.
+
+Key invariant:
+
+> When replay reaches an experiment-owned function/logical unit, the UI should show the exact authoring-time explanation/comment bound to the executed source revision, together with runtime state/output/evidence. AI-generated descriptive comments are not scientific evidence.
+
+This parking-lot item does not change the current BPS execution order, does not open BPS-I01, and does not authorize sandbox execution.
