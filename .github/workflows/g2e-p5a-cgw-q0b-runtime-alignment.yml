@@ -1,0 +1,118 @@
+name: G2E P5A-CGW Q0b Runtime Alignment Qualification
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["research/p5a-cgw-specification"]
+    paths:
+      - "scripts/g2e/p5a_cgw_q0b_align_runtime_5_0_8.ps1"
+      - "tests/g2e/test_p5a_cgw_q0b_runtime_alignment.py"
+      - "g2e/docs/P5A_CGW_Q0B_RUNTIME_ALIGNMENT_*"
+      - ".github/workflows/g2e-p5a-cgw-q0b-runtime-alignment.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  linux-static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: src
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependency
+        run: python -m pip install pytest
+
+      - name: Parse PowerShell wrapper
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "scripts/g2e/p5a_cgw_q0b_align_runtime_5_0_8.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -ne 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
+      - name: Run bounded alignment tests
+        run: pytest -q tests/g2e/test_p5a_cgw_q0b_runtime_alignment.py
+
+      - name: Verify frozen v5.0.8 release metadata
+        shell: python
+        run: |
+          import json, urllib.request
+          release = json.load(urllib.request.urlopen(
+              "https://api.github.com/repos/miuuyy/codex-chatgpt-web/releases/tags/v5.0.8"
+          ))
+          assets = {a["name"]: a for a in release["assets"]}
+          assert release["tag_name"] == "v5.0.8"
+          assert assets["install-launcher.ps1"]["digest"] == "sha256:117ab8e5bfba36d3f611e9294355afe70936a536bf3305d4fe563edab7c40a71"
+          assert assets["codex-web-gpt-5.0.8-win-x64.exe"]["digest"] == "sha256:83224d59506462ab2976f437bfaea96b046d4ed55caa7e1cfd6a3d61de0a8ff3"
+          print("P5A_CGW_Q0B_RELEASE_PIN_PASS")
+
+      - name: Install G2E dependencies
+        run: |
+          python -m pip install -U pip
+          pip install -e ".[dev]"
+
+      - name: Regress existing P5A-CGW qualifier tests
+        run: pytest -q tests/g2e/test_p5a_cgw_zero_model_qualification.py
+
+  windows-static:
+    runs-on: windows-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pytest
+        shell: powershell
+        run: python -m pip install pytest
+
+      - name: Parse wrapper under Windows PowerShell
+        shell: powershell
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "scripts\g2e\p5a_cgw_q0b_align_runtime_5_0_8.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -ne 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
+      - name: Run alignment static tests
+        shell: powershell
+        run: |
+          pytest -q tests\g2e\test_p5a_cgw_q0b_runtime_alignment.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Assert no model-bearing endpoint invocation
+        shell: powershell
+        run: |
+          $src = Get-Content scripts\g2e\p5a_cgw_q0b_align_runtime_5_0_8.ps1 -Raw
+          if ($src -match 'Invoke-(RestMethod|WebRequest)[^\r\n]+/v1/(responses|models)') {
+            throw "MODEL_BEARING_ENDPOINT_FOUND"
+          }
+          if ($src -match 'turn/start') {
+            throw "CODEX_TURN_START_FOUND"
+          }
+          Write-Host "P5A_CGW_Q0B_RUNTIME_ALIGNMENT_ZERO_MODEL_FIREWALL_PASS"
