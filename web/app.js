@@ -2,7 +2,7 @@
 
 const THEME_KEY = "gwr-ui-theme";
 const SIDEBAR_KEY = "gwr-ui-sidebar";
-const state = { bootstrap: null, me: null, health: null };
+const state = { bootstrap: null, me: null, health: null, home: null, homeError: null, homeLoading: false };
 const DEFAULT_ROUTE = "/app/system/diagnostics";
 const ROUTE_COPY = {
   home: "Home unlocks in BPS-M01 after its own QA and local UAT. No KPI, run, project or activity data is fabricated in the foundation shell.",
@@ -177,6 +177,7 @@ function setActiveNav(capabilityId) {
 
 function renderLockedRoute(item) {
   const meta = stateMeta(item);
+  $("#homeRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = true;
   $("#lockedRouteView").hidden = false;
   $("#routeStateIcon").innerHTML = iconSvg(item.id, "icon");
@@ -191,9 +192,178 @@ function renderLockedRoute(item) {
 }
 
 function renderDiagnosticsRoute(item) {
+  $("#homeRouteView").hidden = true;
   $("#lockedRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = false;
   document.title = "GWF — System Diagnostics";
+}
+
+
+function formatHomeTime(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
+}
+
+function formatDuration(startedAt) {
+  const start = new Date(startedAt).getTime();
+  if (!Number.isFinite(start)) return "—";
+  const seconds = Math.max(0, Math.floor((Date.now() - start) / 1000));
+  if (seconds < 60) return seconds + "s";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return minutes + "m";
+  const hours = Math.floor(minutes / 60);
+  return hours + "h " + (minutes % 60) + "m";
+}
+
+function homeEmpty(message, colspan = 1) {
+  return '<tr><td class="empty-cell" colspan="' + colspan + '">' + esc(message) + "</td></tr>";
+}
+
+function renderAttentionIndicator() {
+  const count = state.home?.kpis?.attention_required;
+  $("#notificationButton").innerHTML = iconSvg("bell", "icon") +
+    '<span id="attentionCount" class="attention-count">' + esc(count ?? "—") + "</span>";
+  $("#notificationButton").title = count == null ?
+    "Attention count unavailable" :
+    ("Attention required: " + count + " · feed opens with Operations in a later screen");
+}
+
+function renderHomeError(message) {
+  $("#homeStateBanner").hidden = false;
+  $("#homeStateBanner").className = "home-state-banner error";
+  $("#homeStateBanner").textContent = "Home data unavailable — " + message;
+  $("#homeKpis").innerHTML = "";
+  $("#executingProjectsBody").innerHTML = homeEmpty("Executing projects unavailable.", 8);
+  $("#liveRunsBody").innerHTML = homeEmpty("Live runs unavailable.", 6);
+  $("#homeAttentionList").innerHTML = '<div class="feed-empty">Attention data unavailable.</div>';
+  $("#recentActivityList").innerHTML = '<div class="feed-empty">Recent activity unavailable.</div>';
+}
+
+function renderHomeSummary() {
+  const summary = state.home;
+  if (!summary) {
+    renderHomeError(state.homeError || "No authoritative summary returned.");
+    return;
+  }
+
+  const complete = summary.query_status === "COMPLETE";
+  $("#homeStateBanner").hidden = complete;
+  if (!complete) {
+    $("#homeStateBanner").className = "home-state-banner warn";
+    $("#homeStateBanner").textContent = "Home projection is not complete. Zero values are not treated as authoritative.";
+  }
+  $("#homeScopeBadge").textContent = summary.scope?.label || "Authorized scope";
+  $("#homeGeneratedAt").textContent = formatHomeTime(summary.generated_at);
+  $("#homeBuildSha").textContent = summary.build_sha || "unknown";
+
+  const k = summary.kpis || {};
+  const cards = [
+    ["Total Projects", k.total_projects, "Authorized scope"],
+    ["Lifecycle Active", k.lifecycle_active, "Lifecycle = ACTIVE"],
+    ["Executing Now", k.executing_now, "Authoritative execution"],
+    ["Running Runs", k.running_runs, "runtime_status = RUNNING"],
+    ["Pending Approvals", k.pending_approvals, "PENDING_APPROVAL"],
+    ["Attention Required", k.attention_required, "Unresolved records"],
+    ["Core Health", k.core_health || "UNKNOWN", "Categorical readiness"],
+  ];
+  $("#homeKpis").innerHTML = cards.map(([label, value, note]) => {
+    const danger = label === "Attention Required" && Number(value) > 0;
+    const health = label === "Core Health";
+    const cls = danger ? " attention" : (health ? " health-" + String(value).toLowerCase() : "");
+    return '<article class="home-kpi' + cls + '"><span>' + esc(label) + '</span><strong>' +
+      esc(value ?? "—") + '</strong><small>' + esc(note) + "</small></article>";
+  }).join("");
+
+  const projects = summary.executing_projects || [];
+  $("#executingProjectsCount").textContent = projects.length;
+  $("#executingProjectsBody").innerHTML = projects.length ? projects.map((p) => {
+    const domain = p.domain || {};
+    const domainText = domain.revision_id ?
+      (domain.domain_id + " · " + domain.revision_id) :
+      ((domain.domain_id || "—") + " · unpinned");
+    const phase = p.phase_label || "—";
+    const phaseIds = [p.orchestration_id, p.phase_execution_id].filter(Boolean).join(" · ");
+    return "<tr>" +
+      '<td><strong>' + esc(p.project_name) + '</strong><code>' + esc(p.project_id) + "</code></td>" +
+      '<td><span class="data-state">' + esc(p.lifecycle) + '</span><small>' + esc(p.execution_activity) + "</small></td>" +
+      '<td><span>' + esc(domainText) + "</span></td>" +
+      '<td><span>' + esc(phase) + '</span><code>' + esc(phaseIds || "—") + "</code></td>" +
+      '<td><code>' + esc(p.current_actor || "SYSTEM") + "</code></td>" +
+      '<td><code>' + esc(p.running_run_id || "—") + "</code></td>" +
+      '<td><span>' + esc(formatHomeTime(p.latest_event_at)) + "</span></td>" +
+      '<td><strong class="' + (Number(p.attention_count) > 0 ? "attention-text" : "") + '">' + esc(p.attention_count ?? 0) + "</strong></td>" +
+      "</tr>";
+  }).join("") : homeEmpty("No projects are executing in the current authorized scope.", 8);
+
+  const runs = summary.live_runs || [];
+  $("#liveRunsCount").textContent = runs.length;
+  $("#liveRunsBody").innerHTML = runs.length ? runs.map((run) =>
+    "<tr>" +
+      '<td><code>' + esc(run.run_id) + '</code><small class="run-status">' + esc(run.status) + "</small></td>" +
+      '<td><strong>' + esc(run.project_name) + '</strong><code>' + esc(run.project_id) + "</code></td>" +
+      '<td><span>' + esc(run.workunit_type || "—") + '</span><small>' + esc(run.phase_label || "—") + "</small></td>" +
+      '<td><span>' + esc(formatHomeTime(run.started_at)) + '</span><small>' + esc(formatDuration(run.started_at)) + "</small></td>" +
+      '<td><code>' + esc(run.actor || "SYSTEM") + "</code></td>" +
+      '<td><span>' + esc(run.latest_event_action || "—") + '</span><small>' + esc(formatHomeTime(run.latest_event_at)) + "</small></td>" +
+      "</tr>"
+  ).join("") : homeEmpty("No RUNNING execution runs.", 6);
+
+  const attention = summary.attention || [];
+  $("#homeAttentionCount").textContent = attention.length;
+  $("#homeAttentionList").innerHTML = attention.length ? attention.map((item) =>
+    '<div class="feed-item attention-item"><div><strong>' + esc(item.kind) + '</strong><span>' +
+    esc(item.project_name || "System") + '</span></div><p>' + esc(item.label || item.record_id) +
+    '</p><code>' + esc(item.record_id) + '</code><time>' + esc(formatHomeTime(item.created_at)) + "</time></div>"
+  ).join("") : '<div class="feed-empty">No authoritative attention items.</div>';
+
+  const activity = summary.recent_activity || [];
+  $("#recentActivityList").innerHTML = activity.length ? activity.map((item) =>
+    '<div class="feed-item"><div><strong>' + esc(item.action) + '</strong><span>' +
+    esc(item.project_name || item.project_id) + '</span></div><p>' +
+    esc(item.resource_type + " · " + item.resource_id) + '</p><code>' +
+    esc(item.actor_id || "SYSTEM") + '</code><time>' + esc(formatHomeTime(item.timestamp)) + "</time></div>"
+  ).join("") : '<div class="feed-empty">No authoritative activity in this scope yet.</div>';
+
+  renderAttentionIndicator();
+}
+
+async function refreshHomeSummary(render = true) {
+  if (state.homeLoading) return;
+  state.homeLoading = true;
+  state.homeError = null;
+  if (render) {
+    $("#homeStateBanner").hidden = false;
+    $("#homeStateBanner").className = "home-state-banner loading";
+    $("#homeStateBanner").textContent = "Loading authoritative Home summary…";
+  }
+  try {
+    state.home = await api("/browser/home-summary");
+  } catch (error) {
+    state.home = null;
+    state.homeError = error.message;
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+  } finally {
+    state.homeLoading = false;
+  }
+  renderAttentionIndicator();
+  if (render && !$("#homeRouteView").hidden) {
+    if (state.home) renderHomeSummary();
+    else renderHomeError(state.homeError || "Unknown error");
+  }
+}
+
+function renderHomeRoute(item) {
+  $("#lockedRouteView").hidden = true;
+  $("#diagnosticsRouteView").hidden = true;
+  $("#homeRouteView").hidden = false;
+  document.title = "GWF — Home";
+  if (state.home) renderHomeSummary();
+  else if (state.homeError) renderHomeError(state.homeError);
+  else void refreshHomeSummary(true);
 }
 
 function renderRoute() {
@@ -211,7 +381,8 @@ function renderRoute() {
   }
   setActiveNav(item.id);
   document.title = "GWF — " + displayLabel(item);
-  if (item.state === "LIVE_FOUNDATION" && item.id === "diagnostics") renderDiagnosticsRoute(item);
+  if (item.state === "LIVE_MODULE" && item.id === "home") renderHomeRoute(item);
+  else if (item.state === "LIVE_FOUNDATION" && item.id === "diagnostics") renderDiagnosticsRoute(item);
   else renderLockedRoute(item);
 }
 
@@ -312,6 +483,7 @@ async function loadAuthenticatedShell() {
   $("#loginView").hidden = true;
   $("#appView").hidden = false;
   await refreshHealth();
+  await refreshHomeSummary(false);
   renderRoute();
 }
 
@@ -326,7 +498,7 @@ function showLogin() {
 
 function wireStaticIcons() {
   $("#searchIcon").innerHTML = iconSvg("search", "icon");
-  $("#notificationButton").innerHTML = iconSvg("bell", "icon");
+  $("#notificationButton").innerHTML = iconSvg("bell", "icon") + '<span id="attentionCount" class="attention-count">—</span>';
   $("#mobileMenu").innerHTML = iconSvg("panel", "icon");
   $("#boundaryIcon").innerHTML = iconSvg("shield", "icon");
   document.querySelector('[data-theme-option="light"]').innerHTML = iconSvg("sun", "icon");
@@ -383,6 +555,10 @@ $("#mainNav").addEventListener("click", (event) => {
 
 window.addEventListener("popstate", () => {
   if (state.bootstrap?.authenticated) renderRoute();
+});
+
+$("#homeRefreshButton").addEventListener("click", async () => {
+  await refreshHomeSummary(true);
 });
 
 $("#refreshButton").addEventListener("click", async () => {

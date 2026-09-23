@@ -86,6 +86,86 @@
       </header>
 
       <main class="content">
+        <section id="homeRouteView" class="home-page" hidden>
+          <section class="home-hero">
+            <div>
+              <p class="eyebrow">Operational command dashboard</p>
+              <h1>Home</h1>
+              <p>What is GWF doing right now, and what needs your attention?</p>
+            </div>
+            <div class="home-hero-actions">
+              <span id="homeScopeBadge" class="scope-badge">All authorized projects</span>
+              <button id="homeRefreshButton" class="text-button" type="button">Refresh</button>
+            </div>
+          </section>
+
+          <div id="homeStateBanner" class="home-state-banner" hidden></div>
+
+          <section id="homeKpis" class="home-kpi-grid" aria-label="Home operational metrics"></section>
+
+          <section class="home-primary-grid">
+            <article class="panel home-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Execution activity</p>
+                  <h2>Executing Projects</h2>
+                </div>
+                <span id="executingProjectsCount" class="panel-count">0</span>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead><tr><th>Project</th><th>Lifecycle / activity</th><th>Domain</th><th>Current phase</th><th>Actor</th><th>Run</th><th>Latest event</th><th>Attention</th></tr></thead>
+                  <tbody id="executingProjectsBody"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="panel home-panel attention-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Operator queue</p>
+                  <h2>Attention Required</h2>
+                </div>
+                <span id="homeAttentionCount" class="panel-count">0</span>
+              </div>
+              <div id="homeAttentionList" class="home-feed"></div>
+            </article>
+          </section>
+
+          <section class="home-secondary-grid">
+            <article class="panel home-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Runtime</p>
+                  <h2>Live Runs / Executions</h2>
+                </div>
+                <span id="liveRunsCount" class="panel-count">0</span>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table compact">
+                  <thead><tr><th>Run</th><th>Project</th><th>Workunit / phase</th><th>Started / duration</th><th>Actor</th><th>Latest event</th></tr></thead>
+                  <tbody id="liveRunsBody"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="panel home-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Authoritative event feed</p>
+                  <h2>Recent Activity</h2>
+                </div>
+              </div>
+              <div id="recentActivityList" class="home-feed activity-feed"></div>
+            </article>
+          </section>
+
+          <div class="home-footnote">
+            <span>Projection</span><code id="homeGeneratedAt">—</code>
+            <span>Build</span><code id="homeBuildSha">—</code>
+          </div>
+        </section>
+
         <section id="lockedRouteView" class="route-state-page" hidden>
           <article class="route-state-card">
             <div id="routeStateIcon" class="route-state-icon" aria-hidden="true"></div>

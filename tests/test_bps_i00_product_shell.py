@@ -76,7 +76,7 @@ def test_i00_live_shell_and_bootstrap_are_authoritative(tmp_path, monkeypatch):
 
     capabilities = {x["id"]: x for x in body["capabilities"]}
     assert capabilities["home"] == {
-        "id": "home", "label": "Home", "state": "SKELETON_LOCKED",
+        "id": "home", "label": "Home", "state": "LIVE_MODULE",
         "slice": "BPS-M01", "route": "/app/home",
     }
     assert capabilities["projects"]["state"] == "SKELETON_LOCKED"

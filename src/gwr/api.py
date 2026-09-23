@@ -193,7 +193,7 @@ def create_app(
     resolved_product_info.update(product_info or {})
     browser_cookie_name = "gwr_browser_session"
     browser_capabilities = [
-        {"id": "home", "label": "Home", "state": "SKELETON_LOCKED", "slice": "BPS-M01", "route": "/app/home"},
+        {"id": "home", "label": "Home", "state": "LIVE_MODULE", "slice": "BPS-M01", "route": "/app/home"},
         {"id": "projects", "label": "Projects", "state": "SKELETON_LOCKED", "slice": "BPS-M02", "route": "/app/projects"},
         {"id": "operations", "label": "Operations", "state": "SKELETON_LOCKED", "slice": "BPS-M03", "route": "/app/operations"},
         {"id": "packages", "label": "Packages", "state": "SKELETON_LOCKED", "slice": "BPS-M06", "route": "/app/research/packages"},
@@ -517,6 +517,20 @@ def create_app(
             "build_sha": resolved_product_info["build_sha"],
             "checks": checks,
         }
+
+    @app.get('/browser/home-summary')
+    def browser_home_summary(request: Request):
+        _, principal = browser_principal(request)
+        readiness = ready()
+        if isinstance(readiness, JSONResponse):
+            readiness_payload = json.loads(readiness.body.decode("utf-8"))
+        else:
+            readiness_payload = readiness
+        return product.home_summary(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+            core_health=str(readiness_payload.get("core_health") or "UNKNOWN"),
+        )
 
     @app.get('/projects/{project_id}/audit')
     def audit(project_id: str, authorization: str | None = Header(default=None)):
