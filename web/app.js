@@ -3,6 +3,18 @@
 const THEME_KEY = "gwr-ui-theme";
 const SIDEBAR_KEY = "gwr-ui-sidebar";
 const state = { bootstrap: null, me: null, health: null };
+const DEFAULT_ROUTE = "/app/system/diagnostics";
+const ROUTE_COPY = {
+  home: "Home unlocks in BPS-M01 after its own QA and local UAT. No KPI, run, project or activity data is fabricated in the foundation shell.",
+  projects: "Projects and access management unlock in BPS-M02. No project entities or lifecycle actions are fabricated here.",
+  operations: "Global Runs, Approvals, Audit and Runtime unlock in BPS-M03. This foundation route contains no synthetic operational data.",
+  packages: "Research package registry and usage unlock in BPS-M06. No package or project-usage records are fabricated here.",
+  github: "GitHub product surfaces unlock in BPS-M07. No repository binding or ChangeSet action is fabricated here.",
+  settings: "System settings unlock with BPS-M07. Foundation theme/sidebar preferences remain available from the shell controls.",
+  "shared-library": "Shared Library remains planned and blocked by its own backend governance program.",
+  "reference-acquisition": "Reference Acquisition remains planned and blocked until its backend program is qualified.",
+  agents: "Agents / Codex remains planned and blocked until its interoperability prerequisites are qualified."
+};
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
@@ -82,9 +94,10 @@ function applySidebar(value) {
 
 function stateMeta(item) {
   if (item.state === "LIVE_FOUNDATION") return { cls: "live", label: "Live foundation" };
-  if (item.state === "FOUNDATION_ONLY") return { cls: "foundation", label: "Foundation" };
+  if (item.state === "LIVE_MODULE") return { cls: "live", label: "Live" };
   if (item.state === "PLANNED_BLOCKED") return { cls: "planned", label: "Planned" };
-  return { cls: "locked", label: "Locked" };
+  if (item.state === "SKELETON_LOCKED") return { cls: "locked", label: "Locked" };
+  return { cls: "locked", label: item.state || "Locked" };
 }
 
 function statePill(item) {
@@ -120,13 +133,12 @@ function renderNav() {
   const groups = navGroups(state.bootstrap.capabilities);
   $("#mainNav").innerHTML = groups.map(([group, items]) => {
     const rows = items.map((item) => {
-      const enabled = item.state === "LIVE_FOUNDATION";
-      const active = item.id === "diagnostics";
       const meta = stateMeta(item);
       const title = displayLabel(item) + " — " + meta.label + " · " + item.slice;
-      return '<button type="button" class="nav-item ' + (active ? "active " : "") + (!enabled ? "disabled" : "") +
-        '" data-capability="' + esc(item.id) + '" title="' + esc(title) + '" ' +
-        (!enabled ? 'disabled aria-disabled="true"' : 'aria-current="page"') + '>' +
+      const routeClass = item.state === "LIVE_FOUNDATION" || item.state === "LIVE_MODULE" ? "" : " locked-route";
+      return '<button type="button" class="nav-item' + routeClass +
+        '" data-capability="' + esc(item.id) + '" data-route="' + esc(item.route) +
+        '" aria-label="' + esc(title) + '" title="' + esc(title) + '">' +
         '<span class="nav-icon">' + iconSvg(item.id, "icon") + '</span>' +
         '<span class="nav-label"><strong>' + esc(displayLabel(item)) + '</strong><small>' + esc(displaySubtitle(item)) + '</small></span>' +
         statePill(item) + "</button>";
@@ -137,6 +149,79 @@ function renderNav() {
 
 function capabilityById(id) {
   return state.bootstrap.capabilities.find((item) => item.id === id);
+}
+
+function normalizedRoute(pathname = window.location.pathname) {
+  const trimmed = pathname.replace(/\/+$/, "");
+  return trimmed || "/app";
+}
+
+function capabilityForRoute(pathname = window.location.pathname) {
+  const path = normalizedRoute(pathname);
+  if (path === "/app") return capabilityById("diagnostics");
+  const exact = state.bootstrap.capabilities.find((item) => item.route === path);
+  if (exact) return exact;
+  if (path.startsWith("/app/projects/")) return capabilityById("projects");
+  if (path.startsWith("/app/operations/")) return capabilityById("operations");
+  return null;
+}
+
+function setActiveNav(capabilityId) {
+  document.querySelectorAll("#mainNav .nav-item").forEach((button) => {
+    const active = button.dataset.capability === capabilityId;
+    button.classList.toggle("active", active);
+    if (active) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
+}
+
+function renderLockedRoute(item) {
+  const meta = stateMeta(item);
+  $("#diagnosticsRouteView").hidden = true;
+  $("#lockedRouteView").hidden = false;
+  $("#routeStateIcon").innerHTML = iconSvg(item.id, "icon");
+  $("#routeStateShield").innerHTML = iconSvg("shield", "icon");
+  $("#routeStateTitle").textContent = displayLabel(item);
+  $("#routeStateDescription").textContent = ROUTE_COPY[item.id] || "This product module is not yet unlocked.";
+  $("#routeStatePath").textContent = item.route;
+  $("#routeStateOwner").textContent = item.slice;
+  $("#routeStateMaturity").textContent = meta.label;
+  $("#routeStateBadge").className = "state-pill " + meta.cls;
+  $("#routeStateBadge").textContent = meta.label;
+}
+
+function renderDiagnosticsRoute(item) {
+  $("#lockedRouteView").hidden = true;
+  $("#diagnosticsRouteView").hidden = false;
+  document.title = "GWF — System Diagnostics";
+}
+
+function renderRoute() {
+  let path = normalizedRoute();
+  if (path === "/app") {
+    history.replaceState({ route: DEFAULT_ROUTE }, "", DEFAULT_ROUTE);
+    path = DEFAULT_ROUTE;
+  }
+  const item = capabilityForRoute(path);
+  if (!item) {
+    history.replaceState({ route: DEFAULT_ROUTE }, "", DEFAULT_ROUTE);
+    renderDiagnosticsRoute(capabilityById("diagnostics"));
+    setActiveNav("diagnostics");
+    return;
+  }
+  setActiveNav(item.id);
+  document.title = "GWF — " + displayLabel(item);
+  if (item.state === "LIVE_FOUNDATION" && item.id === "diagnostics") renderDiagnosticsRoute(item);
+  else renderLockedRoute(item);
+}
+
+function navigateTo(path) {
+  if (!path) return;
+  if (normalizedRoute() !== normalizedRoute(path)) {
+    history.pushState({ route: path }, "", path);
+  }
+  renderRoute();
+  $("#sidebar").classList.remove("mobile-open");
 }
 
 function renderFoundationCards() {
@@ -227,6 +312,7 @@ async function loadAuthenticatedShell() {
   $("#loginView").hidden = true;
   $("#appView").hidden = false;
   await refreshHealth();
+  renderRoute();
 }
 
 function showLogin() {
@@ -288,6 +374,17 @@ $("#sidebarToggle").addEventListener("click", () => {
 });
 
 $("#mobileMenu").addEventListener("click", () => $("#sidebar").classList.toggle("mobile-open"));
+
+$("#mainNav").addEventListener("click", (event) => {
+  const button = event.target.closest(".nav-item");
+  if (!button) return;
+  navigateTo(button.dataset.route);
+});
+
+window.addEventListener("popstate", () => {
+  if (state.bootstrap?.authenticated) renderRoute();
+});
+
 $("#refreshButton").addEventListener("click", async () => {
   state.bootstrap = await api("/browser/bootstrap");
   renderNav();
@@ -295,6 +392,7 @@ $("#refreshButton").addEventListener("click", async () => {
   renderCapabilities();
   renderIdentity();
   await refreshHealth();
+  renderRoute();
 });
 
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {

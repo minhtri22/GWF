@@ -75,12 +75,39 @@ def test_i00_live_shell_and_bootstrap_are_authoritative(tmp_path, monkeypatch):
     assert body["shell_authority"] == "BPS-I00"
 
     capabilities = {x["id"]: x for x in body["capabilities"]}
-    assert capabilities["home"]["state"] == "LOCKED"
-    assert capabilities["projects"]["state"] == "LOCKED"
+    assert capabilities["home"] == {
+        "id": "home", "label": "Home", "state": "SKELETON_LOCKED",
+        "slice": "BPS-M01", "route": "/app/home",
+    }
+    assert capabilities["projects"]["state"] == "SKELETON_LOCKED"
+    assert capabilities["projects"]["slice"] == "BPS-M02"
+    assert capabilities["projects"]["route"] == "/app/projects"
+    assert capabilities["operations"]["slice"] == "BPS-M03"
+    assert capabilities["packages"]["slice"] == "BPS-M06"
+    assert capabilities["github"]["slice"] == "BPS-M07"
+    assert capabilities["settings"]["state"] == "SKELETON_LOCKED"
+    assert capabilities["settings"]["slice"] == "BPS-M07"
     assert capabilities["shared-library"]["state"] == "PLANNED_BLOCKED"
     assert capabilities["reference-acquisition"]["state"] == "PLANNED_BLOCKED"
     assert capabilities["agents"]["state"] == "PLANNED_BLOCKED"
     assert capabilities["diagnostics"]["state"] == "LIVE_FOUNDATION"
+    assert capabilities["diagnostics"]["route"] == "/app/system/diagnostics"
+
+    for route in (
+        "/app/home",
+        "/app/projects",
+        "/app/operations",
+        "/app/research/packages",
+        "/app/system/diagnostics",
+        "/app/system/settings",
+        "/app/shared-library",
+        "/app/research/reference-acquisition",
+        "/app/agents",
+    ):
+        deep = client.get(route)
+        assert deep.status_code == 200
+        assert "Governed Knowledge Studio" in deep.text
+    assert client.get("/app/not-a-real-root").status_code == 404
 
     ready = client.get("/ready")
     assert ready.status_code == 200
@@ -167,7 +194,10 @@ def test_i00_shell_javascript_contains_only_presentation_local_storage():
     assert "access_token" not in js
     assert "localStorage.setItem(THEME_KEY" in js
     assert "localStorage.setItem(SIDEBAR_KEY" in js
-    assert 'const enabled = item.state === "LIVE_FOUNDATION";' in js
+    assert 'history.pushState({ route: path }, "", path);' in js
+    assert 'window.addEventListener("popstate"' in js
+    assert 'data-route="' in js
+    assert 'disabled aria-disabled="true"' not in js
 
 
 def test_i00_visual_shell_matches_approved_foundation_contract():
@@ -199,10 +229,31 @@ def test_i00_visual_shell_matches_approved_foundation_contract():
     assert "--topbar-bg:rgba(255,255,255,.92)" in css
     assert "--topbar-bg:rgba(9,17,29,.92)" in css
 
-    # Locked/planned items remain non-functional but descriptive.
-    assert 'disabled aria-disabled="true"' in js
+    # Locked/planned routes remain navigable but module functionality is absent.
     assert '" — " + meta.label + " · " + item.slice' in js
-    assert ".nav-item.disabled{cursor:default;opacity:.9}" in css
+    assert 'history.pushState({ route: path }, "", path);' in js
+    assert 'window.addEventListener("popstate"' in js
+    assert 'renderLockedRoute(item)' in js
+    assert 'data-route="' in js
+    assert 'disabled aria-disabled="true"' not in js
+    assert ".nav-item.locked-route{cursor:pointer;opacity:1}" in css
+    assert 'id="lockedRouteView"' in html
+    assert 'id="diagnosticsRouteView"' in html
+    assert 'id="routeStateOwner"' in html
+
+
+def test_i00_spa_router_has_no_module_data_or_fake_actions():
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+    assert 'const DEFAULT_ROUTE = "/app/system/diagnostics"' in js
+    assert 'SKELETON_LOCKED' in js
+    assert 'PLANNED_BLOCKED' in js
+    assert 'LIVE_FOUNDATION' in js
+    assert '"/app/home"' not in js  # canonical paths come from authoritative bootstrap
+    assert 'api("/browser/bootstrap")' in js
+    assert 'api("/ready")' in js
+    assert "/documents" not in js
+    assert "relation graph" not in js.lower()
+    assert "full-screen reader" not in js.lower()
 
 
 def test_i00_browser_javascript_parses_when_node_is_available():

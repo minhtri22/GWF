@@ -27,11 +27,20 @@ def test_bps_i00_local_uat_script_contract():
     assert '/ready' in text
     assert '/browser/auth/login' in text
     assert '/browser/auth/me' in text
+    assert '/app/home' in text
+    assert '/app/projects' in text
+    assert '/app/system/diagnostics' in text
+    assert 'spa_history_router' in text
+    assert 'route_http_home' in text
     assert 'HttpOnly' in text
     assert 'SameSite=Strict' in text
     assert 'Start-Process $AppUrl' in text
     assert 'System, Light and Dark' in text
     assert 'navigation collapses and expands' in text
+    assert 'browser Back and Forward' in text
+    assert 'route-specific Locked surface' in text
+    assert 'same Projects locked route is restored' in text
+    assert 'LIVE foundation' in text
     assert 'FINAL_LOCAL_VERDICT' in text
     assert 'session_survives_canonical_restart' in text
     assert 'canonical_server_stopped' in text

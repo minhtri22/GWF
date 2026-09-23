@@ -86,6 +86,28 @@
       </header>
 
       <main class="content">
+        <section id="lockedRouteView" class="route-state-page" hidden>
+          <article class="route-state-card">
+            <div id="routeStateIcon" class="route-state-icon" aria-hidden="true"></div>
+            <p class="eyebrow">Product module route</p>
+            <div class="route-state-heading">
+              <h1 id="routeStateTitle">Locked module</h1>
+              <span id="routeStateBadge" class="state-pill locked">Locked</span>
+            </div>
+            <p id="routeStateDescription" class="route-state-copy"></p>
+            <dl class="route-state-facts">
+              <div><dt>Canonical route</dt><dd><code id="routeStatePath">—</code></dd></div>
+              <div><dt>Owning module</dt><dd><code id="routeStateOwner">—</code></dd></div>
+              <div><dt>Maturity</dt><dd id="routeStateMaturity">—</dd></div>
+            </dl>
+            <div class="route-state-note">
+              <span id="routeStateShield" aria-hidden="true"></span>
+              <p>This route is real and reload-safe. Its product functionality remains unavailable until the owning module passes its own QA and local UAT. No placeholder data or fake action is rendered here.</p>
+            </div>
+          </article>
+        </section>
+
+        <div id="diagnosticsRouteView">
         <section class="welcome-section">
           <p class="welcome-kicker">Welcome to GWF</p>
           <h1>Governed Knowledge Workflow</h1>
@@ -139,8 +161,9 @@
 
         <section class="boundary-note">
           <span class="boundary-icon" id="boundaryIcon" aria-hidden="true"></span>
-          <p><strong>Foundation only.</strong> Product areas whose slices have not passed remain visible for orientation but cannot execute fake actions. Documents, Relations graph and full-screen Reader remain future authorized slices.</p>
+          <p><strong>Foundation only.</strong> Product areas whose modules have not passed remain navigable for orientation but cannot execute fake actions. Documents, Relations graph and full-screen Reader remain future authorized modules.</p>
         </section>
+        </div>
       </main>
     </div>
   </div>

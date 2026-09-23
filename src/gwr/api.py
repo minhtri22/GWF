@@ -193,16 +193,16 @@ def create_app(
     resolved_product_info.update(product_info or {})
     browser_cookie_name = "gwr_browser_session"
     browser_capabilities = [
-        {"id": "home", "label": "Home", "state": "LOCKED", "slice": "BPS-I01"},
-        {"id": "projects", "label": "Projects", "state": "LOCKED", "slice": "BPS-I02"},
-        {"id": "operations", "label": "Operations", "state": "LOCKED", "slice": "BPS-I03"},
-        {"id": "packages", "label": "Packages", "state": "LOCKED", "slice": "BPS-I06"},
-        {"id": "github", "label": "GitHub", "state": "LOCKED", "slice": "BPS-I07"},
-        {"id": "shared-library", "label": "Shared Library", "state": "PLANNED_BLOCKED", "slice": "BPS-GAC"},
-        {"id": "reference-acquisition", "label": "Reference Acquisition", "state": "PLANNED_BLOCKED", "slice": "BPS-RA"},
-        {"id": "agents", "label": "Agents / Codex", "state": "PLANNED_BLOCKED", "slice": "BPS-CODEX"},
-        {"id": "diagnostics", "label": "Diagnostics", "state": "LIVE_FOUNDATION", "slice": "BPS-I00"},
-        {"id": "settings", "label": "Settings", "state": "FOUNDATION_ONLY", "slice": "BPS-I00"},
+        {"id": "home", "label": "Home", "state": "SKELETON_LOCKED", "slice": "BPS-M01", "route": "/app/home"},
+        {"id": "projects", "label": "Projects", "state": "SKELETON_LOCKED", "slice": "BPS-M02", "route": "/app/projects"},
+        {"id": "operations", "label": "Operations", "state": "SKELETON_LOCKED", "slice": "BPS-M03", "route": "/app/operations"},
+        {"id": "packages", "label": "Packages", "state": "SKELETON_LOCKED", "slice": "BPS-M06", "route": "/app/research/packages"},
+        {"id": "github", "label": "GitHub", "state": "SKELETON_LOCKED", "slice": "BPS-M07", "route": "/app/system/github"},
+        {"id": "shared-library", "label": "Shared Library", "state": "PLANNED_BLOCKED", "slice": "BPS-GAC", "route": "/app/shared-library"},
+        {"id": "reference-acquisition", "label": "Reference Acquisition", "state": "PLANNED_BLOCKED", "slice": "BPS-RA", "route": "/app/research/reference-acquisition"},
+        {"id": "agents", "label": "Agents / Codex", "state": "PLANNED_BLOCKED", "slice": "BPS-CODEX", "route": "/app/agents"},
+        {"id": "diagnostics", "label": "Diagnostics", "state": "LIVE_FOUNDATION", "slice": "BPS-I00", "route": "/app/system/diagnostics"},
+        {"id": "settings", "label": "Settings", "state": "SKELETON_LOCKED", "slice": "BPS-M07", "route": "/app/system/settings"},
     ]
 
     @app.exception_handler(GWRException)
@@ -964,6 +964,13 @@ def create_app(
         @app.get('/app', include_in_schema=False)
         @app.get('/app/', include_in_schema=False)
         def browser_app():
+            return FileResponse(index_file, media_type="text/html")
+
+        @app.get('/app/{path:path}', include_in_schema=False)
+        def browser_app_deep_link(path: str):
+            root_segment = path.strip('/').split('/', 1)[0] if path.strip('/') else ""
+            if root_segment not in {"home", "projects", "operations", "research", "system", "shared-library", "agents"}:
+                raise HTTPException(status_code=404, detail="browser route not found")
             return FileResponse(index_file, media_type="text/html")
 
         @app.get('/assets/app.js', include_in_schema=False)

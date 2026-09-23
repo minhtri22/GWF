@@ -19,7 +19,7 @@ $LauncherLog = Join-Path $RunRoot "launcher.log"
 $RuntimeRoot = Join-Path $RunRoot "runtime"
 $ServerLauncher = Join-Path $RepoRoot "scripts\gwf_server.ps1"
 $InstallScript = Join-Path $RepoRoot "install.ps1"
-$AppUrl = "http://127.0.0.1:$Port/app"
+$AppUrl = "http://127.0.0.1:$Port/app/system/diagnostics"
 $ReadyUrl = "http://127.0.0.1:$Port/ready"
 $BaseUrl = "http://127.0.0.1:$Port"
 
@@ -216,12 +216,17 @@ try {
     $bootstrap = Invoke-RestMethod -Uri "$BaseUrl/browser/bootstrap" -TimeoutSec 5
     Add-Check "bootstrap_unauthenticated" ($bootstrap.authenticated -eq $false) $bootstrap.authenticated
     $cap = @{}
-    foreach ($item in $bootstrap.capabilities) { $cap[$item.id] = $item.state }
-    Add-Check "home_locked" ($cap["home"] -eq "LOCKED") $cap["home"]
-    Add-Check "projects_locked" ($cap["projects"] -eq "LOCKED") $cap["projects"]
-    Add-Check "shared_library_planned" ($cap["shared-library"] -eq "PLANNED_BLOCKED") $cap["shared-library"]
-    Add-Check "reference_acquisition_planned" ($cap["reference-acquisition"] -eq "PLANNED_BLOCKED") $cap["reference-acquisition"]
-    Add-Check "agents_planned" ($cap["agents"] -eq "PLANNED_BLOCKED") $cap["agents"]
+    foreach ($item in $bootstrap.capabilities) { $cap[$item.id] = $item }
+    Add-Check "home_skeleton_locked" ($cap["home"].state -eq "SKELETON_LOCKED") $cap["home"]
+    Add-Check "home_module_m01" ($cap["home"].slice -eq "BPS-M01") $cap["home"].slice
+    Add-Check "home_route_exact" ($cap["home"].route -eq "/app/home") $cap["home"].route
+    Add-Check "projects_skeleton_locked" ($cap["projects"].state -eq "SKELETON_LOCKED") $cap["projects"]
+    Add-Check "projects_module_m02" ($cap["projects"].slice -eq "BPS-M02") $cap["projects"].slice
+    Add-Check "diagnostics_live_foundation" ($cap["diagnostics"].state -eq "LIVE_FOUNDATION") $cap["diagnostics"]
+    Add-Check "diagnostics_route_exact" ($cap["diagnostics"].route -eq "/app/system/diagnostics") $cap["diagnostics"].route
+    Add-Check "shared_library_planned" ($cap["shared-library"].state -eq "PLANNED_BLOCKED") $cap["shared-library"]
+    Add-Check "reference_acquisition_planned" ($cap["reference-acquisition"].state -eq "PLANNED_BLOCKED") $cap["reference-acquisition"]
+    Add-Check "agents_planned" ($cap["agents"].state -eq "PLANNED_BLOCKED") $cap["agents"]
 
     $loginBody = @{ username=$UatUsername; password=$UatPassword } | ConvertTo-Json
     $loginResponse = Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/browser/auth/login" -Method POST -ContentType "application/json" -Body $loginBody -SessionVariable MachineSession -TimeoutSec 5
@@ -242,6 +247,24 @@ try {
     Add-Check "sidebar_true_reflow_contract" (($appJs -match "sidebar-collapsed") -and ($stylesCss -match "grid-template-columns:260px minmax\(0,1fr\)") -and ($stylesCss -match "sidebar-collapsed\{grid-template-columns:68px minmax\(0,1fr\)")) "expanded 260px -> collapsed 68px app-grid reflow contract present"
     Add-Check "full_shell_theme_tokens" (($stylesCss -match "--bg-sidebar:#f9fbff") -and ($stylesCss -match "--bg-sidebar:#08111f") -and ($stylesCss -match "--topbar-bg:rgba\(255,255,255,.92\)") -and ($stylesCss -match "--topbar-bg:rgba\(9,17,29,.92\)")) "Light/Dark sidebar + topbar shell tokens present"
     Add-Check "later_documents_functionality_absent" (-not ($appJs -match "/documents|relation graph|full-screen reader")) "BPS-I00 does not open future Documents/Relations/Reader functionality"
+    Add-Check "spa_history_router" (($appJs -match "history\.pushState") -and ($appJs -match "popstate") -and ($appJs -match "renderRoute")) "History API router contract present"
+    Add-Check "locked_routes_clickable" (($appJs -match "data-route") -and (-not ($appJs -match 'disabled aria-disabled="true"'))) "locked/planned nav remains clickable"
+
+    $routeChecks = [ordered]@{
+        "home" = "/app/home"
+        "projects" = "/app/projects"
+        "operations" = "/app/operations"
+        "packages" = "/app/research/packages"
+        "diagnostics" = "/app/system/diagnostics"
+        "settings" = "/app/system/settings"
+        "shared_library" = "/app/shared-library"
+        "reference_acquisition" = "/app/research/reference-acquisition"
+        "agents" = "/app/agents"
+    }
+    foreach ($entry in $routeChecks.GetEnumerator()) {
+        $routeResponse = Invoke-WebRequest -UseBasicParsing -Uri ($BaseUrl + $entry.Value) -WebSession $MachineSession -TimeoutSec 5
+        Add-Check ("route_http_" + $entry.Key) ($routeResponse.StatusCode -eq 200 -and $routeResponse.Content -match "Governed Knowledge Studio") $entry.Value
+    }
 
     Write-Host "Step 4/6 - restart/session persistence" -ForegroundColor Cyan
     Invoke-LoggedServerLauncher -Action "restart" -LogPath $LauncherLog
@@ -266,10 +289,14 @@ try {
         @("M04","System, Light and Dark selections each change the FULL shell (sidebar, top bar and content together) and remain clearly legible."),
         @("M05","The left navigation collapses and expands correctly: collapsed mode produces a narrow icon rail and the main workspace visibly expands to reclaim the released width; expanding restores the full sidebar."),
         @("M06","Navigation uses recognizable semantic icons rather than first-letter placeholders; in collapsed mode hover/focus labels identify the item and its Locked/Planned/Live maturity context."),
-        @("M07","The shell hierarchy and compact visual language match the approved Governed Knowledge Studio direction: global sidebar, top command/search bar and research-workspace cards/panels."),
-        @("M08","Home, Projects, Operations, Research/Packages and future GAC/RA/Agents entries that are Locked/Planned cannot execute fake product actions."),
-        @("M09","Runtime identity shows the expected exact build SHA plus canonical backend/server identity."),
-        @("M10","Signing out returns to the real login screen and does not expose a reusable token in the UI.")
+        @("M07","The shell hierarchy and compact visual language still match the approved Governed Knowledge Studio visual baseline."),
+        @("M08","Click Home, Projects, Operations and Research/Packages. Each click changes the URL and shows a route-specific Locked surface with its owning module; no fake module data or action appears."),
+        @("M09","Click Shared Library, Reference Acquisition and Agents/Codex. Each route is navigable but visibly Planned and non-functional."),
+        @("M10","Use browser Back and Forward after visiting several routes. The URL, selected navigation item and route surface follow browser history correctly."),
+        @("M11","While on /app/projects, refresh the browser. The authenticated session remains and the same Projects locked route is restored."),
+        @("M12","Navigate to System/Diagnostics. It is LIVE foundation and shows real exact build, backend/server identity and health rather than placeholder data."),
+        @("M13","Locked/Planned route surfaces contain no fake counts, projects, runs, documents or mutation buttons."),
+        @("M14","Signing out returns to the real login screen and does not expose a reusable token in the UI.")
     )
     $manualAllPass = $true
     foreach ($entry in $manualPrompts) { if (-not (Add-Manual -Id $entry[0] -Prompt $entry[1])) { $manualAllPass = $false } }
