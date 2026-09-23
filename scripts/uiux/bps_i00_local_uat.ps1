@@ -264,7 +264,7 @@ try {
         @("M02","Signing in with the displayed local-UAT credentials succeeded and opened the authoritative BPS-I00 shell."),
         @("M03","Refreshing the browser kept the authenticated shell/session without asking for a token."),
         @("M04","System, Light and Dark selections each change the FULL shell (sidebar, top bar and content together) and remain clearly legible."),
-        @("M05","Collapsing the left navigation produces a narrow icon rail and the main workspace visibly expands to reclaim the released width; expanding restores the full sidebar."),
+        @("M05","The left navigation collapses and expands correctly: collapsed mode produces a narrow icon rail and the main workspace visibly expands to reclaim the released width; expanding restores the full sidebar."),
         @("M06","Navigation uses recognizable semantic icons rather than first-letter placeholders; in collapsed mode hover/focus labels identify the item and its Locked/Planned/Live maturity context."),
         @("M07","The shell hierarchy and compact visual language match the approved Governed Knowledge Studio direction: global sidebar, top command/search bar and research-workspace cards/panels."),
         @("M08","Home, Projects, Operations, Research/Packages and future GAC/RA/Agents entries that are Locked/Planned cannot execute fake product actions."),
