@@ -44,7 +44,7 @@ jobs:
           set -euo pipefail
           git cat-file -e "$SPEC_BASE^{commit}"
           mapfile -t changed < <(git diff --name-only "$SPEC_BASE"...HEAD)
-          printf '%s\n' "\${changed[@]}"
+          printf '%s\n' "${changed[@]}"
           allowed=(
             ".github/workflows/g2e-p5a-cgw-zero-model-qualification.yml"
             "scripts/g2e/p5a_cgw_bridge_qualification.py"
@@ -54,9 +54,9 @@ jobs:
             "g2e/docs/P5A_CGW_IMPLEMENTATION_QUALIFICATION_LOCK.json"
             "g2e/LINEAGE.md"
           )
-          for path in "\${changed[@]}"; do
+          for path in "${changed[@]}"; do
             ok=false
-            for item in "\${allowed[@]}"; do
+            for item in "${allowed[@]}"; do
               if [[ "$path" == "$item" ]]; then ok=true; break; fi
             done
             if [[ "$ok" != true ]]; then
