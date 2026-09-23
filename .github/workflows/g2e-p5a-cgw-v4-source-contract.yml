@@ -67,7 +67,8 @@ jobs:
           print("P5A_CGW_V4_RELEASE_PROVENANCE_PASS")
 
       - name: Verify byte-preserved Q0b fixture attribute
-        run: test "$(git check-attr text -- tests/g2e/fixtures/P5A_CGW_LOCAL_ZERO_MODEL_ADMISSION_V4_EXISTING.json)" = "tests/g2e/fixtures/P5A_CGW_LOCAL_ZERO_MODEL_ADMISSION_V4_EXISTING.json: text: unset"
+        run: |
+          test "$(git check-attr text -- tests/g2e/fixtures/P5A_CGW_LOCAL_ZERO_MODEL_ADMISSION_V4_EXISTING.json)" = "tests/g2e/fixtures/P5A_CGW_LOCAL_ZERO_MODEL_ADMISSION_V4_EXISTING.json: text: unset"
 
       - name: Run v4 source-contract and readjudication tests
         run: pytest -q tests/g2e/test_p5a_cgw_v4_source_contract.py
