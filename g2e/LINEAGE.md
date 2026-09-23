@@ -491,3 +491,23 @@
 - **Specification artifacts:** `P5A_CGW_ORIGIN_AND_SCOPE.md`, `P5A_CGW_TRUST_AUTHORITY_OBSERVABILITY_SPEC.md`, `P5A_CGW_ZERO_MODEL_QUALIFICATION_PLAN.md`, `P5A_CGW_SPECIFICATION_LOCK.json`.
 - **Current authorization:** implementation=false; zero-model qualification execution=false; browser/model turn=false; scientific attempt=false; comparative study=false.
 - **Next:** separately authorize bounded implementation + zero-model/synthetic qualification. Only a PASS of that macro-gate may permit preregistration and exact locking of the first model-bearing P5A-CGW attempt.
+
+
+### G2E-P5A-CGW — Implementation / Synthetic Zero-Model Qualification
+
+- **Status:** CI/SYNTHETIC PASS / LOCAL Q0b REQUIRED / NO MODEL EXECUTION AUTHORIZED.
+- **Authoritative candidate:** `7033f3cee0f7c6834efe459f5719363ceeeb263c`.
+- **Workflow:** `35801134380` — PASS.
+- **Linux job:** `106991493556` — PASS.
+- **Windows job:** `106991493305` — PASS.
+- **Artifact:** `10726071300`; digest `sha256:c814159181918b1ad0e29ca5bf5fc7371e5028f895d4ae518e380efaf65de955`.
+- **Qualified status:** `SYNTHETIC_ZERO_MODEL_PASS_LOCAL_RUNTIME_ADMISSION_REQUIRED`.
+- **Q0a:** exact upstream source provenance PASS for `miuuyy/codex-chatgpt-web@eaf4f09ae92d4dc4429fa597b0861663138f08f8`.
+- **Q0b:** installed Windows CGW/Codex runtime identity remains required; CI is forbidden from fabricating it.
+- **Q1-Q7:** synthetic route/no-fallback, cross-hop identity, browser binding, authority, MCP capability, privacy and 18-case failure-injection contracts PASS.
+- **Q8:** P1/P1.4/P1.5/P2/P3/P4 regressions PASS; Windows parser/firewall PASS.
+- **Model/science firewall:** no ChatGPT Web message, no Codex scientific turn, no MCP-through-ChatGPT invocation, no scientific attempt created or consumed.
+- **Repair lineage:** runs `35800996788` and `35801088549` are non-authoritative implementation-QA failures (CI array expansion and over-broad test assertions only); neither exposed model outcomes.
+- **Authorized next action:** exactly one bounded local zero-model admission collection against the user's existing Codex + CGW installation.
+- **Still forbidden:** first functional attempt, P5A official fallback/cross-credit, and A/B comparison.
+- **Lock:** `g2e/docs/P5A_CGW_IMPLEMENTATION_QUALIFICATION_LOCK.json`.

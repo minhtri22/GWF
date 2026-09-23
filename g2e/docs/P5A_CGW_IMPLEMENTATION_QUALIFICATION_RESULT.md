@@ -1,74 +1,138 @@
 # G2E P5A-CGW — Implementation / Synthetic Zero-Model Qualification
 
-## Status
+## Formal status
 
-IMPLEMENTED / SYNTHETIC QUALIFICATION PENDING CI / LOCAL RUNTIME ADMISSION REQUIRED
+**CI/SYNTHETIC PASS / LOCAL RUNTIME Q0b REQUIRED / NO MODEL EXECUTION AUTHORIZED**
 
-This document is intentionally pre-adjudication. It does not claim PASS until the exact candidate workflow completes.
+Authoritative qualified implementation candidate:
 
-## Implemented components
+`7033f3cee0f7c6834efe459f5719363ceeeb263c`
 
-- `scripts/g2e/p5a_cgw_bridge_qualification.py`
-  - exact reviewed upstream source/blob contract;
-  - CGW config projection with secret exclusion;
-  - CGW `/healthz` admission;
-  - Codex `openai_base_url` route ownership validation;
-  - request/browser/terminal identity correlation;
-  - Full-mode MCP authority binding;
-  - recursive secret redaction;
-  - frozen 18-case failure matrix;
-  - synthetic and local zero-model reports.
+Authoritative workflow:
 
-- `scripts/g2e/p5a_cgw_local_zero_model_oneclick.ps1`
-  - Windows local read-only bridge admission;
-  - GET `/healthz` only;
-  - no `/v1/models`;
-  - no `/v1/responses`;
-  - no Codex `thread/start` or `turn/start`;
-  - no ChatGPT browser submission;
-  - no MCP invocation;
-  - exact local binary hashes captured without persisting secrets.
+- run: `35801134380`
+- Linux job: `106991493556` — PASS
+- Windows job: `106991493305` — PASS
+- artifact: `10726071300`
+- artifact digest: `sha256:c814159181918b1ad0e29ca5bf5fc7371e5028f895d4ae518e380efaf65de955`
 
-- `tests/g2e/test_p5a_cgw_zero_model_qualification.py`
-  - synthetic Q1-Q7 plus zero-model firewall tests.
-
-- `.github/workflows/g2e-p5a-cgw-zero-model-qualification.yml`
-  - exact upstream static-source Q0a;
-  - Linux and Windows qualification;
-  - P1/P1.4/P1.5/P2/P3/P4 regressions;
-  - no model execution.
-
-## Q0 split
-
-Q0 is deliberately split:
-
-- Q0a — exact upstream source provenance: CI-verifiable.
-- Q0b — exact installed local bridge/Codex runtime identity: requires the user's already-installed Windows runtime and therefore cannot be fabricated in GitHub Actions.
-
-The synthetic macro-gate may therefore reach:
+Artifact report status:
 
 `SYNTHETIC_ZERO_MODEL_PASS_LOCAL_RUNTIME_ADMISSION_REQUIRED`
 
-It may not reach final route qualification until Q0b/local route admission is supplied.
+No model turn was executed and no scientific attempt was created or consumed.
 
-## G2E-to-CGW integration boundary
+## Qualified component identities
 
-This phase deliberately connects G2E at the control/evidence plane rather than by injecting another browser controller:
+- bridge qualifier:
+  `aa600a55e29bcaf06e2a8531252976575b178b94`
+- Windows local zero-model one-click:
+  `8d311c1a301e9b96a1d465c9330103a3e5668b82`
+- qualification tests:
+  `3a650f033324f97e552f9c473a57f381183fa795`
+- workflow:
+  `4dd9af4a8f6b9e3526ae282f861c602d13b19828`
 
-```text
-G2E route admission
-  -> read exact CGW route/config identity
-  -> verify Codex openai_base_url ownership
-  -> verify CGW loopback health/version/mode/idle state
-  -> bind exact binary/config hashes
-  -> establish route identity + fail-closed evidence contract
-```
+Specification identities remain:
 
-CGW remains the browser/inference mediator. Codex remains the execution authority. The future model-bearing phase must add live cross-hop evidence for one frozen attempt; it must not create a second browser automation layer in G2E.
+- specification lock:
+  `dda7d753a47245368c1a59d1b88503db87c2e27e`
+- trust/authority/observability spec:
+  `a9734274ed01b45530c6aa4383e128741c3b3401`
+- zero-model qualification plan:
+  `fa3eff8ab7b6471ee751b3344c368114477679ef`
+
+## Q0 provenance split
+
+### Q0a — upstream source provenance — PASS
+
+CI fetched and detached exact:
+
+`miuuyy/codex-chatgpt-web@eaf4f09ae92d4dc4429fa597b0861663138f08f8`
+
+The qualifier verified the frozen source-object identities and contract fragments before synthetic admission.
+
+### Q0b — installed local runtime identity — REQUIRED
+
+GitHub Actions cannot establish the identity of the bridge and Codex binaries already installed on the user's Windows machine.
+
+Q0b therefore remains intentionally unresolved until a local read-only admission package proves:
+
+- the installed CGW config is version 3 / release 5.0.8;
+- route host is loopback;
+- mode and exact connector identity are explicit;
+- automatic tool approval is disabled;
+- Full mode has a configured tunnel when Full mode is active;
+- the CGW health endpoint identifies the expected service/version/mode/port;
+- the bridge is accepting turns and idle at collection time;
+- Codex `openai_base_url` points to that exact loopback CGW route;
+- exact local CGW and Codex command/binary hashes are captured.
+
+No raw browser/tunnel/token secret is admitted to evidence.
+
+## Q1-Q7 — synthetic qualification — PASS
+
+The exact candidate passed 26 dedicated P5A-CGW tests on Linux and the same suite on Windows.
+
+Qualified properties include:
+
+- route ownership and no silent fallback;
+- exact request/thread/turn correlation;
+- browser lease + logical ChatGPT turn binding contract;
+- bridge-side-effect prohibition;
+- delegated authority bounded by the active outer Codex turn;
+- Full-mode connector/capability/tool-registry binding;
+- recursive secret redaction;
+- frozen 18-case fail-closed matrix.
+
+These are infrastructure/contract qualifications. They do not establish live model-task success.
+
+## Q8 — G2E regressions — PASS
+
+The authoritative Linux job passed:
+
+- P1 core schemas;
+- P1.4 agent binding;
+- P1.5 qualification authority;
+- P2 deterministic core;
+- P3 standalone runtime;
+- P4 GWF adapter.
+
+Windows additionally passed:
+
+- P5A-CGW synthetic tests;
+- Windows PowerShell parser qualification;
+- static firewall proving the qualifier has no model-bearing network client and the one-click does not call `/v1/models` or `/v1/responses`.
+
+## Prequalification repair lineage
+
+Two earlier workflow runs are non-authoritative and retained as implementation QA evidence:
+
+1. run `35800996788`: bounded-diff shell array was escaped literally; Windows also exposed two over-broad privacy assertions.
+2. run `35801088549`: CI array expansion was repaired, but the already-identified test assertions had not yet been repaired on that candidate.
+
+The repairs changed only CI/test qualification logic. No browser/model/scientific runtime was invoked by either failed run.
+
+Authoritative qualification is run `35801134380` on candidate `7033f3cee0f7c6834efe459f5719363ceeeb263c`.
 
 ## Current authorization
 
-- model turn: NOT AUTHORIZED
-- scientific attempt: NOT AUTHORIZED
-- A/B comparison: NOT AUTHORIZED
-- local zero-model admission probe: eligible only after CI PASS is formally locked
+Authorized now:
+
+- exactly the bounded local **zero-model runtime admission collection** defined by the lock.
+
+Not authorized:
+
+- ChatGPT Web message submission;
+- Codex `thread/start` / scientific `turn/start`;
+- MCP tool invocation through ChatGPT;
+- first P5A-CGW functional attempt;
+- P5A official fallback/retry;
+- P5A official capability promotion;
+- A/B comparison.
+
+## Next gate
+
+Run the qualified Windows one-click on the user's already-connected Codex + codex-chatgpt-web installation.
+
+Only if the resulting local report is admitted as `LOCAL_ZERO_MODEL_ADMISSION_PASS` may P5A-CGW zero-model qualification be formally closed and the **design/preregistration** of a first functional P5A-CGW attempt begin.

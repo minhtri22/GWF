@@ -1,0 +1,78 @@
+{
+  "schema": "G2E-P5A-CGW-SYNTHETIC-QUALIFICATION-LOCK-v1",
+  "status": "CI_SYNTHETIC_PASS_LOCAL_RUNTIME_Q0B_REQUIRED",
+  "workstream": "p5a-cgw-codex-chatgpt-web-bridge-qualification",
+  "route_id": "p5a-cgw",
+  "specification_base": "4124c9084899b6ef3be3649f1700f62ab082ea0e",
+  "qualified_candidate": "7033f3cee0f7c6834efe459f5719363ceeeb263c",
+  "workflow": {
+    "run_id": 35801134380,
+    "linux_job_id": 106991493556,
+    "windows_job_id": 106991493305,
+    "conclusion": "success",
+    "artifact_id": 10726071300,
+    "artifact_digest": "sha256:c814159181918b1ad0e29ca5bf5fc7371e5028f895d4ae518e380efaf65de955",
+    "report_status": "SYNTHETIC_ZERO_MODEL_PASS_LOCAL_RUNTIME_ADMISSION_REQUIRED"
+  },
+  "components": {
+    "qualifier_blob": "aa600a55e29bcaf06e2a8531252976575b178b94",
+    "local_oneclick_blob": "8d311c1a301e9b96a1d465c9330103a3e5668b82",
+    "test_blob": "3a650f033324f97e552f9c473a57f381183fa795",
+    "workflow_blob": "4dd9af4a8f6b9e3526ae282f861c602d13b19828",
+    "specification_lock_blob": "dda7d753a47245368c1a59d1b88503db87c2e27e",
+    "trust_authority_observability_spec_blob": "a9734274ed01b45530c6aa4383e128741c3b3401",
+    "zero_model_plan_blob": "fa3eff8ab7b6471ee751b3344c368114477679ef"
+  },
+  "upstream": {
+    "repository": "miuuyy/codex-chatgpt-web",
+    "commit": "eaf4f09ae92d4dc4429fa597b0861663138f08f8",
+    "release_version": "5.0.8",
+    "q0a_source_provenance": "PASS"
+  },
+  "q_gates": {
+    "q0a_source_provenance": "PASS",
+    "q0b_local_installed_runtime": "REQUIRED",
+    "q1_route_no_fallback": "PASS_SYNTHETIC",
+    "q2_request_response_correlation": "PASS_SYNTHETIC",
+    "q3_browser_binding_observability": "PASS_SYNTHETIC",
+    "q4_authority_preservation": "PASS_SYNTHETIC",
+    "q5_full_mode_mcp_binding": "PASS_SYNTHETIC",
+    "q6_observability_privacy": "PASS_SYNTHETIC",
+    "q7_failure_injection": "PASS_SYNTHETIC",
+    "q8_g2e_regression": "PASS"
+  },
+  "local_collection_authorization": {
+    "authorized": true,
+    "purpose": "Q0b installed-runtime and route admission only",
+    "max_collections_under_this_lock": 1,
+    "permitted_network": [
+      "GET http://127.0.0.1:<frozen-config-port>/healthz"
+    ],
+    "permitted_reads": [
+      "CGW config.json",
+      "Codex config.toml",
+      "installed CGW launcher/runtime file identity",
+      "installed Codex command/binary file identity"
+    ],
+    "forbidden": [
+      "/v1/models",
+      "/v1/responses",
+      "Codex thread/start",
+      "Codex turn/start",
+      "ChatGPT browser submission",
+      "MCP tool invocation",
+      "scientific attempt marker"
+    ],
+    "expected_report": "g2e/.local/P5A-CGW-ZERO-MODEL-001/P5A_CGW_LOCAL_ZERO_MODEL_ADMISSION.json"
+  },
+  "authorization": {
+    "browser_model_turn": false,
+    "scientific_attempt": false,
+    "functional_attempt": false,
+    "comparative_ab": false,
+    "p5a_official_fallback": false,
+    "cross_credit_to_p5a_official": false
+  },
+  "next_if_local_pass": "FORMAL_CLOSE_ZERO_MODEL_QUALIFICATION_THEN_PREREGISTER_FIRST_P5A_CGW_FUNCTIONAL_ATTEMPT",
+  "next_if_local_blocked": "STOP_AND_ADJUDICATE_LOCAL_ADMISSION_MECHANISM_WITHOUT_MODEL_EXECUTION"
+}
