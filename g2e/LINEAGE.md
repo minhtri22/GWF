@@ -527,3 +527,21 @@
 - **No-rescue boundary:** do not retarget the frozen spec to installed 4.0.7 and do not open a functional attempt/A-B study.
 - **Admissible next step:** a separately locked, prospective zero-model runtime alignment to frozen 5.0.8, followed by at most one fresh local Q0b collection.
 - **Adjudication:** `g2e/docs/P5A_CGW_LOCAL_Q0B_ADJUDICATION.json` and `g2e/docs/P5A_CGW_LOCAL_Q0B_ADJUDICATION.md`.
+
+
+### G2E-P5A-CGW — Q0b runtime-alignment successor qualification
+
+- **Status:** QUALIFIED / ONE LOCAL ALIGNMENT + ONE FRESH Q0b COLLECTION AUTHORIZED / ZERO-MODEL.
+- **Predecessor:** local Q0b blocked solely by installed CGW `4.0.7` vs frozen `5.0.8`; no model/scientific attempt occurred.
+- **Qualified candidate:** `1239140ccec6e91865eea3afb82398fb33008ecd`.
+- **Qualification run:** `35802645056` — PASS.
+- **Linux:** `106996238511` — parser/static tests/exact v5.0.8 release metadata/qualifier regression PASS.
+- **Windows:** `106996239193` — Windows PowerShell parser/static tests/zero-model endpoint firewall PASS.
+- **Alignment wrapper:** `cbbd99ed902ea7ff62fca4e3c9695c133c00b98c`.
+- **Frozen mutation:** exactly `4.0.7 -> 5.0.8`; retargeting the spec to 4.0.7 is prohibited.
+- **Pinned installer script:** SHA256 `117ab8e5bfba36d3f611e9294355afe70936a536bf3305d4fe563edab7c40a71`.
+- **Pinned Windows installer asset:** SHA256 `83224d59506462ab2976f437bfaea96b046d4ed55caa7e1cfd6a3d61de0a8ff3`.
+- **Fresh collection root:** `g2e/.local/P5A-CGW-ZERO-MODEL-Q0B-R2`.
+- **Authorization boundary:** no model turn, ChatGPT browser submission, MCP invocation, scientific attempt, P5A official fallback or A/B comparison.
+- **After fresh Q0b PASS:** formal-close zero-model qualification first; functional attempt remains unauthorized until separately preregistered/locked.
+- **Lock:** `g2e/docs/P5A_CGW_Q0B_RUNTIME_ALIGNMENT_LOCK.json`.

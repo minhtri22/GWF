@@ -1,0 +1,75 @@
+{
+  "schema": "G2E-P5A-CGW-Q0B-RUNTIME-ALIGNMENT-LOCK-v1",
+  "status": "QUALIFIED_ONE_LOCAL_ALIGNMENT_AND_ONE_FRESH_Q0B_AUTHORIZED",
+  "workstream": "p5a-cgw-q0b-runtime-alignment",
+  "predecessor_adjudication_commit": "4182f4c0e32d9e1726d73bbc317723c2ac40029b",
+  "qualified_candidate": "1239140ccec6e91865eea3afb82398fb33008ecd",
+  "qualification": {
+    "run_id": 35802645056,
+    "linux_job_id": 106996238511,
+    "windows_job_id": 106996239193,
+    "conclusion": "success",
+    "prior_non_authoritative_run": 35802584279,
+    "prior_failure_class": "CI_DEPENDENCY_ORDER_ONLY"
+  },
+  "components": {
+    "alignment_wrapper_blob": "cbbd99ed902ea7ff62fca4e3c9695c133c00b98c",
+    "alignment_tests_blob": "54a7f70aa27d6184718d50b21225626ae1f0df3d",
+    "alignment_workflow_blob": "5f3dba290f7f08669410ec173d5a86122b399699",
+    "plan_blob": "1c2951c9e4286403a02174ad1c94a96ecb98cc10",
+    "existing_q0b_collector_blob": "8d311c1a301e9b96a1d465c9330103a3e5668b82"
+  },
+  "frozen_alignment": {
+    "observed_source_version": "4.0.7",
+    "target_version": "5.0.8",
+    "upstream_repository": "miuuyy/codex-chatgpt-web",
+    "upstream_source_commit": "eaf4f09ae92d4dc4429fa597b0861663138f08f8",
+    "installer_script_url": "https://github.com/miuuyy/codex-chatgpt-web/releases/download/v5.0.8/install-launcher.ps1",
+    "installer_script_sha256": "117ab8e5bfba36d3f611e9294355afe70936a536bf3305d4fe563edab7c40a71",
+    "windows_x64_installer_asset_sha256": "83224d59506462ab2976f437bfaea96b046d4ed55caa7e1cfd6a3d61de0a8ff3",
+    "latest_release_resolution_forbidden": true,
+    "retarget_spec_to_4_0_7_forbidden": true
+  },
+  "local_authorization": {
+    "authorized": true,
+    "max_alignment_invocations": 1,
+    "max_fresh_q0b_collections": 1,
+    "alignment_output_root": "g2e/.local/P5A-CGW-Q0B-ALIGN-001",
+    "fresh_q0b_output_root": "g2e/.local/P5A-CGW-ZERO-MODEL-Q0B-R2",
+    "requires_launcher_quit": true,
+    "allowed_network": [
+      "GET exact v5.0.8 install-launcher.ps1",
+      "upstream installer downloads exact v5.0.8 release asset and checksums",
+      "GET http://127.0.0.1:<post-alignment-port>/healthz"
+    ],
+    "forbidden": [
+      "/v1/models",
+      "/v1/responses",
+      "Codex thread/start",
+      "Codex turn/start",
+      "ChatGPT browser submission",
+      "MCP tool invocation",
+      "scientific attempt marker",
+      "P5A official fallback",
+      "A/B comparison"
+    ]
+  },
+  "post_alignment_requirements": {
+    "release_version": "5.0.8",
+    "host": "127.0.0.1",
+    "mode": "full",
+    "connector": "Codex Native2",
+    "auto_approve_tool_calls": false,
+    "health_service": "codex-chatgpt-web",
+    "health_status": "ok",
+    "accepting_turns": true,
+    "codex_route_must_remain_bound_to_cgw": true,
+    "fresh_q0b_status_required": "LOCAL_ZERO_MODEL_ADMISSION_PASS"
+  },
+  "authorization_after_fresh_q0b_pass": {
+    "functional_attempt": false,
+    "scientific_attempt": false,
+    "comparative_ab": false,
+    "next": "FORMAL_CLOSE_P5A_CGW_ZERO_MODEL_QUALIFICATION_THEN_PREREGISTER_FIRST_FUNCTIONAL_ATTEMPT"
+  }
+}
