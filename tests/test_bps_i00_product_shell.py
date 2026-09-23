@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import json
 import os
 import socket
+import shutil
 import subprocess
 import sys
 import time
@@ -202,6 +203,21 @@ def test_i00_visual_shell_matches_approved_foundation_contract():
     assert 'disabled aria-disabled="true"' in js
     assert '" — " + meta.label + " · " + item.slice' in js
     assert ".nav-item.disabled{cursor:default;opacity:.9}" in css
+
+
+def test_i00_browser_javascript_parses_when_node_is_available():
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("node is not installed on this runner")
+    result = subprocess.run(
+        [node, "--check", str(WEB / "app.js")],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        timeout=20,
+    )
+    assert result.returncode == 0, result.stdout
 
 
 def test_i00_theme_control_exposes_system_light_dark_without_fake_product_state():
