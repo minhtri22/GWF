@@ -61,7 +61,9 @@ def test_i00_live_shell_and_bootstrap_are_authoritative(tmp_path, monkeypatch):
     shell = client.get("/app")
     assert shell.status_code == 200
     assert "Governed Knowledge Studio" in shell.text
+    assert "Governed Knowledge Workflow" in shell.text
     assert "Static UAT mode" not in shell.text
+    assert "demo-data.json" not in shell.text
 
     bootstrap = client.get("/browser/bootstrap")
     assert bootstrap.status_code == 200
@@ -91,8 +93,6 @@ def test_i00_live_shell_and_bootstrap_are_authoritative(tmp_path, monkeypatch):
         "observability": "PASS",
     }
     rt.close()
-
-
 
 
 def test_i00_ready_degrades_when_object_store_verification_fails(tmp_path, monkeypatch):
@@ -167,6 +167,50 @@ def test_i00_shell_javascript_contains_only_presentation_local_storage():
     assert "localStorage.setItem(THEME_KEY" in js
     assert "localStorage.setItem(SIDEBAR_KEY" in js
     assert 'const enabled = item.state === "LIVE_FOUNDATION";' in js
+
+
+def test_i00_visual_shell_matches_approved_foundation_contract():
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+    css = (WEB / "styles.css").read_text(encoding="utf-8")
+
+    # Approved baseline direction, not the legacy dashboard shell.
+    assert "Governed Knowledge Workflow" in html
+    assert "Search projects, documents, artifacts" in html
+    assert "Capability maturity" in html
+    assert "System status" in html
+    assert "Static UAT mode" not in html
+
+    # Semantic inline SVG icon system: first-letter placeholders are forbidden.
+    assert "const ICON_PATHS" in js
+    assert "iconSvg(item.id" in js
+    assert "item.label.slice(0, 1)" not in js
+    assert '<svg class="' in js
+
+    # Sidebar collapse changes the actual grid geometry.
+    assert '$("#appView").classList.toggle("sidebar-collapsed", collapsed);' in js
+    assert ".app-shell{min-height:100vh;display:grid;grid-template-columns:260px minmax(0,1fr)" in css
+    assert ".app-shell.sidebar-collapsed{grid-template-columns:68px minmax(0,1fr)}" in css
+
+    # Full-shell theme parity: light sidebar is light; dark sidebar is dark.
+    assert "--bg-sidebar:#f9fbff" in css
+    assert "--bg-sidebar:#08111f" in css
+    assert "--topbar-bg:rgba(255,255,255,.92)" in css
+    assert "--topbar-bg:rgba(9,17,29,.92)" in css
+
+    # Locked/planned items remain non-functional but descriptive.
+    assert 'disabled aria-disabled="true"' in js
+    assert '" — " + meta.label + " · " + item.slice' in js
+    assert ".nav-item.disabled{cursor:default;opacity:.9}" in css
+
+
+def test_i00_theme_control_exposes_system_light_dark_without_fake_product_state():
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+    for theme in ("light", "system", "dark"):
+        assert f'data-theme-option="{theme}"' in html
+    assert 'document.documentElement.dataset.theme = theme;' in js
+    assert 'button.classList.toggle("active", button.dataset.themeOption === theme);' in js
 
 
 def test_i00_server_config_fails_closed_without_auth_secret(tmp_path, monkeypatch):
@@ -342,4 +386,3 @@ def test_i00_windows_launcher_refuses_to_stop_or_restart_unrelated_process(tmp_p
         if unrelated.poll() is None:
             unrelated.terminate()
             unrelated.wait(timeout=10)
-

@@ -10,7 +10,10 @@
 <body>
   <div id="loginView" class="login-layout">
     <section class="login-brand">
-      <div class="brand-lockup"><div class="brand-mark">G</div><div><strong>GWF</strong><span>Governed Workflow Runtime</span></div></div>
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true">G</div>
+        <div class="brand-copy"><strong>GWF</strong><span>Governed Knowledge Workflow</span></div>
+      </div>
       <div class="login-copy">
         <p class="eyebrow">Research operations · governed execution</p>
         <h1>Governed Knowledge Studio</h1>
@@ -18,6 +21,7 @@
       </div>
       <div class="foundation-note"><span class="status-dot"></span><span>Browser foundation · BPS-I00</span></div>
     </section>
+
     <section class="login-panel">
       <form id="loginForm" class="auth-card">
         <p class="eyebrow">Canonical product server</p>
@@ -35,76 +39,111 @@
   <div id="appView" class="app-shell" hidden>
     <aside id="sidebar" class="sidebar">
       <div class="sidebar-head">
-        <div class="brand-lockup"><div class="brand-mark">G</div><div class="brand-copy"><strong>GWF</strong><span>Knowledge Studio</span></div></div>
-        <button id="sidebarToggle" class="icon-button" aria-label="Collapse sidebar" title="Collapse sidebar">⇤</button>
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">G</div>
+          <div class="brand-copy"><strong>GWF</strong><span>Governed Knowledge Workflow</span></div>
+        </div>
+        <button id="sidebarToggle" class="icon-button sidebar-toggle" type="button" aria-label="Collapse sidebar" title="Collapse sidebar"></button>
       </div>
-      <div class="context-card">
-        <span class="context-label">Workspace</span>
-        <strong>Product foundation</strong>
-        <small id="serverMode">canonical</small>
-      </div>
-      <nav id="mainNav" aria-label="Primary navigation"></nav>
+
+      <nav id="mainNav" class="main-nav" aria-label="Primary navigation"></nav>
+
       <div class="sidebar-foot">
-        <div class="health-row"><span id="healthDot" class="health-dot"></span><span class="brand-copy"><strong id="healthLabel">Checking</strong><small>Core health</small></span></div>
+        <div class="foundation-id">
+          <span id="healthDot" class="health-dot"></span>
+          <div class="brand-copy">
+            <strong>BPS-I00</strong>
+            <small id="foundationBuild">Loading build…</small>
+          </div>
+        </div>
       </div>
     </aside>
 
     <div class="workspace">
       <header class="topbar">
-        <div class="top-context">
-          <button id="mobileMenu" class="icon-button mobile-only" aria-label="Open navigation">☰</button>
-          <div><p class="eyebrow">BPS-I00 · shell foundation</p><h1 id="pageTitle">System foundation</h1></div>
-        </div>
+        <button id="mobileMenu" class="icon-button mobile-only" type="button" aria-label="Open navigation"></button>
+
+        <button class="command-search" type="button" disabled aria-disabled="true" title="Authoritative cross-resource search unlocks in a later slice">
+          <span id="searchIcon" class="toolbar-icon" aria-hidden="true"></span>
+          <span>Search projects, documents, artifacts…</span>
+          <kbd>Ctrl K</kbd>
+        </button>
+
         <div class="top-actions">
-          <label class="theme-control">Theme
-            <select id="themeSelect" aria-label="Theme">
-              <option value="system">System</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-          </label>
-          <div class="actor-chip"><span class="avatar" id="actorInitial">?</span><span><strong id="actorName">—</strong><small id="authMethod">—</small></span></div>
+          <div class="theme-switch" role="group" aria-label="Theme">
+            <button type="button" data-theme-option="light" aria-label="Use Light theme" title="Light"></button>
+            <button type="button" data-theme-option="system" aria-label="Use System theme" title="System"></button>
+            <button type="button" data-theme-option="dark" aria-label="Use Dark theme" title="Dark"></button>
+          </div>
+          <button class="icon-button quiet-action" type="button" disabled aria-disabled="true" title="Notifications are locked until their product slice" id="notificationButton"></button>
+          <div class="actor-chip">
+            <span class="avatar" id="actorInitial">?</span>
+            <span><strong id="actorName">—</strong><small id="authMethod">—</small></span>
+          </div>
           <button id="logoutButton" class="ghost">Sign out</button>
         </div>
       </header>
 
       <main class="content">
-        <section class="hero-card">
+        <section class="welcome-section">
+          <p class="welcome-kicker">Welcome to GWF</p>
+          <h1>Governed Knowledge Workflow</h1>
+          <p class="welcome-copy">Traceable research work, exact identity, evidence, approvals and recovery — without turning the browser into a second source of truth.</p>
+        </section>
+
+        <section id="foundationCards" class="foundation-cards" aria-label="Product areas"></section>
+
+        <section class="home-grid">
+          <article class="panel compact-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Foundation boundary</p>
+                <h2>Capability maturity</h2>
+              </div>
+              <span class="state-pill live">BPS-I00</span>
+            </div>
+            <div id="capabilityList" class="capability-list"></div>
+          </article>
+
+          <article class="panel compact-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Authoritative runtime</p>
+                <h2>System status</h2>
+              </div>
+              <button class="text-button" id="refreshButton" type="button">Refresh</button>
+            </div>
+            <div id="systemStatus" class="status-list"></div>
+          </article>
+        </section>
+
+        <section class="identity-strip">
           <div>
-            <p class="eyebrow">Authoritative product surface</p>
-            <h2>Canonical server and browser shell are connected.</h2>
-            <p class="muted">This slice intentionally contains no Home KPIs, project workflows, operations, packages, GitHub actions, Library or Documents. Those remain locked until their own pass-gated slices.</p>
+            <span>Exact build</span>
+            <code id="exactBuild">—</code>
           </div>
-          <span class="state-pill live">LIVE FOUNDATION</span>
-        </section>
-
-        <section class="section-grid">
-          <article class="panel">
-            <div class="panel-head"><div><p class="eyebrow">Exact identity</p><h3>Runtime</h3></div><button class="text-button" id="refreshButton">Refresh</button></div>
-            <dl id="runtimeIdentity" class="identity-list"></dl>
-          </article>
-          <article class="panel">
-            <div class="panel-head"><div><p class="eyebrow">Authenticated context</p><h3>Session</h3></div></div>
-            <dl id="sessionIdentity" class="identity-list"></dl>
-          </article>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head"><div><p class="eyebrow">Product maturity</p><h3>Capability status</h3></div><span class="muted">Functional actions stay disabled until their slice passes.</span></div>
-          <div id="capabilityGrid" class="capability-grid"></div>
-        </section>
-
-        <section class="panel note-panel">
-          <div><p class="eyebrow">Current boundary</p><h3>What this shell proves</h3></div>
-          <div class="boundary-grid">
-            <div><strong>Authoritative</strong><p>Server identity, core readiness and authenticated session come from the live backend.</p></div>
-            <div><strong>Presentation-only local state</strong><p>Theme and sidebar preference are the only browser-local persisted settings in this slice.</p></div>
-            <div><strong>Explicitly locked</strong><p>Future modules are visible for information architecture only and expose no fake mutations.</p></div>
+          <div>
+            <span>Domain</span>
+            <code id="exactDomain">—</code>
           </div>
+          <div>
+            <span>Backend</span>
+            <code id="exactBackend">—</code>
+          </div>
+          <div>
+            <span>Session</span>
+            <code id="exactActor">—</code>
+          </div>
+        </section>
+
+        <section class="boundary-note">
+          <span class="boundary-icon" id="boundaryIcon" aria-hidden="true"></span>
+          <p><strong>Foundation only.</strong> Product areas whose slices have not passed remain visible for orientation but cannot execute fake actions. Documents, Relations graph and full-screen Reader remain future authorized slices.</p>
         </section>
       </main>
     </div>
   </div>
+
   <script src="/assets/app.js"></script>
 </body>
 </html>
