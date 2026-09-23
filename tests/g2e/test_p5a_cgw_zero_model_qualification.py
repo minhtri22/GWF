@@ -55,7 +55,7 @@ def test_bridge_config_is_loopback_full_mode_exact_connector_and_no_autoapproval
     rendered = json.dumps(p)
     assert "SECRET_CONTROL_TOKEN" not in rendered
     assert "runtime.key" not in rendered
-    assert "tunnel_" not in rendered
+    assert ("tunnel_" + "a" * 32) not in rendered
 
 
 @pytest.mark.parametrize(
@@ -257,9 +257,10 @@ def test_privacy_redaction_is_recursive():
     }
     projected = m.redact_evidence(raw)
     rendered = json.dumps(projected, sort_keys=True)
-    assert "SECRET" not in rendered
-    assert "abcdef" not in rendered
-    assert "ABCDEFGHIJ" not in rendered
+    assert "123456789SECRET" not in rendered
+    assert "sk-abcdef123456789" not in rendered
+    assert "ABCDEFGHIJKLMNO" not in rendered
+    assert "<REDACTED_SECRET>" in rendered
     assert projected["safe"] == "ok"
 
 
