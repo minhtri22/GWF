@@ -1,0 +1,63 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-PREMARKER-REPAIR-RESULT-v1",
+  "status": "PASS_REAUTHORIZED_UNCONSUMED_ATTEMPT",
+  "prior_local_invocation": {
+    "observed_parent_exit_code": 1,
+    "final_report_present": false,
+    "observed_preexisting_untracked": [
+      ".local/",
+      "dist/",
+      "evidence/dg-p9/"
+    ],
+    "old_oneclick_blob": "9a6afbaec93844fd3b0adcae2ad624ab036e2ecf",
+    "old_gate": "blanket git status --porcelain cleanliness",
+    "consumption_adjudication": "NOT_CONSUMED",
+    "basis": [
+      "old elevated wrapper rechecked source cleanliness before LocalRoot creation",
+      "LocalRoot/admission/runner/marker all occur after that gate",
+      "UAC cancellation alternative also occurs before those steps",
+      "durable attempt marker could not be reached on either observed path"
+    ],
+    "retry_semantics": "THIS_IS_NOT_A_RETRY_BECAUSE_FROZEN_CONSUMPTION_BOUNDARY_WAS_NOT_CROSSED"
+  },
+  "repair": {
+    "candidate": "08edd76c63fc4d86c3196490bb3b76558c35bc12",
+    "oneclick_blob": "262e9a6c45ade942228f559d330fa4351c26fdfa",
+    "tests_blob": "69d09a3f3fd984c537c690517235a85415b6e0e3",
+    "workflow_blob": "04fc5ca10126df489acc25d029b5f902cbdb3eb9",
+    "plan_blob": "b1f3b84c42e94b6570fe45db3ffda498f74dfebc",
+    "mechanism": "REPLACE_BLANKET_DIRTY_GATE_WITH_TRACKED_CLEAN_PLUS_CRITICAL_UNTRACKED_FAIL_CLOSED",
+    "benign_untracked_examples": [
+      ".local/",
+      "dist/",
+      "evidence/"
+    ],
+    "critical_untracked_prefixes": [
+      "scripts/g2e/",
+      "g2e/docs/",
+      "g2e/config/",
+      "src/",
+      "tests/g2e/",
+      ".github/workflows/"
+    ]
+  },
+  "authoritative_qa": {
+    "run_id": 35813190080,
+    "linux_job_id": 107029017290,
+    "windows_job_id": 107029017493,
+    "conclusion": "success",
+    "artifact_id": 10730851896,
+    "artifact_digest": "sha256:7df1eb0fab1a18cd8ceec5d764d106d4698b15f0d2fa2b298fb47f1620ecaa03",
+    "report_sha256": "0c4b84ee47eea06c45418b6940934c1e08b70202e7ba618eaafa5c40d7b3438f"
+  },
+  "normative_contract_changed": false,
+  "frozen_attempt_id": "p5a-cgw-v4-p5-fx-001-attempt-001",
+  "qualification_firewall": {
+    "model_turn_executed": false,
+    "browser_submission_executed": false,
+    "mcp_tool_invocation_executed": false,
+    "attempt_created": false,
+    "attempt_consumed": false
+  },
+  "next": "CREATE_DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R1"
+}

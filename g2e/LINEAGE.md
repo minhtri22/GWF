@@ -611,3 +611,18 @@
 - **Normative contract:** unchanged from v1; V2 adds only qualified implementation identities and zero-model QA evidence.
 - **Authorization:** exactly one future local dispatch authorized; no A/B; no P5A-official fallback; promotion itself does not execute.
 - **Next:** one local P5A-CGW P5-FX-001 functional execution under V2.
+
+
+### G2E-P5A-CGW — Pre-marker worktree repair / V2R1 reauthorization
+
+- **Observed local invocation:** parent exit code 1; no final execution report; repository contained only unrelated untracked outputs `.local/`, `dist/`, `evidence/dg-p9/`.
+- **Consumption adjudication:** `NOT_CONSUMED`. The old wrapper's blanket source-dirty gate occurs before LocalRoot creation, predispatch admission, runner startup, durable marker fsync and sole `turn/start`; UAC cancellation is also pre-marker.
+- **Repair scope:** infrastructure-only. Scientific study/attempt, v4.0.7 runtime, Codex binary, route/model/mode, P5-FX-001 task/result, authority, evidence contract, retry=0 and timeout=90s are unchanged.
+- **Repaired source gate:** tracked worktree clean + tracked index clean + fail-closed critical untracked prefixes; unrelated output directories no longer block.
+- **Final repaired candidate:** `08edd76c63fc4d86c3196490bb3b76558c35bc12`.
+- **Authoritative zero-model QA:** run `35813190080`; Linux `107029017290` PASS; Windows `107029017493` PASS.
+- **Artifact:** `10730851896`; digest `sha256:7df1eb0fab1a18cd8ceec5d764d106d4698b15f0d2fa2b298fb47f1620ecaa03`; report SHA256 `0c4b84ee47eea06c45418b6940934c1e08b70202e7ba618eaafa5c40d7b3438f`.
+- **Repaired one-click blob:** `262e9a6c45ade942228f559d330fa4351c26fdfa`.
+- **V2 status:** immutable but superseded for dispatch.
+- **V2R1:** same reserved unconsumed attempt `p5a-cgw-v4-p5-fx-001-attempt-001`; exactly one future local dispatch authorized; no retry and no automatic execution.
+- **Next:** one local P5A-CGW P5-FX-001 functional execution under V2R1.
