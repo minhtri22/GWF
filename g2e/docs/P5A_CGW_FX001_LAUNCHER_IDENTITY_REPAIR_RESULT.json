@@ -1,0 +1,57 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-LAUNCHER-IDENTITY-REPAIR-RESULT-v1",
+  "status": "PASS",
+  "prior_preflight": {
+    "blocker": "CGW_BINARY_HASH_DRIFT",
+    "marker_present": false,
+    "final_report_present": false,
+    "attempt_consumed": false
+  },
+  "read_only_identity_decomposition": {
+    "bridge_config_sha256": "f8ba628c60faf5c95409ee3a37ad359f74dd0eb41bb961312b67758f9ba53858",
+    "bridge_release": "4.0.7",
+    "bridge_mode": "full",
+    "bridge_connector": "Codex Native2",
+    "bridge_idle": true,
+    "registry_launcher": {
+      "sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+      "size": 223980032,
+      "file_version": "4.0.7",
+      "product_version": "4.0.7.0"
+    },
+    "runtime_command0": {
+      "basename": "bun.exe",
+      "sha256": "627d2e4775c24bdedee2cd7ccc18dcadae061e5345274ab6e3c4c797927bfb8f",
+      "size": 88825944,
+      "version": "1.4.0"
+    },
+    "codex_binary_sha256": "a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8"
+  },
+  "repair": {
+    "candidate": "71ec98147239de07d14f1ad0b565e819b269149b",
+    "oneclick_blob": "14c24776f22132cf932aaabdb2adb421de16cb05",
+    "tests_blob": "eb28f774bc251a2855322838783365fd711ca1fa",
+    "workflow_blob": "5b82250e1f5729651ea8c039c096d38fe6013bfc",
+    "plan_blob": "b740061e45193bc1f1332f5d7b9910fbf22623ef",
+    "rule": "LAUNCHER_IDENTITY_MUST_RESOLVE_TO_CODEX_WEB_GPT_EXE_ONLY",
+    "runtime_command_fallback_for_identity": false
+  },
+  "authoritative_qa": {
+    "run_id": 35817801154,
+    "linux_job_id": 107042991098,
+    "windows_job_id": 107042991294,
+    "conclusion": "success",
+    "artifact_id": 10732415733,
+    "artifact_digest": "sha256:cb8f0c92329c4884bb3f6f06f50787ab46551d04d4aaa131f8148a3261862345",
+    "report_sha256": "45c71e3fd72a5147dfdeb28657597f26970ed480e43ab9ed99294608243895cb"
+  },
+  "qualification_firewall": {
+    "model_turn_executed": false,
+    "browser_submission_executed": false,
+    "mcp_tool_invocation_executed": false,
+    "attempt_created": false,
+    "attempt_consumed": false
+  },
+  "normative_contract_changed": false,
+  "next": "CREATE_V2R3_AND_RUN_PREFLIGHT_ONLY"
+}

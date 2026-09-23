@@ -637,3 +637,16 @@
 - **Artifact:** `10731307825`; digest `sha256:e9647c3d2f0e7c1ffbd3b0a1d59c3130a4cab6c3adcab455fb71d3ec16bb45cf`; report SHA256 `65c061ff7ffa1836db8af8e6645bd541ff18c998d25cbc236dad96ff6349bce7`.
 - **One-click blob:** `2a38762655c38d8c64b36c1c44bf5a2cce8b92e8`.
 - **V2R2:** same attempt identity; preflight-only required before next live dispatch; retry remains zero.
+
+
+### G2E-P5A-CGW — V2R3 launcher identity repair
+
+- **Observed blocker:** `CGW_BINARY_HASH_DRIFT` under preflight-only; marker absent and no final report, so attempt remained unconsumed.
+- **Read-only identity decomposition:** registry launcher `Codex Web GPT.exe` still matched frozen v4.0.7 SHA256 `ac152ad4...`, size `223980032`; bridge config remained exact; bridge health remained v4.0.7 Full / Codex Native2 and idle; Codex binary remained exact.
+- **Mechanism:** wrapper could fall back from launcher identity to `runtimeCommand[0]`, which is `bun.exe` v1.4.0 with a different hash, then compare Bun against the frozen launcher hash.
+- **Repair:** launcher identity now resolves only to installed `Codex Web GPT.exe`; no fallback to `runtimeCommand[0]`; explicit launcher-not-found/hash-drift diagnostics.
+- **Candidate:** `71ec98147239de07d14f1ad0b565e819b269149b`.
+- **Authoritative zero-model QA:** run `35817801154`; Linux `107042991098` PASS; Windows `107042991294` PASS.
+- **Artifact:** `10732415733`; digest `sha256:cb8f0c92329c4884bb3f6f06f50787ab46551d04d4aaa131f8148a3261862345`; report SHA256 `45c71e3fd72a5147dfdeb28657597f26970ed480e43ab9ed99294608243895cb`.
+- **One-click blob:** `14c24776f22132cf932aaabdb2adb421de16cb05`.
+- **V2R3:** same attempt identity, still `RESERVED_UNCONSUMED`; preflight-only required before live dispatch; retry remains zero.
