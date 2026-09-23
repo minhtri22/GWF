@@ -481,7 +481,8 @@ def test_oneclick_derives_launcher_hash_from_lock_single_source_of_truth():
     source = ONECLICK.read_text(encoding="utf-8")
     assert '$ExpectedCgwSha = ([string]$Lock.launcher_identity.expected_sha256).Trim().ToUpperInvariant()' in source
     assert "LOCK_CGW_LAUNCHER_SHA256_INVALID" in source
-    assert "^[A-F0-9]{64}$" in source
+    assert '$ExpectedCgwSha.Length -ne 64' in source
+    assert '$ExpectedCgwSha -match "[^A-F0-9]"' in source
     assert "AC152AD499B1F41B2CAFE94A3D05F5D4E4D3CD7DDBB417B9C60B118B08BC3CBB" not in source
     assert "AC152AD499B1F41B2CAFE94A3D05F5D4E4D3CD7DBB417B9C60B118B08BC3CBB" not in source
 

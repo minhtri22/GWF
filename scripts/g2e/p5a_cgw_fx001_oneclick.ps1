@@ -106,7 +106,9 @@ if ($Lock.authorization.max_dispatches -ne 1) { throw "DISPATCH_CARDINALITY_DRIF
 if ($Lock.attempt_id -ne $AttemptId) { throw "ATTEMPT_ID_DRIFT" }
 
 $ExpectedCgwSha = ([string]$Lock.launcher_identity.expected_sha256).Trim().ToUpperInvariant()
-if ($ExpectedCgwSha -notmatch '^[A-F0-9]{64}
+if ($ExpectedCgwSha.Length -ne 64 -or $ExpectedCgwSha -match "[^A-F0-9]") {
+    throw "LOCK_CGW_LAUNCHER_SHA256_INVALID:$ExpectedCgwSha"
+}
 if ((Get-GitBlob $ProjectRoot "scripts/g2e/p5a_cgw_fx001_admission.py") -ne $Lock.components.admission_blob) { throw "ADMISSION_BLOB_DRIFT" }
 if ((Get-GitBlob $ProjectRoot "scripts/g2e/p5a_cgw_fx001_runner.py") -ne $Lock.components.runner_blob) { throw "RUNNER_BLOB_DRIFT" }
 if ((Get-GitBlob $ProjectRoot "scripts/g2e/p5a_cgw_fx001_verify.py") -ne $Lock.components.verifier_blob) { throw "VERIFIER_BLOB_DRIFT" }
