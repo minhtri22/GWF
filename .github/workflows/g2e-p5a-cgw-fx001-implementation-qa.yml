@@ -193,8 +193,8 @@ jobs:
           $wrapper = Get-Content scripts\g2e\p5a_cgw_fx001_oneclick.ps1 -Raw
           if ($wrapper -notmatch "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R5") { throw "V2R5_LOCK_GUARD_MISSING" }
           if ($wrapper -notmatch "Test-IsAdministrator") { throw "UAC_GUARD_MISSING" }
-          if ($wrapper -notmatch "git_exe = \$GitExe") { throw "GIT_HANDOFF_MISSING" }
-          if ($wrapper -notmatch "cgw_binary = \$CgwBinary") { throw "CGW_HANDOFF_MISSING" }
+          if (-not $wrapper.Contains('git_exe = $GitExe')) { throw "GIT_HANDOFF_MISSING" }
+          if (-not $wrapper.Contains('cgw_binary = $CgwBinary')) { throw "CGW_HANDOFF_MISSING" }
           if ($wrapper -notmatch "HandoffConfig") { throw "HANDOFF_CONFIG_MISSING" }
           if ($wrapper -notmatch "HandoffDiagnostic") { throw "HANDOFF_DIAGNOSTIC_MISSING" }
           if ($wrapper -notmatch "PreflightOnly") { throw "PREFLIGHT_ONLY_MISSING" }
