@@ -50,6 +50,8 @@ jobs:
             ".github/workflows/g2e-p5a-cgw-fx001-implementation-qa.yml"
             "g2e/config/P5A_CGW_FX001_EXECUTION_CONFIG_V2.json"
             "g2e/docs/P5A_CGW_FX001_V2R6_INFRASTRUCTURE_AMENDMENT_PLAN.md"
+            "g2e/docs/P5A_CGW_FX001_V2R6_QUALIFICATION_RESULT.json"
+            "g2e/docs/P5A_CGW_FX001_EXECUTION_LOCK_V2R6.json"
             "scripts/g2e/p5a_cgw_fx001_admission.py"
             "scripts/g2e/p5a_cgw_fx001_oneclick.ps1"
             "scripts/g2e/p5a_cgw_fx001_runner.py"

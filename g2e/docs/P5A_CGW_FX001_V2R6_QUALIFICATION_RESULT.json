@@ -1,0 +1,50 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-V2R6-QUALIFICATION-RESULT-v1",
+  "status": "PASS",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-attempt-001",
+  "attempt_state": "RESERVED_UNCONSUMED",
+  "scientific_contract_changed": false,
+  "amendment_class": "PRE_CONSUMPTION_INFRASTRUCTURE_REPAIR",
+  "implementation_candidate": "362b6c91f4c126d3ccd16af411308e748d6bf816",
+  "scope_guard_candidate": "131bba6e616210265d3ccdb24890aaf3a62e8061",
+  "implementation_qa": {
+    "run_id": 35871024867,
+    "linux_job_id": 107214835749,
+    "windows_job_id": 107214836041,
+    "conclusion": "success",
+    "artifact_id": 10755435481,
+    "artifact_digest": "sha256:bcbca4de2e818076aea81b1181f34b287983bde0130b54451112f5d37c0d12f2"
+  },
+  "generic_zero_model_qa": {
+    "run_id": 35871326977,
+    "linux_job_id": 107215868984,
+    "windows_job_id": 107215868362,
+    "conclusion": "success",
+    "artifact_id": 10755496045,
+    "artifact_digest": "sha256:5b129073649e0ee90ef64376e1c6fb3128ea365ac4c601b25b24cd654c2aa5e7"
+  },
+  "execution_config_v2": {
+    "git_blob": "5551262c62389eaecf928e8d60fbde22e39d3b1e",
+    "canonical_sha256": "4af6909cecd412e8daf9c641222e129f1e35b7f94b00179339991a6f3ddb72ea"
+  },
+  "runtime": {
+    "codex_release": "rust-v0.153.4",
+    "codex_sha256": "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b",
+    "sandbox_helper_sha256": "0c3eeb7cee8d2bc4c8644def3c818e8b06760979572dcedc919c38d0f38f64c4",
+    "package_sha256": "a6ef3442cb12766a88b39311d79244289e4f9763e2c53ff4fbebc2cb653cc5f3",
+    "global_codex_mutated": false
+  },
+  "roots": {
+    "predecessor": "g2e/.local/P5A-CGW-FX001-V4-001",
+    "predecessor_disposition": "PRESERVE_IMMUTABLE",
+    "successor": "g2e/.local/P5A-CGW-FX001-V4-002"
+  },
+  "firewall": {
+    "model_turn_executed": false,
+    "browser_submission_executed": false,
+    "mcp_invocation_executed": false,
+    "sandbox_setup_executed": false,
+    "attempt_consumed": false
+  },
+  "next_gate": "LOCAL_V2R6_PREFLIGHT_ONLY"
+}
