@@ -46,6 +46,12 @@ def test_bps_i00_local_uat_script_contract():
     assert "access_token" not in report_section
 
 
+def test_bps_i00_local_uat_script_is_windows_powershell_51_encoding_safe():
+    text = SCRIPT.read_text(encoding="utf-8")
+    non_ascii = sorted({ch for ch in text if ord(ch) > 127})
+    assert non_ascii == [], f"Windows PowerShell 5.1 local UAT script must be ASCII-only; found: {non_ascii!r}"
+
+
 @pytest.mark.skipif(sys.platform != "win32", reason="PowerShell parser check is Windows-only")
 def test_bps_i00_local_uat_script_parses_on_windows():
     shell = shutil.which("pwsh") or shutil.which("powershell")

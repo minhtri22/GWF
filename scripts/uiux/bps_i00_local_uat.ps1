@@ -156,7 +156,7 @@ try {
     Write-Host ("BRANCH={0}" -f $BranchName)
     Write-Host ""
 
-    Write-Host "Step 1/6 — canonical quick install" -ForegroundColor Cyan
+    Write-Host "Step 1/6 - canonical quick install" -ForegroundColor Cyan
     Invoke-LoggedPowerShell -ScriptPath $InstallScript -Arguments @() -LogPath $InstallLog
     $EvidencePaths.Add($InstallLog)
     $venvPython = Join-Path $RepoRoot ".venv\Scripts\python.exe"
@@ -178,7 +178,7 @@ try {
     $env:GWR_BUILD_SHA = $HeadStart
     $env:GWR_BROWSER_COOKIE_SECURE = "false"
 
-    Write-Host "Step 2/6 — canonical server start/readiness" -ForegroundColor Cyan
+    Write-Host "Step 2/6 - canonical server start/readiness" -ForegroundColor Cyan
     $preStatus = & $ServerLauncher -Action status -RepoRoot $RepoRoot -Port $Port 2>&1
     if (($preStatus -join [Environment]::NewLine) -notmatch "GWF_SERVER=STOPPED") {
         throw "A canonical GWF server is already registered for this repo. Refusing to stop or reuse a process not started by this UAT run."
@@ -196,7 +196,7 @@ try {
     $statusOutput = & $ServerLauncher -Action status -RepoRoot $RepoRoot -Port $Port 2>&1
     Add-Check "canonical_server_status_ready" (($statusOutput -join [Environment]::NewLine) -match "GWF_SERVER=READY") ($statusOutput -join [Environment]::NewLine)
 
-    Write-Host "Step 3/6 — authoritative shell/session checks" -ForegroundColor Cyan
+    Write-Host "Step 3/6 - authoritative shell/session checks" -ForegroundColor Cyan
     $ProductMeta = Invoke-RestMethod -Uri "$BaseUrl/product/meta" -TimeoutSec 5
     Add-Check "product_build_sha_exact" ($ProductMeta.build_sha -eq $HeadStart) $ProductMeta.build_sha
     Add-Check "server_mode_canonical" ($ProductMeta.server_mode -eq "canonical") $ProductMeta.server_mode
@@ -226,14 +226,14 @@ try {
     Add-Check "no_js_access_token_storage" (-not ($appJs -match "access_token")) "access_token absent from shell JS"
     Add-Check "presentation_storage_only" (($appJs -match "gwr-ui-theme") -and ($appJs -match "gwr-ui-sidebar")) "theme/sidebar preference keys present"
 
-    Write-Host "Step 4/6 — restart/session persistence" -ForegroundColor Cyan
+    Write-Host "Step 4/6 - restart/session persistence" -ForegroundColor Cyan
     Invoke-LoggedPowerShell -ScriptPath $ServerLauncher -Arguments @("-Action","restart","-RepoRoot",$RepoRoot,"-Port","$Port") -LogPath $LauncherLog
     $ReadyState = Wait-Ready
     $MeAfterRestart = Invoke-RestMethod -Uri "$BaseUrl/browser/auth/me" -WebSession $MachineSession -TimeoutSec 5
     Add-Check "session_survives_canonical_restart" ($MeAfterRestart.actor_id -eq $me.actor_id) $MeAfterRestart.actor_id
 
     Write-Host ""
-    Write-Host "Step 5/6 — browser operator checks" -ForegroundColor Cyan
+    Write-Host "Step 5/6 - browser operator checks" -ForegroundColor Cyan
     Write-Host "The script will open the REAL canonical GWF product shell."
     Write-Host ("URL:      {0}" -f $AppUrl)
     Write-Host ("Username: {0}" -f $UatUsername)
@@ -256,7 +256,7 @@ try {
     foreach ($entry in $manualPrompts) { if (-not (Add-Manual -Id $entry[0] -Prompt $entry[1])) { $manualAllPass = $false } }
     if (-not $manualAllPass) { throw "One or more mandatory browser UAT observations failed." }
 
-    Write-Host "Step 6/6 — post-browser authoritative re-query and shutdown" -ForegroundColor Cyan
+    Write-Host "Step 6/6 - post-browser authoritative re-query and shutdown" -ForegroundColor Cyan
     $postReady = Invoke-RestMethod -Uri $ReadyUrl -TimeoutSec 5
     $postMeta = Invoke-RestMethod -Uri "$BaseUrl/product/meta" -TimeoutSec 5
     Add-Check "post_browser_ready" ($postReady.ok -eq $true) $postReady
