@@ -1,0 +1,76 @@
+name: G2E P5A-CGW First Functional Attempt Preregistration
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["research/p5a-cgw-specification"]
+    paths:
+      - "scripts/g2e/p5a_cgw_fx001_preregister.py"
+      - "tests/g2e/test_p5a_cgw_fx001_preregistration.py"
+      - "g2e/docs/P5A_CGW_FX001_PREREGISTRATION_PLAN.md"
+      - ".github/workflows/g2e-p5a-cgw-fx001-preregistration.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  prereg-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install pytest
+      - name: Run preregistration tests
+        run: pytest -q tests/g2e/test_p5a_cgw_fx001_preregistration.py
+      - name: Materialize frozen preregistration
+        run: |
+          python scripts/g2e/p5a_cgw_fx001_preregister.py --output P5A_CGW_FX001_PREREGISTRATION.json
+      - name: Assert zero-model script surface
+        shell: python
+        run: |
+          from pathlib import Path
+          s = Path("scripts/g2e/p5a_cgw_fx001_preregister.py").read_text()
+          forbidden = ["urllib", "requests.", "httpx.", "aiohttp", "socket.socket", "subprocess", "Popen(", "run(["]
+          for token in forbidden:
+              assert token not in s, token
+          assert "def build_preregistration" in s
+          print("P5A_CGW_FX001_PREREG_ZERO_MODEL_PASS")
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p5a-cgw-fx001-preregistration
+          path: P5A_CGW_FX001_PREREGISTRATION.json
+          if-no-files-found: error
+
+  prereg-windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest
+        shell: powershell
+        run: python -m pip install pytest
+      - name: Compile preregistration generator
+        shell: powershell
+        run: |
+          python -m compileall -q scripts\g2e\p5a_cgw_fx001_preregister.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run preregistration tests
+        shell: powershell
+        run: |
+          pytest -q tests\g2e\test_p5a_cgw_fx001_preregistration.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Materialize and verify no dispatch authorization
+        shell: powershell
+        run: |
+          python scripts\g2e\p5a_cgw_fx001_preregister.py --output P5A_CGW_FX001_PREREGISTRATION.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $r = Get-Content P5A_CGW_FX001_PREREGISTRATION.json -Raw | ConvertFrom-Json
+          if ($r.authorization.model_turn -ne $false) { throw "MODEL_TURN_AUTHORIZED_DURING_PREREG" }
+          if ($r.attempt_consumption.retry_budget -ne 0) { throw "RETRY_BUDGET_DRIFT" }
