@@ -27,8 +27,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install test dependency
-        run: python -m pip install pytest
+      - name: Install G2E dependencies
+        run: |
+          python -m pip install -U pip
+          pip install -e ".[dev]"
 
       - name: Parse PowerShell wrapper
         shell: pwsh
@@ -61,11 +63,6 @@ jobs:
           assert assets["codex-web-gpt-5.0.8-win-x64.exe"]["digest"] == "sha256:83224d59506462ab2976f437bfaea96b046d4ed55caa7e1cfd6a3d61de0a8ff3"
           print("P5A_CGW_Q0B_RELEASE_PIN_PASS")
 
-      - name: Install G2E dependencies
-        run: |
-          python -m pip install -U pip
-          pip install -e ".[dev]"
-
       - name: Regress existing P5A-CGW qualifier tests
         run: pytest -q tests/g2e/test_p5a_cgw_zero_model_qualification.py
 
@@ -80,9 +77,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install pytest
+      - name: Install G2E dependencies
         shell: powershell
-        run: python -m pip install pytest
+        run: |
+          python -m pip install -U pip
+          pip install -e ".[dev]"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Parse wrapper under Windows PowerShell
         shell: powershell
