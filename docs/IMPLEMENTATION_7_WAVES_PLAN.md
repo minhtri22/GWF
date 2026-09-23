@@ -81,7 +81,9 @@ Every completed item must record exact dependency revisions/evidence used. A dep
 
 - `docs/BROWSER_PRODUCT_SURFACE_SPEC.md`;
 - `docs/UI_UX_PRODUCT_ARCHITECTURE_SPEC.md`;
-- `docs/UI_UX_QA.md` with final `OPEN=0`.
+- `docs/UI_UX_QA.md` with final `OPEN=0`;
+- `docs/uiux/approved/UI_VISUAL_BASELINE_MANIFEST.md` — approved visual source-of-truth for composition/style;
+- `docs/UI_UX_VISUAL_BASELINE_QA.md` — visual-baseline reconciliation, required `OPEN=0`.
 
 ## BPS execution invariant — one slice at a time
 
@@ -160,11 +162,14 @@ The implementation agent/ChatGPT owns and must complete all six checks without a
 
 6. **UI/UX contract conformance**
    - implementation conforms to `docs/UI_UX_PRODUCT_ARCHITECTURE_SPEC.md`;
-   - dark/light/system theme behavior is correct for implemented surfaces;
-   - sidebar/routing/information hierarchy follows the locked design;
+   - implementation is visually compared against the approved baseline/manifest for the active surface;
+   - dark/light/system theme behavior is correct across the entire implemented shell;
+   - sidebar/routing/information hierarchy follows the locked design and collapsed layout reflows correctly;
+   - semantic icons/tooltips/maturity presentation match the approved design;
    - loading/empty/partial/error/unauthorized/planned states are distinct;
    - exact identities remain inspectable/copyable;
-   - no unsupported integration, invented capability or premature future action appears.
+   - no unsupported integration, invented capability or premature future action appears;
+   - screenshots/reference-state evidence are captured before PRE_LOCAL_PASS; feature presence alone is insufficient.
 
 All six are mandatory.
 
@@ -1836,7 +1841,7 @@ next capability
 
 Current governance states:
 
-- **BPS-I00:** `AUTHORIZED_BOUNDED / NOT_STARTED`; authorization blob `366c338bfeac2e8b1fee3ec4ca45fb504c16dab5`. Implementation may begin only on `feature/bps-i00-product-shell` under root `AGENTS.md`.
+- **BPS-I00:** `UI_CONFORMANCE_RECOVERY_AUTHORIZED / PRE_LOCAL_PASS_INVALIDATED / FINAL_SLICE_PASS=NO`; original authorization remains historically valid and is amended by `docs/BPS_I00_UI_REIMPLEMENTATION_CONTRACT.md`. The only active work is BPS-I00 shell conformance recovery on `feature/bps-i00-product-shell` under root `AGENTS.md`.
 - **BPS-I01…I11:** LOCKED BEHIND PREVIOUS-SLICE `FINAL_SLICE_PASS`.
 - **BPS-W0:** blocked until BPS-I00…I11 all reach `FINAL_SLICE_PASS`.
 - **DG-P11+:** NOT_STARTED / NOT_AUTHORIZED.
@@ -1900,3 +1905,27 @@ Key invariant:
 > When replay reaches an experiment-owned function/logical unit, the UI should show the exact authoring-time explanation/comment bound to the executed source revision, together with runtime state/output/evidence. AI-generated descriptive comments are not scientific evidence.
 
 This parking-lot item does not change the current BPS execution order, does not open BPS-I01, and does not authorize sandbox execution.
+
+## BPS-I00 visual-conformance recovery override
+
+This override is authoritative for the currently open BPS slice:
+
+```text
+approved visual baseline v1.1
+        ↓
+visual-baseline documentation QA OPEN=0
+        ↓
+BPS-I00 shell reimplementation
+        ↓
+QA1→QA6 (strict visual QA6)
+        ↓
+new PRE_LOCAL_PASS
+        ↓
+new exact-head local UAT
+        ↓
+FINAL_SLICE_PASS
+        ↓
+only then BPS-I01 may open
+```
+
+The recovery must preserve canonical server/auth semantics and must not implement later functional slices merely because their approved future visual composition appears in the baseline.

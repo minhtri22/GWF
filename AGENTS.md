@@ -23,7 +23,8 @@ Before touching an active BPS slice, the receiving agent must resolve and read:
 3. `docs/UI_UX_PRODUCT_ARCHITECTURE_SPEC.md` — UI/UX implementation contract;
 4. `docs/UI_UX_QA.md` — closed coverage/traceability findings;
 5. `docs/BROWSER_PRODUCT_SURFACE_SPEC.md` — maturity/authority boundary;
-6. the active slice authorization document;
+6. `docs/uiux/approved/UI_VISUAL_BASELINE_MANIFEST.md` and `docs/UI_UX_VISUAL_BASELINE_QA.md` when the active work has an approved visual baseline;
+7. the active slice authorization/recovery contract;
 7. any exact backend specification/handoff named by that authorization;
 8. `docs/TECHNICAL_DEBT.md` when the active slice touches recorded debt.
 
@@ -42,6 +43,9 @@ UI_UX_SPEC_BLOB
 UI_UX_QA_BLOB
 BROWSER_SURFACE_SPEC_BLOB
 AUTHORIZATION_BLOB
+UI_VISUAL_BASELINE_MANIFEST_BLOB
+UI_VISUAL_BASELINE_ASSET_BLOB
+VISUAL_BASELINE_QA_BLOB
 PREDECESSOR_FINAL_SLICE_PASS_EVIDENCE
 ALLOWED_SCOPE
 FORBIDDEN_SCOPE
@@ -133,11 +137,15 @@ The implementation agent/ChatGPT owns these checks before local user handoff.
 ### QA6 — UI/UX contract conformance
 
 - navigation/information architecture matches the locked spec;
-- dark/light/system behavior is correct for implemented surfaces;
-- sidebar/routing behavior is correct;
+- the rendered surface is compared against the approved visual baseline/manifest where one exists;
+- full-shell dark/light/system parity is correct, not merely the content panel;
+- sidebar collapse/expand changes actual workspace geometry with no stale expanded-width track;
+- semantic icons, collapsed tooltips/focus labels and maturity presentation match the design contract;
 - loading/empty/partial/error/unauthorized/planned states are distinct;
 - exact identities remain inspectable/copyable;
-- no invented connector/capability/action appears.
+- no invented connector/capability/action appears;
+- visual/design conformance is validated with captured reference-state screenshots or equivalent deterministic evidence before PRE_LOCAL_PASS;
+- merely proving that a control exists (theme selector, collapse button, navigation item) is insufficient to mark QA6 PASS.
 
 All six are mandatory:
 
@@ -152,6 +160,8 @@ AND QA6 PASS
 ```
 
 If any QA fails, the assistant fixes/retests the same slice. The user is not used as a manual defect-discovery loop.
+
+A material mismatch against an approved visual baseline is a QA6 FAIL even when backend/runtime behavior is correct.
 
 ## 7. PRE_LOCAL_PASS is not final PASS
 

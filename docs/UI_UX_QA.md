@@ -10,13 +10,18 @@
 ## 2. Final count
 
 ```text
-INITIAL_FINDINGS = 42
-CLOSED           = 42
-OPEN             = 0
-COUNT            = 0
+HISTORICAL_INITIAL_FINDINGS = 42
+HISTORICAL_CLOSED           = 42
+VISUAL_BASELINE_FINDINGS    = 17
+VISUAL_BASELINE_CLOSED      = 17
+TOTAL_CLOSED                = 59
+OPEN                        = 0
+COUNT                       = 0
 ```
 
-**VERDICT: PASS — OPEN=0**
+**CURRENT VERDICT: PASS — OPEN=0**
+
+The original 42-finding semantic/coverage QA remains historical evidence. The user-approved visual-baseline amendment was separately reconciled in `docs/UI_UX_VISUAL_BASELINE_QA.md` and closed 17 additional findings.
 
 ## 3. Audit basis
 
@@ -167,3 +172,28 @@ DG Document Impact P12/P13, Shared Library/GAC, Reference Acquisition, Agent Int
 A finding is CLOSED only because the fixed UI/UX spec now contains an explicit semantic rule, governing reference, coverage decision or API obligation. No finding is closed merely by adding a label or mock screen.
 
 **Final unresolved finding count: 0.**
+
+## 9. Visual baseline amendment v1.1
+
+The following classes are now explicitly covered by the fixed UI/UX documents and approved visual baseline:
+
+- repository-persisted visual source-of-truth;
+- visual/text precedence;
+- full-shell dark/light/system parity;
+- collapsed sidebar workspace reflow;
+- semantic navigation icons and collapsed tooltips;
+- Quick Preview for meaningful document content;
+- full-screen Reader Mode for long research documents/papers;
+- DG-P9-aware preview of current vs pinned revision;
+- coordinated document node preview and relation-edge inspection;
+- strict BPS-I00 boundary: design-language foundation now, later functional slices later;
+- QA6 screenshot/baseline comparison instead of feature-presence-only checks;
+- invalidation of the stale historical BPS-I00 PRE_LOCAL_PASS;
+- explicit separation of future source-code preview/sandbox/replay debt.
+
+Canonical checklist: `docs/UI_UX_VISUAL_BASELINE_QA.md`.
+
+```text
+VISUAL_BASELINE_OPEN = 0
+CURRENT_UI_UX_QA_COUNT = 0
+```

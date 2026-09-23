@@ -325,3 +325,74 @@ BPS_I01 = LOCKED
 DG_P11_PLUS = NOT_AUTHORIZED
 GAC_RA_AI_FUNCTIONAL_UI = BLOCKED
 ```
+
+## 14. Amendment 1 — BPS-I00 UI conformance recovery
+
+### 14.1 Trigger
+
+Local browser UAT reached the real canonical product and exposed a UI/UX conformance failure that assistant-owned QA6 had not detected.
+
+Observed conformance defects included:
+
+- collapsed sidebar did not reclaim the desktop workspace grid width;
+- navigation used first-letter placeholders rather than semantic icons;
+- Light/Dark treatment did not match the approved full-shell design direction;
+- locked navigation semantics were correct, but collapsed presentation/tooltips were insufficient;
+- the rendered shell retained too much of the legacy v0.8.5 dashboard visual ancestry instead of the newly approved Governed Knowledge Studio visual baseline.
+
+Therefore the historical `PRE_LOCAL_PASS` cannot be transferred forward.
+
+### 14.2 Recovery authority
+
+The user explicitly authorized a bounded **BPS-I00 UI reimplementation** after freezing the approved visual baseline.
+
+Recovery contract:
+
+- `docs/BPS_I00_UI_REIMPLEMENTATION_CONTRACT.md`;
+- visual baseline manifest: `docs/uiux/approved/UI_VISUAL_BASELINE_MANIFEST.md`;
+- visual reference: `docs/uiux/approved/GWF_UI_BASELINE_v1_1_APPROVED.jpg`;
+- visual-baseline QA: `docs/UI_UX_VISUAL_BASELINE_QA.md`, required `OPEN=0` before product-code reimplementation.
+
+### 14.3 Bounded recovery scope
+
+The recovery may replace/refactor the BPS-I00 browser shell implementation and its tests.
+
+It must preserve already-qualified runtime foundations:
+
+- canonical server path;
+- HumanAuthService-backed login/session;
+- authoritative backend/session bootstrap;
+- exact build/domain/backend identity;
+- capability maturity semantics;
+- no browser-local authoritative product state.
+
+The recovery must not open BPS-I01 or implement functional Home/Projects/Operations/Packages/Documents/Relations modules.
+
+The approved Documents/Relations/Preview visual is a **future-slice design reference**. BPS-I00 may establish reusable visual primitives/layout conventions needed by that future experience, but it must not fabricate later-slice data/actions.
+
+### 14.4 Recovery acceptance
+
+At minimum QA6 must verify, before any new local handoff:
+
+- approved visual hierarchy and shell composition;
+- semantic icon system, not first-letter placeholders;
+- expanded sidebar ~260 px and collapsed rail ~68 px;
+- collapsed state reflows the workspace with no empty legacy-width track;
+- collapsed icons have descriptive tooltips/focus labels and maturity context;
+- full-shell System/Light/Dark parity;
+- later capabilities remain visibly locked/planned and non-functional;
+- exact visual-reference screenshots are captured for dark/light and expanded/collapsed desktop states;
+- implementation is compared against the approved baseline/manifest, not merely checked for feature presence.
+
+Any material baseline deviation is a QA6 finding and requires explicit resolution or user-approved baseline amendment before PRE_LOCAL_PASS.
+
+### 14.5 Recovery verdict
+
+```text
+BPS_I00_UI_CONFORMANCE_RECOVERY = AUTHORIZED_BOUNDED
+HISTORICAL_PRE_LOCAL_PASS       = INVALIDATED
+QA6                             = REOPENED
+BPS_I00_FINAL_SLICE_PASS        = NO
+BPS_I01                         = LOCKED
+LATER_FUNCTIONAL_UI             = NOT_AUTHORIZED
+```

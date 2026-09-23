@@ -18,6 +18,19 @@ The design direction is **Governed Knowledge Studio**: research-first, SaaS-oper
 
 This document does not authorize code changes by itself.
 
+### 1.1 Approved visual baseline v1.1
+
+The user-approved visual baseline is repository-persisted under:
+
+- `docs/uiux/approved/GWF_UI_BASELINE_v1_1_APPROVED.jpg`;
+- `docs/uiux/approved/UI_VISUAL_BASELINE_MANIFEST.md`.
+
+The visual baseline governs **composition, hierarchy, visual language and interaction placement**. This specification governs semantics, authority and exact behavior. If a compressed visual reference cannot depict a later approved detail, the explicit textual amendment in this specification and the baseline manifest takes precedence.
+
+The approved product direction is a **project-centered Governed Knowledge Studio**, not a restyled legacy v0.8.5 dashboard.
+
+For BPS-I00 specifically, the baseline establishes the correct shell/design system only. Visual examples of Documents/Relations/Preview define the target design language for later slices; they do not authorize BPS-I10/BPS-I11 functionality early.
+
 ---
 
 ## 2. Product UX principles
@@ -159,7 +172,9 @@ Rules:
 - all status pills contain text/icon;
 - graphs and charts must remain distinguishable in both themes;
 - theme preference may be browser-local because it is not authoritative product state;
-- default supports `System | Light | Dark`.
+- default supports `System | Light | Dark`;
+- theme parity applies to the **entire shell**, including sidebar, top bar, content surfaces, overlays/drawers, inspectors and graph chrome;
+- Light mode must not leave a permanently dark-only navigation shell when the approved baseline defines a full-shell light treatment; Dark mode preserves the same information hierarchy.
 
 ### 3.3 Density
 
@@ -174,13 +189,14 @@ Baseline desktop geometry:
 - top bar: ~60 px;
 - context/project subnavigation: ~48 px;
 - main content: fluid;
+- collapsing the desktop sidebar must reclaim the released layout width; a hidden/68 px sidebar must not leave an empty ~260 px grid track;
 - inspector panel: ~320–380 px when open.
 
 ### 3.4 Sidebar behavior
 
-Expanded sidebar shows icon + label + group.
+Expanded sidebar shows a **semantic icon + label + group**.
 
-Collapsed sidebar shows icons only, with tooltip on hover/focus.
+Collapsed sidebar shows semantic icons only, with tooltip on hover/focus. Single-letter placeholders derived from labels (for example `Home -> H`) are not accepted as the production icon system.
 
 Collapse state is presentation preference only.
 
@@ -617,6 +633,37 @@ Show:
 - actor/provenance;
 - active/retired history.
 
+### 11.7 Quick Preview and full-screen Reader
+
+Documents are knowledge/work products, not metadata-only registry rows.
+
+Selecting a document from a list or selecting a document node in a relation graph opens a **Quick Preview** in the contextual inspector. The default inspector tabs are:
+
+```text
+Preview | Details | Relations | History
+```
+
+Quick Preview shows useful governed content, not only tags/IDs. At minimum it includes the document title/type, exact resolved revision identity, status/validity summary, and rendered/readable content sufficient for orientation.
+
+Because research documents, protocols and papers may be long and information-dense, Quick Preview must provide an explicit **Expand / Full screen** action opening a near-full-screen Reader Mode.
+
+Reader Mode requirements:
+
+- readable long-form content with normal scrolling;
+- exact logical document ID and exact revision visible;
+- lifecycle/validity/status visible without dominating the reading surface;
+- exact source/hash/provenance reachable from the reader;
+- `Close` / `Back to graph` returns to the same prior list/graph context and selected root/node;
+- Reader Mode is a projection of the authoritative revision, never browser-authored product truth.
+
+DG-P9 resolution semantics apply to preview:
+
+- `LOGICAL_CURRENT` previews the exact revision resolved as current at read time and identifies it as current;
+- `PINNED_REVISION` previews the exact pinned revision even when it is no longer current and visibly labels the pinned/current distinction;
+- a historical pinned preview must not silently float to the latest revision.
+
+Source-code preview, isolated execution and explainable replay are future work recorded in `TD-UX-03`; they are not authorized by the document Reader requirements above.
+
 ---
 
 ## 12. Relations & Lineage graph
@@ -652,6 +699,7 @@ Single click node:
 
 - select node;
 - update right inspector;
+- default the inspector to the selected document's **Preview** tab when the node resolves to a document;
 - do not change graph root.
 
 Explicit `Set as root` action:
@@ -1539,6 +1587,8 @@ Mobile (<768 px) is outside UX-W0 acceptance for graph/document-authoring/config
 
 - document APIs;
 - list/detail/revisions;
+- Quick Preview;
+- full-screen Reader Mode;
 - QA/findings;
 - lifecycle/validity;
 - authority;
@@ -1594,14 +1644,18 @@ Minimum current-product UAT:
 14. inspect Project Library artifacts/evidence;
 15. open Documents;
 16. inspect exact revision/QA/validity/authority;
-17. open selected document Relations graph;
-18. verify relation/binding identity;
-19. switch graph root;
-20. reload browser and confirm state comes from backend;
-21. switch dark/light theme;
-22. collapse/expand sidebar;
-23. verify unauthorized resources are not leaked;
-24. verify diagnostics/version/HEAD.
+17. quick-preview a document and verify meaningful content plus exact resolved revision;
+18. expand the document into full-screen Reader Mode and return to the same prior context;
+19. open selected document Relations graph;
+20. verify relation/binding identity;
+21. verify LOGICAL_CURRENT vs PINNED_REVISION preview semantics;
+22. switch graph root;
+23. reload browser and confirm state comes from backend;
+24. switch dark/light theme and verify full-shell parity;
+25. collapse/expand sidebar and verify the main workspace reflows;
+26. verify semantic navigation icons and collapsed tooltips/maturity;
+27. verify unauthorized resources are not leaked;
+28. verify diagnostics/version/HEAD.
 
 A static or localStorage simulation is UAT INVALID.
 
@@ -1935,6 +1989,8 @@ PROJECT
 Home is an operational dashboard.
 
 Relations/Lineage graph is project/document contextual.
+
+Document content is first-class: selected documents support contextual Quick Preview and an expandable full-screen Reader Mode bound to the exact resolved revision.
 
 Package Registry exposes exact Domain/Skill package identity and two-way usage.
 

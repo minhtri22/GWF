@@ -4,18 +4,18 @@
 
 ```text
 SLICE = BPS-I00
-STATE = PRE_LOCAL_PASS
-QA1 = PASS
-QA2 = PASS
-QA3 = PASS
-QA4 = PASS
-QA5 = PASS
-QA6 = PASS
-FINAL_SLICE_PASS = NOT_YET
+STATE = PRE_LOCAL_PASS_INVALIDATED
+QA1 = HISTORICAL_PASS_RECHECK_AFTER_RECOVERY
+QA2 = HISTORICAL_PASS_RECHECK_IF_AFFECTED
+QA3 = HISTORICAL_PASS_RETAINED_UNLESS_AFFECTED
+QA4 = HISTORICAL_PASS_RETAINED_UNLESS_AFFECTED
+QA5 = RECHECK_REQUIRED_AFTER_RECOVERY_CODE
+QA6 = FAIL_REOPENED_BY_LOCAL_UAT
+FINAL_SLICE_PASS = NO
 BPS-I01 = LOCKED
 ```
 
-This record closes assistant-owned QA1→QA6 only. It does **not** replace local operator UAT.
+This record is now **historical evidence only**. Local browser UAT exposed material UI/UX conformance defects, so its former PRE_LOCAL_PASS status is invalidated. It does **not** authorize a new local handoff until the bounded UI-conformance recovery reruns affected QA and produces a new PRE_LOCAL_PASS record.
 
 ## 2. Exact implementation identity
 
@@ -247,3 +247,28 @@ FINAL_SLICE_PASS or remain OPEN
 ```
 
 BPS-I01 remains LOCKED.
+
+## 12. Local-UAT supersession / QA6 reopen
+
+The initial assistant-owned QA6 checked the presence of a new shell, theme control, collapse control and navigation, but did not perform sufficiently strict visual/design conformance against a frozen approved baseline.
+
+Local UAT exposed that existence did not imply conformance.
+
+Normative recovery inputs:
+
+- `docs/uiux/approved/UI_VISUAL_BASELINE_MANIFEST.md`;
+- `docs/UI_UX_VISUAL_BASELINE_QA.md`;
+- `docs/BPS_I00_UI_REIMPLEMENTATION_CONTRACT.md`;
+- Amendment 1 of `docs/BPS_I00_IMPLEMENTATION_AUTHORIZATION.md`.
+
+Until the recovery implementation passes a new QA1→QA6 cycle:
+
+```text
+PRE_LOCAL_PASS = INVALID
+QA6 = REOPENED
+LOCAL_UAT = NOT_ACCEPTED_AS_FINAL_PASS
+FINAL_SLICE_PASS = NO
+BPS-I01 = LOCKED
+```
+
+Historical runtime/server/auth evidence remains useful negative/positive evidence, but no PASS is transferred across the recovery code commit.

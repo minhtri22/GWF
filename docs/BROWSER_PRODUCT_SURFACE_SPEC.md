@@ -783,3 +783,35 @@ This document freezes the required browser information architecture and acceptan
 It does **not** require all future-gated navigation to be implemented now. It requires that when a capability is implemented, its browser surface follows this contract and does not create parallel semantics, duplicate stores, hidden authority paths, or simulated acceptance.
 
 Any change that removes a listed governed surface, merges authority-distinct concepts, or makes a blocked/future capability appear authoritative requires an explicit amendment to this contract.
+
+## 24. Approved visual-baseline / document-preview amendment v1.1
+
+The browser product surface is additionally governed by the user-approved visual baseline:
+
+- `docs/uiux/approved/GWF_UI_BASELINE_v1_1_APPROVED.jpg`;
+- `docs/uiux/approved/UI_VISUAL_BASELINE_MANIFEST.md`.
+
+This does not change backend authority or BPS ordering.
+
+### Document preview obligation
+
+When Documents become LIVE in their authorized BPS slice, metadata-only inspection is insufficient.
+
+Required browser behavior:
+
+- document list and contextual selection;
+- Quick Preview containing meaningful rendered/readable document content;
+- exact logical ID and resolved revision identity;
+- `Preview | Details | Relations | History` inspector organization;
+- Expand / Full-screen Reader for long research documents/papers/protocols;
+- return from Reader to the same prior project/document/graph context;
+- DG-P9-correct preview resolution for `LOGICAL_CURRENT` and `PINNED_REVISION`;
+- no browser-side fabrication of document content or revision identity.
+
+When Relations become LIVE, node selection and document preview are coordinated while edge selection shows relation/binding detail.
+
+### BPS-I00 boundary
+
+The visual baseline is used immediately to correct the BPS-I00 shell/design system. Document/Relations/Reader functionality remains locked to its later authorized slices. A visual placeholder/reference must never be counted as LIVE capability.
+
+Future source-code preview, isolated PowerShell/Python execution and explainable replay remain parked under `TD-UX-03` and require their own specification/security/authorization.
