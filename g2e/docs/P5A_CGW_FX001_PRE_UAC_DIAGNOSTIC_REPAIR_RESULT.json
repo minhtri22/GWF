@@ -1,0 +1,44 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-PRE_UAC_DIAGNOSTIC_REPAIR_RESULT-v1",
+  "status": "PASS",
+  "prior_invocations": {
+    "count": 2,
+    "both_marker_absent": true,
+    "both_final_report_absent": true,
+    "consumption_adjudication": "NOT_CONSUMED",
+    "attempt_id": "p5a-cgw-v4-p5-fx-001-attempt-001"
+  },
+  "mechanism": "PRE_UAC_LOCAL_DEPENDENCY_FAILURES_WERE_HIDDEN_INSIDE_ELEVATED_CHILD",
+  "repair": {
+    "candidate": "a25d6389285047cc53b6d793666ffc870b6d22d4",
+    "oneclick_blob": "2a38762655c38d8c64b36c1c44bf5a2cce8b92e8",
+    "tests_blob": "e3f4bcf6cc644d5eb188fe25cc2bb9a32738cbb3",
+    "workflow_blob": "de1d92d75fca65c7a81a838faf46c8b8deb5c93a",
+    "diagnostic_plan_blob": "abb0e1469d7d34de87e095f76591d7ec27b0ad42",
+    "changes": [
+      "move non-admin dependency checks before UAC",
+      "add PreflightOnly mode",
+      "pass resolved Python/Codex/CGW/BridgeHome/LauncherData into elevated child",
+      "surface UAC handoff and child exit codes",
+      "keep wrapper ASCII-only for Windows PowerShell 5.1"
+    ]
+  },
+  "authoritative_qa": {
+    "run_id": 35816108080,
+    "linux_job_id": 107037855866,
+    "windows_job_id": 107037855918,
+    "artifact_id": 10731307825,
+    "artifact_digest": "sha256:e9647c3d2f0e7c1ffbd3b0a1d59c3130a4cab6c3adcab455fb71d3ec16bb45cf",
+    "report_sha256": "65c061ff7ffa1836db8af8e6645bd541ff18c998d25cbc236dad96ff6349bce7",
+    "conclusion": "success"
+  },
+  "qualification_firewall": {
+    "model_turn_executed": false,
+    "browser_submission_executed": false,
+    "mcp_tool_invocation_executed": false,
+    "attempt_created": false,
+    "attempt_consumed": false
+  },
+  "normative_contract_changed": false,
+  "next": "CREATE_V2R2_AND_RUN_PREFLIGHT_ONLY"
+}

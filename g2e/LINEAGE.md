@@ -626,3 +626,14 @@
 - **V2 status:** immutable but superseded for dispatch.
 - **V2R1:** same reserved unconsumed attempt `p5a-cgw-v4-p5-fx-001-attempt-001`; exactly one future local dispatch authorized; no retry and no automatic execution.
 - **Next:** one local P5A-CGW P5-FX-001 functional execution under V2R1.
+
+
+### G2E-P5A-CGW — V2R2 fail-visible pre-UAC repair
+
+- **Observed state:** two local invocations exited pre-marker; both had no durable marker and no final report. Attempt `p5a-cgw-v4-p5-fx-001-attempt-001` remains `RESERVED_UNCONSUMED`.
+- **Mechanism:** non-admin dependency checks were hidden inside the elevated child, so child-side failures collapsed to parent exit code 1.
+- **Repair:** exact local dependency checks now run before UAC; `-PreflightOnly` added; resolved Python/Codex/CGW/BridgeHome/LauncherData are passed into elevated child; wrapper made ASCII-only for Windows PowerShell 5.1.
+- **Authoritative QA:** candidate `a25d6389285047cc53b6d793666ffc870b6d22d4`; run `35816108080`; Linux `107037855866` PASS; Windows `107037855918` PASS.
+- **Artifact:** `10731307825`; digest `sha256:e9647c3d2f0e7c1ffbd3b0a1d59c3130a4cab6c3adcab455fb71d3ec16bb45cf`; report SHA256 `65c061ff7ffa1836db8af8e6645bd541ff18c998d25cbc236dad96ff6349bce7`.
+- **One-click blob:** `2a38762655c38d8c64b36c1c44bf5a2cce8b92e8`.
+- **V2R2:** same attempt identity; preflight-only required before next live dispatch; retry remains zero.

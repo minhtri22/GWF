@@ -1,0 +1,68 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-EXECUTION-LOCK-v2r2",
+  "status": "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R2",
+  "qualified": true,
+  "predecessor_v2r1": {
+    "path": "g2e/docs/P5A_CGW_FX001_EXECUTION_LOCK_V2R1.json",
+    "git_blob": "a62fa59f634509bdd7b5440f5b20b983befe8134",
+    "superseded_for_dispatch": true,
+    "reason": "pre-UAC failures hidden inside elevated child"
+  },
+  "repair_result": {
+    "path": "g2e/docs/P5A_CGW_FX001_PRE_UAC_DIAGNOSTIC_REPAIR_RESULT.json",
+    "git_blob": "5b1798346bcffaf5ff733380896c4d0372f98c7f"
+  },
+  "study_id": "p5a-cgw-v4-p5-fx-001-functional-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-attempt-001",
+  "attempt_state": "RESERVED_UNCONSUMED",
+  "route_id": "p5a-cgw",
+  "execution_config": {
+    "path": "g2e/config/P5A_CGW_FX001_EXECUTION_CONFIG.json",
+    "git_blob": "aea462b84e4583096129820d2a17417803d0f6a2",
+    "canonical_sha256": "b7097e8a63607e33f520ab370e48106fc7234f782204e3c366be409b5b594ab8"
+  },
+  "qualification": {
+    "candidate": "a25d6389285047cc53b6d793666ffc870b6d22d4",
+    "run_id": 35816108080,
+    "linux_job_id": 107037855866,
+    "windows_job_id": 107037855918,
+    "artifact_id": 10731307825,
+    "artifact_digest": "sha256:e9647c3d2f0e7c1ffbd3b0a1d59c3130a4cab6c3adcab455fb71d3ec16bb45cf",
+    "report_sha256": "65c061ff7ffa1836db8af8e6645bd541ff18c998d25cbc236dad96ff6349bce7"
+  },
+  "components": {
+    "admission_blob": "cb1c720bbed568f7ae085f1f5a9282805cf6e495",
+    "runner_blob": "933f57af49ddbcfd56a695780032c42901af8570",
+    "verifier_blob": "1a7dc3966981cf885d6b2f89d3d6c31401164a67",
+    "oneclick_blob": "2a38762655c38d8c64b36c1c44bf5a2cce8b92e8",
+    "test_blob": "e3f4bcf6cc644d5eb188fe25cc2bb9a32738cbb3",
+    "workflow_blob": "de1d92d75fca65c7a81a838faf46c8b8deb5c93a",
+    "pre_uac_diagnostic_plan_blob": "abb0e1469d7d34de87e095f76591d7ec27b0ad42"
+  },
+  "preflight_only": {
+    "required_before_next_live_dispatch": true,
+    "mode_flag": "-PreflightOnly",
+    "uac": false,
+    "vhdx": false,
+    "local_root": false,
+    "marker": false,
+    "model_turn": false,
+    "mcp": false
+  },
+  "frozen_consumption": {
+    "boundary": "durable marker fsync immediately before sole Codex turn/start transport write",
+    "pre_marker_failure_consumes_attempt": false,
+    "post_marker_attempt_consumed": true,
+    "retry_budget": 0,
+    "max_turn_start_transport_writes": 1,
+    "turn_timeout_seconds": 90
+  },
+  "authorization": {
+    "dispatch_authorized": true,
+    "max_dispatches": 1,
+    "retry_authorized": false,
+    "automatic_execution": false,
+    "preflight_only_required_before_dispatch": true
+  },
+  "next_gate": "LOCAL_PREFLIGHT_ONLY_THEN_ONE_LIVE_DISPATCH_IF_PASS"
+}
