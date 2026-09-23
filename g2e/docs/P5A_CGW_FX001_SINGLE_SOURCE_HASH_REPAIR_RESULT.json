@@ -1,0 +1,42 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-SINGLE-SOURCE-HASH-REPAIR-RESULT-v1",
+  "status": "PASS",
+  "prior_preflight": {
+    "blocker": "CGW_LAUNCHER_HASH_DRIFT",
+    "observed_sha256": "AC152AD499B1F41B2CAFE94A3D05F5D4E4D3CD7DDBB417B9C60B118B08BC3CBB",
+    "wrapper_expected_literal_length": 63,
+    "lock_expected_sha256": "AC152AD499B1F41B2CAFE94A3D05F5D4E4D3CD7DDBB417B9C60B118B08BC3CBB",
+    "lock_expected_length": 64,
+    "marker_present": false,
+    "attempt_consumed": false
+  },
+  "repair": {
+    "candidate": "e580d7458a24cf3db590d584963a2a2f0ef51fe2",
+    "oneclick_blob": "86fe5c02d7930fae315c424719728ba1951a5d38",
+    "tests_blob": "1156c61f6ebbbbdabb3247ac325de7cc98fd9f7b",
+    "workflow_blob": "fee75ce60b569f06fb074ec61df716812ca5a6f3",
+    "repair_plan_blob": "565c966f87ac2cd1b7a6566c87ea215054f4c333",
+    "rule": "EXPECTED_CGW_LAUNCHER_HASH_READ_FROM_LOCK_ONLY",
+    "hardcoded_launcher_hash_in_wrapper": false,
+    "lock_hash_validation": "length_64_and_hex_only",
+    "duplicate_tail_removed": true
+  },
+  "authoritative_qa": {
+    "run_id": 35818722282,
+    "linux_job_id": 107045780602,
+    "windows_job_id": 107045780282,
+    "conclusion": "success",
+    "artifact_id": 10731649639,
+    "artifact_digest": "sha256:df720dd1d6cbe197279f697f9567fc88a26dfe3d338e8b57b299eab55cc3d593",
+    "report_sha256": "b71938ca9224ece1591b2fc7d2296286c33a57b49a29e3b19802ff5b6f90c325"
+  },
+  "qualification_firewall": {
+    "model_turn_executed": false,
+    "browser_submission_executed": false,
+    "mcp_tool_invocation_executed": false,
+    "attempt_created": false,
+    "attempt_consumed": false
+  },
+  "normative_contract_changed": false,
+  "next": "CREATE_V2R4_AND_RUN_PREFLIGHT_ONLY"
+}

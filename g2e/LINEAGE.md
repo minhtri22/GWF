@@ -650,3 +650,17 @@
 - **Artifact:** `10732415733`; digest `sha256:cb8f0c92329c4884bb3f6f06f50787ab46551d04d4aaa131f8148a3261862345`; report SHA256 `45c71e3fd72a5147dfdeb28657597f26970ed480e43ab9ed99294608243895cb`.
 - **One-click blob:** `14c24776f22132cf932aaabdb2adb421de16cb05`.
 - **V2R3:** same attempt identity, still `RESERVED_UNCONSUMED`; preflight-only required before live dispatch; retry remains zero.
+
+
+### G2E-P5A-CGW — V2R4 single-source launcher hash repair
+
+- **Observed blocker:** V2R3 preflight-only raised `CGW_LAUNCHER_HASH_DRIFT` even though the installed launcher matched the frozen Q0b identity.
+- **Exact source finding:** duplicated wrapper literal was 63 characters; V2R3 lock stored the correct 64-character SHA-256. Runtime did not drift.
+- **Repair:** wrapper no longer hardcodes the launcher hash; it reads `launcher_identity.expected_sha256` from the active lock, normalizes it, validates length=64 and hex-only, and then compares the installed `Codex Web GPT.exe`.
+- **Additional cleanup:** removed an accidental duplicated wrapper tail caught by Windows PowerShell 5.1 parser QA.
+- **Candidate:** `e580d7458a24cf3db590d584963a2a2f0ef51fe2`.
+- **Authoritative zero-model QA:** run `35818722282`; Linux `107045780602` PASS; Windows `107045780282` PASS.
+- **Artifact:** `10731649639`; digest `sha256:df720dd1d6cbe197279f697f9567fc88a26dfe3d338e8b57b299eab55cc3d593`; report SHA256 `b71938ca9224ece1591b2fc7d2296286c33a57b49a29e3b19802ff5b6f90c325`.
+- **One-click blob:** `86fe5c02d7930fae315c424719728ba1951a5d38`.
+- **Attempt:** `p5a-cgw-v4-p5-fx-001-attempt-001` remains `RESERVED_UNCONSUMED`; marker was never created.
+- **V2R4:** preflight-only remains mandatory before sole live dispatch; retry remains zero.

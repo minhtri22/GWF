@@ -1,0 +1,79 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-EXECUTION-LOCK-v2r4",
+  "status": "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R4",
+  "qualified": true,
+  "predecessor_v2r3": {
+    "path": "g2e/docs/P5A_CGW_FX001_EXECUTION_LOCK_V2R3.json",
+    "git_blob": "a0b2ba25acaba6ea235417d282342eb99247e240",
+    "superseded_for_dispatch": true,
+    "reason": "wrapper duplicated launcher hash with a 63-character transcription defect"
+  },
+  "repair_result": {
+    "path": "g2e/docs/P5A_CGW_FX001_SINGLE_SOURCE_HASH_REPAIR_RESULT.json",
+    "git_blob": "97926d1a96abd661f408f57f221e23196ee061d2"
+  },
+  "study_id": "p5a-cgw-v4-p5-fx-001-functional-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-attempt-001",
+  "attempt_state": "RESERVED_UNCONSUMED",
+  "route_id": "p5a-cgw",
+  "execution_config": {
+    "path": "g2e/config/P5A_CGW_FX001_EXECUTION_CONFIG.json",
+    "git_blob": "aea462b84e4583096129820d2a17417803d0f6a2",
+    "canonical_sha256": "b7097e8a63607e33f520ab370e48106fc7234f782204e3c366be409b5b594ab8"
+  },
+  "qualification": {
+    "candidate": "e580d7458a24cf3db590d584963a2a2f0ef51fe2",
+    "run_id": 35818722282,
+    "linux_job_id": 107045780602,
+    "windows_job_id": 107045780282,
+    "artifact_id": 10731649639,
+    "artifact_digest": "sha256:df720dd1d6cbe197279f697f9567fc88a26dfe3d338e8b57b299eab55cc3d593",
+    "report_sha256": "b71938ca9224ece1591b2fc7d2296286c33a57b49a29e3b19802ff5b6f90c325"
+  },
+  "components": {
+    "admission_blob": "cb1c720bbed568f7ae085f1f5a9282805cf6e495",
+    "runner_blob": "933f57af49ddbcfd56a695780032c42901af8570",
+    "verifier_blob": "1a7dc3966981cf885d6b2f89d3d6c31401164a67",
+    "oneclick_blob": "86fe5c02d7930fae315c424719728ba1951a5d38",
+    "test_blob": "1156c61f6ebbbbdabb3247ac325de7cc98fd9f7b",
+    "workflow_blob": "fee75ce60b569f06fb074ec61df716812ca5a6f3",
+    "repair_plan_blob": "565c966f87ac2cd1b7a6566c87ea215054f4c333"
+  },
+  "launcher_identity": {
+    "required_basename": "Codex Web GPT.exe",
+    "expected_sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+    "expected_sha256_source": "THIS_LOCK_ONLY",
+    "hardcoded_duplicate_in_wrapper": false,
+    "expected_size": 223980032,
+    "expected_release": "4.0.7",
+    "runtime_command0_may_be_bun": true,
+    "runtime_command0_is_not_launcher_identity": true,
+    "fallback_to_runtime_command_for_identity": false
+  },
+  "preflight_only": {
+    "required_before_next_live_dispatch": true,
+    "mode_flag": "-PreflightOnly",
+    "uac": false,
+    "vhdx": false,
+    "local_root": false,
+    "marker": false,
+    "model_turn": false,
+    "mcp": false
+  },
+  "frozen_consumption": {
+    "boundary": "durable marker fsync immediately before sole Codex turn/start transport write",
+    "pre_marker_failure_consumes_attempt": false,
+    "post_marker_attempt_consumed": true,
+    "retry_budget": 0,
+    "max_turn_start_transport_writes": 1,
+    "turn_timeout_seconds": 90
+  },
+  "authorization": {
+    "dispatch_authorized": true,
+    "max_dispatches": 1,
+    "retry_authorized": false,
+    "automatic_execution": false,
+    "preflight_only_required_before_dispatch": true
+  },
+  "next_gate": "LOCAL_PREFLIGHT_ONLY_THEN_ONE_LIVE_DISPATCH_IF_PASS"
+}
