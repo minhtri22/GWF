@@ -389,7 +389,7 @@ def test_oneclick_requires_v2_dispatch_lock_and_zero_retry_shape():
     assert "Dismount-DiskImage" in source
     assert "Test-IsAdministrator" in source
     assert "Start-Process" in source
-    assert "-PythonExe" in source
+    assert "python_exe = $PythonExe" in source
     assert "while (" not in source
 
 
