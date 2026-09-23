@@ -380,8 +380,8 @@ def test_runner_has_one_consumption_boundary_and_one_turn_start():
 
 def test_oneclick_requires_v2_dispatch_lock_and_zero_retry_shape():
     source = ONECLICK.read_text(encoding="utf-8")
-    assert "P5A_CGW_FX001_EXECUTION_LOCK_V2R4.json" in source
-    assert "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R4" in source
+    assert "P5A_CGW_FX001_EXECUTION_LOCK_V2R5.json" in source
+    assert "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R5" in source
     assert "dispatch_authorized" in source
     assert "max_dispatches" in source
     assert "PREDISPATCH_ADMISSION_BLOCKED" in source
@@ -396,9 +396,9 @@ def test_oneclick_requires_v2_dispatch_lock_and_zero_retry_shape():
 def test_oneclick_ignores_noncritical_untracked_outputs_but_fails_closed_on_source():
     source = ONECLICK.read_text(encoding="utf-8")
     assert "Assert-ExecutionSourceClean" in source
-    assert "git -C $Repo diff --quiet --no-ext-diff --" in source
-    assert "git -C $Repo diff --cached --quiet --no-ext-diff --" in source
-    assert "git -C $Repo ls-files --others --exclude-standard" in source
+    assert "& $GitExe -C $Repo diff --quiet --no-ext-diff --" in source
+    assert "& $GitExe -C $Repo diff --cached --quiet --no-ext-diff --" in source
+    assert "& $GitExe -C $Repo ls-files --others --exclude-standard" in source
     assert '"scripts/g2e/"' in source
     assert '"g2e/docs/"' in source
     assert '"g2e/config/"' in source
@@ -437,9 +437,15 @@ def test_oneclick_preflight_is_before_uac_and_has_no_consumption_side_effects():
     local_root_create = source.index("New-Item -ItemType Directory -Path $VolumeDir,$CodexHome,$ReportDir,$VerificationDir")
     assert preflight_banner < preflight_only < uac < local_root_create
     assert "PREFLIGHT_ONLY: PASS" in source
-    assert "-CgwBinary" in source
-    assert "-BridgeHome" in source
-    assert "-LauncherData" in source
+    assert "HANDOFF-CONFIG.json" in source
+    assert "HANDOFF.json" in source
+    assert '"git_exe"' not in source
+    assert "git_exe = $GitExe" in source
+    assert "cgw_binary = $CgwBinary" in source
+    assert "bridge_home = $BridgeHome" in source
+    assert "launcher_data = $LauncherData" in source
+    assert '"-HandoffConfig", $HandoffConfig' in source
+    assert '"-HandoffDiagnostic", $HandoffDiagnostic' in source
     assert "UAC_HANDOFF_ERROR" in source
     assert "ELEVATED_CHILD_EXIT_CODE" in source
 
@@ -459,6 +465,33 @@ def test_oneclick_preflight_resolves_and_checks_local_dependencies_before_uac():
     ):
         assert source.index(token) < uac, token
 
+
+
+def test_oneclick_uac_handoff_uses_json_and_explicit_git_not_space_sensitive_paths():
+    source = ONECLICK.read_text(encoding="utf-8")
+    assert "[string]$GitExe" in source
+    assert '(Get-Command git -ErrorAction Stop).Source' in source
+    assert "& $GitExe -C $Repo" in source
+    assert "HANDOFF_CONFIG_MISSING" in source
+    assert "HANDOFF_PROJECT_ROOT_MISMATCH" in source
+    assert "G2E-P5A-CGW-FX001-HANDOFF-CONFIG-v1" in source
+    assert "G2E-P5A-CGW-FX001-HANDOFF-DIAGNOSTIC-v1" in source
+    assert "exit 97" in source
+
+    start = source.index("$ElevatedArgs = @(")
+    end = source.index("try {", start)
+    args = source[start:end]
+    for forbidden in (
+        "-PythonExe",
+        "-CodexExe",
+        "-GitExe",
+        "-CgwBinary",
+        "-BridgeHome",
+        "-LauncherData",
+    ):
+        assert forbidden not in args
+    for required in ("-ProjectRoot", "-HandoffConfig", "-HandoffDiagnostic", "-ElevatedChild"):
+        assert required in args
 
 
 def test_oneclick_is_ascii_only_for_windows_powershell_51_parser_safety():

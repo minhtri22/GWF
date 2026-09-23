@@ -2,9 +2,12 @@ param(
     [string]$ProjectRoot = "",
     [string]$PythonExe = "",
     [string]$CodexExe = "",
+    [string]$GitExe = "",
     [string]$CgwBinary = "",
     [string]$BridgeHome = "",
     [string]$LauncherData = "",
+    [string]$HandoffConfig = "",
+    [string]$HandoffDiagnostic = "",
     [switch]$ElevatedChild,
     [switch]$PreflightOnly
 )
@@ -33,16 +36,16 @@ function Get-Sha256([string]$Path) {
 }
 
 function Get-GitBlob([string]$Repo, [string]$Path) {
-    $v = (& git -C $Repo rev-parse "HEAD:$Path").Trim()
+    $v = (& $GitExe -C $Repo rev-parse "HEAD:$Path").Trim()
     if ($LASTEXITCODE -ne 0) { throw "GIT_BLOB_FAILED:$Path" }
     return $v
 }
 
 function Assert-ExecutionSourceClean([string]$Repo) {
-    & git -C $Repo diff --quiet --no-ext-diff --
+    & $GitExe -C $Repo diff --quiet --no-ext-diff --
     if ($LASTEXITCODE -ne 0) { throw "TRACKED_WORKTREE_DIRTY" }
 
-    & git -C $Repo diff --cached --quiet --no-ext-diff --
+    & $GitExe -C $Repo diff --cached --quiet --no-ext-diff --
     if ($LASTEXITCODE -ne 0) { throw "TRACKED_INDEX_DIRTY" }
 
     $CriticalPrefixes = @(
@@ -53,7 +56,7 @@ function Assert-ExecutionSourceClean([string]$Repo) {
         "tests/g2e/",
         ".github/workflows/"
     )
-    $Untracked = @(& git -C $Repo ls-files --others --exclude-standard)
+    $Untracked = @(& $GitExe -C $Repo ls-files --others --exclude-standard)
     if ($LASTEXITCODE -ne 0) { throw "GIT_UNTRACKED_SCAN_FAILED" }
 
     foreach ($Path in $Untracked) {
@@ -84,23 +87,71 @@ if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
 } else {
     $ProjectRoot = (Resolve-Path $ProjectRoot).Path
 }
+$ThisScript = $MyInvocation.MyCommand.Path
+Set-Location $ProjectRoot
+
+if ([string]::IsNullOrWhiteSpace($HandoffDiagnostic)) {
+    $HandoffDiagnostic = Join-Path $ProjectRoot "g2e\.local\P5A-CGW-FX001-V4-001-HANDOFF.json"
+}
+if ([string]::IsNullOrWhiteSpace($HandoffConfig)) {
+    $HandoffConfig = Join-Path $ProjectRoot "g2e\.local\P5A-CGW-FX001-V4-001-HANDOFF-CONFIG.json"
+}
+
+if ($ElevatedChild) {
+    trap {
+        try {
+            $diagParent = Split-Path -Parent $HandoffDiagnostic
+            if ($diagParent -and -not (Test-Path -LiteralPath $diagParent)) {
+                New-Item -ItemType Directory -Path $diagParent -Force | Out-Null
+            }
+            $diag = [ordered]@{
+                schema = "G2E-P5A-CGW-FX001-HANDOFF-DIAGNOSTIC-v1"
+                phase = "ELEVATED_CHILD_PREEXECUTION_OR_EXECUTION"
+                exception_type = $_.Exception.GetType().FullName
+                message = $_.Exception.Message
+                script_stack_trace = $_.ScriptStackTrace
+                attempt_consumed_marker_present = $false
+            }
+            $markerCandidate = Join-Path $ProjectRoot "g2e\.local\P5A-CGW-FX001-V4-001\evidence\attempt_consumed.marker"
+            $diag.attempt_consumed_marker_present = [bool](Test-Path -LiteralPath $markerCandidate)
+            $diag | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $HandoffDiagnostic -Encoding UTF8
+        } catch {}
+        exit 97
+    }
+
+    if (-not (Test-Path -LiteralPath $HandoffConfig -PathType Leaf)) {
+        throw "HANDOFF_CONFIG_MISSING:$HandoffConfig"
+    }
+    $Handoff = Get-Content -LiteralPath $HandoffConfig -Raw | ConvertFrom-Json
+    if ([string]$Handoff.project_root -ne $ProjectRoot) {
+        throw "HANDOFF_PROJECT_ROOT_MISMATCH"
+    }
+    $PythonExe = [string]$Handoff.python_exe
+    $CodexExe = [string]$Handoff.codex_exe
+    $GitExe = [string]$Handoff.git_exe
+    $CgwBinary = [string]$Handoff.cgw_binary
+    $BridgeHome = [string]$Handoff.bridge_home
+    $LauncherData = [string]$Handoff.launcher_data
+}
+
 if ([string]::IsNullOrWhiteSpace($PythonExe)) {
     $PythonExe = (Get-Command python -ErrorAction Stop).Source
 }
 if ([string]::IsNullOrWhiteSpace($CodexExe)) {
     $CodexExe = (Get-Command codex -ErrorAction Stop).Source
 }
-$ThisScript = $MyInvocation.MyCommand.Path
-Set-Location $ProjectRoot
+if ([string]::IsNullOrWhiteSpace($GitExe)) {
+    $GitExe = (Get-Command git -ErrorAction Stop).Source
+}
 
-$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_CGW_FX001_EXECUTION_LOCK_V2R4.json"
+$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_CGW_FX001_EXECUTION_LOCK_V2R5.json"
 $AdmissionScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_admission.py"
 $RunnerScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_runner.py"
 $VerifierScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_verify.py"
 
 if (-not (Test-Path -LiteralPath $LockPath)) { throw "DISPATCH_LOCK_V2_MISSING" }
 $Lock = Get-Content -LiteralPath $LockPath -Raw | ConvertFrom-Json
-if ($Lock.status -ne "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R4") { throw "DISPATCH_LOCK_STATUS_INVALID" }
+if ($Lock.status -ne "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R5") { throw "DISPATCH_LOCK_STATUS_INVALID" }
 if ($Lock.authorization.dispatch_authorized -ne $true) { throw "DISPATCH_NOT_AUTHORIZED" }
 if ($Lock.authorization.max_dispatches -ne 1) { throw "DISPATCH_CARDINALITY_DRIFT" }
 if ($Lock.attempt_id -ne $AttemptId) { throw "ATTEMPT_ID_DRIFT" }
@@ -118,6 +169,7 @@ Assert-ExecutionSourceClean $ProjectRoot
 
 if (-not (Test-Path -LiteralPath $PythonExe -PathType Leaf)) { throw "PYTHON_NOT_FOUND" }
 if (-not (Test-Path -LiteralPath $CodexExe -PathType Leaf)) { throw "CODEX_COMMAND_NOT_FOUND" }
+if (-not (Test-Path -LiteralPath $GitExe -PathType Leaf)) { throw "GIT_COMMAND_NOT_FOUND" }
 if ((Get-Sha256 $CodexExe) -ne $ExpectedCodexSha) { throw "CODEX_BINARY_HASH_DRIFT" }
 
 if (-not $BridgeHome) {
@@ -174,6 +226,7 @@ Write-Host ("LOCK: " + $Lock.status)
 Write-Host ("ATTEMPT: " + $AttemptId)
 Write-Host ("PYTHON: " + $PythonExe)
 Write-Host ("CODEX: " + $CodexExe)
+Write-Host ("GIT: " + $GitExe)
 Write-Host ("CGW: " + $CgwBinary)
 Write-Host ("BRIDGE_HOME: " + $BridgeHome)
 Write-Host ("LAUNCHER_DATA: " + $LauncherData)
@@ -188,16 +241,33 @@ if ($PreflightOnly) {
 if (-not (Test-IsAdministrator)) {
     Write-Host ""
     Write-Host "Administrator elevation is required for the isolated P5A-CGW VHDX."
+    $handoffParent = Split-Path -Parent $HandoffConfig
+    if ($handoffParent -and -not (Test-Path -LiteralPath $handoffParent)) {
+        New-Item -ItemType Directory -Path $handoffParent -Force | Out-Null
+    }
+    $handoffPayload = [ordered]@{
+        schema = "G2E-P5A-CGW-FX001-HANDOFF-CONFIG-v1"
+        project_root = $ProjectRoot
+        python_exe = $PythonExe
+        codex_exe = $CodexExe
+        git_exe = $GitExe
+        cgw_binary = $CgwBinary
+        bridge_home = $BridgeHome
+        launcher_data = $LauncherData
+    }
+    $handoffPayload | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $HandoffConfig -Encoding UTF8
+
+    if (Test-Path -LiteralPath $HandoffDiagnostic -PathType Leaf) {
+        Remove-Item -LiteralPath $HandoffDiagnostic -Force
+    }
+
     $ElevatedArgs = @(
         "-NoProfile",
         "-ExecutionPolicy", "Bypass",
         "-File", $ThisScript,
         "-ProjectRoot", $ProjectRoot,
-        "-PythonExe", $PythonExe,
-        "-CodexExe", $CodexExe,
-        "-CgwBinary", $CgwBinary,
-        "-BridgeHome", $BridgeHome,
-        "-LauncherData", $LauncherData,
+        "-HandoffConfig", $HandoffConfig,
+        "-HandoffDiagnostic", $HandoffDiagnostic,
         "-ElevatedChild"
     )
     try {
@@ -208,6 +278,10 @@ if (-not (Test-IsAdministrator)) {
     }
     if ($p.ExitCode -ne 0) {
         Write-Host ("ELEVATED_CHILD_EXIT_CODE: " + $p.ExitCode) -ForegroundColor Red
+        if (Test-Path -LiteralPath $HandoffDiagnostic -PathType Leaf) {
+            Write-Host "=== ELEVATED CHILD DIAGNOSTIC ===" -ForegroundColor Red
+            Get-Content -LiteralPath $HandoffDiagnostic -Raw
+        }
     }
     exit $p.ExitCode
 }
