@@ -1,0 +1,49 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-PREREGISTRATION-QUALIFICATION-v1",
+  "status": "PASS",
+  "qualified_candidate": "5efb9a48556be0f1e61d47d94b63f6ee2391fb4e",
+  "workflow": {
+    "run_id": 35807190228,
+    "linux_job_id": 107010545413,
+    "windows_job_id": 107010545129,
+    "conclusion": "success",
+    "artifact_id": 10728505435,
+    "artifact_digest": "sha256:a4e97b27420135c8475079870b41eb2947f6b997aa2c6bb12e7c70eef325df4d"
+  },
+  "preregistration": {
+    "report_file_sha256": "8b25e5fce8e2c69bd6ff79b1a9ead9854d5d6311bb50878cd26c32e559a78324",
+    "contract_sha256": "061a4d897c87b1176f3fe8ac11fa5efc6839d18626328ce3395698012d704ec6",
+    "study_id": "p5a-cgw-v4-p5-fx-001-functional-qualification",
+    "attempt_id": "p5a-cgw-v4-p5-fx-001-attempt-001"
+  },
+  "components": {
+    "preregistration_generator_blob": "393ad5f3ba20cf28de535de78d29d4e8102d3de8",
+    "tests_blob": "2cdc3cb79e16fef9275dc7b0578145fa04dcc099",
+    "workflow_blob": "6a5ffcf2521145a3782bf435eab45259fd086db7",
+    "plan_blob": "f160d4bad3c9e3a22573771a0c13248833a05bb8"
+  },
+  "frozen": {
+    "cgw_release": "4.0.7",
+    "cgw_source_commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494",
+    "cgw_binary_sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+    "codex_binary_sha256": "a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8",
+    "route_id": "p5a-cgw",
+    "mode": "full",
+    "connector": "Codex Native2",
+    "model": "chatgpt-web/high",
+    "backend_model": "gpt-5.6-sol",
+    "input_sha256": "a176454229feef1ce8bd7eab1ea79fbfeff07c229c88123edf862fea9160eef6",
+    "task_sha256": "4c4aba6a82d540440dfef725b2568afdef4be3b26c3e4e84e2b34c54e6dd460e",
+    "expected_result_sha256": "6dd3ebce33677409bec596309e061cc421bfa38b3160c5b577ffe5f7fbc9980d",
+    "retry_budget": 0,
+    "turn_timeout_seconds": 90
+  },
+  "qualification_firewall": {
+    "model_turn_executed": false,
+    "browser_submission": false,
+    "mcp_tool_invocation": false,
+    "scientific_attempt_created": false,
+    "scientific_attempt_consumed": false
+  },
+  "next": "CREATE_EXECUTION_ENVELOPE_LOCK_WITH_DISPATCH_WITHHELD"
+}

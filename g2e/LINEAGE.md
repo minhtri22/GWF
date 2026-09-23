@@ -576,3 +576,21 @@
 - **No overclaim:** no reproducible-build byte-equivalence claim for installed launcher; no live authenticated ChatGPT turn/MCP roundtrip/functional task has yet been proven.
 - **Firewalls:** no model turn, runtime mutation, scientific attempt, P5A-official cross-credit or A/B comparison.
 - **Next admissible step:** separately preregister the first P5A-CGW functional attempt and exact-lock route/task/identity/consumption semantics before any model-bearing execution.
+
+
+### G2E-P5A-CGW — First functional attempt preregistration + execution envelope lock
+
+- **Preregistration:** PASS on candidate `5efb9a48556be0f1e61d47d94b63f6ee2391fb4e`.
+- **Qualification run:** `35807190228`; Linux `107010545413` PASS; Windows `107010545129` PASS.
+- **Artifact:** `10728505435`; digest `sha256:a4e97b27420135c8475079870b41eb2947f6b997aa2c6bb12e7c70eef325df4d`.
+- **Prereg report:** SHA256 `8b25e5fce8e2c69bd6ff79b1a9ead9854d5d6311bb50878cd26c32e559a78324`; canonical contract `061a4d897c87b1176f3fe8ac11fa5efc6839d18626328ce3395698012d704ec6`.
+- **Reserved study/attempt:** `p5a-cgw-v4-p5-fx-001-functional-qualification` / `p5a-cgw-v4-p5-fx-001-attempt-001`.
+- **Frozen route:** CGW `4.0.7`, Full, `Codex Native2`, `chatgpt-web/high` -> `gpt-5.6-sol`, loopback `127.0.0.1:17841/v1`.
+- **Frozen executables:** Codex `a337b743...`; installed CGW `ac152ad4...`.
+- **Frozen P5-FX-001:** input `a1764542...`; TASK `4c4aba6a...`; expected result canonical hash `6dd3ebce...`.
+- **Consumption:** durable marker immediately before sole Codex `turn/start`; retry=0; timeout=90s.
+- **Evidence:** route/browser binding + at least one live Full-mode MCP roundtrip back to Codex are mandatory for evidence admission.
+- **Execution config:** `g2e/config/P5A_CGW_FX001_EXECUTION_CONFIG.json`; Git blob `aea462b84e4583096129820d2a17417803d0f6a2`; canonical SHA256 `b7097e8a...`.
+- **Lock status:** `EXECUTION_ENVELOPE_LOCKED_DISPATCH_WITHHELD`.
+- **No model execution:** preregistration/lock qualification sent no model turn and consumed no attempt.
+- **Next gate:** bounded functional runner + admission + verifier implementation and zero-model QA. Only a v2 promotion may add implementation identities; any normative contract change requires new lineage.
