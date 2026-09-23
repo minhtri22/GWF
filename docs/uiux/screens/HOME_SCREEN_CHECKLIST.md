@@ -39,6 +39,7 @@ This screen is operational/read-only. It must not introduce new mutation semanti
 - [ ] HOME-03 HomeSummary returns `generated_at` and exact build identity.
 - [ ] HOME-04 HomeSummary only includes projects visible to the authenticated actor.
 - [ ] HOME-05 Avoid browser N+1 fan-out over every project; aggregation occurs server-side.
+- [ ] HOME-05A Display Home scope truthfully. Until a tenant/workspace selector exists, identify it as the actor's all-authorized scope rather than inventing a selected tenant/workspace.
 
 ### B. Exact KPI semantics
 
@@ -74,6 +75,7 @@ This screen is operational/read-only. It must not introduce new mutation semanti
 - [ ] HOME-26 Visual composition follows approved Governed Knowledge Studio baseline: compact KPI row + operational tables/panels, professional research workspace, full shell parity.
 - [ ] HOME-27 Light/Dark/System, sidebar reflow and semantic icon behavior from BPS-I00 must not regress.
 - [ ] HOME-28 Home remains usable at the mobile-minimum level required by the UX spec.
+- [ ] HOME-28A Global attention indicator/count uses the same authoritative HomeSummary attention total; no fake notification feed/action is introduced.
 
 ### F. Safety / Fast Lane boundary
 
@@ -86,8 +88,8 @@ This screen is operational/read-only. It must not introduce new mutation semanti
 Before user UAT:
 
 ```text
-TOTAL = 31
-PASS  = 31
+TOTAL = 33
+PASS  = 33
 FAIL  = 0
 OPEN  = 0
 COUNT = 0
