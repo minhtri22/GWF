@@ -1,0 +1,28 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-SANDBOX-VERSION-SKEW-HYPOTHESIS-v1",
+  "status": "HYPOTHESIS_OPEN_EXISTING_EVIDENCE_ONLY",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-attempt-001",
+  "attempt_consumed": false,
+  "local_sandbox_log": {
+    "sha256": "9afd442f2c205c514a5e513a2604ab8eb59d439259af211d7d151ab896a57858",
+    "size": 234,
+    "error_code": "helper_request_args_failed",
+    "error": "failed to parse payload json: unknown variant `interactive-provision`, expected one of `full`, `provision-only`, `read-acls-only`"
+  },
+  "upstream_contract": {
+    "repo": "openai/codex",
+    "commit": "1bc8fb16ae53512c0c7723a436e4b11be81ad4a8",
+    "change": "interactive-provision added to orchestrator sender and setup-helper parser in same commit",
+    "hypothesis": "MIXED_VERSION_OR_STALE_BUNDLED_WINDOWS_SANDBOX_HELPER"
+  },
+  "next_gate": "READ_ONLY_HELPER_IDENTITY_CENSUS",
+  "prohibited": [
+    "rerun",
+    "delete_local_root",
+    "run_sandbox_setup",
+    "change_model",
+    "change_route",
+    "change_task",
+    "reauthorize_attempt"
+  ]
+}
