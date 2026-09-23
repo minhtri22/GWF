@@ -380,8 +380,8 @@ def test_runner_has_one_consumption_boundary_and_one_turn_start():
 
 def test_oneclick_requires_v2_dispatch_lock_and_zero_retry_shape():
     source = ONECLICK.read_text(encoding="utf-8")
-    assert "P5A_CGW_FX001_EXECUTION_LOCK_V2.json" in source
-    assert "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2" in source
+    assert "P5A_CGW_FX001_EXECUTION_LOCK_V2R1.json" in source
+    assert "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R1" in source
     assert "dispatch_authorized" in source
     assert "max_dispatches" in source
     assert "PREDISPATCH_ADMISSION_BLOCKED" in source

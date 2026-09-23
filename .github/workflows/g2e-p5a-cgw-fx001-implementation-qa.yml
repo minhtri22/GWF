@@ -191,7 +191,7 @@ jobs:
         shell: powershell
         run: |
           $wrapper = Get-Content scripts\g2e\p5a_cgw_fx001_oneclick.ps1 -Raw
-          if ($wrapper -notmatch "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2") { throw "V2_LOCK_GUARD_MISSING" }
+          if ($wrapper -notmatch "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R1") { throw "V2R1_LOCK_GUARD_MISSING" }
           if ($wrapper -notmatch "Test-IsAdministrator") { throw "UAC_GUARD_MISSING" }
           if ($wrapper -notmatch "-PythonExe") { throw "PYTHON_PATH_PRESERVATION_MISSING" }
           if ($wrapper -notmatch "-CodexExe") { throw "CODEX_PATH_PRESERVATION_MISSING" }

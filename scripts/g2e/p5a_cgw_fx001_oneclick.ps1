@@ -110,14 +110,14 @@ if (-not (Test-IsAdministrator)) {
 }
 Set-Location $ProjectRoot
 
-$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_CGW_FX001_EXECUTION_LOCK_V2.json"
+$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_CGW_FX001_EXECUTION_LOCK_V2R1.json"
 $AdmissionScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_admission.py"
 $RunnerScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_runner.py"
 $VerifierScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_verify.py"
 
 if (-not (Test-Path -LiteralPath $LockPath)) { throw "DISPATCH_LOCK_V2_MISSING" }
 $Lock = Get-Content -LiteralPath $LockPath -Raw | ConvertFrom-Json
-if ($Lock.status -ne "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2") { throw "DISPATCH_LOCK_STATUS_INVALID" }
+if ($Lock.status -ne "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R1") { throw "DISPATCH_LOCK_STATUS_INVALID" }
 if ($Lock.authorization.dispatch_authorized -ne $true) { throw "DISPATCH_NOT_AUTHORIZED" }
 if ($Lock.authorization.max_dispatches -ne 1) { throw "DISPATCH_CARDINALITY_DRIFT" }
 if ($Lock.attempt_id -ne $AttemptId) { throw "ATTEMPT_ID_DRIFT" }
