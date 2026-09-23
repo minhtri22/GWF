@@ -10,6 +10,7 @@ on:
       - "tests/g2e/fixtures/P5A_CGW_LOCAL_ZERO_MODEL_ADMISSION_V4_EXISTING.json"
       - "g2e/docs/P5A_CGW_V4_SOURCE_CONTRACT_*"
       - ".github/workflows/g2e-p5a-cgw-v4-source-contract.yml"
+      - ".gitattributes"
 
 permissions:
   contents: read
@@ -65,6 +66,9 @@ jobs:
           assert assets["codex-chatgpt-web-windows-amd64.zip"]["digest"] == "sha256:49f51bed4b85c7d5d54707b09791fa8360f653f97532e0dc16aceeb04d1dd611"
           print("P5A_CGW_V4_RELEASE_PROVENANCE_PASS")
 
+      - name: Verify byte-preserved Q0b fixture attribute
+        run: test "$(git check-attr text -- tests/g2e/fixtures/P5A_CGW_LOCAL_ZERO_MODEL_ADMISSION_V4_EXISTING.json)" = "tests/g2e/fixtures/P5A_CGW_LOCAL_ZERO_MODEL_ADMISSION_V4_EXISTING.json: text: unset"
+
       - name: Run v4 source-contract and readjudication tests
         run: pytest -q tests/g2e/test_p5a_cgw_v4_source_contract.py
 
@@ -106,6 +110,12 @@ jobs:
           python -m pip install -U pip
           pip install -e ".[dev]"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify byte-preserved Q0b fixture attribute
+        shell: powershell
+        run: |
+          $attr = git check-attr text -- tests/g2e/fixtures/P5A_CGW_LOCAL_ZERO_MODEL_ADMISSION_V4_EXISTING.json
+          if ($attr -ne "tests/g2e/fixtures/P5A_CGW_LOCAL_ZERO_MODEL_ADMISSION_V4_EXISTING.json: text: unset") { throw "Q0B_FIXTURE_NOT_BYTE_PRESERVED" }
 
       - name: Compile v4 qualifier
         shell: powershell
