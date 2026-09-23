@@ -1,0 +1,58 @@
+{
+  "schema": "G2E-P5A-CGW-LOCAL-Q0B-ADJUDICATION-v1",
+  "status": "FORMALLY_ADJUDICATED_LOCAL_ADMISSION_BLOCKED",
+  "route_id": "p5a-cgw",
+  "evidence": {
+    "uploaded_report_file_sha256": "b91f425a1b92ea0c4cf2d5f1179ecd413cc04b5ac6285034dfd975b446efc2ff",
+    "report_internal_evidence_sha256": "551d6c90c48c0761880d937257189b626d586772030558e34a516d4d80d6a68e",
+    "report_schema": "G2E-P5A-CGW-LOCAL-ZERO-MODEL-ADMISSION-v1",
+    "report_status": "LOCAL_ZERO_MODEL_ADMISSION_BLOCKED"
+  },
+  "observed": {
+    "cgw_binary_sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+    "cgw_binary_size": 223980032,
+    "codex_binary_sha256": "a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8",
+    "codex_binary_size": 309166080,
+    "bridge_release_version": "4.0.7",
+    "frozen_required_release_version": "5.0.8",
+    "bridge_mode": "full",
+    "active_connector": "Codex Native2",
+    "auto_approve_tool_calls": false,
+    "host": "127.0.0.1",
+    "port": 17841,
+    "health_status": "ok",
+    "accepting_turns": true,
+    "active_http_turns": 0,
+    "active_browser_turns": 0,
+    "codex_openai_base_url": "http://127.0.0.1:17841/v1",
+    "selected_model_is_cgw": true,
+    "tunnel_config_present": true
+  },
+  "blocker": {
+    "code": "CGW_RELEASE_VERSION",
+    "class": "LOCAL_RUNTIME_IDENTITY_MISMATCH",
+    "mechanism": "INSTALLED_CGW_4_0_7_DOES_NOT_MATCH_FROZEN_5_0_8",
+    "outcome_independent": true,
+    "pre_model": true
+  },
+  "adjudication": {
+    "q0a_source_provenance": "PASS",
+    "q0b_local_installed_runtime": "BLOCKED",
+    "q1_q8_ci_synthetic": "PASS_PREVIOUSLY",
+    "functional_qualification": "NOT_ESTABLISHED",
+    "scientific_verdict": "NOT_APPLICABLE",
+    "scientific_attempt_created": false,
+    "scientific_attempt_consumed": false,
+    "model_turn_executed": false,
+    "comparative_ab_authorized": false
+  },
+  "governance": {
+    "same_lock_local_collection_consumed": true,
+    "rerun_under_same_lock": false,
+    "retarget_frozen_spec_to_installed_4_0_7": false,
+    "functional_attempt": false,
+    "p5a_official_fallback": false,
+    "cross_credit_to_p5a_official": false,
+    "allowed_next": "PROSPECTIVE_RUNTIME_ALIGNMENT_TO_FROZEN_5_0_8_UNDER_NEW_ZERO_MODEL_LOCK"
+  }
+}

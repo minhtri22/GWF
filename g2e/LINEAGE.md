@@ -511,3 +511,19 @@
 - **Authorized next action:** exactly one bounded local zero-model admission collection against the user's existing Codex + CGW installation.
 - **Still forbidden:** first functional attempt, P5A official fallback/cross-credit, and A/B comparison.
 - **Lock:** `g2e/docs/P5A_CGW_IMPLEMENTATION_QUALIFICATION_LOCK.json`.
+
+
+### G2E-P5A-CGW — Local Q0b admission blocked on runtime identity
+
+- **Status:** FORMALLY ADJUDICATED / LOCAL ADMISSION BLOCKED / NO MODEL EXECUTION.
+- **Report file SHA256:** `b91f425a1b92ea0c4cf2d5f1179ecd413cc04b5ac6285034dfd975b446efc2ff`.
+- **Internal evidence SHA256:** `551d6c90c48c0761880d937257189b626d586772030558e34a516d4d80d6a68e`.
+- **Observed CGW:** `4.0.7`; `full`; connector `Codex Native2`; loopback `127.0.0.1:17841`; health `ok`; idle; accepting turns; tunnel configured; auto approval false.
+- **Observed Codex route:** `http://127.0.0.1:17841/v1`; selected model is CGW.
+- **Frozen required CGW:** `5.0.8` from the preregistered source/runtime reference.
+- **Blocker:** `CGW_RELEASE_VERSION` / `LOCAL_RUNTIME_IDENTITY_MISMATCH`.
+- **Scientific consequence:** none; no model turn or scientific attempt was created/consumed. This is not scientific FAIL and not functional PASS.
+- **Same-lock collection:** consumed; rerun under that lock is prohibited.
+- **No-rescue boundary:** do not retarget the frozen spec to installed 4.0.7 and do not open a functional attempt/A-B study.
+- **Admissible next step:** a separately locked, prospective zero-model runtime alignment to frozen 5.0.8, followed by at most one fresh local Q0b collection.
+- **Adjudication:** `g2e/docs/P5A_CGW_LOCAL_Q0B_ADJUDICATION.json` and `g2e/docs/P5A_CGW_LOCAL_Q0B_ADJUDICATION.md`.
