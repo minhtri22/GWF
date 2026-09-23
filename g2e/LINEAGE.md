@@ -594,3 +594,20 @@
 - **Lock status:** `EXECUTION_ENVELOPE_LOCKED_DISPATCH_WITHHELD`.
 - **No model execution:** preregistration/lock qualification sent no model turn and consumed no attempt.
 - **Next gate:** bounded functional runner + admission + verifier implementation and zero-model QA. Only a v2 promotion may add implementation identities; any normative contract change requires new lineage.
+
+
+### G2E-P5A-CGW — P5-FX-001 functional harness zero-model QA and V2 promotion
+
+- **Status:** `ZERO_MODEL_IMPLEMENTATION_QA_PASS` -> `DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2`.
+- **Authoritative candidate:** `4a87317c612ea036070bd4d606b3e549df4aa96d`.
+- **Run:** `35809764751`; Linux `107018474772` PASS; Windows `107018474915` PASS.
+- **Artifact:** `10729845248`; digest `sha256:9c50a0ab55ddc6de1283b5064a79ce9c914c5a2f317a1168d55ba8de3e8bf1af`; QA report SHA256 `3a195eed7270753f926a710c18aebee2bb0cab05430845fc02212ae2fe8288c3`.
+- **Components:** admission `cb1c720b...`; runner `933f57af...`; verifier `1a7dc396...`; one-click `9a6afbae...`; tests `57c27123...`; workflow `583ba82d...`; plan `97778aa3...`.
+- **Route evidence:** exact-v4 broker trace/token fingerprint + browser surface/checkpoints + MCP tool log + broker call prefix + full outer Codex item correlation.
+- **No overclaim:** observable capability fingerprint is SHA-256 prefix12; broker completion exposes a 17-character call prefix. Full invocation ID is admitted only through prefix-matched Codex protocol evidence.
+- **Consumption:** marker fsync immediately before sole `turn/start`; retry=0; timeout=90s.
+- **Authority:** Codex sole local executor; CGW/ChatGPT/MCP remain mediation/inference/capability transport.
+- **Qualification firewall:** no model turn, browser submission, MCP tool invocation, attempt creation or attempt consumption.
+- **Normative contract:** unchanged from v1; V2 adds only qualified implementation identities and zero-model QA evidence.
+- **Authorization:** exactly one future local dispatch authorized; no A/B; no P5A-official fallback; promotion itself does not execute.
+- **Next:** one local P5A-CGW P5-FX-001 functional execution under V2.

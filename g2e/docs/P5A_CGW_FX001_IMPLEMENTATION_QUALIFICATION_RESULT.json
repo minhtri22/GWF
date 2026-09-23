@@ -1,0 +1,55 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-IMPLEMENTATION-QUALIFICATION-RESULT-v1",
+  "status": "ZERO_MODEL_IMPLEMENTATION_QA_PASS",
+  "qualified_candidate": "4a87317c612ea036070bd4d606b3e549df4aa96d",
+  "predecessor": {
+    "execution_lock_v1_blob": "22cefe57c214cf58c759fd76ad25fff9dba834cb",
+    "execution_config_blob": "aea462b84e4583096129820d2a17417803d0f6a2",
+    "execution_config_canonical_sha256": "b7097e8a63607e33f520ab370e48106fc7234f782204e3c366be409b5b594ab8"
+  },
+  "workflow": {
+    "run_id": 35809764751,
+    "linux_job_id": 107018474772,
+    "windows_job_id": 107018474915,
+    "conclusion": "success",
+    "artifact_id": 10729845248,
+    "artifact_digest": "sha256:9c50a0ab55ddc6de1283b5064a79ce9c914c5a2f317a1168d55ba8de3e8bf1af",
+    "report_sha256": "3a195eed7270753f926a710c18aebee2bb0cab05430845fc02212ae2fe8288c3"
+  },
+  "non_authoritative_prior_run": {
+    "run_id": 35809667518,
+    "failure_class": "WORKFLOW_FIREWALL_SELF_MATCH_ONLY",
+    "execution_critical_components_changed_after_run": false
+  },
+  "components": {
+    "admission_blob": "cb1c720bbed568f7ae085f1f5a9282805cf6e495",
+    "runner_blob": "933f57af49ddbcfd56a695780032c42901af8570",
+    "verifier_blob": "1a7dc3966981cf885d6b2f89d3d6c31401164a67",
+    "oneclick_blob": "9a6afbaec93844fd3b0adcae2ad624ab036e2ecf",
+    "test_blob": "57c271237ca22bf3de998afb18beda59260f12cc",
+    "workflow_blob": "583ba82d067295e320f146afe69bd472570c1baf",
+    "plan_blob": "97778aa321a0b56a16d31e635352d8c28bb1b0a9"
+  },
+  "gates": {
+    "I0_predecessor_binding": "PASS",
+    "I1_predispatch_admission": "PASS_SYNTHETIC",
+    "I2_consumption_retry_timeout": "PASS_STATIC",
+    "I3_browser_route_correlation": "PASS_SYNTHETIC",
+    "I4_mcp_capability_and_codex_item_correlation": "PASS_SYNTHETIC",
+    "I5_privacy_secret_minimization": "PASS_STATIC_SYNTHETIC",
+    "I6_verifier_metrics_neutrality": "PASS_SYNTHETIC",
+    "I7_failure_injection_fail_closed": "PASS_SYNTHETIC",
+    "I8_windows_wrapper": "PASS_WINDOWS_POWERSHELL_AND_STATIC_QA",
+    "I9_regressions": "PASS"
+  },
+  "qualification_firewall": {
+    "model_turn_executed": false,
+    "browser_submission_executed": false,
+    "mcp_tool_invocation_executed": false,
+    "attempt_created": false,
+    "attempt_consumed": false
+  },
+  "promotion_eligible": true,
+  "promotion_scope": "ADD_ONLY_COMPONENT_IDENTITIES_AND_ZERO_MODEL_QA_EVIDENCE_TO_V1",
+  "normative_contract_changed": false
+}

@@ -1,0 +1,134 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-EXECUTION-LOCK-v2",
+  "status": "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2",
+  "qualified": true,
+  "predecessor_v1": {
+    "path": "g2e/docs/P5A_CGW_FX001_EXECUTION_LOCK.json",
+    "git_blob": "22cefe57c214cf58c759fd76ad25fff9dba834cb"
+  },
+  "study_id": "p5a-cgw-v4-p5-fx-001-functional-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-attempt-001",
+  "route_id": "p5a-cgw",
+  "execution_config": {
+    "path": "g2e/config/P5A_CGW_FX001_EXECUTION_CONFIG.json",
+    "git_blob": "aea462b84e4583096129820d2a17417803d0f6a2",
+    "file_sha256": "a15f8a44d50625fae00e6472e997ccc56ddacd4a938a3c02a2d16802d1bb2e7a",
+    "canonical_sha256": "b7097e8a63607e33f520ab370e48106fc7234f782204e3c366be409b5b594ab8"
+  },
+  "qualification": {
+    "candidate": "4a87317c612ea036070bd4d606b3e549df4aa96d",
+    "run_id": 35809764751,
+    "linux_job_id": 107018474772,
+    "windows_job_id": 107018474915,
+    "artifact_id": 10729845248,
+    "artifact_digest": "sha256:9c50a0ab55ddc6de1283b5064a79ce9c914c5a2f317a1168d55ba8de3e8bf1af",
+    "report_sha256": "3a195eed7270753f926a710c18aebee2bb0cab05430845fc02212ae2fe8288c3",
+    "result_blob": "ff2eb1222f86d0c2aec45fef677ef9d8e5ff71bc"
+  },
+  "components": {
+    "admission_blob": "cb1c720bbed568f7ae085f1f5a9282805cf6e495",
+    "runner_blob": "933f57af49ddbcfd56a695780032c42901af8570",
+    "verifier_blob": "1a7dc3966981cf885d6b2f89d3d6c31401164a67",
+    "oneclick_blob": "9a6afbaec93844fd3b0adcae2ad624ab036e2ecf",
+    "test_blob": "57c271237ca22bf3de998afb18beda59260f12cc",
+    "workflow_blob": "583ba82d067295e320f146afe69bd472570c1baf",
+    "plan_blob": "97778aa321a0b56a16d31e635352d8c28bb1b0a9"
+  },
+  "frozen_runtime": {
+    "cgw_release": "4.0.7",
+    "cgw_source_commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494",
+    "cgw_binary_sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+    "bridge_config_sha256": "f8ba628c60faf5c95409ee3a37ad359f74dd0eb41bb961312b67758f9ba53858",
+    "codex_binary_sha256": "a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8"
+  },
+  "frozen_route": {
+    "mode": "full",
+    "connector": "Codex Native2",
+    "base_url": "http://127.0.0.1:17841/v1",
+    "model": "chatgpt-web/high",
+    "backend_model": "gpt-5.6-sol",
+    "codex_effort": "high",
+    "adapter_effort": "high",
+    "fallback_forbidden": true
+  },
+  "frozen_task": {
+    "fixture_id": "P5-FX-001",
+    "input_sha256": "a176454229feef1ce8bd7eab1ea79fbfeff07c229c88123edf862fea9160eef6",
+    "task_sha256": "4c4aba6a82d540440dfef725b2568afdef4be3b26c3e4e84e2b34c54e6dd460e",
+    "expected_result_canonical_sha256": "6dd3ebce33677409bec596309e061cc421bfa38b3160c5b577ffe5f7fbc9980d",
+    "result_exact_keys": [
+      "count",
+      "input_sha256",
+      "sorted_unique_values",
+      "sum"
+    ]
+  },
+  "frozen_authority": {
+    "codex_is_sole_local_execution_authority": true,
+    "bridge_is_transport_inference_mediation_only": true,
+    "chatgpt_web_has_no_local_authority": true,
+    "mcp_is_turn_bound_capability_transport_only": true,
+    "allowed_reads": [
+      "TASK.md",
+      "input.json"
+    ],
+    "allowed_writes": [
+      "result.json"
+    ],
+    "outside_workspace": "DENY",
+    "approval_policy": "never",
+    "task_tool_network": "DENY",
+    "web_search": "DENY",
+    "route_transport_network": "ALLOW_ONLY_FROZEN_CGW_BROWSER_PATH"
+  },
+  "frozen_consumption": {
+    "boundary": "durable marker fsync immediately before sole Codex turn/start transport write",
+    "pre_marker_failure_consumes_attempt": false,
+    "post_marker_attempt_consumed": true,
+    "max_turn_start_transport_writes": 1,
+    "retry_budget": 0,
+    "automatic_retry": false,
+    "replacement_attempt_under_same_lock": false,
+    "turn_timeout_seconds": 90,
+    "timeout_extension_after_marker": false
+  },
+  "frozen_evidence": {
+    "route_identity_required": true,
+    "browser_response_binding_required": true,
+    "live_mcp_roundtrip_required": true,
+    "exact_tool_name_and_invocation_id_required": true,
+    "executor_codex_required": true,
+    "capability_token_digest_only": true,
+    "observable_capability_token_fingerprint": "sha256_prefix_12_hex_from_exact_v4_source",
+    "broker_completed_call_evidence": "17_char_prefix_must_match_full_outer_codex_item_id",
+    "secret_bearing_raw_material_forbidden": true,
+    "result_and_workspace_integrity_required": true
+  },
+  "predispatch_fail_closed": {
+    "exact_model_must_equal": "chatgpt-web/high",
+    "exact_mode_must_equal": "full",
+    "exact_connector_must_equal": "Codex Native2",
+    "exact_base_url_must_equal": "http://127.0.0.1:17841/v1",
+    "bridge_health_must_be": "ok_and_idle",
+    "bridge_config_sha256_must_equal": "f8ba628c60faf5c95409ee3a37ad359f74dd0eb41bb961312b67758f9ba53858",
+    "codex_config_sha256_captured_before_marker": true,
+    "mismatch_action": "BLOCK_WITHOUT_ATTEMPT_CONSUMPTION",
+    "automatic_config_mutation": false
+  },
+  "authorization": {
+    "execution_envelope_locked": true,
+    "attempt_identity_reserved": true,
+    "dispatch_authorized": true,
+    "model_turn_authorized": true,
+    "functional_attempt_authorized": true,
+    "scientific_attempt_authorized": true,
+    "max_dispatches": 1,
+    "comparative_ab_authorized": false,
+    "p5a_official_fallback_authorized": false,
+    "retry_authorized": false,
+    "automatic_retry_authorized": false,
+    "automatic_execution_on_promotion": false
+  },
+  "local_root": "g2e/.local/P5A-CGW-FX001-V4-001",
+  "next_gate": "ONE_LOCAL_P5A_CGW_FX001_FUNCTIONAL_EXECUTION"
+}
