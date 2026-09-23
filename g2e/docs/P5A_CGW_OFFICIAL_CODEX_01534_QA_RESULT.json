@@ -1,0 +1,40 @@
+{
+  "schema": "G2E-P5A-CGW-OFFICIAL-CODEX-01534-QA-RESULT-v1",
+  "status": "PASS_LOCAL_PREPARATION_AUTHORIZED",
+  "candidate": "2c91cca930a419de24b05a7f7b3e6bf9b4bf083d",
+  "mechanism_fixed_target": "PROJECT_LOCAL_OFFICIAL_RUST_V0_153_4_COHERENT_PACKAGE",
+  "authoritative_qa": {
+    "run_id": 35842825908,
+    "windows_job_id": 107121738819,
+    "conclusion": "success",
+    "artifact_id": 10742480897,
+    "artifact_digest": "sha256:ee4c874c03221125cccb4515f8b9efd941646e3da9c74129df6a86749cb62522"
+  },
+  "qualified_package": {
+    "version": "0.153.4",
+    "archive": "codex-package-x86_64-pc-windows-msvc.tar.gz",
+    "archive_sha256": "a6ef3442cb12766a88b39311d79244289e4f9763e2c53ff4fbebc2cb653cc5f3",
+    "codex_sha256": "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b",
+    "codex_version_output": "codex-cli 0.153.4",
+    "sandbox_helper_sha256": "0c3eeb7cee8d2bc4c8644def3c818e8b06760979572dcedc919c38d0f38f64c4"
+  },
+  "qualification_firewall": {
+    "model_turn": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "sandbox_setup": false,
+    "attempt_consumed": false
+  },
+  "attempt": {
+    "id": "p5a-cgw-v4-p5-fx-001-attempt-001",
+    "state": "RESERVED_UNCONSUMED",
+    "rearm_authorized": false
+  },
+  "authorization": {
+    "local_package_preparation": true,
+    "global_codex_mutation": false,
+    "live_dispatch": false,
+    "sandbox_setup": false
+  },
+  "next_gate": "LOCAL_PROJECT_PACKAGE_QUALIFICATION_REPORT"
+}
