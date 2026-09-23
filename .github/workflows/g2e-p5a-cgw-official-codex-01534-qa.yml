@@ -1,0 +1,70 @@
+name: G2E P5A-CGW Official Codex 0.153.4 Package QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/p5a-cgw-specification
+    paths:
+      - "scripts/g2e/p5a_cgw_prepare_official_codex_01534.ps1"
+      - ".github/workflows/g2e-p5a-cgw-official-codex-01534-qa.yml"
+      - "g2e/docs/P5A_CGW_FX001_MIXED_BUILD_ADJUDICATION.json"
+      - "g2e/docs/P5A_CGW_FX001_OFFICIAL_CODEX_01534_REPAIR_PLAN.md"
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-windows-package:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse PowerShell
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $path = ".\scripts\g2e\p5a_cgw_prepare_official_codex_01534.ps1"
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path $path),
+            [ref]$null,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | Format-List * | Out-String | Write-Host
+            throw "POWERSHELL_PARSE_FAILED"
+          }
+
+      - name: Qualify official package
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $out = Join-Path $env:RUNNER_TEMP "codex-official-0.153.4"
+          powershell.exe -NoProfile -ExecutionPolicy Bypass `
+            -File ".\scripts\g2e\p5a_cgw_prepare_official_codex_01534.ps1" `
+            -OutDir $out
+          if ($LASTEXITCODE -ne 0) {
+            throw "PACKAGE_QUALIFICATION_FAILED:$LASTEXITCODE"
+          }
+          Copy-Item `
+            -LiteralPath (Join-Path $out "QUALIFICATION_REPORT.json") `
+            -Destination ".\P5A_CGW_OFFICIAL_CODEX_01534_QUALIFICATION_REPORT.json"
+
+      - name: Assert zero-model firewall
+        shell: powershell
+        run: |
+          $r = Get-Content ".\P5A_CGW_OFFICIAL_CODEX_01534_QUALIFICATION_REPORT.json" -Raw | ConvertFrom-Json
+          if ($r.status -ne "PASS") { throw "REPORT_NOT_PASS" }
+          if ($r.firewall.model_turn) { throw "MODEL_TURN_FORBIDDEN" }
+          if ($r.firewall.browser_submission) { throw "BROWSER_SUBMISSION_FORBIDDEN" }
+          if ($r.firewall.mcp_invocation) { throw "MCP_INVOCATION_FORBIDDEN" }
+          if ($r.firewall.sandbox_setup) { throw "SANDBOX_SETUP_FORBIDDEN" }
+          if ($r.firewall.attempt_consumed) { throw "ATTEMPT_CONSUMPTION_FORBIDDEN" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p5a-cgw-official-codex-01534-qa
+          path: P5A_CGW_OFFICIAL_CODEX_01534_QUALIFICATION_REPORT.json
+          if-no-files-found: error

@@ -1,0 +1,51 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-SANDBOX-MIXED-BUILD-ADJUDICATION-v1",
+  "status": "MECHANISM_CONFIRMED",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-attempt-001",
+  "attempt_consumed": false,
+  "local_evidence": {
+    "codex_logical_path": "C:/Users/minht/AppData/Local/Programs/OpenAI/Codex/bin/codex.exe",
+    "codex_canonical_path": "C:/Users/minht/.codex/packages/standalone/releases/0.153.4-x86_64-pc-windows-msvc/bin/codex.exe",
+    "codex_sha256": "a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8",
+    "codex_size": 309166080,
+    "selected_helper_path": "C:/Users/minht/.codex/packages/standalone/releases/0.153.4-x86_64-pc-windows-msvc/codex-resources/codex-windows-sandbox-setup.exe",
+    "selected_helper_sha256": "0c3eeb7cee8d2bc4c8644def3c818e8b06760979572dcedc919c38d0f38f64c4",
+    "selected_helper_size": 15413040,
+    "selected_helper_contains_interactive_provision": false,
+    "sandbox_log_sha256": "9afd442f2c205c514a5e513a2604ab8eb59d439259af211d7d151ab896a57858",
+    "sandbox_error": "helper_request_args_failed: failed to parse payload json: unknown variant `interactive-provision`, expected one of `full`, `provision-only`, `read-acls-only`"
+  },
+  "official_rust_v0_153_4": {
+    "tag_commit": "3d2ee51ca2d5db578f328aa75e20aa22c0197c9a",
+    "codex_x86_64_windows_sha256": "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b",
+    "codex_x86_64_windows_size": 295408944,
+    "sandbox_helper_x86_64_windows_sha256": "0c3eeb7cee8d2bc4c8644def3c818e8b06760979572dcedc919c38d0f38f64c4",
+    "sandbox_helper_x86_64_windows_size": 15413040,
+    "package_asset": "codex-package-x86_64-pc-windows-msvc.tar.gz",
+    "package_sha256": "a6ef3442cb12766a88b39311d79244289e4f9763e2c53ff4fbebc2cb653cc5f3"
+  },
+  "source_contract": {
+    "rust_v0_153_4_sender_modes": [
+      "full",
+      "provision-only"
+    ],
+    "post_tag_sender_observed_locally": "interactive-provision",
+    "conclusion": "LOCAL_CODEX_BINARY_IS_NOT_THE_OFFICIAL_RUST_V0_153_4_BINARY_WHILE_THE_SELECTED_HELPER_IS_THE_OFFICIAL_RUST_V0_153_4_HELPER"
+  },
+  "mechanism": "MIXED_BUILD_INSTALL_OR_PARTIAL_UPDATE_WITH_NEWER_CODEX_SENDER_AND_OFFICIAL_0_153_4_HELPER",
+  "scientific_interpretation": "INFRASTRUCTURE_ONLY_PRE_MARKER",
+  "repair_policy": {
+    "mutate_global_codex": false,
+    "patch_single_helper": false,
+    "preferred": "PROJECT_LOCAL_OFFICIAL_0_153_4_COHERENT_PACKAGE",
+    "require_zero_model_qualification_before_rebinding": true
+  },
+  "prohibited": [
+    "rerun_attempt",
+    "delete_local_root",
+    "patch_global_helper",
+    "change_model",
+    "change_route",
+    "change_task"
+  ]
+}
