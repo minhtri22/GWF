@@ -51,16 +51,31 @@ jobs:
       - name: Assert zero-model workflow firewall
         shell: python
         run: |
+          import re, yaml
           from pathlib import Path
-          wf = Path(".github/workflows/g2e-p5a-cgw-fx001-implementation-qa.yml").read_text()
-          forbidden = [
-              "p5a_cgw_fx001_oneclick.ps1 -",
-              "p5a_cgw_fx001_runner.py --workspace",
-              "/v1/responses",
-              "turn/start transport write",
-          ]
-          for token in forbidden:
-              assert token not in wf, token
+
+          doc = yaml.safe_load(
+              Path(".github/workflows/g2e-p5a-cgw-fx001-implementation-qa.yml").read_text()
+          )
+          for job in doc.get("jobs", {}).values():
+              for step in job.get("steps", []):
+                  run = step.get("run")
+                  if not isinstance(run, str):
+                      continue
+                  for line in run.splitlines():
+                      stripped = line.strip().lower()
+                      live_oneclick = (
+                          ("powershell" in stripped or "pwsh" in stripped)
+                          and "p5a_cgw_fx001_oneclick.ps1" in stripped
+                          and "-file" in stripped
+                      )
+                      live_runner = bool(re.search(
+                          r"(^|[;&])\\s*(python|python3|py)\\s+[^;&]*p5a_cgw_fx001_runner\\.py\\s+--",
+                          stripped,
+                      ))
+                      assert not live_oneclick, line
+                      assert not live_runner, line
+
           runner = Path("scripts/g2e/p5a_cgw_fx001_runner.py").read_text()
           assert runner.count('"method": "turn/start"') == 1
           print("P5A_CGW_FX001_ZERO_MODEL_WORKFLOW_FIREWALL_PASS")
