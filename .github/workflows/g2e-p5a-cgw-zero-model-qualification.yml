@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 35
     env:
       PYTHONPATH: src
-      SPEC_BASE: "4124c9084899b6ef3be3649f1700f62ab082ea0e"
+      SPEC_BASE: "109b7815c98ce25f66890c5c3cc859162978b71f"
       CGW_COMMIT: "eaf4f09ae92d4dc4429fa597b0861663138f08f8"
 
     steps:
@@ -47,12 +47,14 @@ jobs:
           printf '%s\n' "${changed[@]}"
           allowed=(
             ".github/workflows/g2e-p5a-cgw-zero-model-qualification.yml"
-            "scripts/g2e/p5a_cgw_bridge_qualification.py"
-            "scripts/g2e/p5a_cgw_local_zero_model_oneclick.ps1"
-            "tests/g2e/test_p5a_cgw_zero_model_qualification.py"
-            "g2e/docs/P5A_CGW_IMPLEMENTATION_QUALIFICATION_RESULT.md"
-            "g2e/docs/P5A_CGW_IMPLEMENTATION_QUALIFICATION_LOCK.json"
-            "g2e/LINEAGE.md"
+            ".github/workflows/g2e-p5a-cgw-fx001-implementation-qa.yml"
+            "g2e/config/P5A_CGW_FX001_EXECUTION_CONFIG_V2.json"
+            "g2e/docs/P5A_CGW_FX001_V2R6_INFRASTRUCTURE_AMENDMENT_PLAN.md"
+            "scripts/g2e/p5a_cgw_fx001_admission.py"
+            "scripts/g2e/p5a_cgw_fx001_oneclick.ps1"
+            "scripts/g2e/p5a_cgw_fx001_runner.py"
+            "scripts/g2e/p5a_cgw_fx001_verify.py"
+            "tests/g2e/test_p5a_cgw_fx001_implementation.py"
           )
           for path in "${changed[@]}"; do
             ok=false
