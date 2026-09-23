@@ -1,0 +1,335 @@
+param(
+    [string]$ProjectRoot = "",
+    [string]$PythonExe = "",
+    [string]$CodexExe = "",
+    [string]$BridgeHome = "",
+    [string]$LauncherData = ""
+)
+
+$ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
+Set-StrictMode -Version Latest
+
+$StudyId = "p5a-cgw-v4-p5-fx-001-functional-qualification"
+$AttemptId = "p5a-cgw-v4-p5-fx-001-attempt-001"
+$ExecutionConfigCanonicalSha = "b7097e8a63607e33f520ab370e48106fc7234f782204e3c366be409b5b594ab8"
+$ExpectedInputSha = "A176454229FEEF1CE8BD7EAB1EA79FBFEFF07C229C88123EDF862FEA9160EEF6"
+$ExpectedTaskSha = "4C4ABA6A82D540440DFEF725B2568AFDEF4BE3B26C3E4E84E2B34C54E6DD460E"
+$ExpectedCodexSha = "A337B7433EBB351C0165DD074CF2500A20FCA9CEAB3680A71DF593653BF70DC8"
+$ExpectedCgwSha = "AC152AD499B1F41B2CAFE94A3D05F5D4E4D3CD7DBB417B9C60B118B08BC3CBB"
+$ProfileId = "g2e_p5a_cgw_fx001"
+
+function Test-IsAdministrator {
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object Security.Principal.WindowsPrincipal($identity)
+    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+function Get-Sha256([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw "FILE_NOT_FOUND:$Path" }
+    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToUpperInvariant()
+}
+
+function Get-GitBlob([string]$Repo, [string]$Path) {
+    $v = (& git -C $Repo rev-parse "HEAD:$Path").Trim()
+    if ($LASTEXITCODE -ne 0) { throw "GIT_BLOB_FAILED:$Path" }
+    return $v
+}
+
+function Convert-ToLfText([string]$Text) {
+    return ($Text -replace "\r\n", "\n" -replace "\r", "\n").TrimEnd("\n")
+}
+
+function Get-FreeDriveLetter {
+    $used = @(Get-Volume | Where-Object DriveLetter | ForEach-Object { $_.DriveLetter.ToString().ToUpperInvariant() })
+    foreach ($code in ([int][char]'R')..([int][char]'Z')) {
+        $letter = ([char]$code).ToString()
+        if ($used -notcontains $letter) { return $letter }
+    }
+    throw "NO_FREE_DRIVE_LETTER"
+}
+
+if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
+    $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+} else {
+    $ProjectRoot = (Resolve-Path $ProjectRoot).Path
+}
+if ([string]::IsNullOrWhiteSpace($PythonExe)) {
+    $PythonExe = (Get-Command python -ErrorAction Stop).Source
+}
+if ([string]::IsNullOrWhiteSpace($CodexExe)) {
+    $CodexExe = (Get-Command codex -ErrorAction Stop).Source
+}
+$ThisScript = $MyInvocation.MyCommand.Path
+if (-not (Test-IsAdministrator)) {
+    Write-Host "Administrator elevation is required for the isolated P5A-CGW VHDX."
+    $ElevatedArgs = @(
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File", $ThisScript,
+        "-ProjectRoot", $ProjectRoot,
+        "-PythonExe", $PythonExe,
+        "-CodexExe", $CodexExe
+    )
+    if (-not [string]::IsNullOrWhiteSpace($BridgeHome)) {
+        $ElevatedArgs += @("-BridgeHome", $BridgeHome)
+    }
+    if (-not [string]::IsNullOrWhiteSpace($LauncherData)) {
+        $ElevatedArgs += @("-LauncherData", $LauncherData)
+    }
+    $p = Start-Process -FilePath "powershell.exe" -Verb RunAs -ArgumentList $ElevatedArgs -Wait -PassThru
+    exit $p.ExitCode
+}
+Set-Location $ProjectRoot
+
+$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_CGW_FX001_EXECUTION_LOCK_V2.json"
+$AdmissionScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_admission.py"
+$RunnerScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_runner.py"
+$VerifierScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_verify.py"
+
+if (-not (Test-Path -LiteralPath $LockPath)) { throw "DISPATCH_LOCK_V2_MISSING" }
+$Lock = Get-Content -LiteralPath $LockPath -Raw | ConvertFrom-Json
+if ($Lock.status -ne "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2") { throw "DISPATCH_LOCK_STATUS_INVALID" }
+if ($Lock.authorization.dispatch_authorized -ne $true) { throw "DISPATCH_NOT_AUTHORIZED" }
+if ($Lock.authorization.max_dispatches -ne 1) { throw "DISPATCH_CARDINALITY_DRIFT" }
+if ($Lock.attempt_id -ne $AttemptId) { throw "ATTEMPT_ID_DRIFT" }
+
+if ((Get-GitBlob $ProjectRoot "scripts/g2e/p5a_cgw_fx001_admission.py") -ne $Lock.components.admission_blob) { throw "ADMISSION_BLOB_DRIFT" }
+if ((Get-GitBlob $ProjectRoot "scripts/g2e/p5a_cgw_fx001_runner.py") -ne $Lock.components.runner_blob) { throw "RUNNER_BLOB_DRIFT" }
+if ((Get-GitBlob $ProjectRoot "scripts/g2e/p5a_cgw_fx001_verify.py") -ne $Lock.components.verifier_blob) { throw "VERIFIER_BLOB_DRIFT" }
+if ((Get-GitBlob $ProjectRoot "scripts/g2e/p5a_cgw_fx001_oneclick.ps1") -ne $Lock.components.oneclick_blob) { throw "ONECLICK_BLOB_DRIFT" }
+if ((Get-GitBlob $ProjectRoot "g2e/config/P5A_CGW_FX001_EXECUTION_CONFIG.json") -ne $Lock.execution_config.git_blob) { throw "EXECUTION_CONFIG_BLOB_DRIFT" }
+if ((& git -C $ProjectRoot status --porcelain).Trim()) { throw "SOURCE_WORKTREE_DIRTY" }
+
+if (-not (Test-Path -LiteralPath $PythonExe -PathType Leaf)) { throw "PYTHON_NOT_FOUND" }
+if (-not (Test-Path -LiteralPath $CodexExe -PathType Leaf)) { throw "CODEX_COMMAND_NOT_FOUND" }
+if ((Get-Sha256 $CodexExe) -ne $ExpectedCodexSha) { throw "CODEX_BINARY_HASH_DRIFT" }
+
+if (-not $BridgeHome) {
+    if ($env:CODEX_CHATGPT_WEB_HOME) { $BridgeHome = $env:CODEX_CHATGPT_WEB_HOME }
+    else { $BridgeHome = Join-Path $HOME ".codex-chatgpt-web" }
+}
+if (-not $LauncherData) {
+    if ($env:CODEX_WEB_GPT_LAUNCHER_DATA_DIR) { $LauncherData = $env:CODEX_WEB_GPT_LAUNCHER_DATA_DIR }
+    else { $LauncherData = Join-Path $env:APPDATA "Codex Web GPT" }
+}
+
+$BridgeConfig = Join-Path $BridgeHome "config.json"
+$DiagnosticsRoot = Join-Path $BridgeHome "diagnostics\browser-turns"
+$LauncherLog = Join-Path $LauncherData "logs\launcher.jsonl"
+if (-not (Test-Path -LiteralPath $BridgeConfig)) { throw "CGW_CONFIG_NOT_FOUND" }
+if (-not (Test-Path -LiteralPath $LauncherLog)) { throw "CGW_LAUNCHER_LOG_NOT_FOUND" }
+
+$BridgeObject = Get-Content -LiteralPath $BridgeConfig -Raw | ConvertFrom-Json
+if ([string]$BridgeObject.host -ne "127.0.0.1" -or [int]$BridgeObject.port -ne 17841) { throw "CGW_LOOPBACK_ROUTE_DRIFT" }
+
+$CgwBinary = $null
+try {
+    $InstallRegistry = "HKCU:\Software\d1a6026a-6210-588e-9a2b-da3936f94e02"
+    $InstallLocation = [string](Get-ItemPropertyValue -LiteralPath $InstallRegistry -Name "InstallLocation")
+    $Candidate = Join-Path $InstallLocation "Codex Web GPT.exe"
+    if (Test-Path -LiteralPath $Candidate) { $CgwBinary = $Candidate }
+} catch {}
+if (-not $CgwBinary) {
+    $Candidate = [string]@($BridgeObject.runtimeCommand)[0]
+    if (-not (Test-Path -LiteralPath $Candidate)) { throw "CGW_BINARY_NOT_FOUND" }
+    $CgwBinary = $Candidate
+}
+if ((Get-Sha256 $CgwBinary) -ne $ExpectedCgwSha) { throw "CGW_BINARY_HASH_DRIFT" }
+
+$LocalRoot = Join-Path $ProjectRoot "g2e\.local\P5A-CGW-FX001-V4-001"
+if (Test-Path -LiteralPath $LocalRoot) { throw "FUNCTIONAL_ROOT_ALREADY_EXISTS_FAIL_CLOSED" }
+
+$VolumeDir = Join-Path $LocalRoot "volume"
+$CodexHome = Join-Path $LocalRoot "codex-home"
+$EvidenceDir = Join-Path $LocalRoot "evidence"
+$ReportDir = Join-Path $LocalRoot "report"
+$VerificationDir = Join-Path $LocalRoot "verification"
+New-Item -ItemType Directory -Path $VolumeDir,$CodexHome,$ReportDir,$VerificationDir -Force | Out-Null
+
+$VhdxPath = Join-Path $VolumeDir "P5A-CGW-FX001.vhdx"
+$DiskpartScript = Join-Path $VolumeDir "create_vhdx.diskpart.txt"
+$HealthPath = Join-Path $ReportDir "CGW_HEALTH_SAFE.json"
+$AdmissionPath = Join-Path $ReportDir "predispatch_admission.json"
+$RunnerEvidence = Join-Path $EvidenceDir "runner_evidence.json"
+$ProtocolPath = Join-Path $EvidenceDir "codex_protocol.jsonl"
+$RoutePath = Join-Path $EvidenceDir "cgw_route_evidence.jsonl"
+$MarkerPath = Join-Path $EvidenceDir "attempt_consumed.marker"
+$VerifyPath = Join-Path $VerificationDir "verification.json"
+$SummaryPath = Join-Path $ReportDir "P5A_CGW_FX001_EXECUTION_REPORT.json"
+
+$Summary = [ordered]@{
+    schema = "G2E-P5A-CGW-FX001-EXECUTION-REPORT-v1"
+    status = "STARTED"
+    study_id = $StudyId
+    attempt_id = $AttemptId
+    attempt_consumed = $false
+    runner_exit_code = $null
+    verifier_exit_code = $null
+    verification_sha256 = $null
+    cleanup = [ordered]@{
+        attached_before_cleanup = $null
+        cleanup_action = "NOT_ATTACHED"
+        attached_after_cleanup = $null
+        cleanup_error = $null
+    }
+}
+
+$FinalExit = 0
+$VhdxMayBeAttached = $false
+
+try {
+    try {
+        $DriveLetter = Get-FreeDriveLetter
+        $VolumeRoot = $DriveLetter + ":\"
+        $diskpart = @(
+            "create vdisk file=""$VhdxPath"" maximum=128 type=expandable",
+            "select vdisk file=""$VhdxPath""",
+            "attach vdisk",
+            "create partition primary",
+            "format fs=ntfs quick label=G2ECGWFX01",
+            "assign letter=$DriveLetter"
+        )
+        [IO.File]::WriteAllLines($DiskpartScript, $diskpart, [Text.ASCIIEncoding]::new())
+        $VhdxMayBeAttached = $true
+        & diskpart.exe /s $DiskpartScript | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "DISKPART_FAILED" }
+        if (-not (Test-Path -LiteralPath $VolumeRoot -PathType Container)) { throw "VHDX_VOLUME_MISSING" }
+
+        $SourceFixture = Join-Path $ProjectRoot "g2e\.local\P5A-D2S1\execution\P5-FX-001"
+        $SourceInput = Join-Path $SourceFixture "input.json"
+        $SourceTask = Join-Path $SourceFixture "TASK.md"
+        if ((Get-Sha256 $SourceInput) -ne $ExpectedInputSha) { throw "SOURCE_INPUT_HASH_DRIFT" }
+        if ((Get-Sha256 $SourceTask) -ne $ExpectedTaskSha) { throw "SOURCE_TASK_HASH_DRIFT" }
+        Copy-Item -LiteralPath $SourceInput -Destination (Join-Path $VolumeRoot "input.json")
+        Copy-Item -LiteralPath $SourceTask -Destination (Join-Path $VolumeRoot "TASK.md")
+
+        $ResultPath = Join-Path $VolumeRoot "result.json"
+        $TomlResultPath = $ResultPath.Replace("\", "\\")
+        $ConfigPath = Join-Path $LocalRoot "codex-config.toml"
+        $config = @"
+model = "chatgpt-web/high"
+model_provider = "openai"
+openai_base_url = "http://127.0.0.1:17841/v1"
+default_permissions = "$ProfileId"
+
+[windows]
+sandbox = "elevated"
+
+[permissions.$ProfileId]
+description = "G2E P5A-CGW P5-FX-001 bounded functional authority"
+
+[permissions.$ProfileId.filesystem]
+":root" = "read"
+"$TomlResultPath" = "write"
+
+[permissions.$ProfileId.network]
+enabled = false
+"@
+        [IO.File]::WriteAllText($ConfigPath, (Convert-ToLfText $config) + [char]10, [Text.UTF8Encoding]::new($false))
+
+        $DefaultAuth = Join-Path $env:USERPROFILE ".codex\auth.json"
+        if (-not (Test-Path -LiteralPath $DefaultAuth)) { throw "DEFAULT_AUTH_MISSING" }
+        Copy-Item -LiteralPath $DefaultAuth -Destination (Join-Path $CodexHome "auth.json")
+        Copy-Item -LiteralPath $ConfigPath -Destination (Join-Path $CodexHome "config.toml")
+
+        $Health = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:17841/healthz" -TimeoutSec 3
+        $Health | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $HealthPath -Encoding UTF8
+
+        $AdmissionArgs = @(
+            $AdmissionScript,
+            "--bridge-config", $BridgeConfig,
+            "--health-json", $HealthPath,
+            "--codex-config", $ConfigPath,
+            "--cgw-binary", $CgwBinary,
+            "--codex-binary", $CodexExe,
+            "--workspace", $VolumeRoot,
+            "--diagnostics-root", $DiagnosticsRoot,
+            "--launcher-log", $LauncherLog,
+            "--marker", $MarkerPath,
+            "--output", $AdmissionPath
+        )
+        & $PythonExe @AdmissionArgs
+        if ($LASTEXITCODE -ne 0) {
+            $Summary.status = "PREDISPATCH_BLOCKED_NO_ATTEMPT_CONSUMPTION"
+            throw "PREDISPATCH_ADMISSION_BLOCKED"
+        }
+
+        $RunnerArgs = @(
+            $RunnerScript,
+            "--workspace", $VolumeRoot,
+            "--codex-home", $CodexHome,
+            "--codex", $CodexExe,
+            "--admission", $AdmissionPath,
+            "--diagnostics-root", $DiagnosticsRoot,
+            "--launcher-log", $LauncherLog,
+            "--evidence-dir", $EvidenceDir,
+            "--execution-config-hash", $ExecutionConfigCanonicalSha
+        )
+        & $PythonExe @RunnerArgs
+        $Summary.runner_exit_code = $LASTEXITCODE
+
+        if (Test-Path -LiteralPath $RunnerEvidence) {
+            $Runner = Get-Content -LiteralPath $RunnerEvidence -Raw | ConvertFrom-Json
+            $Summary.attempt_consumed = [bool]$Runner.attempt_consumed
+        }
+        if ($Summary.runner_exit_code -ne 0 -and -not $Summary.attempt_consumed) {
+            $Summary.status = "RUNNER_BLOCKED_NO_ATTEMPT_CONSUMPTION"
+            throw "RUNNER_BLOCKED_BEFORE_ATTEMPT_CONSUMPTION"
+        }
+
+        $VerifierArgs = @(
+            $VerifierScript,
+            "--runner", $RunnerEvidence,
+            "--protocol", $ProtocolPath,
+            "--route", $RoutePath,
+            "--marker", $MarkerPath,
+            "--admission", $AdmissionPath,
+            "--workspace", $VolumeRoot,
+            "--execution-config-hash", $ExecutionConfigCanonicalSha,
+            "--output", $VerifyPath
+        )
+        & $PythonExe @VerifierArgs
+        $Summary.verifier_exit_code = $LASTEXITCODE
+
+        if (Test-Path -LiteralPath $VerifyPath) {
+            $Summary.verification_sha256 = (Get-Sha256 $VerifyPath).ToLowerInvariant()
+            $Verification = Get-Content -LiteralPath $VerifyPath -Raw | ConvertFrom-Json
+            $Summary.metrics = $Verification.metrics
+            $Summary.adjudication_inputs = $Verification.adjudication_inputs
+        }
+        $Summary.status = "FUNCTIONAL_EVIDENCE_READY_FOR_ADJUDICATION"
+    } catch {
+        if ($Summary.status -eq "STARTED") { $Summary.status = "EXECUTION_WRAPPER_ERROR" }
+        $Summary.diagnostic = $_.Exception.Message
+        $FinalExit = 2
+    }
+} finally {
+    if ($VhdxMayBeAttached -and (Test-Path -LiteralPath $VhdxPath -PathType Leaf)) {
+        try {
+            $before = Get-DiskImage -ImagePath $VhdxPath -ErrorAction Stop
+            $Summary.cleanup.attached_before_cleanup = [bool]$before.Attached
+            if ($before.Attached) {
+                Dismount-DiskImage -ImagePath $VhdxPath -ErrorAction Stop | Out-Null
+                $Summary.cleanup.cleanup_action = "DISMOUNTED"
+            }
+            $after = Get-DiskImage -ImagePath $VhdxPath -ErrorAction Stop
+            $Summary.cleanup.attached_after_cleanup = [bool]$after.Attached
+            if ($after.Attached) {
+                $Summary.cleanup.cleanup_error = "VHDX_STILL_ATTACHED"
+                $FinalExit = 2
+            }
+        } catch {
+            $Summary.cleanup.cleanup_error = $_.Exception.Message
+            $FinalExit = 2
+        }
+    }
+    $Summary | ConvertTo-Json -Depth 16 | Set-Content -LiteralPath $SummaryPath -Encoding UTF8
+}
+
+Write-Host ""
+Write-Host "=== P5A-CGW FX001 EXECUTION ===" -ForegroundColor Cyan
+Write-Host ("STATUS: " + $Summary.status)
+Write-Host ("ATTEMPT_CONSUMED: " + $Summary.attempt_consumed)
+Write-Host ("REPORT: " + $SummaryPath)
+exit $FinalExit

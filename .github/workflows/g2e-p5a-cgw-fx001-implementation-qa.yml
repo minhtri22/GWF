@@ -1,0 +1,186 @@
+name: G2E P5A-CGW FX001 Implementation Zero-Model QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["research/p5a-cgw-specification"]
+    paths:
+      - "scripts/g2e/p5a_cgw_fx001_admission.py"
+      - "scripts/g2e/p5a_cgw_fx001_runner.py"
+      - "scripts/g2e/p5a_cgw_fx001_verify.py"
+      - "scripts/g2e/p5a_cgw_fx001_oneclick.ps1"
+      - "tests/g2e/test_p5a_cgw_fx001_implementation.py"
+      - "g2e/docs/P5A_CGW_FX001_IMPLEMENTATION_QA_PLAN.md"
+      - ".github/workflows/g2e-p5a-cgw-fx001-implementation-qa.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  implementation-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install G2E dependencies
+        run: |
+          python -m pip install -U pip
+          pip install -e ".[dev]"
+
+      - name: Compile bounded implementation
+        run: |
+          python -m compileall -q             scripts/g2e/p5a_cgw_fx001_admission.py             scripts/g2e/p5a_cgw_fx001_runner.py             scripts/g2e/p5a_cgw_fx001_verify.py
+
+      - name: Run bounded implementation QA
+        run: pytest -q tests/g2e/test_p5a_cgw_fx001_implementation.py
+
+      - name: Regress frozen preregistration and exact-v4 contract
+        run: |
+          pytest -q             tests/g2e/test_p5a_cgw_fx001_preregistration.py             tests/g2e/test_p5a_cgw_v4_source_contract.py
+
+      - name: Assert zero-model workflow firewall
+        shell: python
+        run: |
+          from pathlib import Path
+          wf = Path(".github/workflows/g2e-p5a-cgw-fx001-implementation-qa.yml").read_text()
+          forbidden = [
+              "p5a_cgw_fx001_oneclick.ps1 -",
+              "p5a_cgw_fx001_runner.py --workspace",
+              "/v1/responses",
+              "turn/start transport write",
+          ]
+          for token in forbidden:
+              assert token not in wf, token
+          runner = Path("scripts/g2e/p5a_cgw_fx001_runner.py").read_text()
+          assert runner.count('"method": "turn/start"') == 1
+          print("P5A_CGW_FX001_ZERO_MODEL_WORKFLOW_FIREWALL_PASS")
+
+      - name: Materialize qualification report
+        shell: python
+        run: |
+          import json, subprocess
+          from pathlib import Path
+
+          def blob(path):
+              return subprocess.check_output(
+                  ["git", "rev-parse", f"HEAD:{path}"], text=True
+              ).strip()
+
+          report = {
+              "schema": "G2E-P5A-CGW-FX001-IMPLEMENTATION-QA-v1",
+              "status": "ZERO_MODEL_IMPLEMENTATION_QA_PASS",
+              "candidate": subprocess.check_output(
+                  ["git", "rev-parse", "HEAD"], text=True
+              ).strip(),
+              "predecessor": {
+                  "execution_lock_v1_blob": "22cefe57c214cf58c759fd76ad25fff9dba834cb",
+                  "execution_config_blob": "aea462b84e4583096129820d2a17417803d0f6a2",
+                  "execution_config_canonical_sha256": "b7097e8a63607e33f520ab370e48106fc7234f782204e3c366be409b5b594ab8",
+              },
+              "components": {
+                  "admission_blob": blob("scripts/g2e/p5a_cgw_fx001_admission.py"),
+                  "runner_blob": blob("scripts/g2e/p5a_cgw_fx001_runner.py"),
+                  "verifier_blob": blob("scripts/g2e/p5a_cgw_fx001_verify.py"),
+                  "oneclick_blob": blob("scripts/g2e/p5a_cgw_fx001_oneclick.ps1"),
+                  "test_blob": blob("tests/g2e/test_p5a_cgw_fx001_implementation.py"),
+                  "workflow_blob": blob(".github/workflows/g2e-p5a-cgw-fx001-implementation-qa.yml"),
+                  "plan_blob": blob("g2e/docs/P5A_CGW_FX001_IMPLEMENTATION_QA_PLAN.md"),
+              },
+              "gates": {
+                  "I0_predecessor_binding": "PASS",
+                  "I1_predispatch_admission": "PASS_SYNTHETIC",
+                  "I2_consumption_retry_timeout": "PASS_STATIC",
+                  "I3_browser_route_correlation": "PASS_SYNTHETIC",
+                  "I4_mcp_capability_and_codex_item_correlation": "PASS_SYNTHETIC",
+                  "I5_privacy_secret_minimization": "PASS_STATIC_SYNTHETIC",
+                  "I6_verifier_metrics_neutrality": "PASS_SYNTHETIC",
+                  "I7_failure_injection_fail_closed": "PASS_SYNTHETIC",
+                  "I8_windows_wrapper": "PENDING_WINDOWS_JOB",
+                  "I9_regressions": "PASS",
+              },
+              "model_turn_executed": False,
+              "browser_submission_executed": False,
+              "mcp_tool_invocation_executed": False,
+              "attempt_created": False,
+              "attempt_consumed": False,
+              "dispatch_authorized_by_this_report": False,
+          }
+          Path("P5A_CGW_FX001_IMPLEMENTATION_QA.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+              newline="\n",
+          )
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p5a-cgw-fx001-implementation-qa
+          path: P5A_CGW_FX001_IMPLEMENTATION_QA.json
+          if-no-files-found: error
+
+  implementation-windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install G2E dependencies
+        shell: powershell
+        run: |
+          python -m pip install -U pip
+          pip install -e ".[dev]"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Compile Python components
+        shell: powershell
+        run: |
+          python -m compileall -q scripts\g2e\p5a_cgw_fx001_admission.py scripts\g2e\p5a_cgw_fx001_runner.py scripts\g2e\p5a_cgw_fx001_verify.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Parse one-click wrapper with Windows PowerShell
+        shell: powershell
+        run: |
+          $src = Get-Content scripts\g2e\p5a_cgw_fx001_oneclick.ps1 -Raw
+          $null = [scriptblock]::Create($src)
+          Write-Host "P5A_CGW_FX001_POWERSHELL_PARSE_PASS"
+
+      - name: Run bounded implementation QA
+        shell: powershell
+        run: |
+          pytest -q tests\g2e\test_p5a_cgw_fx001_implementation.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Regress preregistration
+        shell: powershell
+        run: |
+          pytest -q tests\g2e\test_p5a_cgw_fx001_preregistration.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Assert dispatch remains dormant during QA
+        shell: powershell
+        run: |
+          $wrapper = Get-Content scripts\g2e\p5a_cgw_fx001_oneclick.ps1 -Raw
+          if ($wrapper -notmatch "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2") { throw "V2_LOCK_GUARD_MISSING" }
+          if ($wrapper -notmatch "Test-IsAdministrator") { throw "UAC_GUARD_MISSING" }
+          if ($wrapper -notmatch "-PythonExe") { throw "PYTHON_PATH_PRESERVATION_MISSING" }
+          if ($wrapper -notmatch "-CodexExe") { throw "CODEX_PATH_PRESERVATION_MISSING" }
+          $runner = Get-Content scripts\g2e\p5a_cgw_fx001_runner.py -Raw
+          $count = ([regex]::Matches($runner, '"method": "turn/start"')).Count
+          if ($count -ne 1) { throw "TURN_START_CARDINALITY_DRIFT" }
+          Write-Host "P5A_CGW_FX001_WINDOWS_ZERO_MODEL_QA_PASS"
