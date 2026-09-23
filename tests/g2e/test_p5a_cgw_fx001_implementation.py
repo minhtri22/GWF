@@ -450,7 +450,8 @@ def test_oneclick_preflight_resolves_and_checks_local_dependencies_before_uac():
     for token in (
         "Assert-ExecutionSourceClean $ProjectRoot",
         'if ((Get-Sha256 $CodexExe) -ne $ExpectedCodexSha)',
-        'if ((Get-Sha256 $CgwBinary) -ne $ExpectedCgwSha)',
+        '$ObservedCgwSha = Get-Sha256 $CgwBinary',
+        'if ($ObservedCgwSha -ne $ExpectedCgwSha)',
         'if ((Get-Sha256 $SourceInput) -ne $ExpectedInputSha)',
         'if ((Get-Sha256 $SourceTask) -ne $ExpectedTaskSha)',
         'if (-not (Test-Path -LiteralPath $DefaultAuth -PathType Leaf))',
