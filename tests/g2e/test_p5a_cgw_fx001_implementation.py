@@ -393,6 +393,41 @@ def test_oneclick_requires_v2_dispatch_lock_and_zero_retry_shape():
     assert "while (" not in source
 
 
+def test_oneclick_ignores_noncritical_untracked_outputs_but_fails_closed_on_source():
+    source = ONECLICK.read_text(encoding="utf-8")
+    assert "Assert-ExecutionSourceClean" in source
+    assert "git -C $Repo diff --quiet --no-ext-diff --" in source
+    assert "git -C $Repo diff --cached --quiet --no-ext-diff --" in source
+    assert "git -C $Repo ls-files --others --exclude-standard" in source
+    assert '"scripts/g2e/"' in source
+    assert '"g2e/docs/"' in source
+    assert '"g2e/config/"' in source
+    assert '"src/"' in source
+    assert '"tests/g2e/"' in source
+    assert '".github/workflows/"' in source
+    assert "status --porcelain" not in source
+
+    critical = (
+        "scripts/g2e/",
+        "g2e/docs/",
+        "g2e/config/",
+        "src/",
+        "tests/g2e/",
+        ".github/workflows/",
+    )
+    for benign in (".local/cache.bin", "dist/pkg.whl", "evidence/dg-p9/report.json"):
+        assert not any(benign.lower().startswith(p.lower()) for p in critical)
+    for dangerous in (
+        "scripts/g2e/shadow.py",
+        "g2e/docs/shadow.json",
+        "g2e/config/shadow.json",
+        "src/shadow.py",
+        "tests/g2e/shadow.py",
+        ".github/workflows/shadow.yml",
+    ):
+        assert any(dangerous.lower().startswith(p.lower()) for p in critical)
+
+
 def test_implementation_does_not_change_normative_execution_config():
     config = json.loads(EXEC_CONFIG.read_text(encoding="utf-8"))
     assert config["route"]["model_slug"] == "chatgpt-web/high"

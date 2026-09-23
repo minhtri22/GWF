@@ -36,6 +36,34 @@ function Get-GitBlob([string]$Repo, [string]$Path) {
     return $v
 }
 
+function Assert-ExecutionSourceClean([string]$Repo) {
+    & git -C $Repo diff --quiet --no-ext-diff --
+    if ($LASTEXITCODE -ne 0) { throw "TRACKED_WORKTREE_DIRTY" }
+
+    & git -C $Repo diff --cached --quiet --no-ext-diff --
+    if ($LASTEXITCODE -ne 0) { throw "TRACKED_INDEX_DIRTY" }
+
+    $CriticalPrefixes = @(
+        "scripts/g2e/",
+        "g2e/docs/",
+        "g2e/config/",
+        "src/",
+        "tests/g2e/",
+        ".github/workflows/"
+    )
+    $Untracked = @(& git -C $Repo ls-files --others --exclude-standard)
+    if ($LASTEXITCODE -ne 0) { throw "GIT_UNTRACKED_SCAN_FAILED" }
+
+    foreach ($Path in $Untracked) {
+        $Normalized = ([string]$Path).Replace("\", "/")
+        foreach ($Prefix in $CriticalPrefixes) {
+            if ($Normalized.StartsWith($Prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                throw "CRITICAL_UNTRACKED_SOURCE:$Normalized"
+            }
+        }
+    }
+}
+
 function Convert-ToLfText([string]$Text) {
     return ($Text -replace "\r\n", "\n" -replace "\r", "\n").TrimEnd("\n")
 }
@@ -99,7 +127,7 @@ if ((Get-GitBlob $ProjectRoot "scripts/g2e/p5a_cgw_fx001_runner.py") -ne $Lock.c
 if ((Get-GitBlob $ProjectRoot "scripts/g2e/p5a_cgw_fx001_verify.py") -ne $Lock.components.verifier_blob) { throw "VERIFIER_BLOB_DRIFT" }
 if ((Get-GitBlob $ProjectRoot "scripts/g2e/p5a_cgw_fx001_oneclick.ps1") -ne $Lock.components.oneclick_blob) { throw "ONECLICK_BLOB_DRIFT" }
 if ((Get-GitBlob $ProjectRoot "g2e/config/P5A_CGW_FX001_EXECUTION_CONFIG.json") -ne $Lock.execution_config.git_blob) { throw "EXECUTION_CONFIG_BLOB_DRIFT" }
-if ((& git -C $ProjectRoot status --porcelain).Trim()) { throw "SOURCE_WORKTREE_DIRTY" }
+Assert-ExecutionSourceClean $ProjectRoot
 
 if (-not (Test-Path -LiteralPath $PythonExe -PathType Leaf)) { throw "PYTHON_NOT_FOUND" }
 if (-not (Test-Path -LiteralPath $CodexExe -PathType Leaf)) { throw "CODEX_COMMAND_NOT_FOUND" }
