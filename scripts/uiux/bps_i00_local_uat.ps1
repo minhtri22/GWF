@@ -82,10 +82,15 @@ function Add-Manual {
 
 function Invoke-LoggedPowerShell {
     param([string]$ScriptPath,[string[]]$Arguments,[string]$LogPath)
-    $global:LASTEXITCODE = 0
-    & $ScriptPath @Arguments 2>&1 | Tee-Object -FilePath $LogPath -Append | Out-Host
+    $PowerShellExe = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+    if (-not (Test-Path $PowerShellExe)) {
+        throw "Unable to resolve current PowerShell executable."
+    }
+    & $PowerShellExe -NoProfile -ExecutionPolicy Bypass -File $ScriptPath @Arguments 2>&1 |
+        Tee-Object -FilePath $LogPath -Append |
+        Out-Host
     $code = $LASTEXITCODE
-    if ($null -eq $code) { $code = 0 }
+    if ($null -eq $code) { $code = 1 }
     if ($code -ne 0) { throw "Command failed with exit code ${code}: $ScriptPath $($Arguments -join ' ')" }
 }
 

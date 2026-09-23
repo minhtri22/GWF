@@ -36,6 +36,8 @@ def test_bps_i00_local_uat_script_contract():
     assert 'session_survives_canonical_restart' in text
     assert 'canonical_server_stopped' in text
     assert 'tracked_worktree_clean_at_end' in text
+    assert '[System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName' in text
+    assert '-NoProfile -ExecutionPolicy Bypass -File $ScriptPath' in text
     report_start = text.index("function Write-Report {")
     report_end = text.index("\ntry {", report_start)
     report_section = text[report_start:report_end].lower()
@@ -44,6 +46,16 @@ def test_bps_i00_local_uat_script_contract():
     assert "uatpassword" not in report_section
     assert "uatsecret" not in report_section
     assert "access_token" not in report_section
+
+
+def test_bps_i00_local_uat_does_not_trust_leaked_nested_last_exit_code():
+    text = SCRIPT.read_text(encoding="utf-8")
+    fn_start = text.index("function Invoke-LoggedPowerShell {")
+    fn_end = text.index("\nfunction Wait-Ready {", fn_start)
+    fn = text[fn_start:fn_end]
+    assert "& $ScriptPath @Arguments" not in fn
+    assert "& $PowerShellExe -NoProfile -ExecutionPolicy Bypass -File $ScriptPath @Arguments" in fn
+    assert "$global:LASTEXITCODE = 0" not in fn
 
 
 def test_bps_i00_local_uat_script_is_windows_powershell_51_encoding_safe():
