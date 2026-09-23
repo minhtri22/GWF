@@ -1,0 +1,36 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-HELPER-IDENTITY-CENSUS-CHECKPOINT-v1",
+  "status": "LOGICAL_PATH_CENSUS_INCOMPLETE_CANONICAL_LOOKUP_REQUIRED",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-attempt-001",
+  "attempt_consumed": false,
+  "codex": {
+    "logical_path": "C:/Users/minht/AppData/Local/Programs/OpenAI/Codex/bin/codex.exe",
+    "sha256": "a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8",
+    "size": 309166080,
+    "last_write_time_local": "2026-09-10T20:37:06.6573567+07:00",
+    "authenticode": "NotSigned"
+  },
+  "logical_helper_candidates": {
+    "direct_sibling": false,
+    "package_resource": false,
+    "bin_resource": false,
+    "path_fallback": false,
+    "isolated_sandbox_bin": false
+  },
+  "setup_error_json_present": false,
+  "durable_marker_present": false,
+  "upstream_lookup_correction": {
+    "logical_lookup_exhausted": true,
+    "canonicalized_exe_retry_required": true,
+    "basis": "bundled_executable_path_for_exe performs find(exe).or_else(find(dunce::canonicalize(exe)))"
+  },
+  "hypothesis_state": "VERSION_SKEW_REMAINS_OPEN",
+  "next_gate": "READ_ONLY_CANONICAL_CODEX_AND_HELPER_IDENTITY_CENSUS",
+  "prohibited": [
+    "rerun",
+    "delete_local_root",
+    "execute_helper",
+    "run_sandbox_setup",
+    "reauthorize_attempt"
+  ]
+}
