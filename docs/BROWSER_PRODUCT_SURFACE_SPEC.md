@@ -815,3 +815,18 @@ When Relations become LIVE, node selection and document preview are coordinated 
 The visual baseline is used immediately to correct the BPS-I00 shell/design system. Document/Relations/Reader functionality remains locked to its later authorized slices. A visual placeholder/reference must never be counted as LIVE capability.
 
 Future source-code preview, isolated PowerShell/Python execution and explainable replay remain parked under `TD-UX-03` and require their own specification/security/authorization.
+
+## 25A. Navigable locked routes and module isolation
+
+Once BPS-I00 passes, the route tree is structurally navigable even when individual modules are not yet LIVE.
+
+A locked/planned route may show only:
+
+- route title;
+- maturity state;
+- owning BPS module;
+- concise explanation of what is unavailable.
+
+It must not show fabricated entities, counts, activity, mutations or backend state.
+
+Future browser execution uses `BPS-M01…BPS-M10`; each module freezes independently after local UAT. `BPS-W0` is reserved for cross-module wiring and end-to-end journeys, not unfinished module work.

@@ -119,3 +119,26 @@ NEXT           = exact-head user local UAT only
 FINAL_SLICE_PASS = NO
 BPS-I01 = LOCKED
 ```
+
+## Route-skeleton supersession
+
+Operator review after visual recovery explicitly established:
+
+```text
+VISUAL_UI_UX = APPROVED
+LOCAL_UAT    = NOT_APPROVED
+REASON       = top-level navigation did not link to navigable route surfaces
+```
+
+The prior PRE_LOCAL_PASS is superseded for I00 final handoff:
+
+```text
+PRE_LOCAL_PASS = INVALIDATED_ROUTE_GAP
+QA1 = REOPENED
+QA2 = REOPENED
+QA6 = REOPENED
+FINAL_SLICE_PASS = NO
+NEXT = bounded BPS-I00 routing repair
+```
+
+Positive visual/theme/sidebar/auth/runtime evidence is retained and regression-checked after routing repair.

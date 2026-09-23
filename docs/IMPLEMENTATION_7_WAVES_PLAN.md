@@ -327,7 +327,10 @@ The user is not responsible for discovering ordinary code/API/UI defects by manu
   - real auth/session bootstrap;
   - theme `System|Light|Dark`;
   - collapsible global sidebar;
-  - route skeleton;
+  - real navigable SPA/global route skeleton;
+  - History API / Back / Forward / reload-safe deep links;
+  - route-specific locked/planned surfaces for unopened modules;
+  - LIVE foundation Diagnostics route;
   - capability maturity badges;
   - exact build/backend identity and basic health.
 - **Must not yet implement:** Home business dashboard, Projects workflow, Operations, Packages, Project Library, Documents.
@@ -338,268 +341,71 @@ The user is not responsible for discovering ordinary code/API/UI defects by manu
   - [x] full-shell System/Light/Dark parity PASS under assistant QA6;
   - [x] expanded ~260 px / collapsed ~68 px sidebar with true workspace reflow PASS under assistant QA6;
   - [x] semantic icons + descriptive collapsed labels/maturity context PASS under assistant QA6;
+  - [ ] top-level routes are clickable and restore through Back/Forward/reload;
+  - [ ] locked/planned routes render truthful route-specific surfaces without fake module data/actions;
+  - [ ] `/app/system/diagnostics` renders LIVE foundation identity/health;
   - [x] future items visibly `PLANNED`/`LOCKED` and non-actionable;
   - [x] no reusable credential stored in static/browser state;
-  - [ ] exact-head browser UAT PASS — pending user local UAT.
+  - [ ] exact-head browser UAT PASS — visual UI/UX approved; navigation/product-flow UAT not yet approved.
 
-### BPS-I01 — Home operational dashboard
+### BPS-M01…M10 — isolated module execution
 
-**Maps to:** UX-I1 / Home.
+Future browser implementation follows the user-approved module-isolation model:
 
-- **HARD dependencies:** BPS-I00 FINAL_SLICE_PASS.
-- **Bounded API allowance:** add only the authorized read-only `HomeSummary`/health aggregation required by the UI/UX contract.
-- **Scope only:**
-  - exact Home KPIs;
-  - Executing Projects;
-  - Live Runs;
-  - Attention Required;
-  - Recent Activity;
-  - categorical Core Health.
-- **PASS gate:**
-  - [ ] lifecycle ACTIVE is not conflated with execution activity;
-  - [ ] counts reconcile against authoritative backend fixtures/state;
-  - [ ] no fake AI/agent activity;
-  - [ ] failed/partial/unavailable states differ from zero results;
-  - [ ] refresh consistency PASS;
-  - [ ] exact-head browser UAT PASS.
+- `docs/BPS_MODULE_EXECUTION_MODEL.md`.
 
-### BPS-I02 — Projects + Access
+Canonical mapping:
 
-**Maps to:** UX-I1 / Projects + Access.
+| Module | Scope | Historical execution label |
+| --- | --- | --- |
+| BPS-M01 | Home | BPS-I01 |
+| BPS-M02 | Projects + Access | BPS-I02 |
+| BPS-M03 | Operations | BPS-I03 |
+| BPS-M04 | Project Workspace / Overview | BPS-I04 |
+| BPS-M05 | Execution + Recovery | BPS-I05 |
+| BPS-M06 | Research / Packages | BPS-I06 |
+| BPS-M07 | System / GitHub | BPS-I07 |
+| BPS-M08 | Project Library | BPS-I08 |
+| BPS-M09 | Documents API + browser + Preview/Reader | BPS-I09 + BPS-I10 |
+| BPS-M10 | Document Relations / Lineage | BPS-I11 |
 
-- **HARD dependencies:** BPS-I01 FINAL_SLICE_PASS.
-- **Bounded API allowance:** authorized tenant/workspace/member list projections and session revoke/logout only.
-- **Scope only:**
-  - Projects index/filter;
-  - project create;
-  - tenant/workspace context;
-  - actor/session;
-  - memberships/roles;
-  - member add/revoke where current service authorizes it;
-  - logout/session revoke;
-  - project lifecycle rename/archive/drain/restore.
-- **PASS gate:**
-  - [ ] tenant concealment/isolation UAT PASS;
-  - [ ] project immutable ID preserved across rename;
-  - [ ] ACTIVE/ARCHIVING/ARCHIVED behavior matches service contract;
-  - [ ] archive with active execution requires explicit drain;
-  - [ ] browser refresh reconstructs access/project state;
-  - [ ] exact-head browser UAT PASS.
+Each module executes:
 
-### BPS-I03 — Global Operations
+```text
+LOCKED
+ -> authorization/spec freeze
+ -> implementation
+ -> QA1→QA6
+ -> PRE_LOCAL_PASS
+ -> exact-head local UAT
+ -> MODULE_FINAL_PASS
+ -> FROZEN_FOR_INTEGRATION
+```
 
-**Maps to:** UX-I1 / Operations.
+Only one module is open at a time. A frozen module is not modified by a later module unless an impacted-module regression amendment is recorded before mutation.
 
-- **HARD dependencies:** BPS-I02 FINAL_SLICE_PASS.
-- **Bounded API allowance:** authorized cross-project read projections for Runs/Approvals/Audit/Runtime.
-- **Scope only:**
-  - global Runs;
-  - Approval inbox;
-  - Audit view;
-  - Distributed Runtime read view.
-- **PASS gate:**
-  - [ ] cross-project results respect actor scope;
-  - [ ] proposal frozen payload/hash visible before decision;
-  - [ ] approve/reject uses authoritative governance path;
-  - [ ] runtime shows jobs/workers/leases/attempts/capacity/recovery without exposing worker-protocol admin mutations;
-  - [ ] exact-head browser UAT PASS.
+### BPS-W0 — cross-module integration/readiness gate
 
-### BPS-I04 — Project Overview
+**HARD dependencies:** BPS-I00 FINAL_SLICE_PASS and BPS-M01…BPS-M10 MODULE_FINAL_PASS.
 
-**Maps to:** UX-I2 / Project workspace Overview.
-
-- **HARD dependencies:** BPS-I03 FINAL_SLICE_PASS.
-- **Scope only:**
-  - project header/context;
-  - domain binding;
-  - lifecycle;
-  - current orchestration/phase/activity;
-  - pending approvals/failures;
-  - validity frontier;
-  - distributed summary;
-  - recent project activity;
-  - package/GitHub summary links.
-- **PASS gate:**
-  - [ ] no deep document graph appears on Overview;
-  - [ ] every summary drills into an authoritative detail surface or explicitly reports unavailable;
-  - [ ] exact IDs are copyable;
-  - [ ] exact-head browser UAT PASS.
-
-### BPS-I05 — Project Execution + governed recovery
-
-**Maps to:** UX-I2 plus the complete v0.2→v0.8.3 execution coverage locked by UI/UX QA.
-
-- **HARD dependencies:** BPS-I04 FINAL_SLICE_PASS.
-- **Bounded API allowance:** read endpoints for Gate/Decision/ImpactSet/RecoveryPlan not already exposed.
-- **Scope only:**
-  - orchestration and domain-driven phase history;
-  - WorkUnit/Run details;
-  - Gates;
-  - Decisions;
-  - Failures;
-  - LoopGuard;
-  - PIVOT/lineage generation;
-  - RecoveryPlan/ImpactSet;
-  - Checkpoint/resume;
-  - Agent Protocol;
-  - SSE live events and Last-Event-ID resume;
-  - retrieval/provider provenance;
-  - independent verifier evidence;
-  - report/handoff.
-- **PASS gate:**
-  - [ ] PASS/FAIL/BLOCKED gate semantics match backend;
-  - [ ] PIVOT is distinct from retry;
-  - [ ] failed attempts remain visible;
-  - [ ] resume uses authoritative checkpoint state;
-  - [ ] no hidden chain-of-thought is exposed;
-  - [ ] SSE reconnect UAT PASS;
-  - [ ] exact-head browser UAT PASS.
-
-### BPS-I06 — Package Registry + Project package configuration
-
-**Maps to:** UX-I3.
-
-- **HARD dependencies:** BPS-I05 FINAL_SLICE_PASS.
-- **Bounded API allowance:** Skill list/detail/revision reads and Package Usage projections.
-- **Scope only:**
-  - Domain Packages/revisions/validation/publish;
-  - Skill Packages/revisions/tool requirements/QA contracts;
-  - Project → Packages;
-  - Package → Projects;
-  - `CONFIGURED` vs `OBSERVED` Skill usage;
-  - exact project Domain pin.
-- **PASS gate:**
-  - [ ] package usage is derived from authoritative bindings/executions;
-  - [ ] no duplicate mutable usage table;
-  - [ ] Domain project pin never silently floats;
-  - [ ] Skill UI does not invent Domain revision lifecycle semantics;
-  - [ ] exact-head browser UAT PASS.
-
-### BPS-I07 — GitHub product surface
-
-**Maps to:** UX-I2 Configuration + global System/GitHub.
-
-- **HARD dependencies:** BPS-I06 FINAL_SLICE_PASS.
-- **Bounded API allowance:** reload-safe repository-binding list/detail and adapter-readiness reads.
-- **Scope only:**
-  - PluginConnection;
-  - exact capability set;
-  - repository binding;
-  - branch/write policy;
-  - SHA-safe ChangeSet prepare/preflight/execute/inspect;
-  - COMMITTED vs VERIFIED;
-  - global GitHub status/usage.
-- **PASS gate:**
-  - [ ] GitHub remains the only current LIVE plugin family;
-  - [ ] no reusable token is displayed/stored;
-  - [ ] stale SHA/file conflict is preserved;
-  - [ ] capability presence does not invent unsupported PR/merge actions;
-  - [ ] reload preserves authoritative binding/change-set state;
-  - [ ] exact-head browser UAT PASS.
-
-### BPS-I08 — Project Library: Artifacts / Revisions / Evidence
-
-**Maps to:** UX-I4.
-
-- **HARD dependencies:** BPS-I07 FINAL_SLICE_PASS.
-- **Bounded API allowance:** Artifact/Revision/ObjectRef/Evidence/Checkpoint reads and persisted Artifact Trace/Impact reads.
-- **Scope only:**
-  - artifact list/detail;
-  - revisions;
-  - ObjectRef/CAS identity;
-  - Evidence;
-  - checkpoint linkage;
-  - existing Artifact Trace graph;
-  - existing Artifact Impact/ImpactSet inspection.
-- **PASS gate:**
-  - [ ] exact revision/content hashes visible;
-  - [ ] ObjectRef verification state visible;
-  - [ ] Artifact Trace/Impact semantics remain distinct from Document Relations;
-  - [ ] backend errors are not rendered as empty Library;
-  - [ ] exact-head browser UAT PASS.
-
-### BPS-I09 — Documentation Governance API P0→P10
-
-**Maps to:** UX-I5 backend/API portion.
-
-- **HARD dependencies:** BPS-I08 FINAL_SLICE_PASS; DG-P0→DG-P10 formal-close evidence.
-- **Scope:** bounded HTTP exposure only for already-qualified DG-P0→P10 services.
-- **Required contracts:**
-  - [ ] document register/enroll/revise with exact source identity;
-  - [ ] validator/QA reads/actions;
-  - [ ] finding resolution/reopen/verify/waiver lifecycle;
-  - [ ] lifecycle/validity inspect/transition/reconcile;
-  - [ ] authority claim/collision/grant/retirement;
-  - [ ] relation declaration/list/retirement;
-  - [ ] relation binding/resolve;
-  - [ ] P10 classification/mutation-authority/archive-plan;
-  - [ ] same native authority/proposal/audit/idempotency semantics;
-  - [ ] no DG-P11 mutation or source write introduced.
-- **PASS gate:**
-  - [ ] targeted API tests PASS;
-  - [ ] SQLite regression PASS;
-  - [ ] PostgreSQL contract/regression PASS where required by existing gate;
-  - [ ] negative authority/stale/hash cases PASS;
-  - [ ] exact-head API evidence frozen.
-
-### BPS-I10 — Documents browser surface P0→P10
-
-**Maps to:** UX-I5 browser portion.
-
-- **HARD dependencies:** BPS-I09 FINAL_SLICE_PASS.
-- **Scope only:**
-  - project Documents list/detail;
-  - source/logical/revision identity;
-  - revisions;
-  - QA/findings;
-  - lifecycle vs validity;
-  - authority;
-  - P10 classification and mutation-authority/archive preview;
-  - governed document action flows exposed by BPS-I09.
-- **PASS gate:**
-  - [ ] old-revision QA cannot visually validate current changed revision;
-  - [ ] lifecycle and validity remain separate;
-  - [ ] authority collision/blocked state is explicit;
-  - [ ] P10 visibly performs no source mutation;
-  - [ ] exact-head browser UAT PASS.
-
-### BPS-I11 — Document Relations / Lineage graph
-
-**Maps to:** UX-I6.
-
-- **HARD dependencies:** BPS-I10 FINAL_SLICE_PASS.
-- **Scope only:**
-  - selected Document as root;
-  - 1-hop ACTIVE incoming/outgoing relations by default;
-  - canonical P8 relation types and target kinds;
-  - LOGICAL_CURRENT vs PINNED_REVISION exact binding;
-  - node/edge inspector;
-  - Set-as-root only for navigable governed Documents;
-  - accessible table equivalent;
-  - revision lineage view supported by current backend.
-- **Must remain disabled:** DG-P12/P13 Document Impact.
-- **PASS gate:**
-  - [ ] relation graph uses only authoritative relation records;
-  - [ ] no Markdown/text inferred edges;
-  - [ ] graph overflow is explicit, not silently truncated;
-  - [ ] three graph families remain semantically separate;
-  - [ ] exact-head browser UAT PASS.
-
-### BPS-W0 — Full current-capability browser readiness gate
+W0 is integration-only. It must not finish missing module functionality.
 
 Required:
 
-- [ ] BPS-I00…BPS-I11 `FINAL_SLICE_PASS` in order;
-- [ ] installed product starts canonical server without UAT-only dependency injection;
-- [ ] all user/operator-relevant capability from v0.2→v0.8.5 and DG-P0→DG-P10 is reachable through authoritative browser UI, diagnostic read surface, project-context view, or explicitly `NOT_APPLICABLE` with rationale;
-- [ ] all legacy static/localStorage product-state simulations are retired from acceptance;
-- [ ] browser refresh reconstructs authoritative product state;
-- [ ] exact identities/audit/provenance remain visible end-to-end;
-- [ ] dark/light + sidebar collapse UAT PASS;
-- [ ] operator-observed UAT evidence is bound to exact product HEAD;
-- [ ] full browser regression PASS.
+- [ ] all modules frozen for integration;
+- [ ] route handoff/deep links/breadcrumbs PASS;
+- [ ] Back/Forward and return-context PASS;
+- [ ] Home→Project PASS;
+- [ ] Project→Execution→Evidence PASS;
+- [ ] Project→Documents→Relations PASS;
+- [ ] Package→Project PASS;
+- [ ] Operations→Run→Project PASS;
+- [ ] Approval→governed-resource PASS;
+- [ ] cross-module exact identity/authorization consistency PASS;
+- [ ] refresh reconstructs authoritative state across module transitions;
+- [ ] full exact-head end-to-end UAT PASS.
 
-**Sequencing decision:** BPS-W0 completes browserization of the **currently implemented** product. It does not implement or authorize DG-P11+, GAC, Reference Acquisition or Agent Interoperability.
+BPS-W0 does not implement or authorize DG-P11+, GAC, Reference Acquisition or Agent Interoperability.
 
 ## Future-backend → UI return rule
 

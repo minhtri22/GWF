@@ -396,3 +396,47 @@ BPS_I00_FINAL_SLICE_PASS        = NO
 BPS_I01                         = LOCKED
 LATER_FUNCTIONAL_UI             = NOT_AUTHORIZED
 ```
+
+## 15. Amendment 2 — navigable route skeleton and module-isolation recovery
+
+### 15.1 Trigger
+
+Local operator review approved the corrected visual UI/UX but did not approve BPS-I00 UAT because top-level navigation remained icon/text-only and disabled. The shell therefore did not satisfy the already-authorized requirement **global route skeleton**.
+
+This is an I00 scope-completeness defect, not authorization to open later module functionality.
+
+### 15.2 Required repair
+
+BPS-I00 must implement:
+
+- clickable top-level navigation;
+- canonical route URL per surface;
+- History API navigation;
+- browser Back/Forward;
+- reload/deep-link restoration;
+- route-specific `SKELETON_LOCKED` / `PLANNED_BLOCKED` surfaces;
+- selected navigation state derived from current route;
+- `/app/system/diagnostics` as `LIVE_FOUNDATION` with real authoritative runtime identity/health.
+
+The canonical server must serve the shell for recognized `/app/*` deep links.
+
+### 15.3 Non-scope
+
+No Home KPI, project data/action, Operations data, Package Registry data, Library, Documents/Reader, Relations graph, GAC/RA/Agents functionality may be introduced. Locked/planned route pages contain no fake counts, entities or mutations.
+
+### 15.4 Module execution transition
+
+After I00 final pass, browser work follows `docs/BPS_MODULE_EXECUTION_MODEL.md`: BPS-M01…M10, then BPS-W0 integration-only UAT.
+
+### 15.5 Current adjudication
+
+```text
+VISUAL_UI_UX_APPROVAL = RETAINED
+BPS_I00_LOCAL_UAT     = NOT_APPROVED
+PRE_LOCAL_PASS        = INVALIDATED_ROUTE_GAP
+QA1                   = REOPENED
+QA2                   = REOPENED
+QA6                   = REOPENED
+FINAL_SLICE_PASS      = NO
+BPS-M01               = LOCKED
+```

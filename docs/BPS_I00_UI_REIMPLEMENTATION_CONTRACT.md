@@ -104,3 +104,27 @@ Those remain later authorized slices/debt.
 ## 8. Stop rule
 
 If matching the approved design requires backend semantics or later-slice capability, STOP and request a bounded amendment. Do not fake the capability and do not silently widen BPS-I00.
+
+## 9. Amendment — routing completion before I00 final pass
+
+The approved visual shell is retained. This bounded repair adds only missing shell-routing behavior.
+
+Allowed additional files:
+
+- `src/gwr/api.py` — canonical shell deep-link fallback only;
+- `web/app.js` — route table/router/history/locked-surface rendering;
+- `web/index.html` / `web/styles.css` — route containers/styles only as needed;
+- `tests/test_bps_i00_product_shell.py`;
+- `scripts/uiux/bps_i00_local_uat.ps1`.
+
+Acceptance additionally requires:
+
+- top-level navigation remains clickable when a module is locked;
+- locked/planned route surfaces are truthful and non-functional;
+- canonical URL changes;
+- Back/Forward restores route;
+- direct `/app/*` reload returns the shell and same route;
+- Diagnostics remains LIVE foundation with real data;
+- no module data/action is fabricated.
+
+Visual baseline v1.1 remains frozen and must not be restyled during this routing repair.

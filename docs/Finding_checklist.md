@@ -2129,3 +2129,44 @@ BPS-I01                          = LOCKED
 ```
 
 QA6 reference-state captures were produced at 1440×900 for Dark/Light × Expanded/Collapsed and compared with approved baseline v1.1. Capture SHA-256 values are recorded in `docs/BPS_I00_PRE_LOCAL_QA.md`. Browser/operator acceptance remains the next exact-head local-UAT gate; these assistant captures do not substitute for user UAT.
+
+## 76. BPS-I00 routing / module-isolation governance findings
+
+### F-145 — HIGH — RESOLVED
+
+- **Finding:** BPS-I00 authorization required a `global route skeleton`, but the implemented navigation disabled unopened top-level items. Local operator review could approve visual UI/UX while being unable to UAT navigation/product flow.
+- **Resolution:** Route availability is separated from module functionality. I00 requires clickable SPA routes, History API/Back/Forward/reload/deep-link behavior and truthful locked/planned route surfaces.
+- **Status:** RESOLVED in governance; bounded implementation follows only after this documentation gate.
+
+### F-146 — HIGH — RESOLVED
+
+- **Finding:** Disabled navigation conflated `LOCKED` capability maturity with route unavailability.
+- **Resolution:** Freeze `SKELETON_LOCKED | PLANNED_BLOCKED | LIVE_FOUNDATION | LIVE_MODULE`. Locked/planned routes are navigable but non-functional.
+- **Status:** RESOLVED.
+
+### F-147 — MEDIUM — RESOLVED
+
+- **Finding:** Previous `BPS-I01…I11` sequencing did not explicitly freeze each user-facing module before later work and mixed cross-module wiring into normal implementation.
+- **Resolution:** Adopt `BPS-M01…M10`, `MODULE_FINAL_PASS -> FROZEN_FOR_INTEGRATION`, and reserve `BPS-W0` for integration-only UAT.
+- **Status:** RESOLVED.
+
+### F-148 — HIGH — RESOLVED
+
+- **Finding:** BPS-I00 local UAT checked visual nav presentation and fake-action blocking but did not require click navigation, canonical URLs, Back/Forward, reload/deep-link restoration or route-specific locked surfaces.
+- **Resolution:** These are now mandatory I00 QA/UAT requirements. Visual approval is retained; prior PRE_LOCAL_PASS is invalidated until routing repair is requalified.
+- **Status:** RESOLVED.
+
+### Documentation adjudication
+
+```text
+INITIAL_FINDINGS = 4
+CLOSED           = 4
+OPEN             = 0
+COUNT            = 0
+
+VISUAL_UI_UX_APPROVAL = RETAINED
+BPS-I00_LOCAL_UAT     = NOT_APPROVED
+BPS-I00_PRE_LOCAL     = INVALIDATED_ROUTE_GAP
+BPS-I00_ROUTING_REPAIR= AUTHORIZED_BOUNDED
+BPS-M01               = LOCKED
+```

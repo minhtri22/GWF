@@ -8,7 +8,7 @@ For any Browser Product Surface / UI/UX implementation work, **an agent MUST rea
 
 This rule applies to:
 
-- current BPS slices `BPS-I00…I11`;
+- current foundation `BPS-I00`, module slices `BPS-M01…M10`, and final integration gate `BPS-W0`;
 - future `BPS-DG*`, `BPS-GAC`, `BPS-RA`, `BPS-CODEX`, or equivalent product-integration slices;
 - any handoff/resume of an already-open BPS slice.
 
@@ -57,6 +57,12 @@ If any required identity is absent, inconsistent or stale, implementation does n
 
 ## 4. One-slice-at-a-time invariant
 
+Only one BPS implementation unit may be OPEN.
+
+After BPS-I00, the unit is a product module (`BPS-M01…M10`). A module that reaches `MODULE_FINAL_PASS` becomes `FROZEN_FOR_INTEGRATION`. Later modules do not modify it unless an impacted-module amendment is recorded before mutation.
+
+`BPS-W0` is integration-only and must not be used to finish missing module features.
+
 Only one BPS implementation slice may be OPEN.
 
 ```text
@@ -67,8 +73,9 @@ slice N authorized
   -> one-click local PS1
   -> returned JSON report
   -> exact-HEAD adjudication
-  -> FINAL_SLICE_PASS
-  -> only then slice N+1 may open
+  -> FINAL_SLICE_PASS / MODULE_FINAL_PASS
+  -> freeze completed unit
+  -> only then next module may open
 ```
 
 No implementation from a later locked BPS slice is pulled forward because it appears convenient.

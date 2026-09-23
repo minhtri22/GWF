@@ -1268,6 +1268,32 @@ Suggested browser routes:
 
 Routes are browser organization, not permission boundaries. Backend authorization remains authoritative.
 
+### 24.1 Route availability vs module maturity
+
+A browser route and a functional module are separate contracts.
+
+BPS-I00 must make the top-level route skeleton navigable. Unopened module routes render a truthful maturity surface rather than disabling navigation.
+
+```text
+SKELETON_LOCKED  = navigable route, no module functionality
+PLANNED_BLOCKED  = navigable orientation route, dependency not authorized
+LIVE_FOUNDATION  = I00 real foundation data
+LIVE_MODULE      = module reached MODULE_FINAL_PASS
+```
+
+For skeleton routes:
+
+- clicking navigation updates URL and active navigation state;
+- Back/Forward restores prior route;
+- direct reload/deep link under recognized `/app/*` restores the shell and route;
+- locked/planned surfaces identify owning module and maturity;
+- no fake data/actions are permitted.
+
+BPS-I00 canonical top-level routes include `/app/home`, `/app/projects`, `/app/operations`, `/app/research/packages`, `/app/system/diagnostics`, and `/app/system/settings`, plus PLANNED orientation routes where applicable.
+
+Functional unlocking follows `BPS-M01…BPS-M10`; cross-module journeys are qualified in `BPS-W0`.
+
+
 ---
 
 ## 25. API/product-surface gaps to implement
