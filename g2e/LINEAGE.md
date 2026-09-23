@@ -664,3 +664,16 @@
 - **One-click blob:** `86fe5c02d7930fae315c424719728ba1951a5d38`.
 - **Attempt:** `p5a-cgw-v4-p5-fx-001-attempt-001` remains `RESERVED_UNCONSUMED`; marker was never created.
 - **V2R4:** preflight-only remains mandatory before sole live dispatch; retry remains zero.
+
+
+### G2E-P5A-CGW — V2R5 UAC handoff repair
+
+- **Observed state:** V2R4 parent preflight PASS; elevated child exit code 1; no final report; durable marker absent. Attempt `p5a-cgw-v4-p5-fx-001-attempt-001` remains `RESERVED_UNCONSUMED`.
+- **Mechanism class:** pre-marker UAC handoff infrastructure. Space-containing paths were passed directly through `Start-Process -ArgumentList`, and elevated Git lookup remained implicit through PATH.
+- **Repair:** parent writes non-secret handoff JSON with exact Python/Codex/Git/CGW/Bridge/Launcher paths; elevated child receives only no-space control arguments, loads exact paths from JSON, uses explicit `git.exe`, binds ProjectRoot, and writes persistent child diagnostic JSON on uncaught errors.
+- **Diagnostic:** child trap records exception + script stack + durable-marker presence and exits 97.
+- **Candidate:** `a51189f03655baae73e118c38bc31f40b1acb1a1`.
+- **Authoritative zero-model QA:** run `35828976329`; Linux `107076946654` PASS; Windows `107076947036` PASS.
+- **Artifact:** `10736286845`; digest `sha256:3cfcf3246b8c184e23b22ed955e4431c2250706dfe27d1f7909bc46559fa7d36`; report SHA256 `3ab56f958730a97c994cf985e6913b25348cc1cb5702c239321d3a833f987942`.
+- **One-click blob:** `baed223096c349ffe19e6242259c26d2b3e69076`.
+- **Scientific contract:** unchanged; retry remains zero; preflight-only required before sole live dispatch.

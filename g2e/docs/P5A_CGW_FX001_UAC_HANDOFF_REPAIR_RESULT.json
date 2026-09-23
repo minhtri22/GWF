@@ -1,0 +1,51 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-UAC-HANDOFF-REPAIR-RESULT-v1",
+  "status": "PASS",
+  "prior_live_invocation": {
+    "lock": "V2R4",
+    "parent_preflight": "PASS",
+    "elevated_child_exit_code": 1,
+    "final_report_present": false,
+    "durable_marker_present": false,
+    "attempt_consumed": false,
+    "adjudication": "PRE_MARKER_ABORT_NOT_CONSUMED"
+  },
+  "mechanism": {
+    "class": "PRE_MARKER_UAC_HANDOFF_INFRASTRUCTURE",
+    "direct_argument_paths_with_spaces": [
+      "Codex Web GPT.exe",
+      "AppData/Roaming/Codex Web GPT"
+    ],
+    "elevated_git_path_was_implicit": true,
+    "scientific_outcome_observed": false
+  },
+  "repair": {
+    "candidate": "a51189f03655baae73e118c38bc31f40b1acb1a1",
+    "oneclick_blob": "baed223096c349ffe19e6242259c26d2b3e69076",
+    "tests_blob": "07cb6fa358c05d1499b21964ce3f4ec8d07e1a96",
+    "workflow_blob": "cbcda4926a6987c13f4c330f6abb64789d0538d4",
+    "repair_plan_blob": "5a26f4d22d580683f94a2fc934577b251377669e",
+    "handoff_rule": "SPACE_SENSITIVE_PATHS_TRANSFERRED_IN_JSON_NOT_ARGUMENT_LIST",
+    "explicit_git_executable": true,
+    "persistent_child_diagnostic": true,
+    "diagnostic_trap_exit_code": 97
+  },
+  "authoritative_qa": {
+    "run_id": 35828976329,
+    "linux_job_id": 107076946654,
+    "windows_job_id": 107076947036,
+    "conclusion": "success",
+    "artifact_id": 10736286845,
+    "artifact_digest": "sha256:3cfcf3246b8c184e23b22ed955e4431c2250706dfe27d1f7909bc46559fa7d36",
+    "report_sha256": "3ab56f958730a97c994cf985e6913b25348cc1cb5702c239321d3a833f987942"
+  },
+  "qualification_firewall": {
+    "model_turn_executed": false,
+    "browser_submission_executed": false,
+    "mcp_tool_invocation_executed": false,
+    "attempt_created": false,
+    "attempt_consumed": false
+  },
+  "normative_contract_changed": false,
+  "next": "CREATE_V2R5_AND_RUN_PREFLIGHT_ONLY"
+}
