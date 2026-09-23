@@ -1,0 +1,157 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-EXECUTION-CONFIG-v2",
+  "study_id": "p5a-cgw-v4-p5-fx-001-functional-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-attempt-001",
+  "route_id": "p5a-cgw",
+  "preregistration": {
+    "qualified_candidate": "5efb9a48556be0f1e61d47d94b63f6ee2391fb4e",
+    "workflow_run_id": 35807190228,
+    "artifact_id": 10728505435,
+    "artifact_digest": "sha256:a4e97b27420135c8475079870b41eb2947f6b997aa2c6bb12e7c70eef325df4d",
+    "report_file_sha256": "8b25e5fce8e2c69bd6ff79b1a9ead9854d5d6311bb50878cd26c32e559a78324",
+    "contract_sha256": "061a4d897c87b1176f3fe8ac11fa5efc6839d18626328ce3395698012d704ec6"
+  },
+  "runtime": {
+    "cgw_release": "4.0.7",
+    "cgw_source_commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494",
+    "cgw_installed_binary_sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+    "cgw_bridge_config_sha256": "f8ba628c60faf5c95409ee3a37ad359f74dd0eb41bb961312b67758f9ba53858",
+    "codex_binary_sha256": "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b",
+    "codex_distribution": {
+      "release": "rust-v0.153.4",
+      "tag_commit": "3d2ee51ca2d5db578f328aa75e20aa22c0197c9a",
+      "package": "codex-package-x86_64-pc-windows-msvc.tar.gz",
+      "package_sha256": "a6ef3442cb12766a88b39311d79244289e4f9763e2c53ff4fbebc2cb653cc5f3",
+      "project_local_relative_path": "g2e/.local/codex-official-0.153.4/package/bin/codex.exe",
+      "sandbox_helper_relative_path": "g2e/.local/codex-official-0.153.4/package/codex-resources/codex-windows-sandbox-setup.exe",
+      "sandbox_helper_sha256": "0c3eeb7cee8d2bc4c8644def3c818e8b06760979572dcedc919c38d0f38f64c4",
+      "local_qualification_report": "g2e/.local/codex-official-0.153.4/QUALIFICATION_REPORT.json"
+    },
+    "predecessor_mixed_build": {
+      "codex_sha256": "a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8",
+      "disposition": "REJECTED_FOR_DISPATCH",
+      "reason": "sender/helper contract mismatch on interactive-provision"
+    }
+  },
+  "route": {
+    "bridge_mode": "full",
+    "connector": "Codex Native2",
+    "bridge_host": "127.0.0.1",
+    "bridge_port": 17841,
+    "codex_openai_base_url": "http://127.0.0.1:17841/v1",
+    "model_slug": "chatgpt-web/high",
+    "backend_model": "gpt-5.6-sol",
+    "codex_effort": "high",
+    "adapter_effort": "high",
+    "requires_pro": false,
+    "model_or_transport_fallback": "FORBIDDEN",
+    "p5a_official_fallback": "FORBIDDEN"
+  },
+  "task": {
+    "fixture_id": "P5-FX-001",
+    "input_sha256": "a176454229feef1ce8bd7eab1ea79fbfeff07c229c88123edf862fea9160eef6",
+    "task_sha256": "4c4aba6a82d540440dfef725b2568afdef4be3b26c3e4e84e2b34c54e6dd460e",
+    "workspace_pre_payload": [
+      "TASK.md",
+      "input.json"
+    ],
+    "only_permitted_post_addition": "result.json"
+  },
+  "result_contract": {
+    "exact_keys": [
+      "count",
+      "input_sha256",
+      "sorted_unique_values",
+      "sum"
+    ],
+    "additional_keys_allowed": false,
+    "count_type": "integer_non_bool",
+    "sum_type": "integer_non_bool",
+    "sorted_unique_values_type": "array_integer_non_bool",
+    "input_sha256_type": "lowercase_sha256_hex",
+    "expected_canonical_sha256": "6dd3ebce33677409bec596309e061cc421bfa38b3160c5b577ffe5f7fbc9980d"
+  },
+  "authority": {
+    "g2e": "attempt_and_evidence_authority",
+    "codex": "sole_local_execution_authority",
+    "cgw": "transport_and_inference_mediation_only",
+    "chatgpt_web": "inference_and_admitted_tool_request_only",
+    "mcp_connector": "turn_bound_capability_transport_only",
+    "delegation_invariant": "bridge<=outer_codex_turn<=g2e_attempt",
+    "workspace": "isolated_ntfs_vhdx",
+    "allowed_reads": [
+      "TASK.md",
+      "input.json"
+    ],
+    "allowed_writes": [
+      "result.json"
+    ],
+    "outside_workspace": "DENY",
+    "interactive_approval": "DENY",
+    "approval_policy": "never",
+    "task_tool_network": "DENY",
+    "route_transport_network": "ALLOW_ONLY_FROZEN_CGW_BROWSER_PATH",
+    "web_search": "DENY",
+    "bridge_local_side_effects": "DENY"
+  },
+  "predispatch": {
+    "exact_selected_model_required": "chatgpt-web/high",
+    "exact_mode_required": "full",
+    "exact_connector_required": "Codex Native2",
+    "exact_base_url_required": "http://127.0.0.1:17841/v1",
+    "health_required": "ok_and_idle",
+    "codex_config_sha256": "CAPTURE_AND_BIND_BEFORE_MARKER",
+    "all_predispatch_checks_must_pass_before_marker": true
+  },
+  "consumption": {
+    "boundary": "durable marker fsync immediately before sole Codex turn/start transport write",
+    "pre_marker_failure_consumes_attempt": false,
+    "post_marker_attempt_consumed": true,
+    "max_turn_start_transport_writes": 1,
+    "retry_budget": 0,
+    "automatic_retry": false,
+    "replacement_attempt_under_same_lock": false,
+    "turn_timeout_seconds": 90,
+    "timeout_extension_after_marker": false
+  },
+  "evidence": {
+    "required_artifacts": [
+      "predispatch_admission.json",
+      "attempt_consumed.marker",
+      "codex_protocol.jsonl",
+      "cgw_route_evidence.jsonl",
+      "runner_evidence.json",
+      "verification.json"
+    ],
+    "conditional_artifacts": [
+      "result.json"
+    ],
+    "route_identity_required": true,
+    "browser_response_binding_required": true,
+    "live_mcp_roundtrip_required": true,
+    "exact_tool_name_and_invocation_id_required": true,
+    "executor_codex_required": true,
+    "capability_token_digest_only": true,
+    "raw_capability_token_forbidden": true,
+    "raw_cookies_forbidden": true,
+    "raw_auth_tokens_forbidden": true,
+    "raw_tunnel_credentials_forbidden": true,
+    "result_and_workspace_integrity_required": true
+  },
+  "decision": {
+    "pass": "all original six P5-FX-001 metrics equal 1 and route evidence admission passes",
+    "fail": "structurally valid attributable completed execution with substantive task metric equal 0",
+    "invalid": "route/infrastructure/protocol/authority/evidence failure, timeout, terminal failure without admitted result, missing live MCP roundtrip, missing metric, or verifier inability"
+  },
+  "local_root": "g2e/.local/P5A-CGW-FX001-V4-002",
+  "predecessor_execution_config": {
+    "path": "g2e/config/P5A_CGW_FX001_EXECUTION_CONFIG.json",
+    "git_blob": "aea462b84e4583096129820d2a17417803d0f6a2",
+    "canonical_sha256": "b7097e8a63607e33f520ab370e48106fc7234f782204e3c366be409b5b594ab8",
+    "amendment_class": "PRE_CONSUMPTION_INFRASTRUCTURE_REPAIR"
+  },
+  "predecessor_local_root": {
+    "path": "g2e/.local/P5A-CGW-FX001-V4-001",
+    "disposition": "PRESERVE_IMMUTABLE_EXISTING_EVIDENCE"
+  }
+}

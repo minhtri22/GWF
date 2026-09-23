@@ -11,6 +11,8 @@ on:
       - "scripts/g2e/p5a_cgw_fx001_oneclick.ps1"
       - "tests/g2e/test_p5a_cgw_fx001_implementation.py"
       - "g2e/docs/P5A_CGW_FX001_IMPLEMENTATION_QA_PLAN.md"
+      - "g2e/docs/P5A_CGW_FX001_V2R6_INFRASTRUCTURE_AMENDMENT_PLAN.md"
+      - "g2e/config/P5A_CGW_FX001_EXECUTION_CONFIG_V2.json"
       - ".github/workflows/g2e-p5a-cgw-fx001-implementation-qa.yml"
 
 permissions:
@@ -99,8 +101,10 @@ jobs:
               ).strip(),
               "predecessor": {
                   "execution_lock_v1_blob": "22cefe57c214cf58c759fd76ad25fff9dba834cb",
-                  "execution_config_blob": "aea462b84e4583096129820d2a17417803d0f6a2",
-                  "execution_config_canonical_sha256": "b7097e8a63607e33f520ab370e48106fc7234f782204e3c366be409b5b594ab8",
+                  "execution_config_v1_blob": "aea462b84e4583096129820d2a17417803d0f6a2",
+                  "execution_config_v1_canonical_sha256": "b7097e8a63607e33f520ab370e48106fc7234f782204e3c366be409b5b594ab8",
+                  "execution_config_v2_blob": "5551262c62389eaecf928e8d60fbde22e39d3b1e",
+                  "execution_config_v2_canonical_sha256": "4af6909cecd412e8daf9c641222e129f1e35b7f94b00179339991a6f3ddb72ea",
               },
               "components": {
                   "admission_blob": blob("scripts/g2e/p5a_cgw_fx001_admission.py"),
@@ -191,7 +195,7 @@ jobs:
         shell: powershell
         run: |
           $wrapper = Get-Content scripts\g2e\p5a_cgw_fx001_oneclick.ps1 -Raw
-          if ($wrapper -notmatch "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R5") { throw "V2R5_LOCK_GUARD_MISSING" }
+          if ($wrapper -notmatch "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R6") { throw "V2R6_LOCK_GUARD_MISSING" }
           if ($wrapper -notmatch "Test-IsAdministrator") { throw "UAC_GUARD_MISSING" }
           if (-not $wrapper.Contains('git_exe = $GitExe')) { throw "GIT_HANDOFF_MISSING" }
           if (-not $wrapper.Contains('cgw_binary = $CgwBinary')) { throw "CGW_HANDOFF_MISSING" }

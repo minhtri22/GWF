@@ -18,10 +18,10 @@ Set-StrictMode -Version Latest
 
 $StudyId = "p5a-cgw-v4-p5-fx-001-functional-qualification"
 $AttemptId = "p5a-cgw-v4-p5-fx-001-attempt-001"
-$ExecutionConfigCanonicalSha = "b7097e8a63607e33f520ab370e48106fc7234f782204e3c366be409b5b594ab8"
+$ExecutionConfigCanonicalSha = "4af6909cecd412e8daf9c641222e129f1e35b7f94b00179339991a6f3ddb72ea"
 $ExpectedInputSha = "A176454229FEEF1CE8BD7EAB1EA79FBFEFF07C229C88123EDF862FEA9160EEF6"
 $ExpectedTaskSha = "4C4ABA6A82D540440DFEF725B2568AFDEF4BE3B26C3E4E84E2B34C54E6DD460E"
-$ExpectedCodexSha = "A337B7433EBB351C0165DD074CF2500A20FCA9CEAB3680A71DF593653BF70DC8"
+$ExpectedCodexSha = "444A3F0008050605CAE73CD9B7A2DCAC61294062DFAAB56DD20430FD6498518B"
 $ProfileId = "g2e_p5a_cgw_fx001"
 
 function Test-IsAdministrator {
@@ -91,10 +91,10 @@ $ThisScript = $MyInvocation.MyCommand.Path
 Set-Location $ProjectRoot
 
 if ([string]::IsNullOrWhiteSpace($HandoffDiagnostic)) {
-    $HandoffDiagnostic = Join-Path $ProjectRoot "g2e\.local\P5A-CGW-FX001-V4-001-HANDOFF.json"
+    $HandoffDiagnostic = Join-Path $ProjectRoot "g2e\.local\P5A-CGW-FX001-V4-002-HANDOFF.json"
 }
 if ([string]::IsNullOrWhiteSpace($HandoffConfig)) {
-    $HandoffConfig = Join-Path $ProjectRoot "g2e\.local\P5A-CGW-FX001-V4-001-HANDOFF-CONFIG.json"
+    $HandoffConfig = Join-Path $ProjectRoot "g2e\.local\P5A-CGW-FX001-V4-002-HANDOFF-CONFIG.json"
 }
 
 if ($ElevatedChild) {
@@ -112,7 +112,7 @@ if ($ElevatedChild) {
                 script_stack_trace = $_.ScriptStackTrace
                 attempt_consumed_marker_present = $false
             }
-            $markerCandidate = Join-Path $ProjectRoot "g2e\.local\P5A-CGW-FX001-V4-001\evidence\attempt_consumed.marker"
+            $markerCandidate = Join-Path $ProjectRoot "g2e\.local\P5A-CGW-FX001-V4-002\evidence\attempt_consumed.marker"
             $diag.attempt_consumed_marker_present = [bool](Test-Path -LiteralPath $markerCandidate)
             $diag | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $HandoffDiagnostic -Encoding UTF8
         } catch {}
@@ -138,20 +138,49 @@ if ([string]::IsNullOrWhiteSpace($PythonExe)) {
     $PythonExe = (Get-Command python -ErrorAction Stop).Source
 }
 if ([string]::IsNullOrWhiteSpace($CodexExe)) {
-    $CodexExe = (Get-Command codex -ErrorAction Stop).Source
+    $CodexExe = Join-Path $ProjectRoot "g2e\.local\codex-official-0.153.4\package\bin\codex.exe"
 }
 if ([string]::IsNullOrWhiteSpace($GitExe)) {
     $GitExe = (Get-Command git -ErrorAction Stop).Source
 }
 
-$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_CGW_FX001_EXECUTION_LOCK_V2R5.json"
+$QualifiedToolRoot = Join-Path $ProjectRoot "g2e\.local\codex-official-0.153.4"
+$QualifiedReport = Join-Path $QualifiedToolRoot "QUALIFICATION_REPORT.json"
+$QualifiedHelper = Join-Path $QualifiedToolRoot "package\codex-resources\codex-windows-sandbox-setup.exe"
+$ExpectedHelperSha = "0C3EEB7CEE8D2BC4C8644DEF3C818E8B06760979572DCEDC919C38D0F38F64C4"
+$ExpectedPackageSha = "A6EF3442CB12766A88B39311D79244289E4F9763E2C53FF4FBEBC2CB653CC5F3"
+$PredecessorMarker = Join-Path $ProjectRoot "g2e\.local\P5A-CGW-FX001-V4-001\evidence\attempt_consumed.marker"
+
+if (Test-Path -LiteralPath $PredecessorMarker -PathType Leaf) {
+    throw "ATTEMPT_ALREADY_CONSUMED_IN_PREDECESSOR_ROOT"
+}
+if (-not (Test-Path -LiteralPath $QualifiedReport -PathType Leaf)) {
+    throw "LOCAL_CODEX_QUALIFICATION_REPORT_MISSING"
+}
+$LocalQualification = Get-Content -LiteralPath $QualifiedReport -Raw | ConvertFrom-Json
+if ([string]$LocalQualification.status -ne "PASS") { throw "LOCAL_CODEX_QUALIFICATION_NOT_PASS" }
+if ([string]$LocalQualification.version -ne "0.153.4") { throw "LOCAL_CODEX_VERSION_DRIFT" }
+if (([string]$LocalQualification.package.sha256).ToUpperInvariant() -ne $ExpectedPackageSha) { throw "LOCAL_CODEX_PACKAGE_HASH_DRIFT" }
+if (([string]$LocalQualification.codex.sha256).ToUpperInvariant() -ne $ExpectedCodexSha) { throw "LOCAL_CODEX_REPORT_BINARY_HASH_DRIFT" }
+if (([string]$LocalQualification.sandbox_helper.sha256).ToUpperInvariant() -ne $ExpectedHelperSha) { throw "LOCAL_CODEX_REPORT_HELPER_HASH_DRIFT" }
+if ([bool]$LocalQualification.firewall.model_turn -or
+    [bool]$LocalQualification.firewall.browser_submission -or
+    [bool]$LocalQualification.firewall.mcp_invocation -or
+    [bool]$LocalQualification.firewall.sandbox_setup -or
+    [bool]$LocalQualification.firewall.attempt_consumed) {
+    throw "LOCAL_CODEX_QUALIFICATION_FIREWALL_INVALID"
+}
+if (-not (Test-Path -LiteralPath $QualifiedHelper -PathType Leaf)) { throw "LOCAL_CODEX_HELPER_MISSING" }
+if ((Get-Sha256 $QualifiedHelper) -ne $ExpectedHelperSha) { throw "LOCAL_CODEX_HELPER_HASH_DRIFT" }
+
+$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_CGW_FX001_EXECUTION_LOCK_V2R6.json"
 $AdmissionScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_admission.py"
 $RunnerScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_runner.py"
 $VerifierScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_verify.py"
 
 if (-not (Test-Path -LiteralPath $LockPath)) { throw "DISPATCH_LOCK_V2_MISSING" }
 $Lock = Get-Content -LiteralPath $LockPath -Raw | ConvertFrom-Json
-if ($Lock.status -ne "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R5") { throw "DISPATCH_LOCK_STATUS_INVALID" }
+if ($Lock.status -ne "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R6") { throw "DISPATCH_LOCK_STATUS_INVALID" }
 if ($Lock.authorization.dispatch_authorized -ne $true) { throw "DISPATCH_NOT_AUTHORIZED" }
 if ($Lock.authorization.max_dispatches -ne 1) { throw "DISPATCH_CARDINALITY_DRIFT" }
 if ($Lock.attempt_id -ne $AttemptId) { throw "ATTEMPT_ID_DRIFT" }
@@ -164,11 +193,16 @@ if ((Get-GitBlob $ProjectRoot "scripts/g2e/p5a_cgw_fx001_admission.py") -ne $Loc
 if ((Get-GitBlob $ProjectRoot "scripts/g2e/p5a_cgw_fx001_runner.py") -ne $Lock.components.runner_blob) { throw "RUNNER_BLOB_DRIFT" }
 if ((Get-GitBlob $ProjectRoot "scripts/g2e/p5a_cgw_fx001_verify.py") -ne $Lock.components.verifier_blob) { throw "VERIFIER_BLOB_DRIFT" }
 if ((Get-GitBlob $ProjectRoot "scripts/g2e/p5a_cgw_fx001_oneclick.ps1") -ne $Lock.components.oneclick_blob) { throw "ONECLICK_BLOB_DRIFT" }
-if ((Get-GitBlob $ProjectRoot "g2e/config/P5A_CGW_FX001_EXECUTION_CONFIG.json") -ne $Lock.execution_config.git_blob) { throw "EXECUTION_CONFIG_BLOB_DRIFT" }
+if ((Get-GitBlob $ProjectRoot "g2e/config/P5A_CGW_FX001_EXECUTION_CONFIG_V2.json") -ne $Lock.execution_config.git_blob) { throw "EXECUTION_CONFIG_BLOB_DRIFT" }
 Assert-ExecutionSourceClean $ProjectRoot
 
 if (-not (Test-Path -LiteralPath $PythonExe -PathType Leaf)) { throw "PYTHON_NOT_FOUND" }
 if (-not (Test-Path -LiteralPath $CodexExe -PathType Leaf)) { throw "CODEX_COMMAND_NOT_FOUND" }
+$QualifiedCodexPath = [System.IO.Path]::GetFullPath([string]$LocalQualification.codex.path)
+$ObservedCodexPath = [System.IO.Path]::GetFullPath($CodexExe)
+if (-not $QualifiedCodexPath.Equals($ObservedCodexPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "LOCAL_CODEX_PATH_BINDING_DRIFT"
+}
 if (-not (Test-Path -LiteralPath $GitExe -PathType Leaf)) { throw "GIT_COMMAND_NOT_FOUND" }
 if ((Get-Sha256 $CodexExe) -ne $ExpectedCodexSha) { throw "CODEX_BINARY_HASH_DRIFT" }
 
@@ -207,7 +241,7 @@ if ($ObservedCgwSha -ne $ExpectedCgwSha) {
     throw "CGW_LAUNCHER_HASH_DRIFT:path=$CgwBinary observed=$ObservedCgwSha expected=$ExpectedCgwSha"
 }
 
-$LocalRoot = Join-Path $ProjectRoot "g2e\.local\P5A-CGW-FX001-V4-001"
+$LocalRoot = Join-Path $ProjectRoot "g2e\.local\P5A-CGW-FX001-V4-002"
 if (Test-Path -LiteralPath $LocalRoot) { throw "FUNCTIONAL_ROOT_ALREADY_EXISTS_FAIL_CLOSED" }
 
 $SourceFixture = Join-Path $ProjectRoot "g2e\.local\P5A-D2S1\execution\P5-FX-001"
@@ -226,6 +260,8 @@ Write-Host ("LOCK: " + $Lock.status)
 Write-Host ("ATTEMPT: " + $AttemptId)
 Write-Host ("PYTHON: " + $PythonExe)
 Write-Host ("CODEX: " + $CodexExe)
+Write-Host ("CODEX_HELPER: " + $QualifiedHelper)
+Write-Host "PREDECESSOR_ROOT: PRESERVED V4-001 / marker absent"
 Write-Host ("GIT: " + $GitExe)
 Write-Host ("CGW: " + $CgwBinary)
 Write-Host ("BRIDGE_HOME: " + $BridgeHome)

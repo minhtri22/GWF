@@ -14,7 +14,7 @@ VERIFIER = ROOT / "scripts" / "g2e" / "p5a_cgw_fx001_verify.py"
 ONECLICK = ROOT / "scripts" / "g2e" / "p5a_cgw_fx001_oneclick.ps1"
 PREREG = ROOT / "scripts" / "g2e" / "p5a_cgw_fx001_preregister.py"
 V1_LOCK = ROOT / "g2e" / "docs" / "P5A_CGW_FX001_EXECUTION_LOCK.json"
-EXEC_CONFIG = ROOT / "g2e" / "config" / "P5A_CGW_FX001_EXECUTION_CONFIG.json"
+EXEC_CONFIG = ROOT / "g2e" / "config" / "P5A_CGW_FX001_EXECUTION_CONFIG_V2.json"
 
 
 def load(path: Path, name: str):
@@ -380,8 +380,8 @@ def test_runner_has_one_consumption_boundary_and_one_turn_start():
 
 def test_oneclick_requires_v2_dispatch_lock_and_zero_retry_shape():
     source = ONECLICK.read_text(encoding="utf-8")
-    assert "P5A_CGW_FX001_EXECUTION_LOCK_V2R5.json" in source
-    assert "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R5" in source
+    assert "P5A_CGW_FX001_EXECUTION_LOCK_V2R6.json" in source
+    assert "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R6" in source
     assert "dispatch_authorized" in source
     assert "max_dispatches" in source
     assert "PREDISPATCH_ADMISSION_BLOCKED" in source
@@ -526,3 +526,17 @@ def test_implementation_does_not_change_normative_execution_config():
     assert config["route"]["bridge_mode"] == "full"
     assert config["consumption"]["retry_budget"] == 0
     assert config["evidence"]["live_mcp_roundtrip_required"] is True
+
+
+def test_v2r6_binds_project_local_coherent_codex_and_preserves_predecessor_root():
+    source = ONECLICK.read_text(encoding="utf-8")
+    assert "codex-official-0.153.4" in source
+    assert "LOCAL_CODEX_QUALIFICATION_REPORT_MISSING" in source
+    assert "LOCAL_CODEX_QUALIFICATION_NOT_PASS" in source
+    assert "LOCAL_CODEX_HELPER_HASH_DRIFT" in source
+    assert "LOCAL_CODEX_PATH_BINDING_DRIFT" in source
+    assert "ATTEMPT_ALREADY_CONSUMED_IN_PREDECESSOR_ROOT" in source
+    assert "P5A-CGW-FX001-V4-002" in source
+    assert "P5A-CGW-FX001-V4-001" in source
+    assert "444A3F0008050605CAE73CD9B7A2DCAC61294062DFAAB56DD20430FD6498518B" in source
+    assert "0C3EEB7CEE8D2BC4C8644DEF3C818E8B06760979572DCEDC919C38D0F38F64C4" in source
