@@ -184,7 +184,7 @@ try {
     $env:GWR_BROWSER_COOKIE_SECURE = "false"
 
     Write-Host "Step 2/6 - canonical server start/readiness" -ForegroundColor Cyan
-    $preStatus = & $ServerLauncher -Action status -RepoRoot $RepoRoot -Port $Port 2>&1
+    $preStatus = & $ServerLauncher -Action status -RepoRoot $RepoRoot -Port $Port *>&1
     if (($preStatus -join [Environment]::NewLine) -notmatch "GWF_SERVER=STOPPED") {
         throw "A canonical GWF server is already registered for this repo. Refusing to stop or reuse a process not started by this UAT run."
     }
@@ -198,7 +198,7 @@ try {
     Add-Check "core_health_healthy" ($ReadyState.core_health -eq "HEALTHY") $ReadyState.core_health
     Add-Check "ready_build_sha_exact" ($ReadyState.build_sha -eq $HeadStart) $ReadyState.build_sha
 
-    $statusOutput = & $ServerLauncher -Action status -RepoRoot $RepoRoot -Port $Port 2>&1
+    $statusOutput = & $ServerLauncher -Action status -RepoRoot $RepoRoot -Port $Port *>&1
     Add-Check "canonical_server_status_ready" (($statusOutput -join [Environment]::NewLine) -match "GWF_SERVER=READY") ($statusOutput -join [Environment]::NewLine)
 
     Write-Host "Step 3/6 - authoritative shell/session checks" -ForegroundColor Cyan
@@ -269,7 +269,7 @@ try {
 
     Invoke-LoggedPowerShell -ScriptPath $ServerLauncher -Arguments @("-Action","stop","-RepoRoot",$RepoRoot,"-Port","$Port") -LogPath $LauncherLog
     $ServerStartedByScript = $false
-    $stopped = & $ServerLauncher -Action status -RepoRoot $RepoRoot -Port $Port 2>&1
+    $stopped = & $ServerLauncher -Action status -RepoRoot $RepoRoot -Port $Port *>&1
     Add-Check "canonical_server_stopped" (($stopped -join [Environment]::NewLine) -match "GWF_SERVER=STOPPED") ($stopped -join [Environment]::NewLine)
 
     $serverStdout = Join-Path $RepoRoot ".gwr\server\server.stdout.log"
@@ -290,7 +290,7 @@ catch {
 }
 finally {
     if ($ServerStartedByScript) {
-        try { & $ServerLauncher -Action stop -RepoRoot $RepoRoot -Port $Port 2>&1 | Tee-Object -FilePath $LauncherLog -Append | Out-Null } catch {}
+        try { & $ServerLauncher -Action stop -RepoRoot $RepoRoot -Port $Port *>&1 | Tee-Object -FilePath $LauncherLog -Append | Out-Null } catch {}
     }
     if ($null -eq $HeadEnd) { try { $HeadEnd = (& git -C $RepoRoot rev-parse HEAD 2>$null | Select-Object -First 1).Trim() } catch {} }
     $EndUtc = (Get-Date).ToUniversalTime().ToString("o")

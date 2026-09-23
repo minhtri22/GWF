@@ -48,6 +48,14 @@ def test_bps_i00_local_uat_script_contract():
     assert "access_token" not in report_section
 
 
+def test_bps_i00_local_uat_captures_launcher_host_information_stream():
+    text = SCRIPT.read_text(encoding="utf-8")
+    assert '$preStatus = & $ServerLauncher -Action status -RepoRoot $RepoRoot -Port $Port *>&1' in text
+    assert '$statusOutput = & $ServerLauncher -Action status -RepoRoot $RepoRoot -Port $Port *>&1' in text
+    assert '$stopped = & $ServerLauncher -Action status -RepoRoot $RepoRoot -Port $Port *>&1' in text
+    assert '-Action status -RepoRoot $RepoRoot -Port $Port 2>&1' not in text
+
+
 def test_bps_i00_local_uat_does_not_trust_leaked_nested_last_exit_code():
     text = SCRIPT.read_text(encoding="utf-8")
     fn_start = text.index("function Invoke-LoggedPowerShell {")
