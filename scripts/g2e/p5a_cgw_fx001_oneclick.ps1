@@ -94,14 +94,14 @@ if ([string]::IsNullOrWhiteSpace($CodexExe)) {
 $ThisScript = $MyInvocation.MyCommand.Path
 Set-Location $ProjectRoot
 
-$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_CGW_FX001_EXECUTION_LOCK_V2R2.json"
+$LockPath = Join-Path $ProjectRoot "g2e\docs\P5A_CGW_FX001_EXECUTION_LOCK_V2R3.json"
 $AdmissionScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_admission.py"
 $RunnerScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_runner.py"
 $VerifierScript = Join-Path $ProjectRoot "scripts\g2e\p5a_cgw_fx001_verify.py"
 
 if (-not (Test-Path -LiteralPath $LockPath)) { throw "DISPATCH_LOCK_V2_MISSING" }
 $Lock = Get-Content -LiteralPath $LockPath -Raw | ConvertFrom-Json
-if ($Lock.status -ne "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R2") { throw "DISPATCH_LOCK_STATUS_INVALID" }
+if ($Lock.status -ne "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R3") { throw "DISPATCH_LOCK_STATUS_INVALID" }
 if ($Lock.authorization.dispatch_authorized -ne $true) { throw "DISPATCH_NOT_AUTHORIZED" }
 if ($Lock.authorization.max_dispatches -ne 1) { throw "DISPATCH_CARDINALITY_DRIFT" }
 if ($Lock.attempt_id -ne $AttemptId) { throw "ATTEMPT_ID_DRIFT" }
@@ -140,16 +140,17 @@ if ([string]::IsNullOrWhiteSpace($CgwBinary)) {
         $InstallRegistry = "HKCU:\Software\d1a6026a-6210-588e-9a2b-da3936f94e02"
         $InstallLocation = [string](Get-ItemPropertyValue -LiteralPath $InstallRegistry -Name "InstallLocation")
         $Candidate = Join-Path $InstallLocation "Codex Web GPT.exe"
-        if (Test-Path -LiteralPath $Candidate) { $CgwBinary = $Candidate }
-    } catch {}
+        if (Test-Path -LiteralPath $Candidate -PathType Leaf) { $CgwBinary = $Candidate }
+    } catch {
+        throw "CGW_LAUNCHER_REGISTRY_LOOKUP_FAILED:$($_.Exception.Message)"
+    }
 }
-if ([string]::IsNullOrWhiteSpace($CgwBinary)) {
-    $Candidate = [string]@($BridgeObject.runtimeCommand)[0]
-    if (-not (Test-Path -LiteralPath $Candidate)) { throw "CGW_BINARY_NOT_FOUND" }
-    $CgwBinary = $Candidate
+if ([string]::IsNullOrWhiteSpace($CgwBinary)) { throw "CGW_LAUNCHER_NOT_FOUND" }
+if (-not (Test-Path -LiteralPath $CgwBinary -PathType Leaf)) { throw "CGW_LAUNCHER_NOT_FOUND:$CgwBinary" }
+$ObservedCgwSha = Get-Sha256 $CgwBinary
+if ($ObservedCgwSha -ne $ExpectedCgwSha) {
+    throw "CGW_LAUNCHER_HASH_DRIFT:path=$CgwBinary observed=$ObservedCgwSha expected=$ExpectedCgwSha"
 }
-if (-not (Test-Path -LiteralPath $CgwBinary -PathType Leaf)) { throw "CGW_BINARY_NOT_FOUND" }
-if ((Get-Sha256 $CgwBinary) -ne $ExpectedCgwSha) { throw "CGW_BINARY_HASH_DRIFT" }
 
 $LocalRoot = Join-Path $ProjectRoot "g2e\.local\P5A-CGW-FX001-V4-001"
 if (Test-Path -LiteralPath $LocalRoot) { throw "FUNCTIONAL_ROOT_ALREADY_EXISTS_FAIL_CLOSED" }

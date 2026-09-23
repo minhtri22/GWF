@@ -380,8 +380,8 @@ def test_runner_has_one_consumption_boundary_and_one_turn_start():
 
 def test_oneclick_requires_v2_dispatch_lock_and_zero_retry_shape():
     source = ONECLICK.read_text(encoding="utf-8")
-    assert "P5A_CGW_FX001_EXECUTION_LOCK_V2R2.json" in source
-    assert "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R2" in source
+    assert "P5A_CGW_FX001_EXECUTION_LOCK_V2R3.json" in source
+    assert "DISPATCH_AUTHORIZED_EXECUTION_LOCK_V2R3" in source
     assert "dispatch_authorized" in source
     assert "max_dispatches" in source
     assert "PREDISPATCH_ADMISSION_BLOCKED" in source
@@ -463,6 +463,16 @@ def test_oneclick_preflight_resolves_and_checks_local_dependencies_before_uac():
 def test_oneclick_is_ascii_only_for_windows_powershell_51_parser_safety():
     source = ONECLICK.read_text(encoding="utf-8")
     assert all(ord(ch) < 128 for ch in source)
+
+
+
+def test_oneclick_never_falls_back_from_launcher_identity_to_runtime_command():
+    source = ONECLICK.read_text(encoding="utf-8")
+    assert "CGW_LAUNCHER_NOT_FOUND" in source
+    assert "CGW_LAUNCHER_HASH_DRIFT" in source
+    assert "CGW_LAUNCHER_REGISTRY_LOOKUP_FAILED" in source
+    assert '$Candidate = [string]@($BridgeObject.runtimeCommand)[0]' not in source
+    assert 'runtimeCommand)[0]' not in source
 
 
 def test_implementation_does_not_change_normative_execution_config():
