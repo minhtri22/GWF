@@ -332,14 +332,15 @@ The user is not responsible for discovering ordinary code/API/UI defects by manu
   - exact build/backend identity and basic health.
 - **Must not yet implement:** Home business dashboard, Projects workflow, Operations, Packages, Project Library, Documents.
 - **PASS gate:**
-  - [ ] clean install reaches canonical server;
-  - [ ] login uses real API;
-  - [ ] reload reconstructs session/shell from backend;
-  - [ ] dark/light parity PASS;
-  - [ ] sidebar expanded/collapsed PASS;
-  - [ ] future items visibly `PLANNED` and non-actionable;
-  - [ ] no reusable credential stored in static/browser state;
-  - [ ] exact-head browser UAT PASS.
+  - [x] clean install reaches canonical server;
+  - [x] login uses real API;
+  - [x] reload reconstructs session/shell from backend;
+  - [x] full-shell System/Light/Dark parity PASS under assistant QA6;
+  - [x] expanded ~260 px / collapsed ~68 px sidebar with true workspace reflow PASS under assistant QA6;
+  - [x] semantic icons + descriptive collapsed labels/maturity context PASS under assistant QA6;
+  - [x] future items visibly `PLANNED`/`LOCKED` and non-actionable;
+  - [x] no reusable credential stored in static/browser state;
+  - [ ] exact-head browser UAT PASS — pending user local UAT.
 
 ### BPS-I01 — Home operational dashboard
 
@@ -1841,7 +1842,7 @@ next capability
 
 Current governance states:
 
-- **BPS-I00:** `UI_CONFORMANCE_RECOVERY_AUTHORIZED / PRE_LOCAL_PASS_INVALIDATED / FINAL_SLICE_PASS=NO`; original authorization remains historically valid and is amended by `docs/BPS_I00_UI_REIMPLEMENTATION_CONTRACT.md`. The only active work is BPS-I00 shell conformance recovery on `feature/bps-i00-product-shell` under root `AGENTS.md`.
+- **BPS-I00:** `PRE_LOCAL_PASS / FINAL_SLICE_PASS=NO / USER_LOCAL_UAT_PENDING`; bounded UI-conformance recovery completed QA1→QA6 against approved baseline v1.1. The only authorized next action is exact-head local UAT through `scripts/uiux/bps_i00_local_uat.ps1`; BPS-I01 remains locked.
 - **BPS-I01…I11:** LOCKED BEHIND PREVIOUS-SLICE `FINAL_SLICE_PASS`.
 - **BPS-W0:** blocked until BPS-I00…I11 all reach `FINAL_SLICE_PASS`.
 - **DG-P11+:** NOT_STARTED / NOT_AUTHORIZED.

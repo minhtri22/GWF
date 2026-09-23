@@ -234,9 +234,14 @@ try {
     Add-Check "browser_session_actor" (-not [string]::IsNullOrWhiteSpace([string]$me.actor_id)) $me.actor_id
 
     $appJs = (Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/assets/app.js" -TimeoutSec 5).Content
+    $stylesCss = (Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/assets/styles.css" -TimeoutSec 5).Content
     Add-Check "no_static_demo_fixture_reference" (-not ($appJs -match "demo-data\.json|gwr-uat-domains|gwr-uat-projects")) "legacy demo references absent"
     Add-Check "no_js_access_token_storage" (-not ($appJs -match "access_token")) "access_token absent from shell JS"
     Add-Check "presentation_storage_only" (($appJs -match "gwr-ui-theme") -and ($appJs -match "gwr-ui-sidebar")) "theme/sidebar preference keys present"
+    Add-Check "semantic_icon_system" (($appJs -match "const ICON_PATHS") -and ($appJs -match "iconSvg\(item\.id") -and (-not ($appJs -match "item\.label\.slice\(0, 1\)"))) "semantic SVG icon system present; first-letter placeholder path absent"
+    Add-Check "sidebar_true_reflow_contract" (($appJs -match "sidebar-collapsed") -and ($stylesCss -match "grid-template-columns:260px minmax\(0,1fr\)") -and ($stylesCss -match "sidebar-collapsed\{grid-template-columns:68px minmax\(0,1fr\)")) "expanded 260px -> collapsed 68px app-grid reflow contract present"
+    Add-Check "full_shell_theme_tokens" (($stylesCss -match "--bg-sidebar:#f9fbff") -and ($stylesCss -match "--bg-sidebar:#08111f") -and ($stylesCss -match "--topbar-bg:rgba\(255,255,255,.92\)") -and ($stylesCss -match "--topbar-bg:rgba\(9,17,29,.92\)")) "Light/Dark sidebar + topbar shell tokens present"
+    Add-Check "later_documents_functionality_absent" (-not ($appJs -match "/documents|relation graph|full-screen reader")) "BPS-I00 does not open future Documents/Relations/Reader functionality"
 
     Write-Host "Step 4/6 - restart/session persistence" -ForegroundColor Cyan
     Invoke-LoggedServerLauncher -Action "restart" -LogPath $LauncherLog
@@ -255,14 +260,16 @@ try {
     Start-Process $AppUrl | Out-Null
 
     $manualPrompts = @(
-        @("M01","The browser opened the new GWF Governed Knowledge Studio login screen, not the old static UAT/demo UI."),
-        @("M02","Signing in with the displayed local-UAT credentials succeeded and opened the BPS-I00 shell."),
+        @("M01","The browser opened the Governed Knowledge Studio login/product shell and it does not look like the legacy v0.8.5 static dashboard."),
+        @("M02","Signing in with the displayed local-UAT credentials succeeded and opened the authoritative BPS-I00 shell."),
         @("M03","Refreshing the browser kept the authenticated shell/session without asking for a token."),
-        @("M04","System, Light and Dark theme selections each work and the shell remains legible."),
-        @("M05","The left navigation collapses and expands correctly."),
-        @("M06","Home, Projects, Operations, Packages and future GAC/RA/Agents entries are visibly Locked/Planned and cannot execute fake actions."),
-        @("M07","Runtime identity shows the expected build SHA and canonical backend/server identity."),
-        @("M08","Signing out returns to the real login screen and does not expose a reusable token in the UI.")
+        @("M04","System, Light and Dark selections each change the FULL shell (sidebar, top bar and content together) and remain clearly legible."),
+        @("M05","Collapsing the left navigation produces a narrow icon rail and the main workspace visibly expands to reclaim the released width; expanding restores the full sidebar."),
+        @("M06","Navigation uses recognizable semantic icons rather than first-letter placeholders; in collapsed mode hover/focus labels identify the item and its Locked/Planned/Live maturity context."),
+        @("M07","The shell hierarchy and compact visual language match the approved Governed Knowledge Studio direction: global sidebar, top command/search bar and research-workspace cards/panels."),
+        @("M08","Home, Projects, Operations, Research/Packages and future GAC/RA/Agents entries that are Locked/Planned cannot execute fake product actions."),
+        @("M09","Runtime identity shows the expected exact build SHA plus canonical backend/server identity."),
+        @("M10","Signing out returns to the real login screen and does not expose a reusable token in the UI.")
     )
     $manualAllPass = $true
     foreach ($entry in $manualPrompts) { if (-not (Add-Manual -Id $entry[0] -Prompt $entry[1])) { $manualAllPass = $false } }

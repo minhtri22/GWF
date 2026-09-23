@@ -2097,3 +2097,35 @@ DG-P11+                         = NOT_STARTED / NOT_AUTHORIZED
 ```
 
 All negative evidence remains preserved. No new finding was opened by exact-handoff requalification.
+
+
+## 75. BPS-I00 UI-conformance recovery QA state
+
+### F-144 — MEDIUM — RESOLVED
+
+- **Negative evidence:** initial reimplementation candidate HEAD `fde9790dc6e9bdf5e688e31f2b3fbeabe3b5823b`, pull-request workflow run `35824494282`.
+- **Observed outcome:** new BPS-I00 shell code passed bounded DG-P10 fixtures/gate and PostgreSQL, but the full historical regression failed because `tools/build_uat_site.py` required the literal marker `LIVE FOUNDATION` in `web/index.html`.
+- **Root cause:** static shell-snapshot compatibility contract mismatch after maturity rendering moved to authoritative bootstrap/client rendering; no backend or BPS-I00 visual semantic defect was indicated.
+- **Repair:** preserve the new shell and add a non-visual HTML maturity meta marker; add JavaScript syntax validation when Node is available. No visual rollback and no backend change.
+- **Verification candidate:** `05d0a7ec7c4e8d36cfa99e4ac5e0b7370a863c53`.
+- **Verification:** run `35824741746` — Linux full regression + compile PASS, PostgreSQL PASS, Windows one-click qualification PASS; run `35824741758` — v0.8.5 Linux qualification PASS and Windows installer qualification PASS.
+- **Status:** RESOLVED.
+
+### BPS-I00 recovery QA1→QA6 adjudication
+
+```text
+BASE_GOVERNANCE_HEAD             = 7cc72fe2eef50460f7f7b3842e6379350e5e493e
+PRODUCT_CANDIDATE_HEAD           = 05d0a7ec7c4e8d36cfa99e4ac5e0b7370a863c53
+QA1 scope completeness           = PASS
+QA2 shell behavior               = PASS
+QA3 authoritative-state boundary = PASS
+QA4 auth/security boundary       = PASS
+QA5 targeted/full regression     = PASS
+QA6 visual baseline conformance  = PASS
+Finding OPEN                     = 0
+PRE_LOCAL_PASS                   = PASS
+FINAL_SLICE_PASS                 = NO
+BPS-I01                          = LOCKED
+```
+
+QA6 reference-state captures were produced at 1440×900 for Dark/Light × Expanded/Collapsed and compared with approved baseline v1.1. Capture SHA-256 values are recorded in `docs/BPS_I00_PRE_LOCAL_QA.md`. Browser/operator acceptance remains the next exact-head local-UAT gate; these assistant captures do not substitute for user UAT.
