@@ -1,0 +1,69 @@
+{
+  "binary_identities": {
+    "cgw_launcher_or_runtime": {
+      "basename": "Codex Web GPT.exe",
+      "sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+      "size": 223980032
+    },
+    "codex_command": {
+      "basename": "codex.exe",
+      "sha256": "a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8",
+      "size": 309166080
+    }
+  },
+  "bridge_config": {
+    "active_connector": "Codex Native2",
+    "auto_approve_tool_calls": false,
+    "automatic_connector": "Codex Native2",
+    "browser_host": "launcher",
+    "browser_interaction_mode": "automatic",
+    "config_version": 3,
+    "host": "127.0.0.1",
+    "manual_connector": "Codex Zero Risk",
+    "mode": "full",
+    "port": 17841,
+    "raw_config_sha256": "f8ba628c60faf5c95409ee3a37ad359f74dd0eb41bb961312b67758f9ba53858",
+    "release_version": "4.0.7",
+    "runtime_command_arity": 2,
+    "subagent_protocol": "compatibility-v1",
+    "tunnel_config_present": true
+  },
+  "bridge_health": {
+    "accepting_turns": true,
+    "active_browser_turns": 0,
+    "active_http_turns": 0,
+    "mode": "full",
+    "port": 17841,
+    "service": "codex-chatgpt-web",
+    "status": "ok",
+    "successful_model_catalog_requests": 23,
+    "version": "4.0.7"
+  },
+  "codex_route": {
+    "model_catalog_configured": false,
+    "model_provider": null,
+    "openai_base_url": "http://127.0.0.1:17841/v1",
+    "raw_config_sha256": "8917a42947474795b9512c2b6f3834805d747f5576df2602f9853ff8eb00aa25",
+    "selected_model_is_cgw": true
+  },
+  "errors": [
+    "CGW_RELEASE_VERSION"
+  ],
+  "evidence_sha256": "551d6c90c48c0761880d937257189b626d586772030558e34a516d4d80d6a68e",
+  "full_mode_observed": true,
+  "functional_claim": false,
+  "model_turn_executed": false,
+  "models_endpoint_called": false,
+  "next_if_pass": "FORMAL_CLOSE_P5A_CGW_ZERO_MODEL_QUALIFICATION_THEN_PREREGISTER_FIRST_FUNCTIONAL_ATTEMPT",
+  "responses_endpoint_called": false,
+  "route_id": "p5a-cgw",
+  "schema": "G2E-P5A-CGW-LOCAL-ZERO-MODEL-ADMISSION-v1",
+  "scientific_attempt_consumed": false,
+  "scientific_attempt_created": false,
+  "source_reference": {
+    "commit": "eaf4f09ae92d4dc4429fa597b0861663138f08f8",
+    "release_version": "5.0.8",
+    "repository": "miuuyy/codex-chatgpt-web"
+  },
+  "status": "LOCAL_ZERO_MODEL_ADMISSION_BLOCKED"
+}

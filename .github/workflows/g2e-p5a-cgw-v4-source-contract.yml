@@ -1,0 +1,132 @@
+name: G2E P5A-CGW v4.0.7 Source Contract Qualification
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["research/p5a-cgw-specification"]
+    paths:
+      - "scripts/g2e/p5a_cgw_v4_source_contract_qualification.py"
+      - "tests/g2e/test_p5a_cgw_v4_source_contract.py"
+      - "tests/g2e/fixtures/P5A_CGW_LOCAL_ZERO_MODEL_ADMISSION_V4_EXISTING.json"
+      - "g2e/docs/P5A_CGW_V4_SOURCE_CONTRACT_*"
+      - ".github/workflows/g2e-p5a-cgw-v4-source-contract.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  v4-contract-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+      V4_COMMIT: "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install G2E dependencies
+        run: |
+          python -m pip install -U pip
+          pip install -e ".[dev]"
+
+      - name: Fetch exact upstream v4.0.7 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init cgw-v4
+          git -C cgw-v4 remote add origin https://github.com/miuuyy/codex-chatgpt-web.git
+          git -C cgw-v4 fetch --depth=1 origin "$V4_COMMIT"
+          git -C cgw-v4 checkout --detach FETCH_HEAD
+          test "$(git -C cgw-v4 rev-parse HEAD)" = "$V4_COMMIT"
+
+      - name: Verify exact v4.0.7 release metadata
+        shell: python
+        run: |
+          import json, urllib.request
+          tag = json.load(urllib.request.urlopen(
+              "https://api.github.com/repos/miuuyy/codex-chatgpt-web/git/ref/tags/v4.0.7"
+          ))
+          assert tag["object"]["sha"] == "425092367f5cbfa33a071e460dbd72215bf0b9fa"
+          tag_object = json.load(urllib.request.urlopen(tag["object"]["url"]))
+          assert tag_object["object"]["sha"] == "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494"
+          release = json.load(urllib.request.urlopen(
+              "https://api.github.com/repos/miuuyy/codex-chatgpt-web/releases/tags/v4.0.7"
+          ))
+          assets = {a["name"]: a for a in release["assets"]}
+          assert release["tag_name"] == "v4.0.7"
+          assert assets["codex-web-gpt-4.0.7-win-x64.exe"]["digest"] == "sha256:90f47feaa5c6c17612ac9bee6a49b11b65e0241b046b7380e2c5219792a55354"
+          assert assets["codex-chatgpt-web-windows-amd64.zip"]["digest"] == "sha256:49f51bed4b85c7d5d54707b09791fa8360f653f97532e0dc16aceeb04d1dd611"
+          print("P5A_CGW_V4_RELEASE_PROVENANCE_PASS")
+
+      - name: Run v4 source-contract and readjudication tests
+        run: pytest -q tests/g2e/test_p5a_cgw_v4_source_contract.py
+
+      - name: Qualify exact source and readjudicate byte-identical existing Q0b evidence
+        run: |
+          python scripts/g2e/p5a_cgw_v4_source_contract_qualification.py \
+            --upstream-root cgw-v4 \
+            --source-output p5a-cgw-v4-source-contract.json \
+            --existing-q0b tests/g2e/fixtures/P5A_CGW_LOCAL_ZERO_MODEL_ADMISSION_V4_EXISTING.json \
+            --readjudication-output p5a-cgw-v4-q0b-readjudication.json
+
+      - name: Regress G2E P5A-CGW generic contract tests
+        run: pytest -q tests/g2e/test_p5a_cgw_zero_model_qualification.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: g2e-p5a-cgw-v4-source-contract-and-readjudication
+          path: |
+            p5a-cgw-v4-source-contract.json
+            p5a-cgw-v4-q0b-readjudication.json
+          if-no-files-found: error
+
+  v4-contract-windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: src
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install G2E dependencies
+        shell: powershell
+        run: |
+          python -m pip install -U pip
+          pip install -e ".[dev]"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Compile v4 qualifier
+        shell: powershell
+        run: |
+          python -m compileall -q scripts\g2e\p5a_cgw_v4_source_contract_qualification.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run v4 readjudication tests
+        shell: powershell
+        run: |
+          pytest -q tests\g2e\test_p5a_cgw_v4_source_contract.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Assert read-only zero-model surface
+        shell: powershell
+        run: |
+          $src = Get-Content scripts\g2e\p5a_cgw_v4_source_contract_qualification.py -Raw
+          if ($src -match 'urllib|requests\.|httpx\.|aiohttp|socket\.socket|Invoke-RestMethod|Invoke-WebRequest') {
+            throw "NETWORK_CLIENT_FOUND_IN_V4_QUALIFIER"
+          }
+          if ($src -match 'turn/start') {
+            throw "CODEX_TURN_START_FOUND_IN_V4_QUALIFIER"
+          }
+          Write-Host "P5A_CGW_V4_READ_ONLY_ZERO_MODEL_FIREWALL_PASS"
