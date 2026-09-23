@@ -1,0 +1,50 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-V2R5-PREMARKER-ADJUDICATION-v1",
+  "status": "PRE_MARKER_SANDBOX_SETUP_BLOCK",
+  "study_id": "p5a-cgw-v4-p5-fx-001-functional-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-attempt-001",
+  "attempt_consumed": false,
+  "durable_marker_present": false,
+  "turn_start_marker_created": false,
+  "turn_start_request_sent": false,
+  "turn_start_accepted": false,
+  "result_exists": false,
+  "blocker": "PREDISPATCH_SANDBOX_SETUP_FAILED",
+  "runner_exit_code": 2,
+  "app_server_exit_code": 1,
+  "admission_status": "PREDISPATCH_ADMISSION_PASS",
+  "admission_errors": [],
+  "cgw_health": {
+    "status": "ok",
+    "version": "4.0.7",
+    "mode": "full",
+    "accepting_turns": true,
+    "active_http_turns": 0,
+    "active_browser_turns": 0
+  },
+  "identities": {
+    "cgw_binary_sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+    "codex_binary_sha256": "a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8",
+    "bridge_config_sha256": "f8ba628c60faf5c95409ee3a37ad359f74dd0eb41bb961312b67758f9ba53858"
+  },
+  "protocol_observed": [
+    "initialize response",
+    "remoteControl/status/changed",
+    "windowsSandbox/readiness response",
+    "windowsSandbox/setupStart response",
+    "windowsSandbox/setupCompleted notification"
+  ],
+  "route_errors_interpretation": "DERIVATIVE_NOT_INDEPENDENT_BLOCKERS_BECAUSE_NO_TURN_WAS_SENT",
+  "cleanup": {
+    "vhdx_attached_before_cleanup": true,
+    "action": "DISMOUNTED",
+    "attached_after_cleanup": false,
+    "error": null
+  },
+  "governance": {
+    "rerun_authorized": false,
+    "delete_local_root_authorized": false,
+    "modify_scientific_contract_authorized": false,
+    "next_workstream": "SANDBOX_SETUP_FAILURE_DECOMPOSITION_EXISTING_EVIDENCE_ONLY"
+  }
+}
