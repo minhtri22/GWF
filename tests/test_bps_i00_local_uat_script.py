@@ -31,7 +31,9 @@ def test_bps_i00_local_uat_script_contract():
     assert '/app/projects' in text
     assert '/app/system/diagnostics' in text
     assert 'spa_history_router' in text
-    assert 'route_http_home' in text
+    assert '$routeChecks = [ordered]@{' in text
+    assert '"home" = "/app/home"' in text
+    assert '("route_http_" + $entry.Key)' in text
     assert 'HttpOnly' in text
     assert 'SameSite=Strict' in text
     assert 'Start-Process $AppUrl' in text
