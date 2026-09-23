@@ -1,0 +1,37 @@
+{
+  "schema": "G2E-P5A-CGW-LOCAL-CODEX-01534-QUALIFICATION-ADJUDICATION-v1",
+  "status": "PASS",
+  "evidence_source": "USER_LOCAL_QUALIFICATION_REPORT_CONSOLE",
+  "local_tool_root": "g2e/.local/codex-official-0.153.4",
+  "report": "g2e/.local/codex-official-0.153.4/QUALIFICATION_REPORT.json",
+  "package": {
+    "name": "codex-package-x86_64-pc-windows-msvc.tar.gz",
+    "sha256": "a6ef3442cb12766a88b39311d79244289e4f9763e2c53ff4fbebc2cb653cc5f3"
+  },
+  "codex": {
+    "relative_path": "g2e/.local/codex-official-0.153.4/package/bin/codex.exe",
+    "sha256": "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b",
+    "version_output": "codex-cli 0.153.4"
+  },
+  "sandbox_helper": {
+    "relative_path": "g2e/.local/codex-official-0.153.4/package/codex-resources/codex-windows-sandbox-setup.exe",
+    "sha256": "0c3eeb7cee8d2bc4c8644def3c818e8b06760979572dcedc919c38d0f38f64c4"
+  },
+  "firewall": {
+    "model_turn": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "sandbox_setup": false,
+    "attempt_consumed": false
+  },
+  "scientific_attempt": {
+    "id": "p5a-cgw-v4-p5-fx-001-attempt-001",
+    "marker_present": false,
+    "state": "RESERVED_UNCONSUMED"
+  },
+  "predecessor_execution_root": "g2e/.local/P5A-CGW-FX001-V4-001",
+  "predecessor_root_action": "PRESERVE_IMMUTABLE_DO_NOT_DELETE",
+  "successor_execution_root": "g2e/.local/P5A-CGW-FX001-V4-002",
+  "rearm_authorized": false,
+  "next_gate": "V2R6_ZERO_MODEL_IMPLEMENTATION_QUALIFICATION"
+}
