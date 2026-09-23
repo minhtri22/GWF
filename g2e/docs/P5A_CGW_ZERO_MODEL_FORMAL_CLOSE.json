@@ -1,0 +1,54 @@
+{
+  "schema": "G2E-P5A-CGW-ZERO-MODEL-FORMAL-CLOSE-v1",
+  "status": "ZERO_MODEL_QUALIFICATION_PASS_V4_0_7",
+  "route_id": "p5a-cgw",
+  "runtime_target": "4.0.7",
+  "source_qualification": "V4_SOURCE_CONTRACT_PASS",
+  "q0b_readjudication": "Q0B_PASS_UNDER_CORRECTED_V4_TARGET",
+  "exact_existing_evidence_reused": true,
+  "exact_existing_evidence_file_sha256": "b91f425a1b92ea0c4cf2d5f1179ecd413cc04b5ac6285034dfd975b446efc2ff",
+  "authoritative_evidence": {
+    "candidate": "1d94a3b30f9727fd8030518ceed6e88af9276428",
+    "workflow_run": 35804095312,
+    "linux_job": 107000855348,
+    "windows_job": 107000855267,
+    "artifact_id": 10727440275,
+    "artifact_digest": "sha256:263c5789fb1d14976ec60a7e75a2ea9eda8fba95f589f3805390d7fb90628d8d",
+    "source_report_sha256": "e6378104821eee58511d1bd544ad4590adf79a33cb3a3601ea173265e12b878a",
+    "readjudication_report_sha256": "6c4cf22fa16fecc217cde3df24140743c59b0f672fd869255a125d9c9a17def0"
+  },
+  "q_gates": {
+    "q0a_exact_v4_source_contract": "PASS",
+    "q0b_existing_local_runtime_evidence": "PASS_BY_READ_ONLY_READJUDICATION",
+    "q1_route_no_fallback": "PASS_SYNTHETIC_PREVIOUSLY",
+    "q2_request_response_correlation": "PASS_SYNTHETIC_PREVIOUSLY",
+    "q3_browser_binding_observability": "PASS_SYNTHETIC_PREVIOUSLY",
+    "q4_authority_preservation": "PASS_SYNTHETIC_PREVIOUSLY",
+    "q5_full_mode_mcp_binding": "PASS_SYNTHETIC_PREVIOUSLY",
+    "q6_observability_privacy": "PASS_SYNTHETIC_PREVIOUSLY",
+    "q7_failure_injection": "PASS_SYNTHETIC_PREVIOUSLY",
+    "q8_g2e_regression": "PASS_PREVIOUSLY_AND_V4_GENERIC_REGRESSION_PASS"
+  },
+  "firewalls": {
+    "model_turn_executed": false,
+    "runtime_mutated": false,
+    "scientific_attempt_created": false,
+    "scientific_attempt_consumed": false,
+    "p5a_official_cross_credit": false,
+    "comparative_ab_authorized": false
+  },
+  "limitations": {
+    "authenticated_live_chatgpt_turn_not_yet_proven": true,
+    "live_mcp_roundtrip_not_yet_proven": true,
+    "complete_p5a_cgw_functional_attempt_not_yet_proven": true,
+    "reproducible_build_equivalence_not_claimed": true
+  },
+  "authorization": {
+    "zero_model_workstream_closed": true,
+    "functional_attempt": false,
+    "scientific_attempt": false,
+    "comparative_ab": false,
+    "p5a_official_fallback": false
+  },
+  "next": "PREREGISTER_FIRST_P5A_CGW_FUNCTIONAL_ATTEMPT_UNDER_SEPARATE_EXACT_LOCK"
+}

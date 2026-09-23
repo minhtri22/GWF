@@ -559,3 +559,20 @@
 - **Next:** bounded exact-v4.0.7 source/contract zero-model qualification, then read-only re-adjudication of existing local Q0b evidence if that qualification passes.
 - **Still closed:** model-bearing functional attempt and P5A official A/B.
 - **Correction record:** `g2e/docs/P5A_CGW_RUNTIME_TARGET_CORRECTION_V4_0_7.md` / `.json`.
+
+
+### G2E-P5A-CGW — v4.0.7 zero-model formal close
+
+- **Status:** ZERO_MODEL_QUALIFICATION_PASS_V4_0_7.
+- **Authoritative candidate:** `1d94a3b30f9727fd8030518ceed6e88af9276428`.
+- **Run:** `35804095312` — PASS.
+- **Linux:** `107000855348` — exact v4 source/release provenance, source contract, byte-identical Q0b readjudication and generic P5A-CGW regression PASS.
+- **Windows:** `107000855267` — byte-preserved evidence identity, readjudicator tests and read-only zero-model firewall PASS.
+- **Artifact:** `10727440275`; digest `sha256:263c5789fb1d14976ec60a7e75a2ea9eda8fba95f589f3805390d7fb90628d8d`.
+- **Source result:** `V4_SOURCE_CONTRACT_PASS`; report SHA256 `e6378104821eee58511d1bd544ad4590adf79a33cb3a3601ea173265e12b878a`.
+- **Q0b result:** `Q0B_PASS_UNDER_CORRECTED_V4_TARGET`; report SHA256 `6c4cf22fa16fecc217cde3df24140743c59b0f672fd869255a125d9c9a17def0`.
+- **Original Q0b evidence reused:** SHA256 `b91f425a1b92ea0c4cf2d5f1179ecd413cc04b5ac6285034dfd975b446efc2ff`; no new local collection.
+- **Runtime target:** exact `v4.0.7` / source commit `b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494`.
+- **No overclaim:** no reproducible-build byte-equivalence claim for installed launcher; no live authenticated ChatGPT turn/MCP roundtrip/functional task has yet been proven.
+- **Firewalls:** no model turn, runtime mutation, scientific attempt, P5A-official cross-credit or A/B comparison.
+- **Next admissible step:** separately preregister the first P5A-CGW functional attempt and exact-lock route/task/identity/consumption semantics before any model-bearing execution.

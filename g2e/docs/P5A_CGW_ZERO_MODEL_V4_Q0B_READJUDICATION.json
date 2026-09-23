@@ -1,0 +1,44 @@
+{
+  "schema": "G2E-P5A-CGW-V4-Q0B-READJUDICATION-v1",
+  "status": "Q0B_PASS_UNDER_CORRECTED_V4_TARGET",
+  "route_id": "p5a-cgw",
+  "readjudication_report_sha256": "6c4cf22fa16fecc217cde3df24140743c59b0f672fd869255a125d9c9a17def0",
+  "original_evidence": {
+    "file_sha256": "b91f425a1b92ea0c4cf2d5f1179ecd413cc04b5ac6285034dfd975b446efc2ff",
+    "internal_evidence_sha256": "551d6c90c48c0761880d937257189b626d586772030558e34a516d4d80d6a68e",
+    "original_status": "LOCAL_ZERO_MODEL_ADMISSION_BLOCKED",
+    "original_blocker": "CGW_RELEASE_VERSION"
+  },
+  "corrected_target": {
+    "release_version": "4.0.7",
+    "source_commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494",
+    "source_contract_status": "V4_SOURCE_CONTRACT_PASS"
+  },
+  "admitted_local_runtime": {
+    "cgw_binary_sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+    "codex_binary_sha256": "a337b7433ebb351c0165dd074cf2500a20fca9ceab3680a71df593653bf70dc8",
+    "bridge_release_version": "4.0.7",
+    "bridge_mode": "full",
+    "active_connector": "Codex Native2",
+    "host": "127.0.0.1",
+    "port": 17841,
+    "health_status": "ok",
+    "accepting_turns": true,
+    "idle": true,
+    "codex_openai_base_url": "http://127.0.0.1:17841/v1",
+    "selected_model_is_cgw": true
+  },
+  "ignored_old_projection_fields_not_source_backed_in_v4": [
+    "bridge_config.automatic_connector",
+    "bridge_config.manual_connector",
+    "bridge_config.browser_interaction_mode"
+  ],
+  "provenance_strength": "EXACT_V4_SOURCE_CONTRACT_PLUS_RUNTIME_SELF_IDENTIFICATION_PLUS_LOCAL_BINARY_FINGERPRINT; NO_REPRODUCIBLE_BUILD_EQUIVALENCE_CLAIM",
+  "model_turn_executed": false,
+  "runtime_mutated": false,
+  "scientific_attempt_created": false,
+  "scientific_attempt_consumed": false,
+  "functional_attempt_authorized": false,
+  "comparative_ab_authorized": false,
+  "next": "FORMAL_CLOSE_P5A_CGW_ZERO_MODEL_QUALIFICATION"
+}

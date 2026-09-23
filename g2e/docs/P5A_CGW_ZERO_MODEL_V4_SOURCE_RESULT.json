@@ -1,0 +1,39 @@
+{
+  "schema": "G2E-P5A-CGW-V4-SOURCE-CONTRACT-QUALIFICATION-v1",
+  "status": "V4_SOURCE_CONTRACT_PASS",
+  "repository": "miuuyy/codex-chatgpt-web",
+  "tag": "v4.0.7",
+  "tag_object": "425092367f5cbfa33a071e460dbd72215bf0b9fa",
+  "source_commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494",
+  "version": "4.0.7",
+  "source_report_sha256": "e6378104821eee58511d1bd544ad4590adf79a33cb3a3601ea173265e12b878a",
+  "authoritative_candidate": "1d94a3b30f9727fd8030518ceed6e88af9276428",
+  "authoritative_run": 35804095312,
+  "linux_job": 107000855348,
+  "windows_job": 107000855267,
+  "artifact_id": 10727440275,
+  "artifact_digest": "sha256:263c5789fb1d14976ec60a7e75a2ea9eda8fba95f589f3805390d7fb90628d8d",
+  "contract": {
+    "loopback_health_and_responses_surface": true,
+    "health_reports_version_mode_idle_state": true,
+    "connector_codex_native2": true,
+    "legacy_connector_no_fallback": true,
+    "chatgpt_web_model_namespace": true,
+    "codex_route_ownership": true,
+    "outer_codex_turn_is_local_execution_authority": true,
+    "turn_scoped_mcp_capability": true,
+    "active_outer_turn_tool_registry_bounds_mcp": true,
+    "bridge_is_not_second_planner_or_fallback": true,
+    "browser_ui_drift_fails_closed": true
+  },
+  "limitations": {
+    "authenticated_chatgpt_session_proven_by_source_ci": false,
+    "live_mcp_connector_proven_by_source_ci": false,
+    "complete_codex_turn_proven_by_source_ci": false,
+    "installed_executable_reproducible_build_equivalence_proven": false,
+    "binding_policy": "exact source/tag contract + config/health self-identification + exact installed executable fingerprint under trusted local-user boundary"
+  },
+  "model_turn_executed": false,
+  "runtime_mutated": false,
+  "scientific_attempt_created": false
+}
