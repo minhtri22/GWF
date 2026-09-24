@@ -784,3 +784,16 @@
 - **Superseded QA:** run `35984064737` failed only on brittle prose matching in static test; no science touched.
 - **Authorization:** exactly one local offline v2 probe; scientific wrapper rerun remains withheld.
 
+### G2E-P5A-CGW — TC semantic-config repair established; TC-002 preflight only
+
+- **Offline semantic probe v2 local:** PASS; exact raw config SHA-256 matched the earlier healthy/idle TC admission snapshot: `6f4347acdcb722d52b2ea4bb166a53c28a809fdf13bb9f358e794bad12c16053`.
+- **Adjudication:** the TC-001 `CGW_CONFIG_HASH_DRIFT` blocker was a whole-file hash guard defect, not semantic transport drift.
+- **TC-001 root:** `g2e/.local/P5A-CGW-FX001-TC-001` remains immutable and must not be reused.
+- **Scientific attempt:** `p5a-cgw-v4-p5-fx-001-tc-attempt-001` remains `RESERVED_UNCONSUMED`.
+- **TC-002 root:** `g2e/.local/P5A-CGW-FX001-TC-002`.
+- **TC-002 semantic admission blob:** `0c676f33aeffbffd8a9dc63af9e9bf0934e9dda1`.
+- **TC-002 one-click blob:** `38d424e38bd1c393b4f0cdbc7876948ac205e01b`.
+- **Authoritative implementation QA:** run `35985055762` PASS; Ubuntu `107585664699`, Windows `107585664688`, PowerShell parser `107585664524` all PASS.
+- **Repair:** raw config SHA retained as provenance only; material semantic values are explicitly frozen, including context window 256000, compatibility-v1, Sol=true, Pro=false, bigger-context=true, and Windows runtime `bun.exe`.
+- **Current authorization:** TC-002 local `-PreflightOnly` only. Live dispatch remains withheld; no TC-002 execution lock exists yet.
+
