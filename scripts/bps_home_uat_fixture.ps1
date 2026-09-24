@@ -35,7 +35,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host ""
-Write-Host "GWF HOME UAT — ISOLATED FIXTURE" -ForegroundColor Cyan
+Write-Host "GWF HOME UAT - ISOLATED FIXTURE" -ForegroundColor Cyan
 Write-Host ("MODE={0}" -f $Mode)
 Write-Host ("HEAD={0}" -f $Head)
 Write-Host ("URL=http://{0}:{1}/app/home" -f $HostName,$Port)
