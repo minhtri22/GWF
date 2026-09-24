@@ -163,3 +163,54 @@ USER_UAT_UNTESTED   = 5
 HOME                = OPEN
 NEXT_SCREEN_ALLOWED = false
 ```
+
+
+## Remaining UAT fixture — isolated / non-product
+
+A bounded local fixture was added only to make the still-untested Home states observable without mutating the canonical working database or adding fake frontend data.
+
+Implementation lineage:
+
+```text
+2c669ac1fc59a7efe12d6481c3c3889708884de4  BPS Home: add isolated UAT data fixture
+3cb25b62d9cdbacd8bf76ab227980988ae40e9aa  BPS Home: add Windows UAT fixture launcher
+8cbe2037be6bee79db4355fb4060db334e278ac8  BPS Home: test isolated UAT fixture
+```
+
+Files:
+
+- `scripts/bps_home_uat_fixture.py`
+- `scripts/bps_home_uat_fixture.ps1`
+- `tests/test_bps_home_uat_fixture.py`
+
+Safety properties:
+
+- fixture runtime uses a fresh ephemeral temporary directory;
+- canonical `.gwr/server/gwr.db` is not used;
+- no production API/auth/schema semantics are changed;
+- `data` mode seeds backend records that are read through the real authenticated `HomeSummary` projection;
+- `error` mode injects a fixture-process-only HTTP 503 for `/browser/home-summary`, leaving auth/bootstrap/shell live so the operator can distinguish unavailable from zero;
+- process exits with Ctrl+C and the temporary fixture database is removed.
+
+Operator commands from an isolated BPS worktree:
+
+```powershell
+git pull --ff-only origin feature/bps-i00-product-shell
+
+# H-UAT-04/05/06/07 + fresh-session H-UAT-08R
+.\scripts\bps_home_uat_fixture.ps1 -Mode data
+
+# after finishing data-mode UAT, Ctrl+C, then:
+# H-UAT-09
+.\scripts\bps_home_uat_fixture.ps1 -Mode error
+```
+
+Fixture credentials:
+
+```text
+username = home-uat
+password = home-uat-password
+URL      = http://127.0.0.1:8877/app/home
+```
+
+Only H-UAT-04/05/06/07/08R/09 need to be rerun. Already accepted H-UAT-01/02/03/10/11 are not reopened.
