@@ -1,0 +1,53 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TC-PREDISPATCH-ADJUDICATION-v1",
+  "status": "PRECONSUMPTION_INFRASTRUCTURE_BLOCK_CONFIRMED",
+  "scientific_verdict": "NOT_APPLICABLE",
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "source_head": "e0b4e259554ea7195a16ef7e0120017759a00495",
+  "observed": {
+    "execution_report_status": "PREDISPATCH_BLOCKED_NO_ATTEMPT_CONSUMPTION",
+    "diagnostic": "PREDISPATCH_ADMISSION_BLOCKED",
+    "marker_present": false,
+    "attempt_consumed": false,
+    "model_turn_sent": false,
+    "runner_evidence_present": false,
+    "verifier_evidence_present": false,
+    "protocol_present": false,
+    "route_evidence_present": false,
+    "vhdx_present": true,
+    "vhdx_attached_after": false,
+    "cleanup_action": "DISMOUNTED",
+    "cleanup_error": null
+  },
+  "admission": {
+    "status": "PREDISPATCH_ADMISSION_BLOCKED",
+    "sole_error": "CGW_CONFIG_HASH_DRIFT",
+    "observed_bridge_config_sha256": "6f4347acdcb722d52b2ea4bb166a53c28a809fdf13bb9f358e794bad12c16053",
+    "frozen_raw_bridge_config_sha256": "f8ba628c60faf5c95409ee3a37ad359f74dd0eb41bb961312b67758f9ba53858",
+    "semantic_checks_observed": {
+      "release_version": "4.0.7",
+      "mode": "full",
+      "host": "127.0.0.1",
+      "port": 17841,
+      "connector": "Codex Native2",
+      "auto_approve_tool_calls": false,
+      "tunnel_present": true,
+      "health_status": "ok",
+      "accepting_turns": true,
+      "active_http_turns": 0,
+      "active_browser_turns": 0,
+      "cgw_binary_sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+      "codex_binary_sha256": "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b"
+    }
+  },
+  "adjudication": {
+    "class": "PRE_MARKER_INFRASTRUCTURE_ADMISSION_BLOCK",
+    "attempt_state": "RESERVED_UNCONSUMED",
+    "live_scientific_dispatch_occurred": false,
+    "retry_budget_consumed": false,
+    "same_attempt_may_continue_only_under_prospective_preconsumption_repair": true,
+    "old_local_root_disposition": "PRESERVE_IMMUTABLE_DO_NOT_DELETE"
+  },
+  "next_gate": "TC_CONFIG_SEMANTIC_BINDING_REPAIR_SPEC_AND_ZERO_MODEL_QA"
+}
