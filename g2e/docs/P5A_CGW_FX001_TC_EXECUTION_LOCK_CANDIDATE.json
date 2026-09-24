@@ -1,0 +1,114 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TC-EXECUTION-LOCK-v1",
+  "status": "DISPATCH_AUTHORIZED_EXECUTION_LOCK_TC1",
+  "qualified": true,
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "attempt_state": "RESERVED_UNCONSUMED",
+  "preregistration_lock": {
+    "path": "g2e/docs/P5A_CGW_FX001_TC_PREREGISTRATION_LOCK.json",
+    "git_blob": "5fd91d79a9a02851c75390a073229eebb2a1179d",
+    "status": "PREREGISTERED_DISPATCH_WITHHELD"
+  },
+  "implementation_qualification": {
+    "path": "g2e/docs/P5A_CGW_FX001_TC_IMPLEMENTATION_QUALIFICATION_RESULT.json",
+    "git_blob": "f31f64621a44a3b95e6b95ec9c8cbf6427de0ffe",
+    "status": "PASS",
+    "qualified_head": "dac5c2d25bbb1581b520ddeabacddbc352c1e288"
+  },
+  "local_preflight": {
+    "path": "g2e/docs/P5A_CGW_FX001_TC_LOCAL_PREFLIGHT_RESULT.json",
+    "git_blob": "20864763349585fcf6d5cffb6eab71eab7e3b434",
+    "status": "PASS",
+    "adjudication": "LOCAL_PREFLIGHT_PASS_UNCONSUMED",
+    "source_head": "9ab12319dd98d250abaca9703830169dda313b15",
+    "attempt_consumed": false,
+    "model_turn_sent": false,
+    "tc_local_root_exists_after": false,
+    "tc_marker_exists_after": false
+  },
+  "execution_config": {
+    "path": "g2e/config/P5A_CGW_FX001_TC_EXECUTION_CONFIG.json",
+    "git_blob": "b8196f331e39e37f2f5fc4b6fc2031f50ac1c192",
+    "canonical_sha256": "6b88011e0bc6ba0164a0e6f4230bb1fb8be6037d7513f348c15d39ea726816f7"
+  },
+  "components": {
+    "admission_blob": "9042940d696f41990c3eb1808035a49f0ddc938e",
+    "runner_blob": "d999931d67a6e5958ed1059f894a359aeef82e22",
+    "verifier_blob": "5ff0190f4024625f3c5330813878a1b17b663b8c",
+    "oneclick_blob": "5cb4285819819a5e6e034be7043628b978332b16"
+  },
+  "route": {
+    "route_id": "p5a-cgw",
+    "bridge_mode": "full",
+    "connector": "Codex Native2",
+    "model_slug": "chatgpt-web/high",
+    "backend_model": "gpt-5.6-sol",
+    "outer_executor": "codex",
+    "codex_version": "0.153.4",
+    "codex_commit": "3d2ee51ca2d5db578f328aa75e20aa22c0197c9a",
+    "cgw_version": "4.0.7",
+    "cgw_commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494"
+  },
+  "local_codex": {
+    "root": "g2e/.local/codex-official-0.153.4",
+    "report": "g2e/.local/codex-official-0.153.4/QUALIFICATION_REPORT.json",
+    "codex_relative_path": "g2e/.local/codex-official-0.153.4/package/bin/codex.exe",
+    "codex_sha256": "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b",
+    "helper_relative_path": "g2e/.local/codex-official-0.153.4/package/codex-resources/codex-windows-sandbox-setup.exe",
+    "helper_sha256": "0c3eeb7cee8d2bc4c8644def3c818e8b06760979572dcedc919c38d0f38f64c4",
+    "package_sha256": "a6ef3442cb12766a88b39311d79244289e4f9763e2c53ff4fbebc2cb653cc5f3",
+    "version_output": "codex-cli 0.153.4",
+    "global_installation_mutation_forbidden": true
+  },
+  "launcher_identity": {
+    "required_basename": "Codex Web GPT.exe",
+    "expected_sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+    "expected_size": 223980032,
+    "expected_release": "4.0.7",
+    "source_commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494",
+    "fallback_to_runtime_command_for_identity": false
+  },
+  "evidence_roots": {
+    "spent_predecessor_v4_001": "g2e/.local/P5A-CGW-FX001-V4-001",
+    "spent_predecessor_v4_002": "g2e/.local/P5A-CGW-FX001-V4-002",
+    "spent_predecessor_disposition": "PRESERVE_IMMUTABLE_DO_NOT_DELETE",
+    "successor_root": "g2e/.local/P5A-CGW-FX001-TC-001",
+    "successor_marker": "g2e/.local/P5A-CGW-FX001-TC-001/evidence/attempt_consumed.marker"
+  },
+  "transport_contract": {
+    "scientific_absolute_turn_deadline_ms": null,
+    "qualified_upstream_browser_absolute_deadline_default_ms": null,
+    "qualified_upstream_bridge_heartbeat_ms": 2000,
+    "qualified_upstream_bridge_stall_timeout_sec": 300,
+    "qualified_upstream_mcp_invocation_timeout_ms": 90000,
+    "qualified_upstream_tunnel_command_response_deadline_ms": 120000,
+    "terminal_signal": "app-server turn/completed for exact turn_id",
+    "operator_abort_class": "INFRASTRUCTURE_INVALID_ONLY",
+    "operator_abort_may_assign_pass_or_fail": false
+  },
+  "task_scope": {
+    "task_id": "P5-FX-001",
+    "input_sha256": "a176454229feef1ce8bd7eab1ea79fbfeff07c229c88123edf862fea9160eef6",
+    "task_sha256": "4c4aba6a82d540440dfef725b2568afdef4be3b26c3e4e84e2b34c54e6dd460e",
+    "expected_result_sha256": "6dd3ebce33677409bec596309e061cc421bfa38b3160c5b577ffe5f7fbc9980d",
+    "network_allowed": false,
+    "allowed_mutation": "result.json only"
+  },
+  "frozen_consumption": {
+    "boundary": "durable marker fsync immediately before sole turn/start write",
+    "max_dispatches": 1,
+    "retry_budget": 0,
+    "same_attempt_rearm": false,
+    "max_turn_start_transport_writes": 1,
+    "scientific_absolute_turn_deadline_ms": null
+  },
+  "authority_invariant": "delegated_authority <= active_outer_codex_turn_authority <= G2E_attempt_authority",
+  "authorization": {
+    "dispatch_authorized": true,
+    "max_dispatches": 1,
+    "retry_budget": 0,
+    "automatic_execution": false
+  },
+  "next_gate": "SOLE_LIVE_TC_DISPATCH"
+}
