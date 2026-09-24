@@ -1,0 +1,80 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TC-IMPLEMENTATION-QUALIFICATION-RESULT-v1",
+  "status": "PASS",
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "execution_config_canonical_sha256": "6b88011e0bc6ba0164a0e6f4230bb1fb8be6037d7513f348c15d39ea726816f7",
+  "qualified_head": "dac5c2d25bbb1581b520ddeabacddbc352c1e288",
+  "components": {
+    "admission_blob": "9042940d696f41990c3eb1808035a49f0ddc938e",
+    "runner_blob": "d999931d67a6e5958ed1059f894a359aeef82e22",
+    "verifier_blob": "5ff0190f4024625f3c5330813878a1b17b663b8c",
+    "oneclick_blob": "5cb4285819819a5e6e034be7043628b978332b16",
+    "core_tests_blob": "8cbec751ae9883051b054876ceb53667d2104800",
+    "oneclick_tests_blob": "a1d5c3effb9f6a9201cfa8f6761a4e503ab18e90",
+    "core_workflow_blob": "f8b72d94d2a04c21d890541df6fa11b8f64caef2",
+    "oneclick_workflow_blob": "c1acffd4998b773ed77c3c52becbc0eb648efdbb",
+    "execution_config_blob": "b8196f331e39e37f2f5fc4b6fc2031f50ac1c192",
+    "preregistration_lock_blob": "5fd91d79a9a02851c75390a073229eebb2a1179d"
+  },
+  "qualification": {
+    "core": {
+      "run_id": 35938145158,
+      "head": "f7cb7066f7a1eb6c82650a14e9f13df729e29379",
+      "conclusion": "success",
+      "jobs": [
+        {"id": 107439776940, "name": "zero-model (windows-latest)", "conclusion": "success"},
+        {"id": 107439777159, "name": "zero-model (ubuntu-latest)", "conclusion": "success"}
+      ]
+    },
+    "oneclick_final": {
+      "run_id": 35938608384,
+      "head": "dac5c2d25bbb1581b520ddeabacddbc352c1e288",
+      "conclusion": "success",
+      "jobs": [
+        {"id": 107441248952, "name": "powershell-parser", "conclusion": "success"},
+        {"id": 107441249085, "name": "static (ubuntu-latest)", "conclusion": "success"},
+        {"id": 107441249129, "name": "static (windows-latest)", "conclusion": "success"}
+      ]
+    },
+    "superseded_qa_failures": [
+      {
+        "run_id": 35938474574,
+        "head": "c1ca29c2fc2c69989b9ca5d7363e26d7c68a5f95",
+        "classification": "ZERO_MODEL_SCRIPT_PARSER_DEFECT",
+        "scientific_attempt_touched": false
+      },
+      {
+        "run_id": 35938601679,
+        "head": "ed33833bec1b06bdb1f9e2fffa3e0279c9f87ecc",
+        "classification": "ZERO_MODEL_TEST_LITERAL_DEFECT",
+        "scientific_attempt_touched": false
+      }
+    ]
+  },
+  "confirmed_contract": {
+    "legacy_90_second_scientific_deadline_absent": true,
+    "exact_terminal_turn_id_required": true,
+    "consumption_boundary_preserved": true,
+    "route_invalidity_is_evidence_failure_not_authority": true,
+    "unexpected_server_request_is_protocol_failure_not_authority": true,
+    "prohibited_web_or_network_is_scope_violation_not_authority": true,
+    "authority_violation_requires_positive_authority_evidence": true,
+    "spent_predecessor_preserved": true,
+    "new_execution_root": "g2e/.local/P5A-CGW-FX001-TC-001",
+    "preflight_only_runs_without_live_dispatch_lock": true,
+    "live_path_requires_exact_future_dispatch_lock": true
+  },
+  "firewall": {
+    "model_turn": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "attempt_marker_creation": false,
+    "scientific_attempt_consumption": false
+  },
+  "authorization": {
+    "local_preflight_only_authorized": true,
+    "live_dispatch_authorized": false,
+    "next_gate": "LOCAL_PREFLIGHT_ONLY"
+  }
+}
