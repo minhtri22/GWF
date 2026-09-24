@@ -773,3 +773,14 @@
 - **Semantic probe QA:** run `35981635479` PASS; Ubuntu `107574652135` PASS; Windows `107574652479` PASS.
 - **Authorization:** one local read-only semantic probe authorized; no scientific wrapper rerun authorized yet.
 
+### G2E-P5A-CGW — TC semantic probe v1 health-unavailable; offline v2 qualified
+
+- **v1 local result:** WinError 10061 / loopback health endpoint not listening; no config projection emitted.
+- **Classification:** infrastructure availability only; no model/browser/MCP/marker/scientific dispatch.
+- **Attempt:** `p5a-cgw-v4-p5-fx-001-tc-attempt-001` remains `RESERVED_UNCONSUMED`.
+- **v2 design:** offline config semantic projection; raw config hash used only to join against the prior healthy/idle admission snapshot, not as a new normative invariant.
+- **v2 source-backed runtime command checks:** absolute executable, executable exists, and no absolute command component under an ephemeral temp root.
+- **Authoritative QA:** run `35984121493` PASS; Ubuntu `107582663649` PASS; Windows `107582664034` PASS.
+- **Superseded QA:** run `35984064737` failed only on brittle prose matching in static test; no science touched.
+- **Authorization:** exactly one local offline v2 probe; scientific wrapper rerun remains withheld.
+
