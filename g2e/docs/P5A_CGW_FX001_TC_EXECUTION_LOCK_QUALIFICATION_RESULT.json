@@ -1,0 +1,50 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TC-EXECUTION-LOCK-QUALIFICATION-RESULT-v1",
+  "status": "PASS",
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "candidate": {
+    "path": "g2e/docs/P5A_CGW_FX001_TC_EXECUTION_LOCK_CANDIDATE.json",
+    "git_blob": "1c92e3a063eff563b4e2a5026728da4fbf01c178"
+  },
+  "final_lock": {
+    "path": "g2e/docs/P5A_CGW_FX001_TC_EXECUTION_LOCK.json",
+    "git_blob": "1c92e3a063eff563b4e2a5026728da4fbf01c178",
+    "byte_identical_to_candidate": true,
+    "status": "DISPATCH_AUTHORIZED_EXECUTION_LOCK_TC1"
+  },
+  "qa": {
+    "authoritative_run_id": 35968597358,
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 107532760248,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107532760427,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107532760549,
+        "name": "powershell-parser",
+        "conclusion": "success"
+      }
+    ],
+    "superseded_infrastructure_only_run": {
+      "run_id": 35968551908,
+      "classification": "QA_DEPENDENCY_MISSING_PYYAML",
+      "scientific_attempt_touched": false
+    }
+  },
+  "authorization": {
+    "live_dispatch_authorized": true,
+    "max_dispatches": 1,
+    "retry_budget": 0,
+    "automatic_execution": false
+  },
+  "attempt_state": "RESERVED_UNCONSUMED",
+  "next_gate": "SOLE_LIVE_TC_DISPATCH"
+}
