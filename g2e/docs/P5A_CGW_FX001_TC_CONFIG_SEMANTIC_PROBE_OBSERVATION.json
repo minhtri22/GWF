@@ -1,0 +1,26 @@
+{
+  "schema": "G2E-P5A-CGW-TC-CONFIG-SEMANTIC-PROBE-OBSERVATION-v1",
+  "status": "INFRASTRUCTURE_HEALTH_ENDPOINT_UNAVAILABLE",
+  "source_head": "af458f58cf5572053fe3adf48a404a9e6d2d7960",
+  "probe": "scripts/g2e/p5a_cgw_tc_config_semantic_probe.py",
+  "exit_code": 1,
+  "exception_class": "urllib.error.URLError",
+  "mechanism": "LOOPBACK_HEALTH_CONNECTION_REFUSED",
+  "endpoint": "http://127.0.0.1:17841/healthz",
+  "winerror": 10061,
+  "config_projection_emitted": false,
+  "scientific_firewall": {
+    "model_turn": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "attempt_marker_write": false,
+    "scientific_dispatch": false
+  },
+  "scientific_attempt": {
+    "id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+    "state": "RESERVED_UNCONSUMED",
+    "changed_by_probe": false
+  },
+  "interpretation": "The probe failed before semantic adjudication because the CGW loopback service was not listening. This is not evidence that config semantics failed.",
+  "next_gate": "OFFLINE_CONFIG_SEMANTIC_PROBE_V2"
+}
