@@ -823,3 +823,16 @@
 - **Mechanism:** loopback CGW health fetch failed before admission; the wrapper performed no pre-UAC runtime-health readiness gate.
 - **Next gate:** TC-003 pre-UAC runtime-health readiness repair + zero-model QA.
 
+### G2E-P5A-CGW — TC-003 runtime-readiness repair qualified
+
+- **Origin:** TC-002 failed before admission because the loopback CGW health endpoint was unavailable; marker absent and attempt remained unconsumed.
+- **TC-003 fresh root:** `g2e/.local/P5A-CGW-FX001-TC-003`.
+- **Repair:** exact loopback health readiness gate before UAC, VHDX, LocalRoot, admission, runner and marker.
+- **Required health:** status ok; service codex-chatgpt-web; version 4.0.7; mode full; port 17841; accepting turns; zero active HTTP/browser turns.
+- **Unchanged components:** semantic admission blob `0c676f33aeffbffd8a9dc63af9e9bf0934e9dda1`; runner `d999931d67a6e5958ed1059f894a359aeef82e22`; verifier `5ff0190f4024625f3c5330813878a1b17b663b8c`; execution config blob `b8196f331e39e37f2f5fc4b6fc2031f50ac1c192`.
+- **TC-003 one-click blob:** `78e9aba82d8a6fc8a8f28281345cee1798db2496`.
+- **Authoritative QA:** run `36056232335` PASS; Ubuntu `107823774545`, Windows `107823774511`, PowerShell parser `107823774287` all PASS.
+- **Superseded QA:** `36056163184` failed only because PyYAML was omitted from the workflow dependency install; no science touched.
+- **Attempt:** remains `RESERVED_UNCONSUMED`.
+- **Current authorization:** TC-003 local `-PreflightOnly` only; live dispatch withheld.
+
