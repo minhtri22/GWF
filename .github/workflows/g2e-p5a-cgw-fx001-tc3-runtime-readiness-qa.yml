@@ -27,7 +27,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install test dependencies
-        run: python -m pip install pytest
+        run: python -m pip install pytest PyYAML
       - name: TC3 runtime-readiness regressions
         run: python -m pytest -q tests/g2e/test_p5a_cgw_fx001_tc3_runtime_readiness.py
 
