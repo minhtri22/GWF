@@ -1,0 +1,33 @@
+name: G2E P5A-CGW FX001 transport-corrected preregistration
+
+on:
+  push:
+    branches:
+      - research/p5a-cgw-fx001-transport-corrected
+    paths:
+      - "g2e/config/P5A_CGW_FX001_TC_EXECUTION_CONFIG.json"
+      - "g2e/docs/P5A_CGW_FX001_TC_PREREGISTRATION.md"
+      - "g2e/docs/P5A_CGW_FX001_TC_PREREGISTRATION_LOCK.json"
+      - "tests/g2e/test_p5a_cgw_fx001_tc_preregistration.py"
+      - ".github/workflows/g2e-p5a-cgw-fx001-tc-preregistration.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zero-model:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install pytest PyYAML
+      - name: Preregistration QA
+        run: python -m pytest -q tests/g2e/test_p5a_cgw_fx001_tc_preregistration.py
