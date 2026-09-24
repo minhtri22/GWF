@@ -63,8 +63,7 @@ def _is_abs(value: Any) -> bool:
 
 
 def _is_windows_pipe(value: Any) -> bool:
-    return isinstance(value, str) and re.fullmatch(r"^\\\\\\\\\.\\\\pipe\\\\[A-Za-z0-9._-]+$", value) is not None
-
+    return isinstance(value, str) and re.fullmatch(r"^\\\\\.\\pipe\\[A-Za-z0-9._-]+$", value) is not None
 
 def _inside(path: str, root: str) -> bool:
     try:
