@@ -1,0 +1,47 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TC-LOCAL-PREFLIGHT-RESULT-v1",
+  "status": "PASS",
+  "adjudication": "LOCAL_PREFLIGHT_PASS_UNCONSUMED",
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "source_head": "9ab12319dd98d250abaca9703830169dda313b15",
+  "authorization": {
+    "path": "g2e/docs/P5A_CGW_FX001_TC_LOCAL_PREFLIGHT_AUTHORIZATION.json",
+    "status": "LOCAL_PREFLIGHT_ONLY_AUTHORIZED",
+    "live_dispatch_authorized_at_preflight": false
+  },
+  "observed": {
+    "exit_code": 0,
+    "preflight_status": "PASS",
+    "prereg_lock_status": "PREREGISTERED_DISPATCH_WITHHELD",
+    "dispatch_lock_status": "WITHHELD_NOT_REQUIRED_FOR_PREFLIGHT",
+    "attempt_consumed": false,
+    "model_turn_sent": false,
+    "tc_local_root_exists_after": false,
+    "tc_marker_exists_after": false,
+    "spent_predecessor_marker_present": true
+  },
+  "evidence_interpretation": {
+    "tc_local_root_absence": "The one-click script fail-closes if the TC LocalRoot already exists before emitting PASS, and -PreflightOnly returns before any LocalRoot creation.",
+    "tc_marker_absence": "The TC marker lives under the TC LocalRoot; the LocalRoot is absent and -PreflightOnly returns before marker-capable live execution.",
+    "spent_predecessor_marker": "Expected preserved evidence from the closed INVALID-SPENT predecessor and not state of the TC attempt."
+  },
+  "firewall": {
+    "uac": false,
+    "vhdx": false,
+    "local_execution_root_creation": false,
+    "model_turn": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "attempt_marker_creation": false,
+    "scientific_attempt_consumption": false
+  },
+  "governance": {
+    "spent_predecessor_remains_closed": true,
+    "tc_attempt_state": "RESERVED_UNCONSUMED",
+    "retry_budget": 0,
+    "max_future_dispatches": 1,
+    "not_a_retry": true
+  },
+  "next_gate": "TC_EXECUTION_LOCK_CANDIDATE_ZERO_MODEL_QA"
+}
