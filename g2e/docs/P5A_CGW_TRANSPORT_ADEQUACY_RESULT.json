@@ -1,0 +1,56 @@
+{
+  "schema": "G2E-P5A-CGW-TRANSPORT-ADEQUACY-RESULT-v1",
+  "status": "PASS",
+  "classification": "INFRASTRUCTURE_CONTRACT_MISMATCH_CONFIRMED",
+  "program_id": "p5a-cgw-transport-adequacy-v1",
+  "origin_spent_attempt": "p5a-cgw-v4-p5-fx-001-attempt-001",
+  "origin_closure_commit": "d6f836614b4fafb4861917fa68d1d3b7e9dcc875",
+  "qualification_head": "10567ffeb04125fab8a16a3168f8e67cb7975ba9",
+  "github_actions": {
+    "run_id": 35937434076,
+    "run_attempt": 1,
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 107437526458,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107437526704,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "confirmed_findings": {
+    "legacy_outer_absolute_turn_timeout_sec": 90,
+    "qualified_upstream_browser_absolute_deadline_default": null,
+    "qualified_upstream_bridge_stall_timeout_sec": 300,
+    "qualified_upstream_mcp_invocation_timeout_ms": 90000,
+    "qualified_upstream_tunnel_command_response_deadline_ms": 120000,
+    "legacy_authority_conflates_route_invalidity": true,
+    "legacy_zero_model_qa_protected_90s_assumption": true
+  },
+  "future_contract": {
+    "reuse_spent_attempt": false,
+    "reuse_spent_execution_lock": false,
+    "scientific_adjudication_absolute_turn_deadline_ms": null,
+    "route_invalidity_class": "evidence_integrity_failure",
+    "unexpected_server_request_class": "protocol_failure",
+    "prohibited_tool_or_network_class": "scope_violation",
+    "authority_violation_requires_positive_authority_evidence": true
+  },
+  "firewall": {
+    "model_turn": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "attempt_marker_creation": false,
+    "scientific_attempt_consumption": false
+  },
+  "scientific_effect": {
+    "spent_v2r6_verdict_changed": false,
+    "spent_v2r6_remains": "INVALID — SPENT",
+    "fresh_attempt_authorized": false
+  }
+}
