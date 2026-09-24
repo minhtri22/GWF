@@ -210,7 +210,42 @@ Fixture credentials:
 ```text
 username = home-uat
 password = home-uat-password
-URL      = http://127.0.0.1:8877/app/home
+URL      = http://localhost:8877/app/home
 ```
 
 Only H-UAT-04/05/06/07/08R/09 need to be rerun. Already accepted H-UAT-01/02/03/10/11 are not reopened.
+
+
+## User UAT follow-up — dogfood + refresh failure
+
+Operator report:
+
+```text
+H-UAT-04 = P
+H-UAT-05 = P
+H-UAT-06 = P
+H-UAT-07 = P
+H-UAT-08R = F
+H-UAT-09 = UNTESTED_ERROR_STATE
+```
+
+The operator reports all dogfood-backed data surfaces PASS. The refresh failure is reproducible after navigating Projects -> Home -> clicking the Home Refresh control: the browser returns to login and the session is lost.
+
+The supplied screenshot shows the `home-uat` fixture identity while browsing a `127.0.0.1:<port>` origin. Local GWF instances use the same browser cookie name `gwr_browser_session`. Browser cookies are host/path scoped rather than port scoped, so concurrent GWF instances on different ports of `127.0.0.1` can overwrite each other's session cookie when their auth secrets differ. This is the leading environment-level explanation for the intermittent behavior; it is not yet promoted to root-cause closure.
+
+The fixture instructions are therefore tightened to open the fixture through `http://localhost:<fixture-port>/...` while it remains bound to `127.0.0.1`. This separates the fixture cookie host from the canonical `127.0.0.1` session without changing product authentication semantics.
+
+Current Home UAT state:
+
+```text
+USER_UAT_PASS       = 9
+USER_UAT_FAIL       = 1
+USER_UAT_UNTESTED   = 1
+HOME                = OPEN
+NEXT_SCREEN_ALLOWED = false
+```
+
+Remaining discriminators:
+
+1. rerun H-UAT-08R using the exact localhost fixture URL to determine whether the failure is cross-port cookie collision or a Home/session defect;
+2. run `-Mode error` through the exact localhost fixture URL for H-UAT-09.
