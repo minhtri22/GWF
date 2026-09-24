@@ -1,0 +1,68 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TC3-RUNTIME-READINESS-IMPLEMENTATION-QUALIFICATION-v1",
+  "status": "PASS",
+  "source_head": "85a3240ac7b63d9560920f1e464dc63ca64a00fb",
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "attempt_state": "RESERVED_UNCONSUMED",
+  "repair_class": "PROSPECTIVE_PRECONSUMPTION_RUNTIME_READINESS_REPAIR",
+  "predecessor_tc002": {
+    "root": "g2e/.local/P5A-CGW-FX001-TC-002",
+    "disposition": "PRESERVE_IMMUTABLE_DO_NOT_REUSE",
+    "scientific_verdict": "NOT_APPLICABLE",
+    "attempt_consumed": false
+  },
+  "successor_tc003": {
+    "root": "g2e/.local/P5A-CGW-FX001-TC-003",
+    "oneclick_blob": "78e9aba82d8a6fc8a8f28281345cee1798db2496",
+    "admission_blob": "0c676f33aeffbffd8a9dc63af9e9bf0934e9dda1",
+    "runner_blob": "d999931d67a6e5958ed1059f894a359aeef82e22",
+    "verifier_blob": "5ff0190f4024625f3c5330813878a1b17b663b8c",
+    "execution_config_blob": "b8196f331e39e37f2f5fc4b6fc2031f50ac1c192"
+  },
+  "readiness_gate": {
+    "position": "PRE_UAC_PRE_VHDX_PRE_LOCALROOT_PRE_ADMISSION_PRE_RUNNER",
+    "endpoint": "http://127.0.0.1:17841/healthz",
+    "required": {
+      "status": "ok",
+      "service": "codex-chatgpt-web",
+      "version": "4.0.7",
+      "mode": "full",
+      "port": 17841,
+      "accepting_turns": true,
+      "active_http_turns": 0,
+      "active_browser_turns": 0
+    }
+  },
+  "authoritative_qa": {
+    "run_id": 36056232335,
+    "jobs": [
+      {
+        "id": 107823774545,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107823774511,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107823774287,
+        "name": "powershell-parser",
+        "conclusion": "success"
+      }
+    ],
+    "conclusion": "success"
+  },
+  "superseded_run": {
+    "run_id": 36056163184,
+    "classification": "WORKFLOW_DEPENDENCY_MISSING_PYYAML",
+    "scientific_attempt_touched": false
+  },
+  "authorization": {
+    "local_preflight_only_may_be_authorized": true,
+    "live_dispatch_authorized": false
+  },
+  "next_gate": "TC3_LOCAL_RUNTIME_READINESS_PREFLIGHT"
+}
