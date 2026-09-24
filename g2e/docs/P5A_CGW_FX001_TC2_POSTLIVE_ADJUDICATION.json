@@ -1,0 +1,57 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TC2-POSTLIVE-ADJUDICATION-v1",
+  "status": "PRECONSUMPTION_INFRASTRUCTURE_BLOCK_CONFIRMED",
+  "scientific_verdict": "NOT_APPLICABLE",
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "source_head": "d1a35e2de8b37061dcee5c493eb5d4ac0239f2e3",
+  "observed": {
+    "local_root_exists": true,
+    "marker_exists": false,
+    "execution_report_exists": true,
+    "execution_report_sha256": "6f9e1d90315c38c9e9d373676a92282a6676adc3309aff39f2526bc334d8812b",
+    "admission_exists": false,
+    "health_snapshot_exists": false,
+    "runner_evidence_exists": false,
+    "verification_exists": false,
+    "protocol_exists": false,
+    "route_evidence_exists": false,
+    "vhdx_exists": true,
+    "vhdx_attached_after": false,
+    "handoff_diagnostic_exists": false,
+    "handoff_config_exists": true
+  },
+  "execution_report": {
+    "status": "EXECUTION_WRAPPER_ERROR",
+    "attempt_consumed": false,
+    "runner_exit_code": null,
+    "verifier_exit_code": null,
+    "verification_sha256": null,
+    "diagnostic": "Unable to connect to the remote server",
+    "cleanup": {
+      "attached_before_cleanup": true,
+      "cleanup_action": "DISMOUNTED",
+      "attached_after_cleanup": false,
+      "cleanup_error": null
+    }
+  },
+  "mechanism": {
+    "class": "PRE_ADMISSION_RUNTIME_HEALTH_UNAVAILABLE",
+    "exact_stage": "CGW_HEALTHZ_FETCH_BEFORE_ADMISSION",
+    "admission_started": false,
+    "runner_started": false,
+    "durable_consumption_boundary_crossed": false,
+    "model_turn_sent": false,
+    "mcp_invocation": false,
+    "browser_submission": false
+  },
+  "adjudication": {
+    "attempt_state": "RESERVED_UNCONSUMED",
+    "retry_budget_consumed": false,
+    "scientific_dispatch_count": 0,
+    "tc002_root_disposition": "PRESERVE_IMMUTABLE_DO_NOT_REUSE",
+    "tc002_live_lock_disposition": "HISTORICAL_AUTHORIZATION_SPENT_BY_WRAPPER_INVOCATION_DO_NOT_REUSE",
+    "same_tc002_wrapper_rerun_authorized": false
+  },
+  "next_gate": "TC3_PRE_UAC_RUNTIME_HEALTH_READINESS_REPAIR_AND_ZERO_MODEL_QA"
+}
