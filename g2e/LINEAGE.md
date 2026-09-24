@@ -797,3 +797,16 @@
 - **Repair:** raw config SHA retained as provenance only; material semantic values are explicitly frozen, including context window 256000, compatibility-v1, Sol=true, Pro=false, bigger-context=true, and Windows runtime `bun.exe`.
 - **Current authorization:** TC-002 local `-PreflightOnly` only. Live dispatch remains withheld; no TC-002 execution lock exists yet.
 
+### G2E-P5A-CGW — TC-002 local preflight PASS and live lock qualification PASS
+
+- **TC-002 local preflight:** PASS at source HEAD `2c0db5e71264d62758c1be5d808e0c284fb24048`; exit `0`; attempt consumed `false`; model turn sent `false`; no TC-002 LocalRoot/marker created.
+- **Attempt:** `p5a-cgw-v4-p5-fx-001-tc-attempt-001` remains `RESERVED_UNCONSUMED`.
+- **Candidate lock blob:** `2debd81a6f45e9764a69d0749b19e5b9a5dee3ab`.
+- **Authoritative lock QA:** run `35989165462` PASS; Ubuntu `107598853136`, Windows `107598853421`, PowerShell parser `107598852815` all PASS.
+- **Final TC-002 live lock:** `g2e/docs/P5A_CGW_FX001_TC2_EXECUTION_LOCK.json`.
+- **Final live-lock blob:** `2debd81a6f45e9764a69d0749b19e5b9a5dee3ab`, byte-identical to candidate.
+- **Lock status:** `DISPATCH_AUTHORIZED_EXECUTION_LOCK_TC2`.
+- **Authorization:** exactly one future scientific live dispatch; retry budget `0`; automatic execution false.
+- **Evidence roots:** TC-001 preserved immutable; TC-002 uses fresh root `g2e/.local/P5A-CGW-FX001-TC-002`.
+- **Next gate:** sole live TC-002 dispatch.
+
