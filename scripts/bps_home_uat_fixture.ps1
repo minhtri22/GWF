@@ -39,8 +39,8 @@ Write-Host ""
 Write-Host "GWF HOME UAT - ISOLATED FIXTURE" -ForegroundColor Cyan
 Write-Host ("MODE={0}" -f $Mode)
 Write-Host ("HEAD={0}" -f $Head)
-Write-Host ("URL=http://{0}:{1}/app/home" -f $HostName,$Port)
-Write-Host "This fixture uses an ephemeral temporary database and does not touch the canonical working DB."
+Write-Host ("BROWSER_URL=http://localhost:{0}/app/home" -f $Port)\nWrite-Host ("BIND_URL=http://{0}:{1}/app/home" -f $HostName,$Port)
+Write-Host "Open the BROWSER_URL exactly as shown. localhost isolates the fixture cookie from 127.0.0.1 GWF sessions."\nWrite-Host "This fixture uses an ephemeral temporary database and does not touch the canonical working DB."
 Write-Host "Stop with Ctrl+C."
 Write-Host ""
 
