@@ -317,7 +317,7 @@ def wait_for_turn(client: RpcClient, turn_id: str) -> dict[str, Any]:
         for msg in list(notifications):
             if msg.get("method") == "turn/completed":
                 turn = ((msg.get("params") or {}).get("turn") or {})
-                if turn.get("id") in (None, turn_id):
+                if turn.get("id") == turn_id:
                     return {
                         "terminal": True,
                         "timeout": False,
