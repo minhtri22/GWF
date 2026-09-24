@@ -7,7 +7,7 @@ SCREEN_ID        = HOME
 OWNER            = BPS-M01
 ROUTE            = /app/home
 PROTOCOL         = BPS-SCREEN-FAST-LANE-v1
-STATUS           = SELF_QA_PASS / USER_UAT_PENDING
+STATUS           = USER_UAT_OPEN
 BASE_HEAD        = 28f82c10de8737ee33e59027f804ea54ce41bf95
 CHECKLIST_HEAD   = f37b20c14f001e83f2b0cb3ef176102c59a02cd0
 CANDIDATE_HEAD   = b3bb883085d65fbcfbd655da7d895599b9d65210
@@ -117,3 +117,49 @@ F = FAIL
 ```
 
 Any F keeps Home open. All P marks `HOME = SCREEN_PASS`, then the next screen may begin.
+
+## User UAT — 2026-09-24
+
+Observed on the current Home product surface. Screenshot footer reports build:
+
+```text
+910612aeb1c7508cabec5e42a5d36ff87277d861
+```
+
+Adjudication:
+
+```text
+H-UAT-01 = P
+H-UAT-02 = P
+H-UAT-03 = P
+H-UAT-04 = UNTESTED_NONEMPTY_STATE
+H-UAT-05 = UNTESTED_NONEMPTY_STATE
+H-UAT-06 = UNTESTED_NONEMPTY_STATE
+H-UAT-07 = UNTESTED_NONEMPTY_STATE
+H-UAT-08 = OPEN_INTERMITTENT_SESSION_LOSS_ON_REFRESH
+H-UAT-09 = UNTESTED_ERROR_STATE
+H-UAT-10 = P
+H-UAT-11 = P
+```
+
+The currently visible zero-result states were:
+
+- Executing Projects: `No projects are executing in the current authorized scope.`
+- Live Runs / Executions: `No RUNNING execution runs.`
+- Attention Required: `No authoritative attention items.`
+- Recent Activity: `No authoritative activity in this scope yet.`
+
+These observations are not promoted to PASS for the non-empty authoritative-data behaviors because the operator explicitly reported that no dogfood data was available to judge them.
+
+Refresh was reported as intermittent: sometimes preserving login/session and sometimes returning the operator to login. This remains OPEN until localized; a prior UAT phase did not show the loss.
+
+Error/unavailable rendering remains untested by the operator because no controlled error was observed.
+
+```text
+USER_UAT_PASS       = 5
+USER_UAT_FAIL       = 0
+USER_UAT_OPEN       = 1
+USER_UAT_UNTESTED   = 5
+HOME                = OPEN
+NEXT_SCREEN_ALLOWED = false
+```
