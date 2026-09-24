@@ -718,3 +718,18 @@
 - **GitHub Actions:** run `35937711829` PASS; Ubuntu `107438403029` PASS; Windows `107438403265` PASS.
 - **Authorization:** bounded implementation + zero-model QA authorized; live dispatch withheld.
 - **Firewall:** no model turn/browser submission/MCP invocation/attempt consumption.
+
+
+### G2E-P5A-CGW — P5-FX-001 transport-corrected implementation qualification
+
+- **Study:** `p5a-cgw-v4-p5-fx-001-transport-corrected-qualification`.
+- **Attempt:** `p5a-cgw-v4-p5-fx-001-tc-attempt-001`; still unconsumed.
+- **Qualified package head:** `dac5c2d25bbb1581b520ddeabacddbc352c1e288`.
+- **Formal implementation result commit:** `2fc6bcc1f2e602d35e73a828bec46463556b2887`.
+- **Qualified blobs:** admission `9042940d696f41990c3eb1808035a49f0ddc938e`; runner `d999931d67a6e5958ed1059f894a359aeef82e22`; verifier `5ff0190f4024625f3c5330813878a1b17b663b8c`; one-click `5cb4285819819a5e6e034be7043628b978332b16`.
+- **Core zero-model QA:** run `35938145158` PASS on Windows and Ubuntu.
+- **One-click zero-model QA:** final run `35938608384` PASS; PowerShell 5.1 parser PASS; Windows static PASS; Ubuntu static PASS.
+- **Superseded zero-model defects:** run `35938474574` caught a PowerShell parser defect; run `35938601679` caught a Python test-literal escape defect. Neither touched model/browser/MCP/attempt state.
+- **Corrected contract:** no 90 s scientific absolute deadline; exact terminal turn id required; route/protocol/scope/authority classes separated; spent V2R6 evidence remains immutable.
+- **Local preflight authorization:** `P5A_CGW_FX001_TC_LOCAL_PREFLIGHT_AUTHORIZATION.json`; preflight only is authorized.
+- **Live dispatch:** withheld. An execution lock may be created only after exact local preflight PASS with TC root and marker still absent.
