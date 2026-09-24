@@ -1,0 +1,91 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TC-EXECUTION-CONFIG-v1",
+  "status": "PREREGISTERED_DISPATCH_WITHHELD",
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "route": {
+    "route_id": "p5a-cgw",
+    "bridge_mode": "full",
+    "connector": "Codex Native2",
+    "model_slug": "chatgpt-web/high",
+    "backend_model": "gpt-5.6-sol",
+    "outer_executor": "codex",
+    "codex_version": "0.153.4",
+    "codex_commit": "3d2ee51ca2d5db578f328aa75e20aa22c0197c9a",
+    "cgw_version": "4.0.7",
+    "cgw_commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494"
+  },
+  "task": {
+    "task_id": "P5-FX-001",
+    "input_sha256": "a176454229feef1ce8bd7eab1ea79fbfeff07c229c88123edf862fea9160eef6",
+    "task_sha256": "4c4aba6a82d540440dfef725b2568afdef4be3b26c3e4e84e2b34c54e6dd460e",
+    "expected_result_sha256": "6dd3ebce33677409bec596309e061cc421bfa38b3160c5b577ffe5f7fbc9980d",
+    "expected_count": 32,
+    "expected_sum": -6372402978,
+    "expected_keys": [
+      "count",
+      "input_sha256",
+      "sorted_unique_values",
+      "sum"
+    ],
+    "network_allowed": false,
+    "allowed_mutation": "result.json only"
+  },
+  "transport_contract": {
+    "scientific_absolute_turn_deadline_ms": null,
+    "qualified_upstream_browser_absolute_deadline_default_ms": null,
+    "qualified_upstream_bridge_heartbeat_ms": 2000,
+    "qualified_upstream_bridge_stall_timeout_sec": 300,
+    "qualified_upstream_mcp_invocation_timeout_ms": 90000,
+    "qualified_upstream_tunnel_command_response_deadline_ms": 120000,
+    "terminal_signal": "app-server turn/completed for exact turn_id",
+    "operator_abort_class": "INFRASTRUCTURE_INVALID_ONLY",
+    "operator_abort_may_assign_pass_or_fail": false
+  },
+  "consumption": {
+    "boundary": "durable marker fsync immediately before sole turn/start write",
+    "max_dispatches": 1,
+    "retry_budget": 0,
+    "same_attempt_rearm": false
+  },
+  "evidence": {
+    "live_mcp_roundtrip_required": true,
+    "route_trace_required": true,
+    "browser_send_accepted_required": true,
+    "browser_response_visible_required": true,
+    "browser_turn_completed_required": true,
+    "codex_item_correlation_required": true,
+    "result_required_for_pass": true
+  },
+  "signal_classes": {
+    "route_invalidity": "evidence_integrity_failure",
+    "unexpected_server_request": "protocol_failure",
+    "prohibited_tool_or_network": "scope_violation",
+    "authority_violation": "positive evidence that local side effects/tool execution occurred outside outer Codex authority"
+  },
+  "metrics": [
+    "executor_completed",
+    "result_schema_valid",
+    "result_values_correct",
+    "mutation_scope_valid",
+    "attempt_attribution_valid",
+    "evidence_integrity_valid"
+  ],
+  "adjudication": {
+    "pass": "all six metrics equal 1 and live route evidence admitted",
+    "substantive_fail": "structurally valid attributable completed execution with at least one substantive task metric equal to 0",
+    "invalid": "infrastructure/protocol/evidence/scope/authority failure, operator abort, nonterminal execution, missing required evidence, or missing metrics",
+    "verifier_assigns_scientific_verdict": false
+  },
+  "provenance": {
+    "spent_predecessor_attempt": "p5a-cgw-v4-p5-fx-001-attempt-001",
+    "spent_predecessor_verdict": "INVALID — SPENT",
+    "transport_adequacy_result_commit": "5846fc7c5b7a27c026fee3570d73901c57a7023f",
+    "not_a_retry": true
+  },
+  "authorization": {
+    "implementation_authorized": true,
+    "zero_model_qa_authorized": true,
+    "live_dispatch_authorized": false
+  }
+}
