@@ -1,0 +1,29 @@
+{
+  "schema": "G2E-P5A-CGW-TC-CONFIG-SEMANTIC-PROBE-QUALIFICATION-v1",
+  "status": "PASS",
+  "authoritative_run_id": 35981635479,
+  "jobs": [
+    {
+      "id": 107574652135,
+      "name": "zero-model (ubuntu-latest)",
+      "conclusion": "success"
+    },
+    {
+      "id": 107574652479,
+      "name": "zero-model (windows-latest)",
+      "conclusion": "success"
+    }
+  ],
+  "firewall": {
+    "model_turn": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "attempt_marker_write": false,
+    "scientific_dispatch": false
+  },
+  "authorization": {
+    "local_semantic_probe_authorized": true,
+    "scientific_wrapper_rerun_authorized": false
+  },
+  "next_gate": "LOCAL_REDACTED_CONFIG_SEMANTIC_PROBE"
+}
