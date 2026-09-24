@@ -1,0 +1,35 @@
+{
+  "schema": "G2E-P5A-CGW-TC-OFFLINE-CONFIG-SEMANTIC-PROBE-V2-QUALIFICATION-v1",
+  "status": "PASS",
+  "authoritative_run_id": 35984121493,
+  "jobs": [
+    {
+      "id": 107582663649,
+      "name": "zero-model (ubuntu-latest)",
+      "conclusion": "success"
+    },
+    {
+      "id": 107582664034,
+      "name": "zero-model (windows-latest)",
+      "conclusion": "success"
+    }
+  ],
+  "superseded_run": {
+    "run_id": 35984064737,
+    "classification": "STATIC_TEST_PROSE_MATCH_FAILURE",
+    "scientific_attempt_touched": false
+  },
+  "firewall": {
+    "network_request": false,
+    "model_turn": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "attempt_marker_write": false,
+    "scientific_dispatch": false
+  },
+  "authorization": {
+    "local_offline_config_probe_v2_authorized": true,
+    "scientific_wrapper_rerun_authorized": false
+  },
+  "next_gate": "LOCAL_OFFLINE_CONFIG_SEMANTIC_PROBE_V2"
+}
