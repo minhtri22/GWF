@@ -1,0 +1,75 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TC2-IMPLEMENTATION-QUALIFICATION-RESULT-v1",
+  "status": "PASS",
+  "source_head": "ed82173c5d430b7710c763ab33d28f0459f34326",
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "repair_class": "PROSPECTIVE_PRECONSUMPTION_INFRASTRUCTURE_REPAIR",
+  "predecessor_tc001": {
+    "root": "g2e/.local/P5A-CGW-FX001-TC-001",
+    "disposition": "PRESERVE_IMMUTABLE_DO_NOT_REUSE",
+    "attempt_consumed": false,
+    "scientific_verdict": "NOT_APPLICABLE"
+  },
+  "successor_tc002": {
+    "root": "g2e/.local/P5A-CGW-FX001-TC-002",
+    "admission_blob": "0c676f33aeffbffd8a9dc63af9e9bf0934e9dda1",
+    "oneclick_blob": "38d424e38bd1c393b4f0cdbc7876948ac205e01b",
+    "runner_blob": "d999931d67a6e5958ed1059f894a359aeef82e22",
+    "verifier_blob": "5ff0190f4024625f3c5330813878a1b17b663b8c",
+    "execution_config_blob": "b8196f331e39e37f2f5fc4b6fc2031f50ac1c192",
+    "execution_config_canonical_sha256": "6b88011e0bc6ba0164a0e6f4230bb1fb8be6037d7513f348c15d39ea726816f7"
+  },
+  "semantic_repair": {
+    "whole_file_config_hash_enforced": false,
+    "raw_config_hash_retained_for_provenance": true,
+    "frozen_observed_semantics": {
+      "release_version": "4.0.7",
+      "mode": "full",
+      "subagent_protocol": "compatibility-v1",
+      "host": "127.0.0.1",
+      "port": 17841,
+      "context_window": 256000,
+      "connector": "Codex Native2",
+      "browser_host": "launcher",
+      "sol_available": true,
+      "pro_available": false,
+      "experimental_bigger_context": true,
+      "stall_timeout_rule": "absent_or_300_seconds",
+      "auto_approve_tool_calls": false,
+      "windows_runtime_executable_basename": "bun.exe",
+      "runtime_command_length": 2
+    }
+  },
+  "authoritative_qa": {
+    "run_id": 35985055762,
+    "ubuntu_job_id": 107585664699,
+    "windows_job_id": 107585664688,
+    "powershell_parser_job_id": 107585664524,
+    "conclusion": "success"
+  },
+  "superseded_zero_model_failures": [
+    {
+      "run_id": 35984799657,
+      "classification": "WINDOWS_NAMED_PIPE_REGEX_IMPLEMENTATION_DEFECT",
+      "scientific_attempt_touched": false
+    },
+    {
+      "run_id": 35984946573,
+      "classification": "WINDOWS_NAMED_PIPE_REGEX_AND_FIXTURE_OVERESCAPED",
+      "scientific_attempt_touched": false
+    }
+  ],
+  "firewall": {
+    "model_turn": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "attempt_marker_write": false,
+    "scientific_dispatch": false
+  },
+  "authorization": {
+    "local_preflight_only_may_be_authorized": true,
+    "live_dispatch_authorized": false
+  },
+  "next_gate": "TC2_LOCAL_PREFLIGHT_ONLY"
+}
