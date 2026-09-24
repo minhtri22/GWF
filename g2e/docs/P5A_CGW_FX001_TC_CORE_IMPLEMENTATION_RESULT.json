@@ -1,0 +1,40 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TC-CORE-IMPLEMENTATION-RESULT-v1",
+  "status": "PASS",
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "qualification_head": "f7cb7066f7a1eb6c82650a14e9f13df729e29379",
+  "execution_config_canonical_sha256": "6b88011e0bc6ba0164a0e6f4230bb1fb8be6037d7513f348c15d39ea726816f7",
+  "components": {
+    "admission_blob": "9042940d696f41990c3eb1808035a49f0ddc938e",
+    "runner_blob": "d999931d67a6e5958ed1059f894a359aeef82e22",
+    "verifier_blob": "5ff0190f4024625f3c5330813878a1b17b663b8c",
+    "tests_blob": "8cbec751ae9883051b054876ceb53667d2104800",
+    "workflow_blob": "f8b72d94d2a04c21d890541df6fa11b8f64caef2"
+  },
+  "github_actions": {
+    "run_id": 35938145158,
+    "conclusion": "success",
+    "jobs": [
+      {"id": 107439776940, "name": "zero-model (windows-latest)", "conclusion": "success"},
+      {"id": 107439777159, "name": "zero-model (ubuntu-latest)", "conclusion": "success"}
+    ]
+  },
+  "confirmed": {
+    "legacy_90_second_scientific_deadline_removed": true,
+    "terminal_turn_requires_exact_turn_id": true,
+    "route_invalidity_not_authority_violation": true,
+    "protocol_scope_authority_signals_separated": true,
+    "consumption_boundary_preserved": true
+  },
+  "authorization": {
+    "oneclick_envelope_implementation_authorized": true,
+    "live_dispatch_authorized": false
+  },
+  "firewall": {
+    "model_turn": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "attempt_consumption": false
+  }
+}
