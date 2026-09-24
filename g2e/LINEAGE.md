@@ -688,3 +688,18 @@
 - **Final verdict:** `INVALID — SPENT`.
 - **Not FAIL:** no completed execution and no substantive task metric equal to 0.
 - **Governance:** retry=0; same attempt may not be rerun or rearmed; V4-001 and V4-002 preserved; future continuation requires a new preregistered attempt or separately governed infrastructure study.
+
+
+### G2E-P5A-CGW — Transport Adequacy v1 infrastructure study
+
+- **Origin:** follows spent closure of `p5a-cgw-v4-p5-fx-001-attempt-001`; no retry, rearm, or replacement attempt.
+- **Branch:** `research/p5a-cgw-transport-adequacy`.
+- **Qualified upstream:** `miuuyy/codex-chatgpt-web` v4.0.7 commit `b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494`; `openai/codex` `rust-v0.153.4` commit `3d2ee51ca2d5db578f328aa75e20aa22c0197c9a`.
+- **Mechanism finding 1:** V2R6 GWF runner imposed an absolute 90 s turn deadline, while qualified Full mode has no absolute browser-turn deadline by default, uses 2 s SSE heartbeats, a 300 s bridge-stall budget, up to 90 s per MCP invocation, and an approximately 120 s tunnel command-response deadline.
+- **Mechanism finding 2:** V2R6 verifier mapped `not route_check.valid` directly into `authority_violation=true`, conflating evidence integrity with authority.
+- **QA correction:** previous zero-model implementation test explicitly asserted `TURN_TIMEOUT_S = 90.0`; Transport Adequacy v1 now records that assertion as legacy spent behavior rather than a future transport requirement.
+- **Zero-model qualification head:** `10567ffeb04125fab8a16a3168f8e67cb7975ba9`.
+- **GitHub Actions:** run `35937434076` PASS; Ubuntu job `107437526458` PASS; Windows job `107437526704` PASS.
+- **Formal result:** `INFRASTRUCTURE_CONTRACT_MISMATCH_CONFIRMED`; result file `g2e/docs/P5A_CGW_TRANSPORT_ADEQUACY_RESULT.json`.
+- **Firewall:** no model turn, browser submission, MCP invocation, attempt marker, or scientific attempt consumption.
+- **Governance:** V2R6 remains `INVALID — SPENT`; fresh scientific attempt is **not** authorized by this infrastructure result. Any continuation requires a new preregistered attempt under the corrected transport contract.
