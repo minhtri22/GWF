@@ -746,3 +746,19 @@
 - **Adjudication:** `LOCAL_PREFLIGHT_PASS_UNCONSUMED`.
 - **Live dispatch:** still withheld. Next gate is execution-lock candidate creation plus zero-model/static QA; the exact live lock path remains absent until that QA passes.
 
+### G2E-P5A-CGW — TC execution lock qualification PASS
+
+- **Preflight result:** `LOCAL_PREFLIGHT_PASS_UNCONSUMED`; TC attempt remains `RESERVED_UNCONSUMED`.
+- **Lock candidate blob:** `1c92e3a063eff563b4e2a5026728da4fbf01c178`.
+- **Authoritative zero-model QA:** run `35968597358` PASS.
+  - Ubuntu job `107532760248` PASS.
+  - Windows job `107532760427` PASS.
+  - PowerShell 5.1 parser job `107532760549` PASS.
+- **Superseded QA run:** `35968551908` failed before assertions because workflow omitted PyYAML; infrastructure-only, no scientific attempt touched.
+- **Final live lock:** `g2e/docs/P5A_CGW_FX001_TC_EXECUTION_LOCK.json`.
+- **Final live-lock blob:** `1c92e3a063eff563b4e2a5026728da4fbf01c178`, byte-identical to the qualified candidate.
+- **Lock status:** `DISPATCH_AUTHORIZED_EXECUTION_LOCK_TC1`.
+- **Authorization:** exactly one future live dispatch; retry budget `0`; automatic execution false.
+- **Transport:** no scientific absolute outer-turn deadline; upstream liveness contract remains authoritative.
+- **Next gate:** sole live TC dispatch.
+
