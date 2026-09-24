@@ -1,0 +1,35 @@
+name: G2E P5A-CGW FX001 TC core implementation QA
+
+on:
+  push:
+    branches:
+      - research/p5a-cgw-fx001-transport-corrected
+    paths:
+      - "scripts/g2e/p5a_cgw_fx001_tc_admission.py"
+      - "scripts/g2e/p5a_cgw_fx001_tc_runner.py"
+      - "scripts/g2e/p5a_cgw_fx001_tc_verify.py"
+      - "tests/g2e/test_p5a_cgw_fx001_tc_implementation.py"
+      - ".github/workflows/g2e-p5a-cgw-fx001-tc-core-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zero-model:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install pytest PyYAML
+      - name: Compile TC Python
+        run: python -m py_compile scripts/g2e/p5a_cgw_fx001_tc_admission.py scripts/g2e/p5a_cgw_fx001_tc_runner.py scripts/g2e/p5a_cgw_fx001_tc_verify.py
+      - name: TC core regressions
+        run: python -m pytest -q tests/g2e/test_p5a_cgw_fx001_tc_implementation.py
