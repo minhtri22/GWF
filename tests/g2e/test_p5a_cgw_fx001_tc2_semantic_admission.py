@@ -64,9 +64,8 @@ def valid_config():
 
 def test_windows_named_pipe_shape_parser():
     mod = load_admission()
-    assert mod._is_windows_pipe(r"\\\\.\\pipe\\codex-chatgpt-web-test") is True
-    assert mod._is_windows_pipe(r"\\.\\pipe\\broken") is False
-
+    assert mod._is_windows_pipe(r"\\.\pipe\codex-chatgpt-web-test") is True
+    assert mod._is_windows_pipe(r"\.\pipe\broken") is False
 
 def test_admission_no_longer_enforces_raw_config_hash():
     s = ADMISSION.read_text(encoding="utf-8")
