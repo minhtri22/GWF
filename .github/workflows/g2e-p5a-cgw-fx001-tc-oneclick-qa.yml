@@ -1,0 +1,51 @@
+name: G2E P5A-CGW FX001 TC one-click QA
+
+on:
+  push:
+    branches:
+      - research/p5a-cgw-fx001-transport-corrected
+    paths:
+      - "scripts/g2e/p5a_cgw_fx001_tc_oneclick.ps1"
+      - "tests/g2e/test_p5a_cgw_fx001_tc_oneclick.py"
+      - ".github/workflows/g2e-p5a-cgw-fx001-tc-oneclick-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install pytest PyYAML
+      - name: Static one-click regressions
+        run: python -m pytest -q tests/g2e/test_p5a_cgw_fx001_tc_oneclick.py
+
+  powershell-parser:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Windows PowerShell 5.1 parser
+        shell: powershell
+        run: |
+          $Errors = $null
+          $Tokens = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path ".\scripts\g2e\p5a_cgw_fx001_tc_oneclick.ps1"),
+            [ref]$Tokens,
+            [ref]$Errors
+          )
+          if ($Errors.Count -ne 0) {
+            $Errors | Format-List *
+            throw "POWERSHELL_PARSE_FAILED"
+          }
+          Write-Host "POWERSHELL_51_PARSE_PASS"
