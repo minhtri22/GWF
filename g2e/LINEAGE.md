@@ -703,3 +703,18 @@
 - **Formal result:** `INFRASTRUCTURE_CONTRACT_MISMATCH_CONFIRMED`; result file `g2e/docs/P5A_CGW_TRANSPORT_ADEQUACY_RESULT.json`.
 - **Firewall:** no model turn, browser submission, MCP invocation, attempt marker, or scientific attempt consumption.
 - **Governance:** V2R6 remains `INVALID — SPENT`; fresh scientific attempt is **not** authorized by this infrastructure result. Any continuation requires a new preregistered attempt under the corrected transport contract.
+
+
+### G2E-P5A-CGW — P5-FX-001 transport-corrected preregistration
+
+- **Study:** `p5a-cgw-v4-p5-fx-001-transport-corrected-qualification`.
+- **Attempt:** `p5a-cgw-v4-p5-fx-001-tc-attempt-001`.
+- **Origin:** new study after Transport Adequacy v1; not a retry/rearm/replacement of spent V2R6 attempt.
+- **Frozen route/task:** P5-FX-001, `chatgpt-web/high`, `Codex Native2`, outer Codex authority, original input/task/result hashes unchanged.
+- **Corrected transport:** no scientific absolute outer-turn deadline; route liveness follows qualified CGW/Codex transport; operator abort is infrastructure INVALID only.
+- **Signal classes:** route invalidity=evidence integrity; unexpected server request=protocol failure; prohibited tool/network=scope violation; authority requires positive authority evidence.
+- **Execution config canonical SHA256:** `6b88011e0bc6ba0164a0e6f4230bb1fb8be6037d7513f348c15d39ea726816f7`.
+- **Prereg qualification head:** `f2d4a2fe6f63c58b375486fa1010547a3bc935c8`.
+- **GitHub Actions:** run `35937711829` PASS; Ubuntu `107438403029` PASS; Windows `107438403265` PASS.
+- **Authorization:** bounded implementation + zero-model QA authorized; live dispatch withheld.
+- **Firewall:** no model turn/browser submission/MCP invocation/attempt consumption.
