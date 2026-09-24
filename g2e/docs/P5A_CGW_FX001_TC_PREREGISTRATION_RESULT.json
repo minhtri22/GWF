@@ -1,0 +1,36 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TC-PREREGISTRATION-RESULT-v1",
+  "status": "PASS",
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "execution_config_canonical_sha256": "6b88011e0bc6ba0164a0e6f4230bb1fb8be6037d7513f348c15d39ea726816f7",
+  "qualification_head": "f2d4a2fe6f63c58b375486fa1010547a3bc935c8",
+  "github_actions": {
+    "run_id": 35937711829,
+    "run_attempt": 1,
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 107438403029,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107438403265,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "authorization": {
+    "implementation_authorized": true,
+    "zero_model_qa_authorized": true,
+    "live_dispatch_authorized": false
+  },
+  "firewall": {
+    "model_turn": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "attempt_consumption": false
+  }
+}
