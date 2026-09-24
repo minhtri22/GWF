@@ -1,0 +1,40 @@
+name: G2E P5A-CGW transport adequacy
+
+on:
+  push:
+    branches:
+      - research/p5a-cgw-transport-adequacy
+    paths:
+      - "g2e/config/P5A_CGW_TRANSPORT_ADEQUACY_POLICY.json"
+      - "g2e/docs/P5A_CGW_TRANSPORT_ADEQUACY_MECHANISM_AUDIT.md"
+      - "scripts/g2e/p5a_cgw_transport_adequacy.py"
+      - "tests/g2e/test_p5a_cgw_transport_adequacy.py"
+      - ".github/workflows/g2e-p5a-cgw-transport-adequacy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zero-model:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest
+        run: python -m pip install pytest
+      - name: Transport adequacy regressions
+        run: python -m pytest -q tests/g2e/test_p5a_cgw_transport_adequacy.py
+      - name: Static audit
+        shell: bash
+        run: |
+          python scripts/g2e/p5a_cgw_transport_adequacy.py \
+            --runner scripts/g2e/p5a_cgw_fx001_runner.py \
+            --verifier scripts/g2e/p5a_cgw_fx001_verify.py \
+            --policy g2e/config/P5A_CGW_TRANSPORT_ADEQUACY_POLICY.json
