@@ -30,8 +30,9 @@ if (-not (Test-Path $Fixture)) {
 }
 
 $Head = (& git -C $RepoRoot rev-parse HEAD 2>$null | Select-Object -First 1)
-if ($LASTEXITCODE -ne 0) {
-    throw "Cannot resolve git HEAD for $RepoRoot"
+if (-not $Head) {
+    $Head = "unknown"
+    Write-Warning "Could not resolve git HEAD for display; continuing because HEAD identity is non-blocking for this isolated fixture."
 }
 
 Write-Host ""
