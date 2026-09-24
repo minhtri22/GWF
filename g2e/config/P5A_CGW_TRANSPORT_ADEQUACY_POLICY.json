@@ -1,0 +1,79 @@
+{
+  "schema": "G2E-P5A-CGW-TRANSPORT-ADEQUACY-POLICY-v1",
+  "status": "SPECIFICATION_ONLY_NO_DISPATCH",
+  "program_id": "p5a-cgw-transport-adequacy-v1",
+  "origin": {
+    "spent_attempt": "p5a-cgw-v4-p5-fx-001-attempt-001",
+    "spent_closure_commit": "d6f836614b4fafb4861917fa68d1d3b7e9dcc875",
+    "rerun_forbidden": true,
+    "replacement_attempt_authorized": false
+  },
+  "qualified_upstream": {
+    "codex_chatgpt_web": {
+      "repository": "miuuyy/codex-chatgpt-web",
+      "version": "4.0.7",
+      "commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494",
+      "source_contract": {
+        "browser_turn_absolute_deadline_default_ms": null,
+        "bridge_heartbeat_ms": 2000,
+        "bridge_stall_timeout_sec": 300,
+        "mcp_invocation_timeout_ms": 90000,
+        "tunnel_command_response_deadline_ms": 120000
+      },
+      "source_blobs": {
+        "docs/architecture.md": "4367828fae8ad0a53e4adb0af19c1589640cb37c",
+        "src/types.ts": "8065d245da7017db0ef8a5a27ed670c0ff87263f",
+        "src/stall-timeout.ts": "00cb445c283aebf75ab740086399e2212e940454",
+        "src/bridge.ts": "2b6ca55dc3dc3bda9a5aa70c0756db858a891117",
+        "src/adapters/chatgpt-web/mcp-server.ts": "51d9c787f93c391fba70f68ce759c673d789275d",
+        "src/adapters/chatgpt-web/turn-broker.ts": "6017bbaafd87c58078a72dbac42e843d5bcf3209"
+      }
+    },
+    "openai_codex": {
+      "repository": "openai/codex",
+      "tag": "rust-v0.153.4",
+      "tag_object": "042fb41b7c813ac7999105e886b2b7aa715b5081",
+      "commit": "3d2ee51ca2d5db578f328aa75e20aa22c0197c9a",
+      "source_blobs": {
+        "codex-rs/codex-api/src/sse/responses.rs": "abef2468cc0c896a17bcd30ff785b3539988adc0",
+        "codex-rs/app-server/tests/suite/v2/turn_start.rs": "f38b5cddfe57af4a434b1c55ab17bf4f98f49cc5"
+      }
+    }
+  },
+  "spent_v2r6_mechanism_findings": {
+    "legacy_runner_blob": "678504c62cbd9afe1f6a0fd0b39c5147973bad8d",
+    "legacy_verifier_blob": "c37052a00f3cef97b138c83c632e80ae88323142",
+    "legacy_outer_absolute_turn_timeout_sec": 90,
+    "legacy_authority_conflates_route_invalidity": true,
+    "classification": "INFRASTRUCTURE_CONTRACT_MISMATCH"
+  },
+  "future_transport_contract": {
+    "reuse_spent_attempt": false,
+    "reuse_spent_execution_lock": false,
+    "scientific_adjudication_absolute_turn_deadline_ms": null,
+    "transport_liveness_owner": "qualified_upstream",
+    "route_invalidity_class": "evidence_integrity_failure",
+    "unexpected_server_request_class": "protocol_failure",
+    "prohibited_tool_or_network_class": "scope_violation",
+    "authority_violation_requires_positive_authority_evidence": true,
+    "authority_positive_evidence_examples": [
+      "bridge_performed_local_side_effects",
+      "observed_executor_is_not_outer_codex",
+      "tool_result_was_fabricated_or_executed_outside_outer_codex_authority"
+    ],
+    "operator_guard": {
+      "allowed": true,
+      "may_assign_scientific_fail": false,
+      "may_assign_scientific_pass": false,
+      "on_trigger": "INFRASTRUCTURE_INVALID_ONLY",
+      "must_not_be_shorter_than_or_substitute_for_upstream_transport_liveness_contract": true
+    }
+  },
+  "firewall": {
+    "model_turn": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "attempt_marker_creation": false,
+    "scientific_attempt_consumption": false
+  }
+}
