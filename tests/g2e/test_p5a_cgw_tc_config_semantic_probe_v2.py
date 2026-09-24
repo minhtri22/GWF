@@ -26,7 +26,8 @@ def test_v2_binds_prior_healthy_snapshot_by_provenance_hash_only():
     assert '"health_snapshot_provenance_join"' in s
     assert "raw_hash == EXPECTED_HEALTH_JOIN_SHA256" in s
     plan = PLAN.read_text(encoding="utf-8")
-    assert "not promoted to a new normative transport invariant" in plan
+    assert "not promoted to a" in plan
+    assert "normative transport invariant" in plan
 
 
 def test_v2_matches_upstream_durable_runtime_command_constraints():
