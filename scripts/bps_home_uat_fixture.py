@@ -236,11 +236,11 @@ def _print_banner(mode: str, host: str, port: int, runtime_root: Path) -> None:
     print("====================")
     print(f"mode       = {mode}")
     print(f"head       = {_git_head()}")
-    print(f"url        = http://{host}:{port}/app/home")
+    print(f"browser_url= http://localhost:{port}/app/home")\n    print(f"bind_url   = http://{host}:{port}/app/home")
     print(f"username   = {USERNAME}")
     print(f"password   = {PASSWORD}")
     print(f"runtime    = {runtime_root}")
-    print("isolation  = EPHEMERAL TEMP DIRECTORY")
+    print("cookie host= localhost (isolated from 127.0.0.1 sessions)")\n    print("isolation  = EPHEMERAL TEMP DIRECTORY")
     print("working DB = NOT USED")
     print()
     if mode == "data":
