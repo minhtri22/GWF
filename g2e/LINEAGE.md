@@ -733,3 +733,16 @@
 - **Corrected contract:** no 90 s scientific absolute deadline; exact terminal turn id required; route/protocol/scope/authority classes separated; spent V2R6 evidence remains immutable.
 - **Local preflight authorization:** `P5A_CGW_FX001_TC_LOCAL_PREFLIGHT_AUTHORIZATION.json`; preflight only is authorized.
 - **Live dispatch:** withheld. An execution lock may be created only after exact local preflight PASS with TC root and marker still absent.
+
+### G2E-P5A-CGW — TC local preflight adjudication PASS
+
+- **Study:** `p5a-cgw-v4-p5-fx-001-transport-corrected-qualification`.
+- **Attempt:** `p5a-cgw-v4-p5-fx-001-tc-attempt-001`.
+- **Source HEAD:** `9ab12319dd98d250abaca9703830169dda313b15`.
+- **Observed local preflight:** exit code `0`; `STATUS: PASS`; prereg lock `PREREGISTERED_DISPATCH_WITHHELD`.
+- **Attempt state:** `ATTEMPT_CONSUMED=False`; `MODEL_TURN_SENT=False`; TC LocalRoot absent; TC marker absent.
+- **Spent predecessor marker:** present as expected and preserved; it is not TC-attempt state.
+- **Scientific firewall:** no UAC, VHDX, LocalRoot creation, browser/model turn, MCP invocation, marker creation, or attempt consumption.
+- **Adjudication:** `LOCAL_PREFLIGHT_PASS_UNCONSUMED`.
+- **Live dispatch:** still withheld. Next gate is execution-lock candidate creation plus zero-model/static QA; the exact live lock path remains absent until that QA passes.
+
