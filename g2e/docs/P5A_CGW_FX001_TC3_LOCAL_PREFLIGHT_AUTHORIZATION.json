@@ -1,0 +1,41 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TC3-LOCAL-PREFLIGHT-AUTHORIZATION-v1",
+  "status": "LOCAL_PREFLIGHT_ONLY_AUTHORIZED_TC3",
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "attempt_state": "RESERVED_UNCONSUMED",
+  "source_head": "85a3240ac7b63d9560920f1e464dc63ca64a00fb",
+  "implementation_qualification": {
+    "path": "g2e/docs/P5A_CGW_FX001_TC3_RUNTIME_READINESS_QUALIFICATION.json",
+    "status": "PASS",
+    "authoritative_run_id": 36056232335
+  },
+  "allowed": {
+    "script": "scripts/g2e/p5a_cgw_fx001_tc3_oneclick.ps1",
+    "args": [
+      "-PreflightOnly"
+    ],
+    "root": "g2e/.local/P5A-CGW-FX001-TC-003"
+  },
+  "required_success": {
+    "exit_code": 0,
+    "preflight_status": "PASS",
+    "runtime_health_ready": true,
+    "attempt_consumed": false,
+    "model_turn_sent": false,
+    "tc003_local_root_exists_after": false,
+    "tc003_marker_exists_after": false
+  },
+  "forbidden": {
+    "live_dispatch": true,
+    "uac": true,
+    "vhdx_creation": true,
+    "local_root_creation": true,
+    "attempt_marker_creation": true,
+    "model_turn": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "tc002_root_mutation": true
+  },
+  "live_dispatch_authorized": false
+}
