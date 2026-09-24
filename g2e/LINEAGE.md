@@ -810,3 +810,16 @@
 - **Evidence roots:** TC-001 preserved immutable; TC-002 uses fresh root `g2e/.local/P5A-CGW-FX001-TC-002`.
 - **Next gate:** sole live TC-002 dispatch.
 
+### G2E-P5A-CGW — TC-002 pre-consumption runtime-health block
+
+- **TC-002 live wrapper invocation:** process exit `2` at exact source HEAD `d1a35e2de8b37061dcee5c493eb5d4ac0239f2e3`.
+- **Forensic marker:** absent; scientific consumption boundary was not crossed.
+- **Execution report:** `EXECUTION_WRAPPER_ERROR`, `attempt_consumed=false`, runner/verifier not started, diagnostic `Unable to connect to the remote server`.
+- **Admission/runner/protocol/route/verifier artifacts:** absent.
+- **Cleanup:** VHDX existed, was attached before cleanup, was dismounted successfully, and was not attached afterward.
+- **Adjudication:** `PRECONSUMPTION_INFRASTRUCTURE_BLOCK_CONFIRMED`; scientific verdict not applicable; attempt remains `RESERVED_UNCONSUMED`.
+- **TC-002 root:** preserve immutable and do not reuse.
+- **TC-002 live lock:** historical authorization only; do not reuse the wrapper/lock pair.
+- **Mechanism:** loopback CGW health fetch failed before admission; the wrapper performed no pre-UAC runtime-health readiness gate.
+- **Next gate:** TC-003 pre-UAC runtime-health readiness repair + zero-model QA.
+
