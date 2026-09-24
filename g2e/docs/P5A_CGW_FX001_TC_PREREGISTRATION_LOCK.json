@@ -1,0 +1,31 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TC-PREREGISTRATION-LOCK-v1",
+  "status": "PREREGISTERED_DISPATCH_WITHHELD",
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "execution_config_canonical_sha256": "6b88011e0bc6ba0164a0e6f4230bb1fb8be6037d7513f348c15d39ea726816f7",
+  "predecessor": {
+    "attempt_id": "p5a-cgw-v4-p5-fx-001-attempt-001",
+    "verdict": "INVALID — SPENT",
+    "rerun_forbidden": true,
+    "rearm_forbidden": true
+  },
+  "transport_correction": {
+    "legacy_absolute_timeout_sec": 90,
+    "scientific_absolute_turn_deadline_ms": null,
+    "mechanism_evidence_commit": "5846fc7c5b7a27c026fee3570d73901c57a7023f"
+  },
+  "authorization": {
+    "implementation_authorized": true,
+    "zero_model_qa_authorized": true,
+    "live_dispatch_authorized": false,
+    "max_dispatches_if_later_authorized": 1,
+    "retry_budget": 0
+  },
+  "firewall": {
+    "model_turn": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "attempt_consumption": false
+  }
+}
