@@ -1,0 +1,48 @@
+{
+  "schema": "G2E-P5A-CGW-TC-OFFLINE-CONFIG-SEMANTIC-PROBE-v2-LOCAL-RESULT",
+  "status": "PASS",
+  "source_head": "df68185c9bfb1bdda8ad430e93439ca070852c34",
+  "exit_code": 0,
+  "raw_config_sha256": "6f4347acdcb722d52b2ea4bb166a53c28a809fdf13bb9f358e794bad12c16053",
+  "prior_healthy_snapshot_raw_config_sha256": "6f4347acdcb722d52b2ea4bb166a53c28a809fdf13bb9f358e794bad12c16053",
+  "all_semantic_checks_pass": true,
+  "observed_summary": {
+    "version": 3,
+    "release_version": "4.0.7",
+    "mode": "full",
+    "connector": "Codex Native2",
+    "host": "127.0.0.1",
+    "port": 17841,
+    "context_window": 256000,
+    "browser_host": "launcher",
+    "auto_approve_tool_calls": false,
+    "sol_available": true,
+    "pro_available": false,
+    "experimental_bigger_context": true,
+    "stall_timeout_sec": null,
+    "subagent_protocol": "compatibility-v1",
+    "runtime_command_first_basename": "bun.exe",
+    "runtime_command_length": 2,
+    "runtime_executable_absolute": true,
+    "runtime_executable_exists": true,
+    "runtime_no_ephemeral_absolute_component": true,
+    "tunnel_semantics_pass": true
+  },
+  "firewall": {
+    "network_request": false,
+    "model_endpoint_requested": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "attempt_marker_write": false,
+    "scientific_dispatch": false
+  },
+  "adjudication": {
+    "whole_file_hash_guard_defect_confirmed": true,
+    "semantic_transport_drift": false,
+    "scientific_verdict": "NOT_APPLICABLE",
+    "attempt_state": "RESERVED_UNCONSUMED",
+    "tc001_root_disposition": "PRESERVE_IMMUTABLE_DO_NOT_REUSE",
+    "repair_class": "PROSPECTIVE_PRECONSUMPTION_INFRASTRUCTURE_REPAIR"
+  },
+  "next_gate": "TC002_SEMANTIC_ADMISSION_REPAIR_IMPLEMENTATION_AND_ZERO_MODEL_QA"
+}
