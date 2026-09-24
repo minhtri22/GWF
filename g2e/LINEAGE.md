@@ -762,3 +762,14 @@
 - **Transport:** no scientific absolute outer-turn deadline; upstream liveness contract remains authoritative.
 - **Next gate:** sole live TC dispatch.
 
+### G2E-P5A-CGW — TC predispatch block and semantic-config probe
+
+- **TC-001 wrapper outcome:** `PREDISPATCH_BLOCKED_NO_ATTEMPT_CONSUMPTION`.
+- **Sole admission error:** `CGW_CONFIG_HASH_DRIFT`; observed raw config SHA256 `6f4347acdcb722d52b2ea4bb166a53c28a809fdf13bb9f358e794bad12c16053`, prior frozen raw hash `f8ba628c60faf5c95409ee3a37ad359f74dd0eb41bb961312b67758f9ba53858`.
+- **Attempt state:** durable marker absent; runner/verifier/protocol/route evidence absent; model turn not sent; TC attempt remains `RESERVED_UNCONSUMED`.
+- **Cleanup:** VHDX was dismounted successfully and is not attached.
+- **Adjudication:** pre-marker infrastructure admission block; scientific verdict not applicable; TC-001 root must be preserved and not reused.
+- **Repair discipline:** do not remove the raw-hash guard blindly. First collect a redacted semantic projection of all source-backed config/health fields.
+- **Semantic probe QA:** run `35981635479` PASS; Ubuntu `107574652135` PASS; Windows `107574652479` PASS.
+- **Authorization:** one local read-only semantic probe authorized; no scientific wrapper rerun authorized yet.
+
