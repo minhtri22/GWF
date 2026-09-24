@@ -28,7 +28,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install pytest
-        run: python -m pip install pytest
+        run: python -m pip install pytest PyYAML
       - name: Transport adequacy regressions
         run: python -m pytest -q tests/g2e/test_p5a_cgw_transport_adequacy.py
       - name: Static audit
