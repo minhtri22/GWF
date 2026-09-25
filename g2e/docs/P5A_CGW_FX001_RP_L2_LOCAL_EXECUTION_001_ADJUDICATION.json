@@ -1,0 +1,55 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-L2-LOCAL-EXECUTION-001-ADJUDICATION-v1",
+  "status": "PASS_DIAGNOSTIC_PRIOR_QUALIFIED_REGISTERED_LAUNCHER_AVAILABLE",
+  "source_head": "ef64365e59d69a974fddf34f12c36590aad66322",
+  "zero_science": true,
+  "observed": {
+    "source_repo": {
+      "head": "4a01da5fdd9b01ef32b0b82c2bb7db01ebab2232",
+      "branch": "main",
+      "dirty": true,
+      "dirty_entry_count": 21,
+      "v4_0_7_tag_commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494",
+      "head_matches_release_commit": false,
+      "tag_matches_release_commit": true
+    },
+    "portable_launcher": {
+      "sha256": "5bedc89da21594bac53edceedf929b3640ed877a63a6d80fe3d6f0b94bc2182c",
+      "size": 223980032,
+      "file_version": "4.0.7",
+      "product_version": "4.0.7.0",
+      "prior_qualified_match": false
+    },
+    "local_release_installer": {
+      "sha256": "7e624c61932d5bd5ba9c0f12dcce2e351f2070f25a50c47df305a0a1ec9a63c3",
+      "official_release_match": false
+    },
+    "registered_launcher": {
+      "path": "C:\\Users\\minht\\AppData\\Local\\Programs\\Codex Web GPT\\Codex Web GPT.exe",
+      "sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+      "size": 223980032,
+      "file_version": "4.0.7",
+      "product_version": "4.0.7.0",
+      "prior_qualified_match": true
+    }
+  },
+  "operator_provenance_note": "The portable Codex Web GPT.exe under the cloned source tree is an intentionally modified/rebuilt local binary and is not the canonical launcher identity for G2E.",
+  "classification": "PRIOR_QUALIFIED_REGISTERED_LAUNCHER_AVAILABLE",
+  "interpretation": {
+    "portable_custom_build_should_not_be_used_for_G2E_identity": true,
+    "exact_prior_qualified_launcher_available_locally": true,
+    "launcher_provenance_question_resolved": true,
+    "fresh_runtime_can_be_rebound_to_registered_launcher_after_new_explicit_authorization": true
+  },
+  "scientific_effect": {
+    "process_launch": false,
+    "http_request": false,
+    "responses_request": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  },
+  "next_gate": "FRESH_ZERO_SCIENCE_RUNTIME_FROM_PRIOR_QUALIFIED_REGISTERED_LAUNCHER_THEN_RP_I1C"
+}
