@@ -1,0 +1,72 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1T-QUALIFICATION-v1",
+  "status": "PASS_ZERO_SCIENCE_TEMPORAL_PROBE",
+  "source_head": "e286742d010e7aba9cbfae6a61820cd184433a4d",
+  "parent_diagnostic": "P5A_CGW_FX001_RP_I1D_LOCAL_EXECUTION_002_ADJUDICATION",
+  "parent_current_state_result": "PASS_DIAGNOSTIC_CURRENT_INSTANCE_MISMATCH_PROVEN",
+  "purpose": "Determine whether the currently proven dev-profile listener mismatch was already in force during the exact TC-003 execution window.",
+  "temporal_bounds": {
+    "lower_bound_commit": "79caac767c7276a5a92672102df7ff784f62e733",
+    "lower_bound_utc": "2026-09-25T02:59:15Z",
+    "upper_bound_commit": "3fa19569936773401c041254d2ceb4fde142f54e",
+    "upper_bound_utc": "2026-09-25T03:40:47Z"
+  },
+  "artifacts": {
+    "plan": {
+      "path": "g2e/docs/P5A_CGW_FX001_RP_I1T_TEMPORAL_BINDING_PLAN.md",
+      "git_blob": "0830a74790ec1dba64f42272b4b591e1d822c71f"
+    },
+    "script": {
+      "path": "scripts/g2e/p5a_cgw_fx001_rp_i1t_temporal_binding.ps1",
+      "git_blob": "87dec076673f96ee72d51576920f9b836878d466"
+    },
+    "test": {
+      "path": "tests/g2e/test_p5a_cgw_fx001_rp_i1t.py",
+      "git_blob": "26a136efa34e2f10880f10c1293b6fd1ee85fb3b"
+    },
+    "workflow": {
+      "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i1t-qa.yml",
+      "git_blob": "25237f72fea2482f91256e144bdfac9bc2484e0c"
+    }
+  },
+  "authoritative_qa": {
+    "run_id": 36097507504,
+    "jobs": [
+      {
+        "id": 107952770365,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107952770435,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107952770243,
+        "name": "powershell-parser",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "superseded_qa": [
+    {
+      "run_id": 36097429380,
+      "classification": "WORKFLOW_DEPENDENCY_MISSING_PYYAML"
+    },
+    {
+      "run_id": 36097467875,
+      "classification": "QA_ASSERTION_PATH_CONSTRUCTION_MISMATCH"
+    }
+  ],
+  "safety": {
+    "health_get_only": true,
+    "responses_request": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_creation": false,
+    "replacement_attempt_activation": false
+  },
+  "next_gate": "RP-I1T_LOCAL_TEMPORAL_EXECUTION"
+}
