@@ -938,3 +938,159 @@
 - Qualified RP-I1R script blob: `051539f12f67df17ee9cdd3a06d9177f7af17c42`.
 - Current authorization: one local RP-I1R zero-science probe. RP-I3 and replacement science remain closed.
 
+
+
+### G2E-P5A-CGW — Canonical results-only consolidation through P5-FX-001 route causal closure
+
+> Append-only consolidation. Earlier entries remain historical record. This section records only outcomes, scientific/governance status, and open backlog; implementation and repair details are intentionally omitted.
+
+#### 1. Runtime and route qualification
+
+- The qualified bridge target is `codex-chatgpt-web` v4.0.7 at source commit `b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494`.
+- The qualified project-local Codex target is official Codex `0.153.4` at commit `3d2ee51ca2d5db578f328aa75e20aa22c0197c9a`.
+- The qualified route is `full` mode with model `chatgpt-web/high`, backend `gpt-5.6-sol`, connector `Codex Native2`, and loopback Responses endpoint `http://127.0.0.1:17841/v1`.
+- The route authority invariant remains:
+  `delegated_authority <= active_outer_codex_turn_authority <= G2E_attempt_authority`.
+- No result in this workstream established an authority escape.
+
+#### 2. Original P5-FX-001 attempt
+
+- Original frozen scientific attempt: `p5a-cgw-v4-p5-fx-001-attempt-001`.
+- Final state: **SPENT**.
+- Final adjudication: **INVALID — SPENT**.
+- No substantive scientific PASS or FAIL was supported.
+- Same-attempt rerun/rearm remains forbidden.
+
+#### 3. Transport Adequacy v1
+
+- Result: `INFRASTRUCTURE_CONTRACT_MISMATCH_CONFIRMED`.
+- The prior scientific transport envelope was not adequate for the observed route timing.
+- Transport invalidity was separated from authority violation as distinct adjudication classes.
+- This study did not change the spent state of the original attempt.
+
+#### 4. Transport-corrected study reservation
+
+- Reserved scientific attempt: `p5a-cgw-v4-p5-fx-001-tc-attempt-001`.
+- This attempt was a new transport-corrected study attempt, not a retry or reinterpretation of the spent predecessor.
+- Retry budget remained `0`.
+
+#### 5. TC-001
+
+- Result: `PRECONSUMPTION_INFRASTRUCTURE_BLOCK_CONFIRMED`.
+- Scientific verdict: `NOT_APPLICABLE`.
+- Attempt state after TC-001: `RESERVED_UNCONSUMED`.
+- No model turn was sent and no scientific attempt was consumed.
+
+#### 6. Semantic transport configuration
+
+- Offline semantic configuration probe v2 result: **PASS**.
+- The observed CGW configuration matched the frozen semantic route contract for v4.0.7/full/Codex Native2.
+- Whole-file configuration identity was not required to establish semantic transport identity.
+- Scientific attempt remained `RESERVED_UNCONSUMED`.
+
+#### 7. TC-002
+
+- Local preflight result: **PASS**.
+- Live execution result: `PRECONSUMPTION_INFRASTRUCTURE_BLOCK_CONFIRMED`.
+- Scientific verdict: `NOT_APPLICABLE`.
+- Attempt state after TC-002: `RESERVED_UNCONSUMED`.
+- Scientific dispatch count remained `0`.
+
+#### 8. TC-003
+
+- Runtime-readiness preflight result: **PASS**.
+- The sole live TC-003 dispatch crossed the durable attempt-consumption boundary.
+- Codex app-server accepted the exact turn and reached terminal `turn/completed`.
+- No timeout, authority violation, scope violation, or protocol-terminal failure was established.
+- Frozen scientific metrics:
+  - `executor_completed=1`
+  - `mutation_scope_valid=1`
+  - `attempt_attribution_valid=1`
+  - `evidence_integrity_valid=0`
+  - `result_schema_valid=0`
+  - `result_values_correct=0`
+- `result.json` was absent.
+- Final TC-003 adjudication: **`INVALID_SPENT`**.
+- This was not a substantive scientific FAIL and not a scientific PASS.
+- Attempt `p5a-cgw-v4-p5-fx-001-tc-attempt-001` is permanently **SPENT**.
+- Transport-corrected study status: **FORMALLY_CLOSED** with no scientific claim supported for P5-FX-001.
+
+#### 9. Route-path postmortem
+
+- Initial source/evidence postmortem result:
+  `OBSERVABILITY_INSTANCE_BINDING_GAP_PROVEN`.
+- Exact Codex 0.153.4 source supports the configured `openai_base_url`; silent ignoring of that route configuration was ruled out.
+- Exact CGW 4.0.7 source establishes that full-mode local-tool registration and browser evidence should precede normal browser send.
+- The spent TC-003 route evidence was insufficient by itself to identify the physical instance because evidence sinks were not bound to the live listener instance.
+
+#### 10. RP-I1 / RP-I2
+
+- Local instance-binding result: **BLOCKED**.
+- Production-profile ownership evidence was not sufficient to bind the live listener.
+- RP-I2 was not independently promoted to PASS from that observation.
+- No scientific attempt was created or consumed.
+
+#### 11. RP-I1D current-instance diagnosis
+
+- Result: `PASS_DIAGNOSTIC_CURRENT_INSTANCE_MISMATCH_PROVEN`.
+- Health and the sole TCP listener on `127.0.0.1:17841` bound to PID `27240`.
+- PID `27240` was identified as the CGW v4.0.7 daemon under the **development profile**.
+- Its parent PID `15604` was the portable development launcher.
+- The route measurement being examined used the **production-profile** evidence roots.
+- Therefore H-R1 — observed-instance / evidence-root mismatch — was proven for the observed runtime state.
+
+#### 12. RP-I1T temporal binding
+
+- Result: `BLOCKED_TEMPORAL_BINDING_INCOMPLETE`.
+- The live listener PID `27240` and its launcher parent both predated the lower bound of the TC-003 execution window.
+- The same PID remained bound to the healthy CGW service.
+- RP-I1T's own preregistered PASS criterion was not met, so its verdict remains BLOCKED and is not rewritten.
+
+#### 13. Historical TC-003 route causal closure
+
+- Frozen TC-003 health evidence independently recorded:
+  - service `codex-chatgpt-web`
+  - version `4.0.7`
+  - mode `full`
+  - PID `27240`
+  - port `17841`
+- TC-003 durable attempt marker timestamp: `2026-09-25T03:01:22Z`.
+- The same PID `27240` was independently bound to the development-profile CGW daemon and portable development launcher, with process creation preceding TC-003.
+- TC-003 Codex route contract targeted `http://127.0.0.1:17841/v1`.
+- TC-003 route measurement observed production-profile evidence roots instead of the development-profile roots serving the live port.
+- Historical causal closure result:
+  **`PASS_HR1_HISTORICAL_ROOT_CAUSE_PROVEN`**.
+- Established causal explanation:
+  - TC-003 reached the development CGW instance;
+  - route evidence was read from production-profile sinks;
+  - therefore launcher delta and browser-diagnostic observations were empty for the active request;
+  - downstream route-correlation fields were unavailable;
+  - evidence integrity failed;
+  - TC-003 correctly remained `INVALID_SPENT`.
+- This causal closure does not change the scientific verdict of TC-003.
+
+#### 14. Current RP-I1R status
+
+- RP-I1R zero-science qualification result: **PASS** at qualification level.
+- Its objective is to establish active-profile instance binding before evidence roots are accepted.
+- The latest local RP-I1R execution has **not produced an adjudicable local gate result**.
+- Therefore local `PASS_ACTIVE_PROFILE_INSTANCE_BOUND_ZERO_SCIENCE` is **not yet established**.
+- RP-I3 remains closed.
+- No replacement scientific attempt is authorized.
+
+#### 15. Current scientific status of P5-FX-001
+
+- P5-FX-001 has **no valid scientific PASS**.
+- P5-FX-001 has **no valid substantive scientific FAIL**.
+- Both scientific attempts used so far are spent/closed according to their own governance.
+- The route/evidence disappearance mechanism for TC-003 is causally closed as historical instance/evidence-root mismatch.
+- The absence of `result.json` remains scientifically unresolved.
+
+#### Backlog — unresolved result questions only
+
+- **B1 — Active-profile binding result:** establish an adjudicable local RP-I1R result.
+- **B2 — Outbound request/tool surface:** determine whether the exact Codex outbound Responses request advertised the expected native mutation-capable tools.
+- **B3 — Tool invocation/result absence:** determine whether `result.json` was absent because the required native tool surface was not advertised or because no advertised native tool was invoked.
+- **B4 — Evidence-sink qualification:** establish that future route evidence is bound to the same live instance before any scientific execution.
+- **B5 — Replacement-attempt governance:** only after the evidence path and outbound tool contract are independently established may governance consider a new replacement scientific attempt. No replacement attempt is currently authorized.
+
