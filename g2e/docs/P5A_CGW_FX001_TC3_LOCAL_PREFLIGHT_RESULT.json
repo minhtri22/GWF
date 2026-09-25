@@ -1,0 +1,48 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TC3-LOCAL-PREFLIGHT-RESULT-v1",
+  "status": "PASS",
+  "adjudication": "TC3_RUNTIME_READINESS_PREFLIGHT_PASS_UNCONSUMED",
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "source_head": "389d958e937aa79ff223d75a9904ece1595ce8b5",
+  "authorization": {
+    "path": "g2e/docs/P5A_CGW_FX001_TC3_LOCAL_PREFLIGHT_AUTHORIZATION.json",
+    "status": "LOCAL_PREFLIGHT_ONLY_AUTHORIZED_TC3",
+    "live_dispatch_authorized_at_preflight": false
+  },
+  "observed": {
+    "exit_code": 0,
+    "preflight_status": "PASS",
+    "prereg_lock_status": "PREREGISTERED_DISPATCH_WITHHELD",
+    "dispatch_lock_status": "WITHHELD_NOT_REQUIRED_FOR_PREFLIGHT",
+    "runtime_health_ready": true,
+    "attempt_consumed": false,
+    "model_turn_sent": false,
+    "tc003_local_root_exists_after": false,
+    "tc003_marker_exists_after": false
+  },
+  "firewall": {
+    "uac": false,
+    "vhdx_creation": false,
+    "local_root_creation": false,
+    "attempt_marker_creation": false,
+    "model_turn": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_dispatch": false
+  },
+  "evidence_roots": {
+    "tc001": "g2e/.local/P5A-CGW-FX001-TC-001",
+    "tc002": "g2e/.local/P5A-CGW-FX001-TC-002",
+    "predecessor_disposition": "PRESERVE_IMMUTABLE_DO_NOT_REUSE",
+    "tc003": "g2e/.local/P5A-CGW-FX001-TC-003",
+    "tc003_exists_after": false
+  },
+  "governance": {
+    "attempt_state": "RESERVED_UNCONSUMED",
+    "retry_budget": 0,
+    "max_future_scientific_dispatches": 1,
+    "live_dispatch_authorized": false
+  },
+  "next_gate": "TC3_EXECUTION_LOCK_CANDIDATE_ZERO_MODEL_QA"
+}
