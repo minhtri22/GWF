@@ -1,0 +1,32 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1-LOCAL-EXECUTION-ADJUDICATION-v1",
+  "status": "INVALID_HARNESS_NO_ENVIRONMENT_ADJUDICATION",
+  "execution_kind": "ZERO_SCIENCE_LOCAL_PROBE",
+  "source_head": "81d690b9712102f1f561e04832601879ac29a5ea",
+  "probe_path": "scripts/g2e/p5a_cgw_fx001_route_instance_probe.ps1",
+  "probe_blob": "8d0a2dfd17113e357eee8c35d34bcdbea14155f2",
+  "observed": {
+    "verdict": "BLOCKED",
+    "checks_empty": true,
+    "observed_empty": true,
+    "shell_last_exit_code": 0
+  },
+  "root_cause": {
+    "class": "HARNESS_CONTAINER_TYPE_CONVERSION",
+    "detail": "$checks was an OrderedDictionary created by [ordered]@{}, while Add-Check accepted [hashtable]. PowerShell converted the argument to a separate Hashtable instance, so writes were not reflected in the caller's OrderedDictionary. The subsequent required-file gate therefore saw null check entries and returned BLOCKED before environment inspection.",
+    "environment_evidence_collected": false
+  },
+  "scientific_effect": {
+    "model_executed": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_consumed": false,
+    "parent_scientific_state_changed": false
+  },
+  "adjudication": {
+    "RP_I1": null,
+    "RP_I2": null,
+    "interpretation": "NO ENVIRONMENT VERDICT",
+    "rerun_after_qualified_harness_repair": true
+  }
+}
