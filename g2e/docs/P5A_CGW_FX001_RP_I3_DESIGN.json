@@ -1,0 +1,77 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I3-DESIGN-v1",
+  "status": "DESIGNED_ZERO_SCIENCE_NOT_YET_EXECUTED",
+  "parent_gate": {
+    "RP_I1": "PASS",
+    "RP_I2": "PASS_INSTANCE_BOUND_ZERO_SCIENCE"
+  },
+  "purpose": "Witness the exact Codex 0.153.4 outbound Responses request contract before any CGW/browser/model execution.",
+  "codex": {
+    "relative_path": "g2e/.local/codex-official-0.153.4/package/bin/codex.exe",
+    "required_sha256": "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b",
+    "version": "codex-cli 0.153.4"
+  },
+  "topology": [
+    "Codex app-server",
+    "isolated temporary CODEX_HOME",
+    "openai_base_url -> GWF loopback witness",
+    "witness captures bounded metadata + raw body SHA256",
+    "witness rejects locally",
+    "no forwarding target exists"
+  ],
+  "witness_contract": {
+    "bind_host": "127.0.0.1",
+    "request_target": "/v1/responses",
+    "max_captured_responses_posts": 1,
+    "forwarding": false,
+    "captured": [
+      "method/path",
+      "content length",
+      "request body SHA256",
+      "JSON parse status",
+      "model",
+      "tool count",
+      "tool names and types only",
+      "authorization header presence only",
+      "top-level metadata key names only",
+      "thread/turn metadata presence booleans"
+    ],
+    "prohibited_capture": [
+      "authorization value",
+      "user prompt text",
+      "instructions text",
+      "tool schemas/arguments",
+      "auth.json contents"
+    ]
+  },
+  "isolation": {
+    "copy_real_auth": false,
+    "dummy_api_key_only": true,
+    "mcp_servers_empty": true,
+    "apps_disabled": true,
+    "plugins_disabled": true,
+    "remote_plugin_disabled": true,
+    "workspace_dependencies_disabled": true,
+    "request_compression_disabled": true
+  },
+  "pass": "PASS_CODEX_OUTBOUND_CONTRACT_WITNESSED",
+  "pass_requires": [
+    "exact Codex binary SHA256",
+    "one captured POST /v1/responses",
+    "request body hashes successfully",
+    "request JSON parses",
+    "model == chatgpt-web/high",
+    "tools array is observed and bounded projection emitted",
+    "witness forwarded_requests == 0"
+  ],
+  "interpretation_rule": "Tool-surface presence or absence is an observation, not a criterion tuned to make RP-I3 pass.",
+  "prohibited": [
+    "CGW request",
+    "browser submission",
+    "MCP invocation",
+    "upstream/model forwarding",
+    "scientific attempt creation",
+    "replacement attempt activation"
+  ],
+  "next_if_pass": "RP_I4_EVIDENCE_SINK_SOURCE_BINDING"
+}
