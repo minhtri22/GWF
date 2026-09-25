@@ -51,3 +51,11 @@ jobs:
             throw "POWERSHELL_PARSE_FAILED"
           }
           Write-Host "POWERSHELL_51_PARSE_PASS"
+
+      - name: Ordered dictionary binding regression
+        shell: powershell
+        run: |
+          & ".\\tests\\g2e\\p5a_cgw_fx001_route_probe_container_regression.ps1"
+          if ($LASTEXITCODE -ne 0) {
+            throw "ORDERED_DICTIONARY_BINDING_REGRESSION_FAILED"
+          }
