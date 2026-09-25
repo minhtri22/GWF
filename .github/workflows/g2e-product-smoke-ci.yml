@@ -1,0 +1,42 @@
+name: G2E product smoke CI
+
+on:
+  push:
+    branches:
+      - research/p5a-cgw-fx001-transport-corrected
+    paths:
+      - "scripts/g2e/g2e_product_smoke.py"
+      - "scripts/g2e/g2e_product_smoke.ps1"
+      - "tests/g2e/test_g2e_product_smoke.py"
+      - ".github/workflows/g2e-product-smoke-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-code:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install pytest PyYAML
+      - run: python -m py_compile scripts/g2e/g2e_product_smoke.py
+      - run: python -m pytest -q tests/g2e/test_g2e_product_smoke.py
+      - name: PowerShell parser
+        shell: powershell
+        run: |
+          $Errors = $null
+          $Tokens = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path ".\scripts\g2e\g2e_product_smoke.ps1"),
+            [ref]$Tokens,
+            [ref]$Errors
+          )
+          if ($Errors.Count -ne 0) {
+            $Errors | Format-List *
+            throw "POWERSHELL_PARSE_FAILED"
+          }
+          Write-Host "G2E_PRODUCT_SMOKE_STATIC_PASS"
