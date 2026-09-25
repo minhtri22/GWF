@@ -245,8 +245,8 @@ function renderAttentionIndicator() {
   $("#notificationButton").innerHTML = iconSvg("bell", "icon") +
     '<span id="attentionCount" class="attention-count">' + esc(count ?? "—") + "</span>";
   $("#notificationButton").title = count == null ?
-    "Attention count unavailable" :
-    ("Attention required: " + count + " · feed opens with Operations in a later screen");
+    "Attention count unavailable — open Home" :
+    ("Attention required: " + count + " · open Home attention");
 }
 
 function renderHomeError(message) {
@@ -641,14 +641,35 @@ function renderCapabilities() {
 function renderIdentity() {
   const product = state.bootstrap.product;
   const me = state.me;
+  const memberships = me.memberships || {};
+  const membershipCount =
+    (memberships.tenants?.length || 0) +
+    (memberships.workspaces?.length || 0) +
+    (memberships.projects?.length || 0);
   $("#actorName").textContent = me.principal_id || me.actor_id;
   $("#actorInitial").textContent = (me.principal_id || "?").slice(0, 1).toUpperCase();
   $("#authMethod").textContent = me.auth_method;
+  $("#actorMenuPrincipal").textContent = me.principal_id || "—";
+  $("#actorMenuActorId").textContent = me.actor_id || "—";
+  $("#actorMenuAuth").textContent = me.auth_method || "—";
+  $("#actorMenuExpires").textContent = formatHomeTime(me.expires_at);
+  $("#actorMenuMemberships").textContent =
+    (memberships.tenants?.length || 0) + " tenant · " +
+    (memberships.workspaces?.length || 0) + " workspace · " +
+    (memberships.projects?.length || 0) + " project" +
+    (membershipCount === 0 ? " (none)" : "");
   $("#foundationBuild").textContent = product.version + " · " + String(product.build_sha || "unknown").slice(0, 8);
   $("#exactBuild").textContent = product.version + " · " + product.build_sha;
   $("#exactDomain").textContent = product.domain_id;
   $("#exactBackend").textContent = product.backend + " · " + product.server_mode;
   $("#exactActor").textContent = me.principal_id || me.actor_id;
+}
+
+function setActorMenu(open) {
+  const menu = $("#actorMenu");
+  const button = $("#actorMenuButton");
+  menu.hidden = !open;
+  button.setAttribute("aria-expanded", open ? "true" : "false");
 }
 
 function statusRow(icon, label, value, stateClass = "") {
@@ -708,6 +729,7 @@ function showLogin() {
   state.homeError = null;
   state.projects = null;
   state.projectsError = null;
+  setActorMenu(false);
   $("#appView").hidden = true;
   $("#loginView").hidden = false;
   const product = state.bootstrap?.product;
@@ -779,6 +801,27 @@ window.addEventListener("popstate", () => {
 
 $("#homeRefreshButton").addEventListener("click", async () => {
   await refreshHomeSummary(true);
+});
+
+$("#notificationButton").addEventListener("click", () => {
+  const home = capabilityById("home");
+  if (!home?.route) return;
+  navigateTo(home.route);
+  requestAnimationFrame(() => {
+    $("#homeAttentionPanel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
+
+$("#actorMenuButton").addEventListener("click", (event) => {
+  event.stopPropagation();
+  setActorMenu($("#actorMenu").hidden);
+});
+
+$("#actorMenu").addEventListener("click", (event) => event.stopPropagation());
+
+document.addEventListener("click", () => setActorMenu(false));
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") setActorMenu(false);
 });
 
 $("#projectsRefreshButton").addEventListener("click", async () => {
