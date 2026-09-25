@@ -1,0 +1,55 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1D-PID-COLLISION-REPAIR-QUALIFICATION-v1",
+  "status": "PASS_ZERO_SCIENCE_HARNESS_REPAIR",
+  "source_head": "a3299a232f3eca814c4145dff41bf0e25cf5323c",
+  "supersedes_execution": "P5A_CGW_FX001_RP_I1D_LOCAL_EXECUTION_001_ADJUDICATION",
+  "root_cause": "POWERSHELL_AUTOMATIC_VARIABLE_COLLISION",
+  "repaired_invariant": "Get-ProcessSnapshot uses parameter ProcessId instead of Pid, avoiding collision with PowerShell automatic read-only variable $PID.",
+  "artifacts": {
+    "script": {
+      "path": "scripts/g2e/p5a_cgw_fx001_route_instance_diagnostic.ps1",
+      "git_blob": "60f5a20fa9b73aa30f0f2b09d54a53848fc3bfa2"
+    },
+    "python_test": {
+      "path": "tests/g2e/test_p5a_cgw_fx001_rp_i1d.py",
+      "git_blob": "4aa44ceb42d21e34a10faf3460505ec70914aeb3"
+    },
+    "powershell_pid_regression": {
+      "path": "tests/g2e/p5a_cgw_fx001_rp_i1d_pid_binding_regression.ps1",
+      "git_blob": "1055db0599b63d6430992af20f91b012f1651651"
+    },
+    "workflow": {
+      "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i1d-qa.yml",
+      "git_blob": "7d0183462794e19c3df3d1f11e06635acbbe8ba7"
+    }
+  },
+  "authoritative_qa": {
+    "run_id": 36096975968,
+    "jobs": [
+      {
+        "id": 107951177007,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107951176783,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107951176861,
+        "name": "powershell-parser + PID binding regression",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "scientific_effect": {
+    "model_executed": false,
+    "responses_request": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  },
+  "next_gate": "RP-I1D_LOCAL_DIAGNOSTIC_REEXECUTION"
+}
