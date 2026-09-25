@@ -1,0 +1,63 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-L1-QUALIFICATION-v1",
+  "status": "PASS_ZERO_SCIENCE_LAUNCHER_IDENTITY_PROBE_QUALIFICATION",
+  "source_head": "29d6b076a36d4c29ed645859dba0f6e8559ad12a",
+  "parent_block": "P5A_CGW_FX001_FRESH_RUNTIME_LAUNCHER_IDENTITY_BLOCK",
+  "purpose": "Qualify a read-only launcher identity decomposition after the previously qualified launcher SHA256 no longer matched the current executable at the same path.",
+  "artifacts": {
+    "plan": {
+      "path": "g2e/docs/P5A_CGW_FX001_RP_L1_LAUNCHER_IDENTITY_PLAN.md",
+      "git_blob": "82384350eb66a6f3375de9e19004b7f41a8d7ca4"
+    },
+    "script": {
+      "path": "scripts/g2e/p5a_cgw_fx001_rp_l1_launcher_identity.ps1",
+      "git_blob": "32d38088797a6c0d14f5fb6ea0b1db0f44078965"
+    },
+    "test": {
+      "path": "tests/g2e/test_p5a_cgw_fx001_rp_l1.py",
+      "git_blob": "88695ad9f493a40f9bd36996288fdee0d7b40a9f"
+    },
+    "workflow": {
+      "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-l1-qa.yml",
+      "git_blob": "a274fde7ce2c8f45df6562ee5e55a9d397eaa9d5"
+    }
+  },
+  "authoritative_qa": {
+    "run_id": 36145271286,
+    "jobs": [
+      {
+        "id": 108104741305,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 108104741289,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 108104741141,
+        "name": "powershell-parser",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "prior_qualified_launcher": {
+    "sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+    "size": 223980032,
+    "file_version": "4.0.7",
+    "product_version": "4.0.7.0"
+  },
+  "observed_unqualified_sha256": "5bedc89da21594bac53edceedf929b3640ed877a63a6d80fe3d6f0b94bc2182c",
+  "safety": {
+    "process_launch": false,
+    "http_request": false,
+    "responses_request": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_creation": false,
+    "replacement_attempt_activation": false
+  },
+  "next_gate": "RP-L1_LOCAL_LAUNCHER_IDENTITY_DECOMPOSITION"
+}
