@@ -1,0 +1,20 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1S-LOCAL-AUTHORIZATION-v1",
+  "status": "RP_I1S_LOCAL_ZERO_SCIENCE_AUTHORIZED",
+  "qualified_source_head": "3865807c51ec52f54e724b06ada7c3338ffc8225",
+  "qualified_script_blob": "ee0e120c09cb0b5ecb18a7e12582e02ca76e0c15",
+  "allowed": {
+    "script": "scripts/g2e/p5a_cgw_fx001_rp_i1s_ownership_snapshot.ps1",
+    "operation": "read-only development ownership-state and process snapshot",
+    "network_scope": "GET http://127.0.0.1:17841/healthz only"
+  },
+  "forbidden": {
+    "responses_request": true,
+    "model_execution": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "scientific_attempt_creation": true,
+    "replacement_attempt_activation": true
+  },
+  "interpretation": "Diagnostic result may classify ownership-state identity only. It cannot itself PASS RP-I1R, open RP-I3, or authorize replacement science."
+}
