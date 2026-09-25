@@ -1,0 +1,28 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1-RP-I2-LOCAL-REEXECUTION-AUTHORIZATION-v1",
+  "status": "RP_I1_RP_I2_LOCAL_ZERO_SCIENCE_REEXECUTION_AUTHORIZED",
+  "qualified_source_head": "64a009926972c7bc795f75c645098706d403acf2",
+  "qualified_probe_blob": "6f2414ed02fb8de33580d7f00eb0b6c480af2d6c",
+  "allowed": {
+    "script": "scripts/g2e/p5a_cgw_fx001_route_instance_probe.ps1",
+    "operation": "read-only instance/listener/sink binding plus GET-only local Responses route canary",
+    "network_scope": "loopback 127.0.0.1:17841 only",
+    "max_model_executions": 0
+  },
+  "required_interpretation": {
+    "PASS_INSTANCE_BOUND_ZERO_SCIENCE": "RP-I1/RP-I2 pass; RP-I3 may be designed/qualified next.",
+    "BLOCKED": "Environment/precondition block; do not infer route identity.",
+    "INVALID_HARNESS_CONTAINER_BINDING": "Harness invalid; do not adjudicate environment."
+  },
+  "forbidden": {
+    "responses_post": true,
+    "model_execution": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "scientific_attempt_creation": true,
+    "replacement_attempt_activation": true,
+    "TC001_mutation": true,
+    "TC002_mutation": true,
+    "TC003_mutation": true
+  }
+}
