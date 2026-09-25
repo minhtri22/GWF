@@ -27,7 +27,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install test dependencies
-        run: python -m pip install pytest
+        run: python -m pip install pytest PyYAML
       - name: RP-I1T static regressions
         run: python -m pytest -q tests/g2e/test_p5a_cgw_fx001_rp_i1t.py
 
