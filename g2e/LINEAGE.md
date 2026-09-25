@@ -1156,3 +1156,12 @@
 - Exact dirty-source build reconstruction remains unresolved but does not block the next zero-science observability gate because the runtime binary itself is exact-hash bound.
 - **Backlog:** proceed to RP-I2 local route canary; RP-I3 and replacement science remain closed.
 
+### G2E-P5A-CGW — RP-I2 local route canary result
+
+- RP-I2 local zero-science verdict: `PASS_INSTANCE_BOUND_ZERO_SCIENCE`.
+- The exact custom runtime remained bound to the frozen launcher identity, with health/listener/supervisor/launcher-log relationships consistent.
+- The zero-science local route canary `GET /v1/responses` returned the expected HTTP `426`.
+- Therefore RP-I1 instance identity and RP-I2 local route ingress identity are both closed PASS.
+- No Responses POST, model execution, browser submission, MCP invocation, or replacement scientific attempt occurred.
+- **Backlog:** design and independently qualify RP-I3 Codex outbound request witness; replacement science remains closed.
+
