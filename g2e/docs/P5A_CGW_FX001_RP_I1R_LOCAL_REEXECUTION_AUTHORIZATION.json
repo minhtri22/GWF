@@ -1,0 +1,21 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1R-LOCAL-REEXECUTION-AUTHORIZATION-v1",
+  "status": "RP_I1R_LOCAL_ZERO_SCIENCE_REEXECUTION_AUTHORIZED",
+  "qualified_source_head": "69fa3aed771b65af906d776ecf6adfc7d96248be",
+  "qualified_script_blob": "784defd507c765e28d5c76f6aca5e8945a58f303",
+  "allowed": {
+    "script": "scripts/g2e/p5a_cgw_fx001_rp_i1r_active_profile_probe.ps1",
+    "operation": "read-only active-profile instance binding plus GET-only /v1/responses canary",
+    "network_scope": "loopback 127.0.0.1:17841 GET only"
+  },
+  "forbidden": {
+    "responses_post": true,
+    "model_execution": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "scientific_attempt_creation": true,
+    "replacement_attempt_activation": true
+  },
+  "pass_verdict": "PASS_ACTIVE_PROFILE_INSTANCE_BOUND_ZERO_SCIENCE",
+  "interpretation": "Only a complete final JSON from the qualified script may establish the local RP-I1R gate result."
+}
