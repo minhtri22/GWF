@@ -138,7 +138,10 @@ class RpcClient:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise TimeoutError("TURN_COMPLETION_TIMEOUT")
-            msg = self.next_json(min(remaining, 2.0))
+            try:
+                msg = self.next_json(min(remaining, 2.0))
+            except TimeoutError:
+                continue
             if "method" in msg and "id" not in msg:
                 pending.append(msg)
 
