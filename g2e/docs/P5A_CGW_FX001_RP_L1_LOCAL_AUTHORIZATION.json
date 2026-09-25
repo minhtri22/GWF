@@ -1,0 +1,22 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-L1-LOCAL-AUTHORIZATION-v1",
+  "status": "RP_L1_LOCAL_ZERO_SCIENCE_AUTHORIZED",
+  "qualified_source_head": "29d6b076a36d4c29ed645859dba0f6e8559ad12a",
+  "qualified_script_blob": "32d38088797a6c0d14f5fb6ea0b1db0f44078965",
+  "allowed": {
+    "script": "scripts/g2e/p5a_cgw_fx001_rp_l1_launcher_identity.ps1",
+    "operation": "read-only launcher file identity and Authenticode metadata decomposition",
+    "network_scope": "none"
+  },
+  "forbidden": {
+    "process_launch": true,
+    "http_request": true,
+    "responses_request": true,
+    "model_execution": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "scientific_attempt_creation": true,
+    "replacement_attempt_activation": true
+  },
+  "interpretation": "The local result may classify launcher identity only. A same-version/different-SHA result is diagnostic and does not itself qualify the new binary or authorize a fresh runtime launch."
+}
