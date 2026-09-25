@@ -1,0 +1,55 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1C-POWERSHELL51-TIMESTAMP-QUALIFICATION-v1",
+  "status": "PASS_ZERO_SCIENCE_TIMESTAMP_RUNTIME_QUALIFICATION",
+  "source_head": "2bb9297395b586b157cff0620a1e273bdb81934c",
+  "parent_qualification": "P5A_CGW_FX001_RP_I1C_QUALIFICATION",
+  "purpose": "Qualify RP-I1C process creation-time normalization under Windows PowerShell 5.1 without changing any core-home derivation, ownership binding, or profile-classification logic.",
+  "artifacts": {
+    "script": {
+      "path": "scripts/g2e/p5a_cgw_fx001_rp_i1c_derived_core_home.ps1",
+      "git_blob": "f7f02ea994c7e911ad2cdeee7e594365c930ff93"
+    },
+    "static_test": {
+      "path": "tests/g2e/test_p5a_cgw_fx001_rp_i1c.py",
+      "git_blob": "e7cd0e67aa346f3f86dc76f3be2ca4adbd6e2dea"
+    },
+    "runtime_regression": {
+      "path": "tests/g2e/p5a_cgw_fx001_rp_i1c_timestamp_regression.ps1",
+      "git_blob": "00a98924e7bee501425b6282748fb92a9302f27a"
+    },
+    "workflow": {
+      "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i1c-qa.yml",
+      "git_blob": "3297ce489e4e6fa10ecb0b760b05eeadef1c2413"
+    }
+  },
+  "authoritative_qa": {
+    "run_id": 36107009040,
+    "jobs": [
+      {
+        "id": 107981735398,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107981735208,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107981735312,
+        "name": "powershell-parser + timestamp runtime regression",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "safety": {
+    "health_get_only": true,
+    "responses_request": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_creation": false,
+    "replacement_attempt_activation": false
+  },
+  "next_gate": "RP-I1C_LOCAL_DERIVED_CORE_HOME_REEXECUTION"
+}
