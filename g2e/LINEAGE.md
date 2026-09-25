@@ -1117,3 +1117,13 @@
 - No replacement scientific attempt is authorized.
 - **Backlog:** identify the effective ownership/config/log/diagnostics root used by the live launcher generation containing PID `15604` and daemon PID `27240`, without mutating stale ownership artifacts.
 
+### G2E-P5A-CGW — RP-I1U runtime-generation result
+
+- RP-I1U local zero-science diagnostic result: `PASS_DIAGNOSTIC_PRIOR_RUNTIME_GENERATION_TERMINATED`.
+- The previously observed listener PID `27240` and launcher PID `15604` were no longer alive.
+- Port `17841` had no active listener and no `Codex Web GPT.exe` launcher process was present.
+- Therefore the prior CGW runtime generation had fully terminated before the blocked RP-I1C observation.
+- RP-I1C remains not adjudicated; RP-I3 remains closed.
+- No replacement scientific attempt is authorized.
+- **Backlog:** establish a fresh zero-science CGW runtime generation, then rerun exact RP-I1C to identify and bind the effective `coreHome` / ownership state of that fresh generation.
+
