@@ -1,0 +1,125 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TC3-POSTLIVE-ADJUDICATION-v1",
+  "status": "INVALID_SPENT",
+  "scientific_verdict": "NOT_APPLICABLE_INVALID_EVIDENCE",
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "source_head": "79caac767c7276a5a92672102df7ff784f62e733",
+  "attempt_state": "SPENT",
+  "consumption": {
+    "marker_present": true,
+    "marker_sha256": "786701375256c4ffeb867d2109d1ec194e2b7972dc01d7081db5e2fd71ba7e0c",
+    "marker_bound_attempt": true,
+    "marker_bound_execution_config": true,
+    "marker_bound_admission": true,
+    "turn_start_request_sent": true,
+    "turn_start_accepted": true,
+    "turn_terminal": true,
+    "terminal_status": "completed",
+    "turn_timeout": false
+  },
+  "execution_report": {
+    "sha256": "089e4d759f86a4dc5591cfe4f293dba5bc6dbfab2a34bfcd01516c8f5f293d74",
+    "status": "FUNCTIONAL_EVIDENCE_READY_FOR_ADJUDICATION",
+    "attempt_consumed": true,
+    "runner_exit_code": 0,
+    "verifier_exit_code": 0,
+    "verification_sha256": "78f2388bb26832ce3964cb3321e567354bd758cab18fa2794a5fb6a062000d20",
+    "cleanup": {
+      "attached_before_cleanup": true,
+      "cleanup_action": "DISMOUNTED",
+      "attached_after_cleanup": false,
+      "cleanup_error": null
+    }
+  },
+  "verification": {
+    "metrics": {
+      "executor_completed": 1,
+      "result_schema_valid": 0,
+      "result_values_correct": 0,
+      "mutation_scope_valid": 1,
+      "attempt_attribution_valid": 1,
+      "evidence_integrity_valid": 0
+    },
+    "adjudication_inputs": {
+      "attempt_consumed_under_frozen_rule": true,
+      "authority_violation": false,
+      "infrastructure_or_protocol_failure": true,
+      "live_mcp_roundtrip_admitted": false,
+      "protocol_failure": false,
+      "result_exists": false,
+      "retry_budget": 0,
+      "scope_violation": false,
+      "terminal_status": "completed",
+      "turn_start_accepted": true,
+      "turn_start_request_sent": true,
+      "turn_terminal": true,
+      "turn_timeout": false,
+      "unexpected_server_request_count": 0,
+      "replacement_attempt_authorized": false
+    },
+    "route_checks": {
+      "valid": false,
+      "errors": [
+        "ROUTE_BROWSER_SURFACE_MISSING",
+        "ROUTE_CAPABILITY_DIGEST_INVALID",
+        "ROUTE_INVOCATION_ID_MISSING",
+        "ROUTE_REQUEST_ID_MISSING",
+        "ROUTE_RESPONSE_BINDING_INVALID",
+        "ROUTE_TOOL_NAME_MISSING",
+        "ROUTE_TOOL_RESULT_DIGEST_INVALID"
+      ]
+    }
+  },
+  "runner": {
+    "app_server_exit_code": 1,
+    "driver_exception": null,
+    "browser_diagnostics_new_dirs": [],
+    "launcher_delta_record_count": 0,
+    "route_evidence_record_count": 4,
+    "route_evidence_errors": [
+      "ROUTE_BROKER_REGISTRATION_CARDINALITY",
+      "ROUTE_BROWSER_DIAGNOSTIC_DIRECTORY_CARDINALITY",
+      "ROUTE_CHECKPOINT_MISSING:send-accepted",
+      "ROUTE_CHECKPOINT_MISSING:response-visible",
+      "ROUTE_CHECKPOINT_MISSING:turn-completed",
+      "ROUTE_BROWSER_SURFACE_AMBIGUOUS",
+      "ROUTE_RESPONSE_BINDING_MISSING",
+      "ROUTE_MCP_CALL_NOT_CORRELATED_TO_CODEX_ITEM",
+      "ROUTE_MCP_TOOL_NAME_MISSING",
+      "ROUTE_CAPABILITY_DIGEST_MISSING"
+    ],
+    "result_exists": false,
+    "result_sha256": null,
+    "input_unchanged": true,
+    "task_unchanged": true
+  },
+  "classification": {
+    "primary": "POST_CONSUMPTION_ROUTE_EVIDENCE_INVALIDATION",
+    "substantive_fail": false,
+    "reason_not_substantive_fail": "Frozen adjudication requires structurally valid attributable terminal execution without infrastructure/protocol/evidence invalidation. Evidence integrity failed and live MCP roundtrip was not admitted, so zero result metrics are non-substantive.",
+    "authority_violation": false,
+    "scope_violation": false,
+    "protocol_failure": false,
+    "infrastructure_or_protocol_failure": true
+  },
+  "governance": {
+    "retry_budget": 0,
+    "retry_authorized": false,
+    "same_attempt_rearm_authorized": false,
+    "replacement_attempt_authorized": false,
+    "tc003_rerun_authorized": false,
+    "tc003_root_disposition": "PRESERVE_IMMUTABLE_DO_NOT_REUSE",
+    "tc003_execution_lock_disposition": "CONSUMED_HISTORICAL_DO_NOT_REUSE"
+  },
+  "evidence_hashes": {
+    "admission_sha256": "76798e50504a6cb968075032917c3937003be0fee3aec8737ced45a90b3b38d9",
+    "health_sha256": "bdf0bbf55e35a1df364179d135091e701f28eb08515cc47bfdf6b22f4bfccd8a",
+    "marker_sha256": "786701375256c4ffeb867d2109d1ec194e2b7972dc01d7081db5e2fd71ba7e0c",
+    "runner_sha256": "ee88758e3c51e29c3507ab49e9a82a886d9a1f0ea9db884fcc53bb25688e7a5b",
+    "verification_sha256": "78f2388bb26832ce3964cb3321e567354bd758cab18fa2794a5fb6a062000d20",
+    "protocol_sha256": "fa9da396d2a1f5c952fd34bf43416db738e2fd2942d30eca246dac13ca605fa1",
+    "route_sha256": "058566e32530aabbf2853091b4b4631d16cba9f0247ee2d929bc82c786b914fc"
+  },
+  "next_gate": "NO_SCIENTIFIC_RETRY__POSTMORTEM_ROUTE_PATH_ONLY"
+}
