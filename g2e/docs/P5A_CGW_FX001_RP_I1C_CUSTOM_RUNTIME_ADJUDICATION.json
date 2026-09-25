@@ -1,0 +1,40 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1C-CUSTOM-RUNTIME-ADJUDICATION-v1",
+  "status": "PASS_CUSTOM_RUNTIME_INSTANCE_BINDING",
+  "source_head": "550b86a8620d39312bd230d1f3b4b7606f1daf63",
+  "zero_science": true,
+  "runtime_identity_lock": "g2e/docs/P5A_CGW_FX001_CUSTOM_RUNTIME_IDENTITY_LOCK.json",
+  "observed": {
+    "health_pid": 7232,
+    "listener_pid": 7232,
+    "launcher_owner_pid": 27060,
+    "launcher_path": "D:\\WORK\\RESEARCH\\codex-chatgpt-web\\launcher\\artifacts\\codex-web-gpt-4.0.7-win-x64-portable\\Codex Web GPT.exe",
+    "launcher_sha256": "5bedc89da21594bac53edceedf929b3640ed877a63a6d80fe3d6f0b94bc2182c",
+    "derived_core_home": "C:\\Users\\minht\\.codex-chatgpt-web-dev\\core-home",
+    "descriptor_profile": "production",
+    "config_mode": "full",
+    "config_port": 17841,
+    "relationships": {
+      "health_equals_listener": true,
+      "supervisor_daemon_equals_listener": true,
+      "supervisor_owner_equals_listener_parent": true,
+      "descriptor_equals_supervisor_owner": true
+    }
+  },
+  "classification": "PASS_DERIVED_CORE_HOME_BINDS_PRODUCTION_LAUNCHER",
+  "interpretation": {
+    "intended_runtime_bound": true,
+    "profile_production_is_expected_for_no_dev_profile_launch": true,
+    "custom_environment_bound_home_is_expected": true,
+    "RP_I1_gate": "PASS",
+    "next_gate": "RP_I2_LOCAL_ROUTE_CANARY"
+  },
+  "scientific_effect": {
+    "responses_request": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  }
+}
