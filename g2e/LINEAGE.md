@@ -924,3 +924,17 @@
 - Qualified RP-I1T script blob: `87dec076673f96ee72d51576920f9b836878d466`.
 - Current authorization: one local RP-I1T zero-science temporal probe only. RP-I3 and replacement science remain closed.
 
+### G2E-P5A-CGW — Historical route mismatch causal closure; RP-I1R active-profile repair
+
+- Frozen TC-003 health evidence itself bound `127.0.0.1:17841` to PID `27240` immediately before attempt consumption; marker timestamp `2026-09-25T03:01:22Z`.
+- RP-I1D/RP-I1T process evidence bound the same PID `27240` to the development-profile `bun.exe` under `~/.codex-chatgpt-web-dev/core-home`, created at `02:54:17Z`, with portable dev launcher parent PID `15604` created at `02:54:09Z`.
+- TC-003 Codex route contract used `openai_base_url=http://127.0.0.1:17841/v1`.
+- TC-003 measurement watched production roots `~/.codex-chatgpt-web` and `%APPDATA%/Codex Web GPT`.
+- Causal closure: `PASS_HR1_HISTORICAL_ROOT_CAUSE_PROVEN` — the spent run reached the development CGW instance while route measurement watched production evidence sinks. This explains zero launcher delta, zero new browser diagnostics, and the resulting null route-correlation fields.
+- This causal closure does **not** explain the missing `result.json`; outbound tool advertisement/invocation remains a separate question.
+- RP-I1T retains its own preregistered verdict `BLOCKED_TEMPORAL_BINDING_INCOMPLETE`; it is not rewritten. Direct frozen TC-003 health PID evidence supersedes its missing launcher-log criterion for historical attribution.
+- RP-I1R repair removes profile hardcoding: health/listener PID -> parent PID -> enumerate qualified profiles -> exact supervisor owner/daemon binding -> descriptor binding -> only then select active config/log/diagnostics roots.
+- RP-I1R authoritative QA run `36099040137` PASS: Ubuntu `107957374166`, Windows `107957374454`, PowerShell parser `107957374341`.
+- Qualified RP-I1R script blob: `051539f12f67df17ee9cdd3a06d9177f7af17c42`.
+- Current authorization: one local RP-I1R zero-science probe. RP-I3 and replacement science remain closed.
+
