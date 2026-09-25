@@ -1,0 +1,45 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-L1-LOCAL-EXECUTION-001-ADJUDICATION-v1",
+  "status": "PASS_DIAGNOSTIC_SAME_VERSION_DIFFERENT_UNSIGNED_BINARY",
+  "source_head": "9c1e4aa99532a31cac205402037c2c70cd3c7d15",
+  "zero_science": true,
+  "observed": {
+    "launcher_path": "D:\\WORK\\RESEARCH\\codex-chatgpt-web\\launcher\\artifacts\\codex-web-gpt-4.0.7-win-x64-portable\\Codex Web GPT.exe",
+    "current_sha256": "5bedc89da21594bac53edceedf929b3640ed877a63a6d80fe3d6f0b94bc2182c",
+    "current_size": 223980032,
+    "file_version": "4.0.7",
+    "product_version": "4.0.7.0",
+    "company_name": "miuuyy",
+    "product_name": "Codex Web GPT",
+    "authenticode_status": "NotSigned",
+    "signer_subject": null,
+    "signer_thumbprint": null
+  },
+  "prior_qualified": {
+    "sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+    "size": 223980032,
+    "file_version": "4.0.7",
+    "product_version": "4.0.7.0"
+  },
+  "comparisons": {
+    "exact_prior_identity": false,
+    "same_file_and_product_version": true
+  },
+  "classification": "SAME_VERSION_DIFFERENT_BINARY_SIGNATURE_NOT_VALID",
+  "interpretation": {
+    "same_version_is_not_identity_equivalence": true,
+    "current_binary_not_requalified": true,
+    "fresh_runtime_launch_remains_blocked": true
+  },
+  "scientific_effect": {
+    "process_launch": false,
+    "http_request": false,
+    "responses_request": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  },
+  "next_gate": "RP-L2_RELEASE_OR_BUILD_PROVENANCE_EQUIVALENCE"
+}
