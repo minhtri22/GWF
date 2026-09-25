@@ -705,6 +705,10 @@ async function loadAuthenticatedShell() {
 }
 
 function showLogin() {
+  state.home = null;
+  state.homeError = null;
+  state.projects = null;
+  state.projectsError = null;
   $("#appView").hidden = true;
   $("#loginView").hidden = false;
   const product = state.bootstrap?.product;
