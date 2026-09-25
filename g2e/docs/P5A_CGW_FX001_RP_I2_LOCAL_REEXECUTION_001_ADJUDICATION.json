@@ -1,0 +1,53 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I2-LOCAL-REEXECUTION-001-ADJUDICATION-v1",
+  "status": "PASS_INSTANCE_BOUND_ZERO_SCIENCE",
+  "source_head": "5f3a42f86495ae05787269a4f0980f58f7f90078",
+  "qualified_probe_blob": "852fc3c8d14bfb1feb4f809f5c1f5a529fa6bb2f",
+  "runtime_identity": {
+    "launcher_path": "D:\\WORK\\RESEARCH\\codex-chatgpt-web\\launcher\\artifacts\\codex-web-gpt-4.0.7-win-x64-portable\\Codex Web GPT.exe",
+    "launcher_sha256": "5bedc89da21594bac53edceedf929b3640ed877a63a6d80fe3d6f0b94bc2182c",
+    "owner_pid": 27060,
+    "daemon_pid": 7232,
+    "health_pid": 7232,
+    "mode": "full",
+    "port": 17841
+  },
+  "checks": {
+    "config_bound": true,
+    "supervisor_bound": true,
+    "browser_descriptor_bound": true,
+    "launcher_log_bound_to_daemon_pid": true,
+    "listener_pid_matches_health": true,
+    "daemon_pid_matches_health": true,
+    "daemon_parent_matches_owner": true,
+    "health_accepting_turns": true,
+    "health_idle_http": true,
+    "health_idle_browser": true
+  },
+  "route_canary": {
+    "method": "GET",
+    "path": "/v1/responses",
+    "status_code": 426,
+    "body_length": 64,
+    "expected_status_match": true
+  },
+  "harness_integrity": {
+    "add_check_shared_container": true,
+    "initial_check_count": 4,
+    "repaired_httpclient_path_qualified": true
+  },
+  "scientific_effect": {
+    "responses_post": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  },
+  "interpretation": {
+    "RP_I1": "PASS",
+    "RP_I2": "PASS",
+    "local_route_ingress_identity_established": true,
+    "next_gate": "RP_I3_CODEX_OUTBOUND_REQUEST_WITNESS_DESIGN_AND_QUALIFICATION"
+  }
+}
