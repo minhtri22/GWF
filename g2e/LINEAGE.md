@@ -1094,3 +1094,14 @@
 - **B4 — Evidence-sink qualification:** establish that future route evidence is bound to the same live instance before any scientific execution.
 - **B5 — Replacement-attempt governance:** only after the evidence path and outbound tool contract are independently established may governance consider a new replacement scientific attempt. No replacement attempt is currently authorized.
 
+### G2E-P5A-CGW — RP-I1R local active-profile result
+
+- RP-I1R local zero-science execution completed with final verdict: `BLOCKED_ACTIVE_PROFILE_OWNERSHIP_UNBOUND`.
+- Health, sole listener identity, listener process existence, listener-parent existence, and GET-only `/v1/responses` canary all passed.
+- No qualified profile ownership state bound the live listener instance; bound profile count was `0`.
+- Development profile config remained semantically valid, but development ownership state did not bind the live daemon/launcher process pair.
+- RP-I1R local PASS is not established.
+- RP-I3 remains closed.
+- No replacement scientific attempt is authorized.
+- **Backlog:** establish a read-only ownership-state snapshot sufficient to identify what process identities the active development supervisor and browser descriptor currently reference.
+
