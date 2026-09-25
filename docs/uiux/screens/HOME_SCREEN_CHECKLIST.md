@@ -7,7 +7,7 @@ SCREEN_ID        = HOME
 OWNER            = BPS-M01
 ROUTE            = /app/home
 PROTOCOL         = BPS-SCREEN-FAST-LANE-v1
-STATUS           = USER_UAT_OPEN
+STATUS           = SCREEN_PASS
 BASE_HEAD        = 28f82c10de8737ee33e59027f804ea54ce41bf95
 CHECKLIST_HEAD   = f37b20c14f001e83f2b0cb3ef176102c59a02cd0
 CANDIDATE_HEAD   = b3bb883085d65fbcfbd655da7d895599b9d65210
@@ -249,3 +249,45 @@ Remaining discriminators:
 
 1. rerun H-UAT-08R using the exact localhost fixture URL to determine whether the failure is cross-port cookie collision or a Home/session defect;
 2. run `-Mode error` through the exact localhost fixture URL for H-UAT-09.
+
+
+## Final User UAT closure — 2026-09-25
+
+Final operator results:
+
+```text
+H-UAT-08R2 = P
+H-UAT-09   = P
+```
+
+Together with the previously accepted observations:
+
+```text
+H-UAT-01 = P
+H-UAT-02 = P
+H-UAT-03 = P
+H-UAT-04 = P
+H-UAT-05 = P
+H-UAT-06 = P
+H-UAT-07 = P
+H-UAT-08 = P  (resolved by isolated-host discriminator H-UAT-08R2)
+H-UAT-09 = P
+H-UAT-10 = P
+H-UAT-11 = P
+```
+
+H-UAT-08 adjudication: the failure observed while multiple local GWF instances shared the same `127.0.0.1` cookie host did not reproduce when the isolated fixture was opened through `localhost`. This is classified as a local cross-port cookie-host collision in the UAT environment, not a Home Refresh product defect. No authentication/security semantics were changed.
+
+H-UAT-09 adjudication: the controlled fixture error rendered an unavailable/error state rather than authoritative-looking zero values.
+
+Final screen state:
+
+```text
+USER_UAT_PASS       = 11
+USER_UAT_FAIL       = 0
+USER_UAT_UNTESTED   = 0
+HOME                = SCREEN_PASS
+NEXT_SCREEN_ALLOWED = true
+```
+
+Per `BPS-SCREEN-FAST-LANE-v1`, Home is closed and the next screen is the Projects index.
