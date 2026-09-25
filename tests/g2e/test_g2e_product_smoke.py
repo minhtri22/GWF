@@ -41,3 +41,12 @@ def test_health_probe_is_native_python_not_nested_powershell():
     assert 'urllib.request.urlopen' in src
     assert '"powershell"' not in src
     assert 'launcher_log = launcher_data / "logs" / "launcher.jsonl"' in src
+
+
+def test_powershell_wrapper_autostarts_custom_runtime_when_down():
+    ps1 = (ROOT / "scripts" / "g2e" / "g2e_product_smoke.ps1").read_text(encoding="utf-8")
+    assert "Start-CustomCgwRuntime" in ps1
+    assert "CODEX_WEB_GPT_LAUNCHER_DATA_DIR" in ps1
+    assert "CODEX_CHATGPT_WEB_HOME" in ps1
+    assert "CUSTOM_CGW_RUNTIME_START_TIMEOUT" in ps1
+    assert "Start-Process -FilePath $Launcher -PassThru" in ps1
