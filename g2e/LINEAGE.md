@@ -887,3 +887,15 @@
 - Qualified probe blob: `6f2414ed02fb8de33580d7f00eb0b6c480af2d6c`.
 - Current authorization: exact repaired RP-I1/RP-I2 local zero-science re-execution only. RP-I3 and replacement science remain closed.
 
+### G2E-P5A-CGW — RP-I1 blocked on missing launcher ownership markers; RP-I1D opened
+
+- Repaired RP-I1/RP-I2 local execution at HEAD `49da95e1816cd6fa4f12a79904f212edaeeda108` was harness-valid: shared container true, initial check count 4.
+- Environment observation: config exists and launcher log exists, but `~/.codex-chatgpt-web/runtime/launcher-supervisor.json` and `launcher-browser.json` are absent.
+- Exact CGW 4.0.7 source confirms both expected paths are correct for production CORE_HOME; browser descriptor is created by BrowserHost and removed on destroy.
+- RP-I1 result: `BLOCKED_LAUNCHER_OWNERSHIP_MARKERS_MISSING`; RP-I2 not reached. No model/browser/MCP/scientific attempt.
+- Because the gate probe returned before health/listener inspection, no causal choice was made between inactive launcher, external/stale listener, or unexpected effective profile/home.
+- RP-I1D was added as a diagnostic-complete, health-GET-only observation probe. It cannot PASS RP-I1/RP-I2 by itself.
+- RP-I1D QA run `36093919701` PASS: Ubuntu `107941992610`, Windows `107941992506`, PowerShell parser `107941992289`.
+- Qualified RP-I1D script blob: `3e518819ff74112602eef022100538fe642e908b`.
+- Current authorization: one local RP-I1D zero-science diagnostic. RP-I3 and replacement science remain closed.
+
