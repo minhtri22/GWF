@@ -1,0 +1,64 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-L2-QUALIFICATION-v1",
+  "status": "PASS_ZERO_SCIENCE_LAUNCHER_PROVENANCE_CENSUS_QUALIFICATION",
+  "source_head": "1317b89f9ee94fa89b4514fa8f882db862e50359",
+  "parent_result": "P5A_CGW_FX001_RP_L1_LOCAL_EXECUTION_001_ADJUDICATION",
+  "official_release_reference": {
+    "repository": "miuuyy/codex-chatgpt-web",
+    "tag": "v4.0.7",
+    "release_commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494",
+    "windows_installer_asset": "codex-web-gpt-4.0.7-win-x64.exe",
+    "windows_installer_sha256": "90f47feaa5c6c17612ac9bee6a49b11b65e0241b046b7380e2c5219792a55354"
+  },
+  "artifacts": {
+    "plan": {
+      "path": "g2e/docs/P5A_CGW_FX001_RP_L2_LAUNCHER_PROVENANCE_PLAN.md",
+      "git_blob": "ca821fcb1cef8fc892aae74db7616fc9dd7fe4e5"
+    },
+    "script": {
+      "path": "scripts/g2e/p5a_cgw_fx001_rp_l2_launcher_provenance.ps1",
+      "git_blob": "f04fb6da72391681665dc0cec232d67fd510ec91"
+    },
+    "test": {
+      "path": "tests/g2e/test_p5a_cgw_fx001_rp_l2.py",
+      "git_blob": "563f95dce66e658df2b2c0941ad1d986c7671bcf"
+    },
+    "workflow": {
+      "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-l2-qa.yml",
+      "git_blob": "bb7d2f6304ae49a8e00c6249bd2dda117edb13a6"
+    }
+  },
+  "authoritative_qa": {
+    "run_id": 36146168291,
+    "jobs": [
+      {
+        "id": 108107769866,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 108107769841,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 108107769591,
+        "name": "powershell-parser",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "safety": {
+    "process_launch": false,
+    "http_request": false,
+    "download": false,
+    "install_or_extract": false,
+    "responses_request": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_creation": false,
+    "replacement_attempt_activation": false
+  },
+  "next_gate": "RP-L2_LOCAL_LAUNCHER_PROVENANCE_CENSUS"
+}
