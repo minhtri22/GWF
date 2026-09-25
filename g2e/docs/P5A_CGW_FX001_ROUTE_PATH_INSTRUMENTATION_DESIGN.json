@@ -1,0 +1,91 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-ROUTE-PATH-INSTRUMENTATION-DESIGN-v1",
+  "status": "DESIGNED_NOT_YET_SCIENTIFICALLY_ACTIVATED",
+  "parent_study": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "parent_final_classification": "INVALID_SPENT",
+  "purpose": "Make the transport/evidence path attributable before any future model execution.",
+  "prohibited": [
+    "model_execution",
+    "browser_submission",
+    "mcp_invocation",
+    "TC001_mutation",
+    "TC002_mutation",
+    "TC003_mutation",
+    "replacement_attempt_activation"
+  ],
+  "gates": [
+    {
+      "id": "RP-I1",
+      "name": "CGW_INSTANCE_BINDING",
+      "zero_science": true,
+      "requirements": [
+        "config host=127.0.0.1 and port=17841",
+        "health service/version/mode exact and idle",
+        "health.pid is a positive integer",
+        "exactly one LISTEN owner exists for 127.0.0.1:17841",
+        "listener PID == health.pid",
+        "launcher-supervisor.json exists and status=ready",
+        "supervisor daemonPid == health.pid",
+        "supervisor ownerPid process exists",
+        "daemon process exists and command line contains serve",
+        "launcher-browser.json exists and parses",
+        "launcher log contains runtime.daemon_started for the same daemonPid in current or rotated log"
+      ],
+      "pass": "PASS_INSTANCE_BOUND_ZERO_SCIENCE"
+    },
+    {
+      "id": "RP-I2",
+      "name": "CGW_LOCAL_ROUTE_CANARY",
+      "zero_science": true,
+      "requirements": [
+        "GET /v1/responses only; never POST",
+        "same bound listener returns the source-defined HTTP 426 local-route response",
+        "no browser turn, no model request, no MCP call"
+      ],
+      "pass": "PASS_LOCAL_RESPONSES_HANDLER_BOUND"
+    },
+    {
+      "id": "RP-I3",
+      "name": "CODEX_OUTBOUND_REQUEST_WITNESS",
+      "zero_science": true,
+      "requirements": [
+        "use exact qualified Codex 0.153.4 binary",
+        "use isolated temporary CODEX_HOME",
+        "point openai_base_url to a GWF loopback witness, not CGW",
+        "witness must reject before upstream/model forwarding",
+        "capture only bounded request metadata: method/path, model, request-body hash, tool count/names/types, thread/turn metadata presence",
+        "prove chatgpt-web/high is emitted to the configured loopback Responses endpoint",
+        "prove expected native mutation-capable tool surface is or is not advertised before any real model execution"
+      ],
+      "pass": "PASS_CODEX_OUTBOUND_CONTRACT_WITNESSED"
+    },
+    {
+      "id": "RP-I4",
+      "name": "EVIDENCE_SINK_SOURCE_BINDING",
+      "zero_science": true,
+      "requirements": [
+        "freeze exact CGW source commit and critical source blobs",
+        "prove full mode => localToolsEnabled=true",
+        "prove broker.register precedes browser send in frozen source",
+        "prove browser-page-acquired capture precedes browser send in frozen source",
+        "prove launcher-owned daemon stdout/stderr feed launcher.jsonl",
+        "derive diagnostics root from the same CORE_HOME bound by RP-I1"
+      ],
+      "pass": "PASS_SINK_CONTRACT_BOUND"
+    }
+  ],
+  "activation_rule": "Only RP-I1 + RP-I2 + RP-I3 + RP-I4 PASS may open a new governance review for a replacement scientific attempt. PASS does not itself authorize such an attempt.",
+  "evidence_policy": {
+    "no_synthetic_route_events": true,
+    "null_identity_fields_fail_closed": true,
+    "ingress_witness_required": true,
+    "pid_binding_required": true,
+    "request_body_hash_required": true,
+    "route_event_must_have_direct_source": "Each route event must be directly observed at its boundary; do not manufacture codex_request/browser_submit/mcp_roundtrip events from missing logs."
+  },
+  "historical_root_cause": "OBSERVABILITY_INSTANCE_BINDING_GAP_PROVEN",
+  "unresolved_historical_choice": [
+    "H-R1 observed-instance/evidence-root mismatch",
+    "H-R2 dual observation-sink failure on correct instance"
+  ]
+}
