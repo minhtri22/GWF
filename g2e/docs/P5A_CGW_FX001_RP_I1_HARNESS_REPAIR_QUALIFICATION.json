@@ -1,0 +1,59 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1-HARNESS-REPAIR-QUALIFICATION-v1",
+  "status": "PASS_ZERO_SCIENCE_HARNESS_REPAIR",
+  "source_head": "64a009926972c7bc795f75c645098706d403acf2",
+  "supersedes_execution": "P5A_CGW_FX001_RP_I1_LOCAL_EXECUTION_001_ADJUDICATION",
+  "root_cause": "HARNESS_CONTAINER_TYPE_CONVERSION",
+  "repaired_invariant": "Add-Check now accepts System.Collections.IDictionary, preserving identity of the caller's OrderedDictionary; probe self-checks initial shared-container cardinality before any environment adjudication.",
+  "artifacts": {
+    "probe": {
+      "path": "scripts/g2e/p5a_cgw_fx001_route_instance_probe.ps1",
+      "git_blob": "6f2414ed02fb8de33580d7f00eb0b6c480af2d6c"
+    },
+    "python_static_test": {
+      "path": "tests/g2e/test_p5a_cgw_fx001_route_path_postmortem.py",
+      "git_blob": "3b49e580603edb9c82123def240caeba2d907548"
+    },
+    "powershell_semantic_regression": {
+      "path": "tests/g2e/p5a_cgw_fx001_route_probe_container_regression.ps1",
+      "git_blob": "369cb2cbbca43757e9e919ecfec00ab7989650b1"
+    },
+    "workflow": {
+      "path": ".github/workflows/g2e-p5a-cgw-fx001-route-path-postmortem-qa.yml",
+      "git_blob": "4d77ebe3bab22293f6704c0543df0dc31d922df9"
+    }
+  },
+  "authoritative_qa": {
+    "run_id": 36093100419,
+    "jobs": [
+      {
+        "id": 107939487478,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107939487225,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107939487545,
+        "name": "powershell-parser + ordered dictionary regression",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "prior_qa_note": {
+    "run_id": 36093047933,
+    "classification": "QA_HARNESS_MISMATCH_ONLY",
+    "detail": "The semantic regression itself printed PASS; workflow incorrectly inspected LASTEXITCODE after an internal PowerShell script. That workflow-only check was removed prospectively."
+  },
+  "scientific_effect": {
+    "model_executed": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_consumed": false,
+    "replacement_attempt_authorized": false
+  },
+  "next_gate": "RP-I1_RP-I2_LOCAL_ZERO_SCIENCE_REEXECUTION"
+}
