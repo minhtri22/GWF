@@ -6,6 +6,28 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Convert-ToUtcIso([object]$Value) {
+    if ($null -eq $Value) { return $null }
+    if ($Value -is [DateTime]) {
+        return $Value.ToUniversalTime().ToString("o")
+    }
+    if ($Value -is [DateTimeOffset]) {
+        return $Value.UtcDateTime.ToString("o")
+    }
+    $text = [string]$Value
+    try {
+        return ([DateTimeOffset]::Parse($text)).UtcDateTime.ToString("o")
+    }
+    catch {
+        try {
+            return [Management.ManagementDateTimeConverter]::ToDateTime($text).ToUniversalTime().ToString("o")
+        }
+        catch {
+            return $null
+        }
+    }
+}
+
 function Read-JsonSafe([string]$Path) {
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
     try { return (Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json) }
@@ -22,7 +44,7 @@ function Get-ProcessInfo([int]$ProcessId) {
         parent_pid = [int]$p.ParentProcessId
         name = [string]$p.Name
         executable_path = [string]$p.ExecutablePath
-        creation_time_utc = [Management.ManagementDateTimeConverter]::ToDateTime([string]$p.CreationDate).ToUniversalTime().ToString("o")
+        creation_time_utc = Convert-ToUtcIso $p.CreationDate
         command_contains_serve = ($cmd -match "(^|\s)serve(\s|$)")
         command_has_dev_profile_flag = ($cmd -match "(^|\s)--dev-profile(\s|$)")
         command_has_electron_child_type = ($cmd -match "(^|\s)--type=")
