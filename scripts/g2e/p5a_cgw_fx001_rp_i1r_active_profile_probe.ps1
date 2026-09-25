@@ -8,6 +8,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+Add-Type -AssemblyName System.Net.Http
+
 function Read-JsonSafe([string]$Path) {
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
     try { return (Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json) }
