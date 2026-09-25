@@ -38,3 +38,10 @@ def test_plan_cannot_pass_rp_i1():
     s = PLAN.read_text(encoding="utf-8")
     assert "cannot PASS RP-I1 or RP-I2 by itself" in s
     assert "no model execution" in s
+
+
+def test_rp_i1d_avoids_powershell_pid_automatic_variable_collision():
+    s = DIAG.read_text(encoding="utf-8")
+    assert "function Get-ProcessSnapshot([int]$ProcessId)" in s
+    assert 'ProcessId=$ProcessId' in s
+    assert "function Get-ProcessSnapshot([int]$Pid)" not in s
