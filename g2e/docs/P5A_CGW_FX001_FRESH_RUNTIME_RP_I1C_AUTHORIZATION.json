@@ -1,0 +1,42 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-FRESH-RUNTIME-RP-I1C-AUTHORIZATION-v1",
+  "status": "FRESH_ZERO_SCIENCE_RUNTIME_AND_RP_I1C_REEXECUTION_AUTHORIZED",
+  "source_head": "da20878a6af995a66ead38cfef5344b72b3e57cd",
+  "parent_result": "P5A_CGW_FX001_RP_I1U_LOCAL_EXECUTION_001_ADJUDICATION",
+  "prior_generation": {
+    "launcher_pid": 15604,
+    "daemon_pid": 27240,
+    "classification": "PRIOR_RUNTIME_GENERATION_TERMINATED"
+  },
+  "launcher": {
+    "path": "D:\\WORK\\RESEARCH\\codex-chatgpt-web\\launcher\\artifacts\\codex-web-gpt-4.0.7-win-x64-portable\\Codex Web GPT.exe",
+    "required_sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+    "args": [
+      "--dev-profile"
+    ],
+    "environment": {
+      "CODEX_WEB_GPT_DEV_HOME": "C:\\Users\\minht\\.codex-chatgpt-web-dev\\core-home"
+    }
+  },
+  "rp_i1c": {
+    "script": "scripts/g2e/p5a_cgw_fx001_rp_i1c_derived_core_home.ps1",
+    "required_git_blob": "f7f02ea994c7e911ad2cdeee7e594365c930ff93"
+  },
+  "allowed": [
+    "verify exact launcher SHA256",
+    "verify no active listener on port 17841 before launch",
+    "start one fresh dev-profile launcher generation",
+    "GET /healthz readiness only",
+    "run exact RP-I1C read-only probe after readiness"
+  ],
+  "forbidden": {
+    "responses_request": true,
+    "model_execution": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "scientific_attempt_creation": true,
+    "replacement_attempt_activation": true
+  },
+  "interpretation": "This authorization establishes only a fresh zero-science runtime generation and permits one RP-I1C diagnostic re-execution on that generation. It does not open RP-I3 or replacement science.",
+  "next_gate": "RP_I1C_FRESH_GENERATION_RESULT"
+}
