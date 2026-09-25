@@ -1,0 +1,39 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I2-LOCAL-EXECUTION-001-ADJUDICATION-v1",
+  "status": "INVALID_NO_RP_I2_GATE_ADJUDICATION",
+  "source_head": "1a16d51f22134aea8ade0b27c5488f8edf7590f3",
+  "zero_science": true,
+  "runtime_binding": {
+    "owner_pid": 27060,
+    "daemon_pid": 7232,
+    "launcher_path": "D:\\WORK\\RESEARCH\\codex-chatgpt-web\\launcher\\artifacts\\codex-web-gpt-4.0.7-win-x64-portable\\Codex Web GPT.exe",
+    "launcher_sha256": "5bedc89da21594bac53edceedf929b3640ed877a63a6d80fe3d6f0b94bc2182c",
+    "health_pid": 7232,
+    "health_status": "ok",
+    "health_mode": "full",
+    "pass": true
+  },
+  "harness_failure": {
+    "stage": "BEFORE_GET_V1_RESPONSES",
+    "error": "Unable to find type [Net.Http.HttpClient].",
+    "classification": "WINDOWS_POWERSHELL_51_ASSEMBLY_LOAD_COMPATIBILITY",
+    "responses_get_attempted": false,
+    "route_canary_observed": false,
+    "final_probe_json_emitted": false
+  },
+  "scientific_effect": {
+    "responses_post": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  },
+  "interpretation": {
+    "RP_I1_binding_remains_pass": true,
+    "RP_I2": null,
+    "route_failure_may_not_be_inferred": true,
+    "runtime_failure_may_not_be_inferred": true
+  },
+  "next_gate": "RP_I2_POWERSHELL51_HTTPCLIENT_REPAIR_AND_REQUALIFICATION"
+}
