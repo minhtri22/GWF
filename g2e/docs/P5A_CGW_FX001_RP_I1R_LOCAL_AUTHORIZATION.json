@@ -1,0 +1,24 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1R-LOCAL-AUTHORIZATION-v1",
+  "status": "RP_I1R_LOCAL_ZERO_SCIENCE_AUTHORIZED",
+  "qualified_source_head": "33ffd6e869943f85925390eb026f768abe698d00",
+  "qualified_script_blob": "051539f12f67df17ee9cdd3a06d9177f7af17c42",
+  "allowed": {
+    "script": "scripts/g2e/p5a_cgw_fx001_rp_i1r_active_profile_probe.ps1",
+    "operation": "read-only live PID/profile/config/log/diagnostics binding plus GET-only /v1/responses canary",
+    "network_scope": "loopback 127.0.0.1:17841 GET only"
+  },
+  "forbidden": {
+    "responses_post": true,
+    "model_execution": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "scientific_attempt_creation": true,
+    "replacement_attempt_activation": true,
+    "TC001_mutation": true,
+    "TC002_mutation": true,
+    "TC003_mutation": true
+  },
+  "pass_verdict": "PASS_ACTIVE_PROFILE_INSTANCE_BOUND_ZERO_SCIENCE",
+  "interpretation": "PASS qualifies repaired RP-I1/RP-I2 instrumentation only. RP-I3 and replacement science remain separately gated."
+}
