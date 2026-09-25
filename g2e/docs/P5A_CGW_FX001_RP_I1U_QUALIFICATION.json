@@ -1,0 +1,55 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1U-QUALIFICATION-v1",
+  "status": "PASS_ZERO_SCIENCE_RUNTIME_AVAILABILITY_QUALIFICATION",
+  "source_head": "ba670d4b0f6e618811168af23c17ecc690fa6880",
+  "parent_result": "P5A_CGW_FX001_RP_I1C_LOCAL_EXECUTION_002_ADJUDICATION",
+  "purpose": "Qualify an offline read-only snapshot that classifies whether the prior CGW listener/launcher generation is still alive or has been replaced/terminated.",
+  "artifacts": {
+    "plan": {
+      "path": "g2e/docs/P5A_CGW_FX001_RP_I1U_RUNTIME_AVAILABILITY_PLAN.md",
+      "git_blob": "9135e7c07787f5b3090f1b37055b53dc9113a0e7"
+    },
+    "script": {
+      "path": "scripts/g2e/p5a_cgw_fx001_rp_i1u_runtime_availability.ps1",
+      "git_blob": "81c67dea5aa2ece248af26d94f8165bc267232e9"
+    },
+    "test": {
+      "path": "tests/g2e/test_p5a_cgw_fx001_rp_i1u.py",
+      "git_blob": "4b86144d552233214213dfc5b5cf69a6b2fcc2ec"
+    },
+    "workflow": {
+      "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i1u-qa.yml",
+      "git_blob": "d7c98ef3e4f44ccdcb13bda5291bb9d5435bb733"
+    }
+  },
+  "authoritative_qa": {
+    "run_id": 36134293871,
+    "jobs": [
+      {
+        "id": 108068543622,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 108068543281,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 108068543615,
+        "name": "powershell-parser",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "safety": {
+    "http_request": false,
+    "responses_request": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_creation": false,
+    "replacement_attempt_activation": false
+  },
+  "next_gate": "RP-I1U_LOCAL_RUNTIME_AVAILABILITY_SNAPSHOT"
+}
