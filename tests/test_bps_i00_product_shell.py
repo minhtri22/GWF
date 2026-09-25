@@ -242,6 +242,29 @@ def test_i00_visual_shell_matches_approved_foundation_contract():
     assert 'id="routeStateOwner"' in html
 
 
+def test_i00_topbar_has_no_dead_shortcut_and_exposes_live_actor_attention_affordances():
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+
+    # Do not advertise a browser shortcut until the command/search palette is live.
+    assert "Ctrl K" not in html
+
+    # Attention count is actionable through the already-authoritative Home queue.
+    assert 'id="notificationButton"' in html
+    assert 'id="homeAttentionPanel"' in html
+    assert '$("#notificationButton").addEventListener("click"' in js
+    assert 'scrollIntoView({ behavior: "smooth", block: "start" })' in js
+
+    # The current actor/avatar has a real read-only session menu, not a dead chip.
+    assert 'id="actorMenuButton"' in html
+    assert 'id="actorMenu"' in html
+    assert 'id="actorMenuPrincipal"' in html
+    assert 'id="actorMenuActorId"' in html
+    assert 'id="actorMenuExpires"' in html
+    assert '$("#actorMenuButton").addEventListener("click"' in js
+    assert "me.memberships || {}" in js
+
+
 def test_i00_spa_router_has_no_module_data_or_fake_actions():
     js = (WEB / "app.js").read_text(encoding="utf-8")
     assert 'const DEFAULT_ROUTE = "/app/system/diagnostics"' in js
