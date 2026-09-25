@@ -836,3 +836,16 @@
 - **Attempt:** remains `RESERVED_UNCONSUMED`.
 - **Current authorization:** TC-003 local `-PreflightOnly` only; live dispatch withheld.
 
+### G2E-P5A-CGW — TC-003 readiness preflight PASS and live lock qualification PASS
+
+- **TC-003 local readiness preflight:** PASS at source HEAD `389d958e937aa79ff223d75a9904ece1595ce8b5`; exit `0`; health gate ready; attempt consumed `false`; model turn sent `false`; no TC-003 LocalRoot/VHDX/marker created.
+- **Attempt:** `p5a-cgw-v4-p5-fx-001-tc-attempt-001` remains `RESERVED_UNCONSUMED`.
+- **Candidate lock blob:** `5c86ff49dbcdd21ad040d39bd82decb40a63e69e`.
+- **Authoritative lock QA:** run `36088430010` PASS; Ubuntu `107925363060`, Windows `107925362956`, PowerShell parser `107925363147` all PASS.
+- **Final TC-003 live lock:** `g2e/docs/P5A_CGW_FX001_TC3_EXECUTION_LOCK.json`.
+- **Final live-lock blob:** `5c86ff49dbcdd21ad040d39bd82decb40a63e69e`, byte-identical to candidate.
+- **Lock status:** `DISPATCH_AUTHORIZED_EXECUTION_LOCK_TC3`.
+- **Authorization:** exactly one future scientific live dispatch; retry budget `0`; automatic execution false.
+- **Evidence roots:** TC-001 and TC-002 preserved immutable; TC-003 uses fresh root `g2e/.local/P5A-CGW-FX001-TC-003`.
+- **Next gate:** sole live TC-003 dispatch.
+
