@@ -50,3 +50,9 @@ jobs:
             throw "POWERSHELL_PARSE_FAILED"
           }
           Write-Host "POWERSHELL_51_PARSE_PASS"
+
+      - name: PID automatic-variable binding regression
+        shell: powershell
+        run: |
+          & ".\\tests\\g2e\\p5a_cgw_fx001_rp_i1d_pid_binding_regression.ps1"
+          Write-Host "RP_I1D_PID_BINDING_CI_PASS"
