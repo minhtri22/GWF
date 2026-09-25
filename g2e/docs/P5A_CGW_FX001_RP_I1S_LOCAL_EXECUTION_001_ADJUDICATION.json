@@ -1,0 +1,52 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1S-LOCAL-EXECUTION-001-ADJUDICATION-v1",
+  "status": "PASS_DIAGNOSTIC_SUPERVISOR_DESCRIPTOR_GENERATION_SPLIT",
+  "source_head": "8da28ac2e86e1e5df19671ca999413a5c88481c1",
+  "zero_science": true,
+  "observed": {
+    "health_pid": 27240,
+    "listener_pid": 27240,
+    "listener_alive": true,
+    "listener_parent_pid": 15604,
+    "launcher_parent_alive": true,
+    "supervisor_file": {
+      "ownerPid": 35276,
+      "daemonPid": null,
+      "tunnelPid": null,
+      "status": "ready",
+      "updatedAt": "2026-09-12T08:11:21.734Z",
+      "owner_alive": false
+    },
+    "browser_descriptor": {
+      "pid": 1928,
+      "profile": "development",
+      "createdAt": "2026-09-16T04:02:24.589Z",
+      "referenced_pid_alive": true,
+      "referenced_pid_current_process": "svchost.exe",
+      "referenced_pid_current_creation_time_utc": "2026-09-22T19:37:17.3373870Z"
+    },
+    "relationships": {
+      "health_equals_listener": true,
+      "supervisor_daemon_equals_listener": false,
+      "supervisor_owner_equals_listener_parent": false,
+      "descriptor_equals_supervisor_owner": false
+    }
+  },
+  "interpretation": {
+    "stale_supervisor_generation_proven": true,
+    "stale_descriptor_generation_proven": true,
+    "pid_reuse_observed_for_descriptor_reference": true,
+    "default_dev_ownership_root_represents_live_instance": false,
+    "RP_I1R_block_explained": true,
+    "live_effective_ownership_root": "UNRESOLVED"
+  },
+  "scientific_effect": {
+    "model_executed": false,
+    "responses_request": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  },
+  "next_gate": "RP-I1E_EFFECTIVE_LAUNCHER_GENERATION_ROOT_DISCOVERY"
+}
