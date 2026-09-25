@@ -51,3 +51,12 @@ def test_plan_forbids_hardcoded_sink_selection_before_binding():
     s = PLAN.read_text(encoding="utf-8")
     assert "must never choose an evidence root before binding the active listener instance" in s
     assert "does not authorize a replacement scientific attempt" in s
+
+
+def test_rp_i1r_loads_system_net_http_before_httpclient_use():
+    s = PROBE.read_text(encoding="utf-8")
+    load = 'Add-Type -AssemblyName System.Net.Http'
+    use = '[Net.Http.HttpClient]::new()'
+    assert load in s
+    assert use in s
+    assert s.index(load) < s.index(use)
