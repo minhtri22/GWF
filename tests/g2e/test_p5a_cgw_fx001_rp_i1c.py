@@ -40,3 +40,10 @@ def test_plan_is_read_only():
     s = PLAN.read_text(encoding="utf-8")
     assert "ZERO-SCIENCE READ-ONLY DIAGNOSTIC" in s
     assert "No /v1/responses request" in s
+
+
+def test_rp_i1c_uses_robust_timestamp_normalization():
+    s = PROBE.read_text(encoding="utf-8")
+    assert "function Convert-ToUtcIso([object]$Value)" in s
+    assert 'creation_time_utc = Convert-ToUtcIso $p.CreationDate' in s
+    assert '[Management.ManagementDateTimeConverter]::ToDateTime([string]$p.CreationDate)' not in s
