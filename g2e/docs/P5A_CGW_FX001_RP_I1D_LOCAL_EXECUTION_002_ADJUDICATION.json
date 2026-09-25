@@ -1,0 +1,76 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1D-LOCAL-EXECUTION-002-ADJUDICATION-v1",
+  "status": "PASS_DIAGNOSTIC_CURRENT_INSTANCE_MISMATCH_PROVEN",
+  "source_head": "4b081867528638a26ef518d55dc71bae21fe590c",
+  "diagnostic_script_blob": "60f5a20fa9b73aa30f0f2b09d54a53848fc3bfa2",
+  "zero_science": true,
+  "observed": {
+    "production_measurement_root": "C:\\Users\\minht\\.codex-chatgpt-web",
+    "production_launcher_data": "C:\\Users\\minht\\AppData\\Roaming\\Codex Web GPT",
+    "production_supervisor_state_exists": false,
+    "production_browser_descriptor_exists": false,
+    "production_launcher_log_exists": true,
+    "production_launcher_log_rotated_exists": true,
+    "configured_host": "127.0.0.1",
+    "configured_port": 17841,
+    "configured_release": "4.0.7",
+    "configured_mode": "full",
+    "configured_browser_host": "launcher",
+    "health": {
+      "reachable": true,
+      "pid": 27240,
+      "status": "ok",
+      "service": "codex-chatgpt-web",
+      "version": "4.0.7",
+      "mode": "full",
+      "port": 17841,
+      "accepting_turns": true,
+      "active_http_turns": 0,
+      "active_browser_turns": 0
+    },
+    "listener": {
+      "count": 1,
+      "unique_pid": 27240,
+      "address": "127.0.0.1",
+      "port": 17841
+    },
+    "listener_process": {
+      "pid": 27240,
+      "parent_pid": 15604,
+      "name": "bun.exe",
+      "executable_path": "C:\\Users\\minht\\.codex-chatgpt-web-dev\\core-home\\versions\\4.0.7-win32-x64\\runtime\\bun.exe",
+      "command_contains_serve": true,
+      "command_sha256": "b2323b28ed6a196128472bd0abe95eb746b00a4c19a24d630facd4a82e89c3cb"
+    },
+    "parent_launcher": {
+      "pid": 15604,
+      "executable_path": "D:\\WORK\\RESEARCH\\codex-chatgpt-web\\launcher\\artifacts\\codex-web-gpt-4.0.7-win-x64-portable\\Codex Web GPT.exe",
+      "command_sha256": "bb66c21415ae35cdc076e9bd947cb420c58ee2b8ca2a02e92bda80ffed7acf65"
+    },
+    "classification": "LIVE_LISTENER_WITHOUT_LAUNCHER_OWNERSHIP_MARKERS"
+  },
+  "source_profile_binding": {
+    "cgw_commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494",
+    "dev_profile_default_core_home": "~/.codex-chatgpt-web-dev",
+    "dev_profile_default_launcher_user_data": "<dev-core-home>/launcher",
+    "production_default_core_home": "~/.codex-chatgpt-web",
+    "production_default_launcher_user_data": "<AppData>/Codex Web GPT",
+    "profiles_are_required_distinct": true
+  },
+  "conclusion": {
+    "current_instance_mismatch_proven": true,
+    "current_runtime_profile": "DEVELOPMENT",
+    "measurement_profile": "PRODUCTION",
+    "historical_TC3_root_cause_proven": false,
+    "reason_historical_not_yet_proven": "This is a current-state snapshot. Temporal binding to the TC-003 execution window is still required before attributing the spent historical attempt to the same dev listener."
+  },
+  "scientific_effect": {
+    "model_executed": false,
+    "responses_request": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  },
+  "next_gate": "RP-I1T_TC3_TEMPORAL_INSTANCE_BINDING"
+}
