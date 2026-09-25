@@ -899,3 +899,14 @@
 - Qualified RP-I1D script blob: `3e518819ff74112602eef022100538fe642e908b`.
 - Current authorization: one local RP-I1D zero-science diagnostic. RP-I3 and replacement science remain closed.
 
+### G2E-P5A-CGW — RP-I1D PID automatic-variable harness repair
+
+- First RP-I1D local execution at HEAD `4a506e96686ee8bb1afd0a5f0b03e3b5c9d2dcee` aborted with `Cannot overwrite variable Pid because it is read-only or constant.`
+- Root cause: PowerShell variable names are case-insensitive; function parameter `[int]$Pid` collided with automatic read-only variable `$PID`.
+- Formal classification: `INVALID_HARNESS_NO_ENVIRONMENT_ADJUDICATION`; the script emitted no final diagnostic JSON, so no current runtime ownership verdict is permitted.
+- Prospective repair: `Get-ProcessSnapshot([int]$ProcessId)`; exact PID parameter collision removed.
+- Runtime regression added that invokes a PowerShell function with `-ProcessId $PID` and requires round-trip identity.
+- Authoritative repair QA run `36096975968`: Ubuntu `107951177007` PASS; Windows `107951176783` PASS; PowerShell parser + PID binding regression `107951176861` PASS.
+- Qualified RP-I1D script blob: `60f5a20fa9b73aa30f0f2b09d54a53848fc3bfa2`.
+- Current authorization: exact repaired RP-I1D local zero-science re-execution only. RP-I1/RP-I2 remain blocked; RP-I3 and replacement science remain closed.
+
