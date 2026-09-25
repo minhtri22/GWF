@@ -1137,3 +1137,13 @@
 - RP-I3 remains closed and no replacement scientific attempt is authorized.
 - **Backlog:** establish release/build provenance for the current launcher before any fresh runtime launch.
 
+### G2E-P5A-CGW — RP-L2 launcher-provenance result
+
+- RP-L2 local zero-science diagnostic result: `PASS_DIAGNOSTIC_PRIOR_QUALIFIED_REGISTERED_LAUNCHER_AVAILABLE`.
+- The registered Windows launcher is present locally and matches the previously qualified launcher identity exactly at SHA256 `ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb`.
+- The cloned-tree portable launcher is not the canonical G2E launcher identity.
+- Launcher provenance is therefore resolved without rebuilding or requalifying the modified portable binary.
+- RP-I1C remains pending on a fresh zero-science runtime generation.
+- RP-I3 remains closed and no replacement scientific attempt is authorized.
+- **Backlog:** start one fresh zero-science generation from the exact prior-qualified registered launcher, then rerun RP-I1C.
+
