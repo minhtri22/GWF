@@ -114,7 +114,8 @@ def bounded_projection(method: str, path: str, headers: http.client.HTTPMessage,
 class WitnessState:
     def __init__(self) -> None:
         self.q: queue.Queue[dict[str, Any]] = queue.Queue()
-        self.request_count = 0
+        self.total_post_count = 0
+        self.responses_post_count = 0
         self.forwarded_requests = 0
 
 
@@ -141,9 +142,11 @@ class WitnessHandler(http.server.BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         length = int(self.headers.get("Content-Length", "0") or "0")
         raw = self.rfile.read(length)
-        self.state.request_count += 1
-        if self.path == "/v1/responses" and self.state.q.empty():
-            self.state.q.put(bounded_projection("POST", self.path, self.headers, raw))
+        self.state.total_post_count += 1
+        if self.path == "/v1/responses":
+            self.state.responses_post_count += 1
+            if self.state.q.empty():
+                self.state.q.put(bounded_projection("POST", self.path, self.headers, raw))
         self._respond_json(409, {
             "error": {
                 "type": "g2e_rp_i3_witness_stop",
@@ -295,13 +298,21 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     "ephemeral": True,
                 },
             })
-            thread_result = client.wait_for_id(2, STARTUP_TIMEOUT_S)
+            thread_result = None
+            thread_error = None
+            try:
+                thread_result = client.wait_for_id(2, STARTUP_TIMEOUT_S)
+            except Exception as exc:
+                thread_error = type(exc).__name__
+                if state.q.empty():
+                    raise
+
             thread = thread_result.get("thread") if isinstance(thread_result, dict) else None
             thread_id = thread.get("id") if isinstance(thread, dict) else None
-            if not isinstance(thread_id, str) or not thread_id:
-                raise RuntimeError("THREAD_ID_MISSING")
 
             if state.q.empty():
+                if not isinstance(thread_id, str) or not thread_id:
+                    raise RuntimeError("THREAD_ID_MISSING")
                 client.send({
                     "method": "turn/start",
                     "id": 3,
@@ -354,7 +365,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 },
                 "captured": captured,
                 "derived": {
-                    "responses_post_count_observed": state.request_count,
+                    "total_post_count_observed": state.total_post_count,
+                    "responses_post_count_observed": state.responses_post_count,
+                    "thread_start_error_after_local_reject": thread_error,
                     "tool_names": tool_names,
                     "mutation_capable_known_tool_names": mutation_hits,
                     "mutation_capable_known_surface_present": bool(mutation_hits),
@@ -377,6 +390,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 and isinstance(captured.get("tool_count"), int)
                 and isinstance(captured.get("request_body_sha256"), str)
                 and len(captured["request_body_sha256"]) == 64
+                and state.responses_post_count == 1
                 and state.forwarded_requests == 0
             ):
                 result["verdict"] = "PASS_CODEX_OUTBOUND_CONTRACT_WITNESSED"
