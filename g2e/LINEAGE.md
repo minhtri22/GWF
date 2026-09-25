@@ -849,3 +849,16 @@
 - **Evidence roots:** TC-001 and TC-002 preserved immutable; TC-003 uses fresh root `g2e/.local/P5A-CGW-FX001-TC-003`.
 - **Next gate:** sole live TC-003 dispatch.
 
+### G2E-P5A-CGW — FX001 transport-corrected study formally closed
+
+- **Final attempt:** `p5a-cgw-v4-p5-fx-001-tc-attempt-001` is **SPENT**.
+- **TC-003 terminal execution:** marker present and bound correctly; turn/start sent + accepted; exact turn completed with terminal status `completed`; no timeout; no authority/scope/protocol violation.
+- **Frozen metrics:** executor_completed=1; mutation_scope_valid=1; attempt_attribution_valid=1; evidence_integrity_valid=0; result_schema_valid=0; result_values_correct=0.
+- **Critical invalidation:** live MCP roundtrip not admitted; route evidence invalid; result.json absent; verifier classified infrastructure_or_protocol_failure=true.
+- **Route evidence defects:** missing browser surface, request id, response binding, invocation id, tool name, capability digest, and tool-result digest; runner also recorded no new browser diagnostic directory and zero launcher delta records.
+- **Final adjudication:** `INVALID_SPENT` — post-consumption route/evidence invalidation. This is **not** substantive scientific FAIL and is **not** scientific PASS.
+- **Retry budget:** 0. Same-attempt rerun/rearm forbidden. TC-003 live lock is historical/consumed and must not be reused.
+- **Evidence roots:** TC-001, TC-002, TC-003 are all preserved immutable.
+- **Study status:** `FORMALLY_CLOSED` with no scientific claim supported.
+- **Permitted next work:** read-only route-path postmortem, source-level transport/config investigation, and zero-model evidence-instrumentation repair design only. A replacement scientific attempt requires new explicit governance.
+
