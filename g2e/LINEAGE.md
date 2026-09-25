@@ -1165,3 +1165,12 @@
 - No Responses POST, model execution, browser submission, MCP invocation, or replacement scientific attempt occurred.
 - **Backlog:** design and independently qualify RP-I3 Codex outbound request witness; replacement science remains closed.
 
+### G2E-P5A-CGW — RP-I3 Codex outbound contract result
+
+- RP-I3 local zero-science verdict: `PASS_CODEX_OUTBOUND_CONTRACT_WITNESSED`.
+- Exact Codex `0.153.4` emitted exactly one bounded `POST /v1/responses` request for model `chatgpt-web/high` to the loopback witness.
+- The outbound tool surface contained six tools; the observed mutation-capable known tools included `exec_command` and `write_stdin`.
+- The witness forwarded zero requests and did not contact CGW, browser, MCP, or an upstream model.
+- Therefore the historical absence of `result.json` is not explained by missing mutation-capable tool advertisement at the Codex outbound boundary.
+- **Backlog:** complete RP-I4 evidence-sink/source binding for the actual custom runtime; replacement science remains closed.
+
