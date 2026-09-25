@@ -1,0 +1,24 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-L2-LOCAL-AUTHORIZATION-v1",
+  "status": "RP_L2_LOCAL_ZERO_SCIENCE_AUTHORIZED",
+  "qualified_source_head": "1317b89f9ee94fa89b4514fa8f882db862e50359",
+  "qualified_script_blob": "f04fb6da72391681665dc0cec232d67fd510ec91",
+  "allowed": {
+    "script": "scripts/g2e/p5a_cgw_fx001_rp_l2_launcher_provenance.ps1",
+    "operation": "read-only local source/tag/status, registry install location, and candidate file hashes",
+    "network_scope": "none"
+  },
+  "forbidden": {
+    "process_launch": true,
+    "http_request": true,
+    "download": true,
+    "install_or_extract": true,
+    "responses_request": true,
+    "model_execution": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "scientific_attempt_creation": true,
+    "replacement_attempt_activation": true
+  },
+  "interpretation": "The local result may identify a stronger local provenance source only. It does not itself requalify a new launcher or authorize a fresh runtime launch."
+}
