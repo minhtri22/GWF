@@ -166,6 +166,103 @@
           </div>
         </section>
 
+        <section id="projectsRouteView" class="projects-page" hidden>
+          <section class="projects-hero">
+            <div>
+              <p class="eyebrow">Authorized project registry</p>
+              <h1>Projects</h1>
+              <p>Browse governed projects you are authorized to view. Lifecycle and execution activity are shown separately.</p>
+            </div>
+            <div class="projects-hero-actions">
+              <span id="projectsScopeBadge" class="scope-badge">All authorized projects</span>
+              <button id="projectsRefreshButton" class="text-button" type="button">Refresh</button>
+            </div>
+          </section>
+
+          <div id="projectsStateBanner" class="home-state-banner" hidden></div>
+
+          <section class="panel projects-filter-panel" aria-label="Projects filters">
+            <div class="projects-filter-grid">
+              <label class="projects-filter search-filter">
+                <span>Page filter</span>
+                <input id="projectsTextFilter" type="search" placeholder="Name or exact project ID" autocomplete="off">
+              </label>
+              <label class="projects-filter">
+                <span>Lifecycle</span>
+                <select id="projectsLifecycleFilter">
+                  <option value="">All lifecycle</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="ARCHIVING">Archiving</option>
+                  <option value="ARCHIVED">Archived</option>
+                </select>
+              </label>
+              <label class="projects-filter">
+                <span>Tenant</span>
+                <select id="projectsTenantFilter"><option value="">All tenants</option></select>
+              </label>
+              <label class="projects-filter">
+                <span>Workspace</span>
+                <select id="projectsWorkspaceFilter"><option value="">All workspaces</option></select>
+              </label>
+              <label class="projects-filter">
+                <span>Domain</span>
+                <select id="projectsDomainFilter"><option value="">All domains</option></select>
+              </label>
+              <label class="projects-filter">
+                <span>Activity</span>
+                <select id="projectsActivityFilter">
+                  <option value="">All activity</option>
+                  <option value="EXECUTING">Executing</option>
+                  <option value="PAUSED">Paused</option>
+                  <option value="QUEUED">Queued</option>
+                  <option value="IDLE">Idle</option>
+                </select>
+              </label>
+              <label class="projects-filter">
+                <span>Attention</span>
+                <select id="projectsAttentionFilter">
+                  <option value="">All</option>
+                  <option value="required">Attention required</option>
+                  <option value="clear">No attention</option>
+                </select>
+              </label>
+              <button id="projectsResetFiltersButton" class="ghost projects-reset" type="button">Reset filters</button>
+            </div>
+          </section>
+
+          <section class="panel projects-list-panel">
+            <div class="panel-head projects-list-head">
+              <div>
+                <p class="eyebrow">Governed scope</p>
+                <h2>Authorized Projects</h2>
+              </div>
+              <div class="projects-result-count"><strong id="projectsVisibleCount">0</strong><span>visible</span></div>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table projects-table">
+                <thead>
+                  <tr>
+                    <th>Project</th>
+                    <th>Tenant / workspace</th>
+                    <th>Lifecycle / activity</th>
+                    <th>Domain package / revision</th>
+                    <th>Runs / jobs</th>
+                    <th>Approvals / attention</th>
+                    <th>Last authoritative event</th>
+                    <th>Created</th>
+                  </tr>
+                </thead>
+                <tbody id="projectsTableBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <div class="home-footnote">
+            <span>Projection</span><code id="projectsGeneratedAt">—</code>
+            <span>Build</span><code id="projectsBuildSha">—</code>
+          </div>
+        </section>
+
         <section id="lockedRouteView" class="route-state-page" hidden>
           <article class="route-state-card">
             <div id="routeStateIcon" class="route-state-icon" aria-hidden="true"></div>
