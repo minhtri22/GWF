@@ -1127,3 +1127,13 @@
 - No replacement scientific attempt is authorized.
 - **Backlog:** establish a fresh zero-science CGW runtime generation, then rerun exact RP-I1C to identify and bind the effective `coreHome` / ownership state of that fresh generation.
 
+### G2E-P5A-CGW — RP-L1 launcher-identity result
+
+- RP-L1 local zero-science diagnostic result: `PASS_DIAGNOSTIC_SAME_VERSION_DIFFERENT_UNSIGNED_BINARY`.
+- The current launcher kept the same file size, FileVersion `4.0.7`, and ProductVersion `4.0.7.0`, but its SHA256 differed from the previously qualified launcher.
+- The current launcher reported no valid Authenticode signature.
+- Therefore same-version metadata did not establish launcher identity equivalence, and the current binary was not requalified.
+- Fresh-runtime launch remains blocked; RP-I1C has not rerun.
+- RP-I3 remains closed and no replacement scientific attempt is authorized.
+- **Backlog:** establish release/build provenance for the current launcher before any fresh runtime launch.
+
