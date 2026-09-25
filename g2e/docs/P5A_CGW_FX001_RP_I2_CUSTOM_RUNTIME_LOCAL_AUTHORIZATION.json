@@ -1,0 +1,39 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I2-CUSTOM-RUNTIME-LOCAL-AUTHORIZATION-v1",
+  "status": "RP_I2_CUSTOM_RUNTIME_ZERO_SCIENCE_AUTHORIZED",
+  "parent_binding": "g2e/docs/P5A_CGW_FX001_RP_I1C_CUSTOM_RUNTIME_ADJUDICATION.json",
+  "runtime_identity_lock": "g2e/docs/P5A_CGW_FX001_CUSTOM_RUNTIME_IDENTITY_LOCK.json",
+  "qualified_probe": {
+    "path": "scripts/g2e/p5a_cgw_fx001_route_instance_probe.ps1",
+    "git_blob": "6f2414ed02fb8de33580d7f00eb0b6c480af2d6c"
+  },
+  "runtime_of_record": {
+    "launcher_path": "D:\\WORK\\RESEARCH\\codex-chatgpt-web\\launcher\\artifacts\\codex-web-gpt-4.0.7-win-x64-portable\\Codex Web GPT.exe",
+    "launcher_sha256": "5bedc89da21594bac53edceedf929b3640ed877a63a6d80fe3d6f0b94bc2182c",
+    "bridge_home": "C:\\Users\\minht\\.codex-chatgpt-web-dev\\core-home",
+    "launcher_data": "C:\\Users\\minht\\.codex-chatgpt-web-dev",
+    "expected_port": 17841,
+    "expected_version": "4.0.7",
+    "expected_mode": "full",
+    "expected_profile": "production"
+  },
+  "allowed": [
+    "read config/supervisor/browser descriptor/launcher logs for the bound custom runtime",
+    "GET /healthz on 127.0.0.1:17841",
+    "GET /v1/responses on 127.0.0.1:17841 and require source-defined HTTP 426",
+    "read local TCP/process metadata"
+  ],
+  "forbidden": {
+    "responses_post": true,
+    "model_execution": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "scientific_attempt_creation": true,
+    "replacement_attempt_activation": true
+  },
+  "required_outcome": {
+    "pass_verdict": "PASS_INSTANCE_BOUND_ZERO_SCIENCE",
+    "route_canary_status_code": 426
+  },
+  "interpretation": "RP-I2 is a zero-science route canary on the exact custom runtime-of-record. PASS permits design/qualification of RP-I3 only; it does not authorize replacement science."
+}
