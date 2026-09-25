@@ -34,3 +34,10 @@ def test_route_projection_extracts_broker_and_mcp():
     assert out["broker_registrations"][0]["trace_id"] == "abcDEF12"
     assert out["broker_completions"][0]["call"] == "call_1"
     assert out["mcp_tools"] == ["exec_command"]
+
+
+def test_health_probe_is_native_python_not_nested_powershell():
+    src = SCRIPT.read_text(encoding="utf-8")
+    assert 'urllib.request.urlopen' in src
+    assert '"powershell"' not in src
+    assert 'launcher_log = launcher_data / "logs" / "launcher.jsonl"' in src
