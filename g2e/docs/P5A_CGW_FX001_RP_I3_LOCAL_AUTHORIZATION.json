@@ -1,0 +1,30 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I3-LOCAL-AUTHORIZATION-v1",
+  "status": "RP_I3_LOCAL_ZERO_SCIENCE_EXECUTION_AUTHORIZED",
+  "qualified_source_head": "cb1e2629f9173d0af481225552324feafc8d973e",
+  "qualified_script_blob": "3f3a5a0176bcc67a988c732d6da14b465636a18e",
+  "max_executions": 1,
+  "codex": {
+    "path": "g2e/.local/codex-official-0.153.4/package/bin/codex.exe",
+    "required_sha256": "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b"
+  },
+  "allowed": {
+    "operation": "Start exact Codex 0.153.4 app-server with temporary isolated CODEX_HOME and a loopback-only Responses witness; capture one bounded POST /v1/responses projection; reject locally.",
+    "loopback_only": true,
+    "temporary_codex_home": true,
+    "dummy_api_key_only": true
+  },
+  "forbidden": {
+    "cgw_request": true,
+    "real_auth_copy": true,
+    "upstream_model_forwarding": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "scientific_attempt_creation": true,
+    "replacement_attempt_activation": true
+  },
+  "required_interpretation": {
+    "PASS_CODEX_OUTBOUND_CONTRACT_WITNESSED": "RP-I3 passes regardless of whether the observed mutation-capable tool subset is present or absent; tool surface is interpreted as evidence, not a pass target.",
+    "BLOCKED": "Do not infer Codex outbound contract; no automatic retry without fresh review."
+  }
+}
