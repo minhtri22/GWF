@@ -163,6 +163,8 @@ foreach ($logPath in @($LauncherLogRotated, $LauncherLog)) {
 Add-Check $checks "launcher_log_bound_to_daemon_pid" $daemonStartedBound ("daemonPid=$daemonPid")
 
 # Zero-science local-route canary. GET is source-defined as non-executing; never POST.
+# Windows PowerShell 5.1 does not guarantee System.Net.Http is preloaded.
+Add-Type -AssemblyName System.Net.Http
 $client = [Net.Http.HttpClient]::new()
 try {
     $response = $client.GetAsync("http://127.0.0.1:$ExpectedPort/v1/responses").GetAwaiter().GetResult()
