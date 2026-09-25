@@ -115,7 +115,7 @@ Write-Host ""
 
 $Health = Get-CgwHealth
 if ($null -eq $Health -or [string]$Health.status -ne "ok") {
-    Write-Host "CGW_RUNTIME=DOWN — auto-starting custom runtime" -ForegroundColor Yellow
+    Write-Host "CGW_RUNTIME=DOWN - auto-starting custom runtime" -ForegroundColor Yellow
     $Health = Start-CustomCgwRuntime
 }
 else {
