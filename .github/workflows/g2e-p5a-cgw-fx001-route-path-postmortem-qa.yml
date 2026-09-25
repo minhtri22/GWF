@@ -57,3 +57,9 @@ jobs:
         run: |
           & ".\\tests\\g2e\\p5a_cgw_fx001_route_probe_container_regression.ps1"
           Write-Host "ORDERED_DICTIONARY_BINDING_REGRESSION_PASS"
+
+      - name: HttpClient PowerShell 5.1 regression
+        shell: powershell
+        run: |
+          & ".\\tests\\g2e\\p5a_cgw_fx001_rp_i2_httpclient_regression.ps1"
+          Write-Host "RP_I2_HTTPCLIENT_REGRESSION_PASS"
