@@ -1,0 +1,21 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1U-LOCAL-AUTHORIZATION-v1",
+  "status": "RP_I1U_LOCAL_ZERO_SCIENCE_AUTHORIZED",
+  "qualified_source_head": "ba670d4b0f6e618811168af23c17ecc690fa6880",
+  "qualified_script_blob": "81c67dea5aa2ece248af26d94f8165bc267232e9",
+  "allowed": {
+    "script": "scripts/g2e/p5a_cgw_fx001_rp_i1u_runtime_availability.ps1",
+    "operation": "read-only TCP/process runtime availability snapshot",
+    "network_scope": "none"
+  },
+  "forbidden": {
+    "http_request": true,
+    "responses_request": true,
+    "model_execution": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "scientific_attempt_creation": true,
+    "replacement_attempt_activation": true
+  },
+  "interpretation": "Diagnostic output may classify current runtime generation availability only. It cannot establish RP-I1C, open RP-I3, or authorize replacement science."
+}
