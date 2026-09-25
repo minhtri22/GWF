@@ -79,7 +79,7 @@ def test_i00_live_shell_and_bootstrap_are_authoritative(tmp_path, monkeypatch):
         "id": "home", "label": "Home", "state": "LIVE_MODULE",
         "slice": "BPS-M01", "route": "/app/home",
     }
-    assert capabilities["projects"]["state"] == "SKELETON_LOCKED"
+    assert capabilities["projects"]["state"] == "LIVE_MODULE"
     assert capabilities["projects"]["slice"] == "BPS-M02"
     assert capabilities["projects"]["route"] == "/app/projects"
     assert capabilities["operations"]["slice"] == "BPS-M03"
