@@ -1,0 +1,37 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RUNTIME-OF-RECORD-CORRECTION-v1",
+  "status": "PASS_RUNTIME_OF_RECORD_CORRECTION",
+  "supersedes_interpretation_from": [
+    "g2e/docs/P5A_CGW_FX001_RP_L2_LOCAL_EXECUTION_001_ADJUDICATION.json",
+    "g2e/docs/P5A_CGW_FX001_FRESH_RUNTIME_REGISTERED_LAUNCHER_RP_I1C_AUTHORIZATION.json"
+  ],
+  "preserved_observations": [
+    "The registered launcher with SHA256 ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb exists locally.",
+    "The custom portable launcher has SHA256 5bedc89da21594bac53edceedf929b3640ed877a63a6d80fe3d6f0b94bc2182c.",
+    "The local source tree tag v4.0.7 resolves to upstream commit b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494."
+  ],
+  "corrected_operator_fact": {
+    "runtime_of_record": "CUSTOM_PORTABLE_BUILD",
+    "source_repo": "D:\\WORK\\RESEARCH\\codex-chatgpt-web",
+    "launcher_path": "D:\\WORK\\RESEARCH\\codex-chatgpt-web\\launcher\\artifacts\\codex-web-gpt-4.0.7-win-x64-portable\\Codex Web GPT.exe",
+    "launcher_sha256": "5bedc89da21594bac53edceedf929b3640ed877a63a6d80fe3d6f0b94bc2182c",
+    "launch_recipe": {
+      "CODEX_WEB_GPT_LAUNCHER_DATA_DIR": "%USERPROFILE%\\.codex-chatgpt-web-dev",
+      "CODEX_CHATGPT_WEB_HOME": "%USERPROFILE%\\.codex-chatgpt-web-dev\\core-home",
+      "CODEX_HOME": "%USERPROFILE%\\.codex-chatgpt-web-dev\\codex-home",
+      "launcher_args": []
+    }
+  },
+  "interpretation": {
+    "registered_launcher_is_not_runtime_of_record": true,
+    "custom_portable_is_intended_runtime_under_test": true,
+    "prior_registered_launcher_authorization_is_superseded": true,
+    "exact_binary_hash_is_sufficient_for_runtime_identity_binding": true,
+    "exact_dirty_source_build_reconstruction_is_not_required_to_continue_route_observability_work": true
+  },
+  "science_effect": {
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false,
+    "RP_I3_opened": false
+  }
+}
