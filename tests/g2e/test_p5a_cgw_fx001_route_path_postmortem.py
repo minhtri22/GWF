@@ -50,3 +50,11 @@ def test_instance_probe_binds_pid_chain_and_sinks():
         "PASS_INSTANCE_BOUND_ZERO_SCIENCE",
     ):
         assert token in s
+
+
+def test_instance_probe_preserves_ordered_dictionary_identity():
+    s = PROBE.read_text(encoding="utf-8")
+    assert "[System.Collections.IDictionary]$Checks" in s
+    assert "add_check_shared_container" in s
+    assert 'verdict = "INVALID_HARNESS_CONTAINER_BINDING"' in s
+    assert "[hashtable]$Checks" not in s
