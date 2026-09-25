@@ -25,9 +25,9 @@ function Read-JsonSafe([string]$Path) {
     catch { return $null }
 }
 
-function Get-ProcessSnapshot([int]$Pid) {
-    if ($Pid -le 0) { return $null }
-    $p = Get-CimInstance Win32_Process -Filter "ProcessId=$Pid" -ErrorAction SilentlyContinue
+function Get-ProcessSnapshot([int]$ProcessId) {
+    if ($ProcessId -le 0) { return $null }
+    $p = Get-CimInstance Win32_Process -Filter "ProcessId=$ProcessId" -ErrorAction SilentlyContinue
     if ($null -eq $p) { return $null }
     $cmd = [string]$p.CommandLine
     return [ordered]@{
