@@ -50,3 +50,9 @@ jobs:
             throw "POWERSHELL_PARSE_FAILED"
           }
           Write-Host "POWERSHELL_51_PARSE_PASS"
+
+      - name: PowerShell 5.1 timestamp runtime regression
+        shell: powershell
+        run: |
+          & ".\\tests\\g2e\\p5a_cgw_fx001_rp_i1c_timestamp_regression.ps1"
+          Write-Host "RP_I1C_TIMESTAMP_RUNTIME_CI_PASS"
