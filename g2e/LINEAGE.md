@@ -1105,3 +1105,15 @@
 - No replacement scientific attempt is authorized.
 - **Backlog:** establish a read-only ownership-state snapshot sufficient to identify what process identities the active development supervisor and browser descriptor currently reference.
 
+### G2E-P5A-CGW — RP-I1S ownership-generation result
+
+- RP-I1S local zero-science diagnostic result: `PASS_DIAGNOSTIC_SUPERVISOR_DESCRIPTOR_GENERATION_SPLIT`.
+- Live health/listener remained bound to PID `27240`, with live launcher parent PID `15604`.
+- The development supervisor state referenced an older owner generation and did not bind the live listener.
+- The development browser descriptor referenced a different older generation; its recorded PID had since been reused by an unrelated process.
+- Therefore the default development ownership files did not represent the live launcher/daemon generation.
+- This result explains the RP-I1R `bound profile count=0` observation.
+- RP-I1R remains BLOCKED; RP-I3 remains closed.
+- No replacement scientific attempt is authorized.
+- **Backlog:** identify the effective ownership/config/log/diagnostics root used by the live launcher generation containing PID `15604` and daemon PID `27240`, without mutating stale ownership artifacts.
+
