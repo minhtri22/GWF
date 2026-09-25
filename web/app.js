@@ -180,7 +180,6 @@ function capabilityForRoute(pathname = window.location.pathname) {
   if (path === "/app") return capabilityById("diagnostics");
   const exact = state.bootstrap.capabilities.find((item) => item.route === path);
   if (exact) return exact;
-  if (path.startsWith("/app/projects/")) return capabilityById("projects");
   if (path.startsWith("/app/operations/")) return capabilityById("operations");
   return null;
 }
