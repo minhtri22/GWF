@@ -1,0 +1,80 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I4-DESIGN-v1",
+  "status": "DESIGNED_ZERO_SCIENCE_NOT_YET_EXECUTED",
+  "parent_gates": {
+    "RP_I1": "PASS",
+    "RP_I2": "PASS_INSTANCE_BOUND_ZERO_SCIENCE",
+    "RP_I3": "PASS_CODEX_OUTBOUND_CONTRACT_WITNESSED"
+  },
+  "purpose": "Bind the actual custom packaged runtime and live durable runtime to the previously reviewed critical CGW source contract and evidence sinks without model execution.",
+  "runtime_of_record": {
+    "launcher_sha256": "5bedc89da21594bac53edceedf929b3640ed877a63a6d80fe3d6f0b94bc2182c",
+    "version": "4.0.7",
+    "platform": "win32",
+    "arch": "x64"
+  },
+  "layers": [
+    {
+      "id": "PACKAGE_TO_LIVE_RUNTIME",
+      "requirements": [
+        "portable resources/runtime/manifest.json exists",
+        "live core-home versions/4.0.7-win32-x64/manifest.json exists",
+        "manifest bundleId equal",
+        "manifest appVersion/platform/arch equal",
+        "app/cli.js hashes equal",
+        "app/browser-helper.cjs hashes equal",
+        "app/package.json hashes equal",
+        "app/bun.lock hashes equal"
+      ]
+    },
+    {
+      "id": "CRITICAL_SOURCE_EQUIVALENCE",
+      "requirements": [
+        "local v4.0.7 tag resolves to b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494",
+        "each critical local source file hashes to the already-reviewed upstream git blob",
+        "source equivalence is file-content based; unrelated dirty worktree entries do not fail the gate"
+      ]
+    },
+    {
+      "id": "LIVE_SINK_BINDING",
+      "requirements": [
+        "config mode=full",
+        "supervisor status=ready",
+        "launcher log exists under the same launcher-data root",
+        "supervisor daemonPid is present in launcher log",
+        "diagnostics root is derived as <same coreHome>/diagnostics/browser-turns",
+        "browser descriptor is under <same coreHome>/runtime"
+      ]
+    }
+  ],
+  "critical_source_blobs": {
+    "src/server.ts": "af4cd5c3886f119f35efa4fc0e28bd2ecfc48530",
+    "src/config.ts": "1444c64ab66282e72411585392e3d242773a971a",
+    "src/adapters/chatgpt-web/index.ts": "c7e7f291ae6ea6d23818aba8803ad83e39171dbd",
+    "src/adapters/chatgpt-web/browser-worker.ts": "4e82981a28158e65705f31213bfbd123a6be5e2e",
+    "src/adapters/chatgpt-web/turn-broker.ts": "6017bbaafd87c58078a72dbac42e843d5bcf3209",
+    "src/adapters/chatgpt-web/mcp-server.ts": "51d9c787f93c391fba70f68ce759c673d789275d",
+    "launcher/electron/runtime-supervisor.cjs": "19b19e24b4ab02ae02f762006f750ca9054d7bc6",
+    "launcher/electron/main.cjs": "c3f83aacac26baaa28119ff1b147fbb355c4cac9",
+    "launcher/electron/profile.cjs": "b1a20dc7fcfffc0ab45bfe916d173a59d4b93e5a",
+    "launcher/electron/logging.cjs": "c4149c3c8a27a9b8105d23f58655d9bdc5df9d70"
+  },
+  "inherited_reviewed_semantics": [
+    "mode=full => localToolsEnabled=true",
+    "broker.register occurs before browser send",
+    "browser-page-acquired capture occurs before browser send",
+    "launcher-owned daemon stdout/stderr feed launcher.jsonl",
+    "diagnostics root derives from CORE_HOME"
+  ],
+  "pass": "PASS_SINK_CONTRACT_BOUND",
+  "blocked_custom_source_drift": "BLOCKED_CUSTOM_CRITICAL_SOURCE_DRIFT",
+  "interpretation": "PASS is allowed only when the actual live runtime equals the packaged runtime payload and every critical source file equals the previously reviewed source blob. Otherwise no source-semantic inheritance is permitted.",
+  "prohibited": [
+    "responses POST",
+    "model execution",
+    "browser submission",
+    "MCP invocation",
+    "scientific attempt creation",
+    "replacement attempt activation"
+  ]
+}
