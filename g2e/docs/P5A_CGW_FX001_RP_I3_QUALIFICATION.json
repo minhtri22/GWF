@@ -1,0 +1,70 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I3-QUALIFICATION-v1",
+  "status": "PASS_ZERO_SCIENCE_RP_I3_WITNESS_QUALIFICATION",
+  "source_head": "cb1e2629f9173d0af481225552324feafc8d973e",
+  "parent_result": "g2e/docs/P5A_CGW_FX001_RP_I2_LOCAL_REEXECUTION_001_ADJUDICATION.json",
+  "artifacts": {
+    "design": {
+      "path": "g2e/docs/P5A_CGW_FX001_RP_I3_DESIGN.json",
+      "git_blob": "770815bd0b1f17c745af460ba8746ce9723ae0a3"
+    },
+    "script": {
+      "path": "scripts/g2e/p5a_cgw_fx001_rp_i3_outbound_witness.py",
+      "git_blob": "3f3a5a0176bcc67a988c732d6da14b465636a18e"
+    },
+    "test": {
+      "path": "tests/g2e/test_p5a_cgw_fx001_rp_i3_outbound_witness.py",
+      "git_blob": "d14a5cfa953aded1784e1cc02242057b4bb34f50"
+    },
+    "workflow": {
+      "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i3-qa.yml",
+      "git_blob": "64342c3bfcb62ff4c342c090346902cf8da9b598"
+    }
+  },
+  "codex": {
+    "required_sha256": "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b",
+    "version": "codex-cli 0.153.4"
+  },
+  "authoritative_qa": {
+    "run_id": 36154440168,
+    "jobs": [
+      {
+        "id": 108135435216,
+        "name": "zero-model-static (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 108135435785,
+        "name": "zero-model-static (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 108135435613,
+        "name": "compile (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 108135435573,
+        "name": "compile (ubuntu-latest)",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "invariants": {
+    "witness_loopback_only": true,
+    "forwarding_code_absent": true,
+    "max_responses_posts_for_pass": 1,
+    "request_body_sha256_required": true,
+    "model_exact": "chatgpt-web/high",
+    "tool_surface_observational_not_pass_tuned": true,
+    "real_auth_copied": false,
+    "dummy_api_key_only": true,
+    "cgw_request_forbidden": true,
+    "browser_submission_forbidden": true,
+    "mcp_invocation_forbidden": true,
+    "upstream_model_forwarding_forbidden": true,
+    "scientific_attempt_creation_forbidden": true,
+    "replacement_attempt_activation_forbidden": true
+  },
+  "next_gate": "RP_I3_LOCAL_ZERO_SCIENCE_EXECUTION"
+}
