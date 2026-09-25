@@ -1,0 +1,54 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1T-LOCAL-EXECUTION-001-ADJUDICATION-v1",
+  "status": "BLOCKED_TEMPORAL_BINDING_INCOMPLETE",
+  "execution_kind": "ZERO_SCIENCE_TEMPORAL_BINDING",
+  "source_head": "03affb687c6d3e2201c0e931326e166742dbbc71",
+  "temporal_window": {
+    "start_utc": "2026-09-25T02:59:15Z",
+    "end_utc": "2026-09-25T03:40:47Z"
+  },
+  "checks": {
+    "health_matches_listener": true,
+    "listener_created_before_window": true,
+    "listener_command_is_serve": true,
+    "listener_path_is_dev": true,
+    "parent_created_before_window": true,
+    "parent_is_portable_launcher": true,
+    "dev_launcher_log_exists": true,
+    "dev_supervisor_exists": true,
+    "dev_descriptor_exists": true,
+    "dev_log_binds_listener_before_window": false,
+    "no_daemon_exit_in_tc3_window": true,
+    "browser_initialized_before_window": true
+  },
+  "observed": {
+    "health_pid": 27240,
+    "listener_pid": 27240,
+    "listener_creation_time_utc": "2026-09-25T02:54:17.6530380Z",
+    "listener_executable": "C:\\Users\\minht\\.codex-chatgpt-web-dev\\core-home\\versions\\4.0.7-win32-x64\\runtime\\bun.exe",
+    "parent_pid": 15604,
+    "parent_creation_time_utc": "2026-09-25T02:54:09.5647200Z",
+    "parent_executable": "D:\\WORK\\RESEARCH\\codex-chatgpt-web\\launcher\\artifacts\\codex-web-gpt-4.0.7-win-x64-portable\\Codex Web GPT.exe",
+    "dev_home": "C:\\Users\\minht\\.codex-chatgpt-web-dev",
+    "dev_supervisor_exists": true,
+    "dev_descriptor_exists": true,
+    "matching_daemon_start_records": 0,
+    "daemon_exit_records_in_tc3_window": 0
+  },
+  "interpretation": {
+    "current_dev_instance_continuity_supported": true,
+    "process_existed_before_tc3_lower_bound": true,
+    "historical_listener_activity_during_entire_tc3_window_not_yet_proven": true,
+    "H_R1_historical_root_cause": "NOT_YET_PROMOTED",
+    "blocker": "No direct dev launcher log record currently binds runtime.daemon_started to PID 27240 at or before the TC-003 lower bound."
+  },
+  "scientific_effect": {
+    "model_executed": false,
+    "responses_request": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  },
+  "next_gate": "RP-I1TF_DEV_PROFILE_TEMPORAL_FORENSIC"
+}
