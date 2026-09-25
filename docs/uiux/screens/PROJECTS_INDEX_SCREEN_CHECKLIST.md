@@ -7,7 +7,7 @@ SCREEN_ID        = PROJECTS_INDEX
 OWNER            = BPS-M02
 ROUTE            = /app/projects
 PROTOCOL         = BPS-SCREEN-FAST-LANE-v1
-STATUS           = SELF_QA_PASS / USER_UAT_PENDING
+STATUS           = USER_UAT_OPEN / P10_PENDING / SHELL_RERUN_PENDING
 BASE_HEAD        = d35c8d498e378784227d9f454fb186885213a7b0
 ```
 
@@ -142,3 +142,52 @@ F = FAIL
 ```
 
 Any F keeps Projects Index open. All P marks `PROJECTS_INDEX = SCREEN_PASS`.
+
+
+## User UAT — first pass
+
+Operator results:
+
+```text
+P-UAT-01 = P
+P-UAT-02 = P
+P-UAT-03 = P
+P-UAT-04 = P
+P-UAT-05 = P
+P-UAT-06 = P
+P-UAT-07 = P
+P-UAT-08 = P
+P-UAT-09 = P
+P-UAT-10 = PENDING
+```
+
+Additional shell findings discovered during Projects UAT:
+
+1. The global search control is intentionally not live yet, but it advertised `Ctrl K`; on the operator browser that shortcut invoked browser/Google behavior. The dead shortcut hint is removed. Global authoritative search remains a later bounded shell capability; the live Projects page filter remains the valid current search surface.
+2. The top-bar attention bell displayed an authoritative Home attention count but was non-actionable. It now navigates to the existing authoritative Home `Attention Required` panel; no synthetic notification feed was introduced.
+3. The current actor/avatar was display-only even though the architecture requires an actor menu/current session view. A read-only actor/session menu now exposes principal, actor ID, auth method, expiry and membership counts from `/browser/auth/me`. No profile-edit mutation was added.
+
+Repair lineage:
+
+```text
+b39797c17c3adec169a27ea3251deb2a04b6f01a  remove dead Ctrl-K hint; expose actor/attention affordances
+76ee32f2dc7f6287ca723523bdcd2abad15196d9  actor session menu styling
+86102f2676b892201065ab7e97d0e0956d974a41  attention navigation + actor session menu behavior
+c28f76cd2d7de948d534d9aad127dafdef25061b  regression coverage for shell affordances
+```
+
+Projects Index is not closed yet. Required final checks are:
+
+- targeted shell rerun for the repaired top-bar behaviors;
+- `P-UAT-10` controlled Projects-unavailable/error-state check.
+
+Current state:
+
+```text
+USER_UAT_PASS       = 9
+USER_UAT_FAIL       = 0
+USER_UAT_PENDING    = 1
+SHELL_FINDINGS      = REPAIRED / RERUN_PENDING
+PROJECTS_INDEX      = OPEN
+NEXT_SCREEN_ALLOWED = false
+```
