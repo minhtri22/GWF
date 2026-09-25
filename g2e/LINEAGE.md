@@ -910,3 +910,17 @@
 - Qualified RP-I1D script blob: `60f5a20fa9b73aa30f0f2b09d54a53848fc3bfa2`.
 - Current authorization: exact repaired RP-I1D local zero-science re-execution only. RP-I1/RP-I2 remain blocked; RP-I3 and replacement science remain closed.
 
+### G2E-P5A-CGW — RP-I1D current dev-runtime mismatch proven; RP-I1T temporal binding opened
+
+- Repaired RP-I1D local execution at HEAD `4b081867528638a26ef518d55dc71bae21fe590c` completed and classified `LIVE_LISTENER_WITHOUT_LAUNCHER_OWNERSHIP_MARKERS`.
+- Production measurement roots: `~/.codex-chatgpt-web` and `%APPDATA%/Codex Web GPT`; production supervisor/browser ownership markers were absent while production launcher log files existed.
+- Live health and sole TCP listener both bound to PID `27240` on `127.0.0.1:17841`.
+- PID `27240` is `bun.exe` under `~/.codex-chatgpt-web-dev/core-home/versions/4.0.7-win32-x64/runtime`, command contains `serve`, parent PID `15604`.
+- Parent PID `15604` is the portable launcher under `D:/WORK/RESEARCH/codex-chatgpt-web/launcher/artifacts/.../Codex Web GPT.exe`.
+- Exact CGW 4.0.7 profile source defines development core home `~/.codex-chatgpt-web-dev` and development launcher userData under that dev home, separate from production roots.
+- Adjudication: `PASS_DIAGNOSTIC_CURRENT_INSTANCE_MISMATCH_PROVEN`. This proves H-R1 for current state, but not yet the historical TC-003 window.
+- RP-I1T freezes TC-003 Git bounds: lower `2026-09-25T02:59:15Z` (live-lock qualification commit) and upper `2026-09-25T03:40:47Z` (post-live adjudication commit).
+- RP-I1T authoritative QA run `36097507504` PASS: Ubuntu `107952770365`, Windows `107952770435`, PowerShell parser `107952770243`.
+- Qualified RP-I1T script blob: `87dec076673f96ee72d51576920f9b836878d466`.
+- Current authorization: one local RP-I1T zero-science temporal probe only. RP-I3 and replacement science remain closed.
+
