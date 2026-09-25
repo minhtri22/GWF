@@ -194,7 +194,7 @@ def create_app(
     browser_cookie_name = "gwr_browser_session"
     browser_capabilities = [
         {"id": "home", "label": "Home", "state": "LIVE_MODULE", "slice": "BPS-M01", "route": "/app/home"},
-        {"id": "projects", "label": "Projects", "state": "SKELETON_LOCKED", "slice": "BPS-M02", "route": "/app/projects"},
+        {"id": "projects", "label": "Projects", "state": "LIVE_MODULE", "slice": "BPS-M02", "route": "/app/projects"},
         {"id": "operations", "label": "Operations", "state": "SKELETON_LOCKED", "slice": "BPS-M03", "route": "/app/operations"},
         {"id": "packages", "label": "Packages", "state": "SKELETON_LOCKED", "slice": "BPS-M06", "route": "/app/research/packages"},
         {"id": "github", "label": "GitHub", "state": "SKELETON_LOCKED", "slice": "BPS-M07", "route": "/app/system/github"},
@@ -530,6 +530,14 @@ def create_app(
             principal.actor_id,
             build_sha=resolved_product_info["build_sha"],
             core_health=str(readiness_payload.get("core_health") or "UNKNOWN"),
+        )
+
+    @app.get('/browser/projects-index')
+    def browser_projects_index(request: Request):
+        _, principal = browser_principal(request)
+        return product.projects_index(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
         )
 
     @app.get('/projects/{project_id}/audit')
