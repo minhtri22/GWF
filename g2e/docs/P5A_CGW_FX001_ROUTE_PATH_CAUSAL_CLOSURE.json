@@ -1,0 +1,83 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-ROUTE-PATH-CAUSAL-CLOSURE-v1",
+  "status": "PASS_HR1_HISTORICAL_ROOT_CAUSE_PROVEN",
+  "parent_study": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "parent_attempt": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "parent_attempt_state": "SPENT",
+  "parent_scientific_classification": "INVALID_SPENT",
+  "historical_mechanism": "OBSERVED_INSTANCE_EVIDENCE_ROOT_MISMATCH",
+  "evidence_join": {
+    "tc3_frozen_health": {
+      "sha256": "bdf0bbf55e35a1df364179d135091e701f28eb08515cc47bfdf6b22f4bfccd8a",
+      "service": "codex-chatgpt-web",
+      "version": "4.0.7",
+      "mode": "full",
+      "pid": 27240,
+      "port": 17841,
+      "uptime_seconds": 413.639,
+      "accepting_turns": true,
+      "active_http_turns": 0,
+      "active_browser_turns": 0
+    },
+    "tc3_consumption_marker": {
+      "timestamp_utc": "2026-09-25T03:01:22Z",
+      "sha256": "786701375256c4ffeb867d2109d1ec194e2b7972dc01d7081db5e2fd71ba7e0c",
+      "attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001"
+    },
+    "codex_route_contract": {
+      "model_provider": "openai",
+      "openai_base_url": "http://127.0.0.1:17841/v1",
+      "model": "chatgpt-web/high"
+    },
+    "current_and_temporal_process_binding": {
+      "listener_pid": 27240,
+      "listener_creation_time_utc": "2026-09-25T02:54:17.6530380Z",
+      "listener_executable": "C:\\Users\\minht\\.codex-chatgpt-web-dev\\core-home\\versions\\4.0.7-win32-x64\\runtime\\bun.exe",
+      "listener_command_contains_serve": true,
+      "parent_pid": 15604,
+      "parent_creation_time_utc": "2026-09-25T02:54:09.5647200Z",
+      "parent_executable": "D:\\WORK\\RESEARCH\\codex-chatgpt-web\\launcher\\artifacts\\codex-web-gpt-4.0.7-win-x64-portable\\Codex Web GPT.exe",
+      "process_existed_before_tc3_marker": true
+    },
+    "measurement_roots_used_by_tc3": {
+      "bridge_home": "C:\\Users\\minht\\.codex-chatgpt-web",
+      "launcher_data": "C:\\Users\\minht\\AppData\\Roaming\\Codex Web GPT",
+      "profile": "production"
+    },
+    "actual_runtime_profile": {
+      "profile": "development",
+      "core_home": "C:\\Users\\minht\\.codex-chatgpt-web-dev",
+      "source_contract": "Development profile defaults to ~/.codex-chatgpt-web-dev and launcher userData under the dev home; production and development homes must differ."
+    }
+  },
+  "causal_chain": [
+    "TC-003 frozen health snapshot bound port 17841 to PID 27240 immediately before the consumed attempt.",
+    "The TC-003 marker at 03:01:22Z falls after PID 27240 creation at 02:54:17Z; the same process identity is bound to the dev-profile bun executable and portable dev launcher parent.",
+    "Codex was configured to send Responses traffic to 127.0.0.1:17841/v1.",
+    "TC-003 route measurement watched production bridge/log/diagnostic roots instead of the development profile roots serving the port.",
+    "Therefore launcher_delta=0 and browser_diagnostics_new_dirs=[] were observations of the wrong evidence sinks, causing null route correlation fields and evidence_integrity_valid=0."
+  ],
+  "explains": [
+    "launcher_delta_record_count=0",
+    "browser_diagnostics_new_dirs=[]",
+    "request_id=null in synthesized route evidence",
+    "browser_surface=null in synthesized route evidence",
+    "MCP correlation unavailable from watched sinks"
+  ],
+  "does_not_explain": [
+    "Why result.json was absent.",
+    "Whether Codex advertised the expected native mutation-capable tool surface in the outbound Responses request.",
+    "Whether the model chose to invoke any advertised native tool."
+  ],
+  "rp_i1t_disposition": {
+    "verdict_remains": "BLOCKED_TEMPORAL_BINDING_INCOMPLETE",
+    "reason": "Its preregistered direct launcher-log criterion did not pass and is not retroactively rewritten.",
+    "superseding_evidence_for_historical_attribution": "Frozen TC-003 health PID plus process creation/profile binding provides a stronger direct historical join."
+  },
+  "scientific_effect": {
+    "scientific_verdict_changed": false,
+    "tc3_remains": "INVALID_SPENT",
+    "replacement_attempt_authorized": false
+  },
+  "next_gate": "RP-I1R_ACTIVE_PROFILE_INSTANCE_BINDING_REPAIR"
+}
