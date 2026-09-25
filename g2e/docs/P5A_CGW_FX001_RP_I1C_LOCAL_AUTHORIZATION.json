@@ -1,0 +1,20 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1C-LOCAL-AUTHORIZATION-v1",
+  "status": "RP_I1C_LOCAL_ZERO_SCIENCE_AUTHORIZED",
+  "qualified_source_head": "94068671152db0d815bd4f9e6438eae9bbc869be",
+  "qualified_script_blob": "99883295b5ee5b611c612f78c483e67bbd97bd2b",
+  "allowed": {
+    "script": "scripts/g2e/p5a_cgw_fx001_rp_i1c_derived_core_home.ps1",
+    "operation": "read-only live listener path derivation, ownership/config binding, and launcher binary identity check",
+    "network_scope": "GET http://127.0.0.1:17841/healthz only"
+  },
+  "forbidden": {
+    "responses_request": true,
+    "model_execution": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "scientific_attempt_creation": true,
+    "replacement_attempt_activation": true
+  },
+  "interpretation": "Diagnostic result may establish the effective coreHome and launcher profile binding only. It cannot itself open RP-I3 or authorize replacement science."
+}
