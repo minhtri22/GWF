@@ -862,3 +862,16 @@
 - **Study status:** `FORMALLY_CLOSED` with no scientific claim supported.
 - **Permitted next work:** read-only route-path postmortem, source-level transport/config investigation, and zero-model evidence-instrumentation repair design only. A replacement scientific attempt requires new explicit governance.
 
+### G2E-P5A-CGW — FX001 route-path source postmortem
+
+- **Scope:** bounded zero-science source/evidence postmortem; no model, browser submission, MCP invocation, or scientific attempt activation.
+- **Historical conclusion:** exact TC-003 physical route is not uniquely recoverable from the spent evidence.
+- **Proven measurement defect:** `OBSERVABILITY_INSTANCE_BINDING_GAP` — the old runner did not prove equality of Codex outbound destination, listener PID, health PID, launcher supervisor daemonPid, launcher log sink, and diagnostics CORE_HOME before interpreting route evidence.
+- **Source invariant:** CGW 4.0.7 `mode=full` implies local tools; tool-capable adapter performs broker registration before browser send; browser worker captures `browser-page-acquired` before send. Therefore “model did not use a tool” cannot explain the joint absence of broker/log and browser-diagnostic evidence.
+- **Codex invariant:** exact 0.153.4 source supports `openai_base_url` for the built-in OpenAI Responses provider; silent ignoring of the key is ruled out as the primary source hypothesis.
+- **Remaining historical classes:** observed-instance/evidence-root mismatch vs dual observation-sink failure on the correct instance. Spent evidence cannot choose between them.
+- **Result absence:** no observed native write occurred, but the spent run did not witness the outbound request tool catalog, so it cannot determine whether mutation tools were omitted or merely not invoked.
+- **Instrumentation design:** RP-I1 instance binding; RP-I2 GET-only local Responses handler canary; RP-I3 exact Codex outbound request witness against a non-forwarding loopback server; RP-I4 source-bound sink contract.
+- **Authoritative QA:** run `36092223719` PASS; Ubuntu `107936860747`, Windows `107936860693`, PowerShell parser `107936860491` all PASS.
+- **Current authorization:** RP-I1 local zero-science instance probe only. No replacement scientific attempt is authorized.
+
