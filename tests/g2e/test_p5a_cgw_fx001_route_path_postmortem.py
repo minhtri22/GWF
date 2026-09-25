@@ -32,6 +32,7 @@ def test_instance_probe_is_zero_science_and_get_only():
     assert 'browser_submission = $false' in s
     assert 'mcp_invocation = $false' in s
     assert '.GetAsync("http://127.0.0.1:$ExpectedPort/v1/responses")' in s
+    assert "Add-Type -AssemblyName System.Net.Http" in s
     assert "PostAsync(" not in s
     assert "turn/start" not in s
     assert "attempt_consumed.marker" not in s
