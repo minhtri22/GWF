@@ -1,0 +1,55 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1S-QUALIFICATION-v1",
+  "status": "PASS_ZERO_SCIENCE_OWNERSHIP_SNAPSHOT_QUALIFICATION",
+  "source_head": "3865807c51ec52f54e724b06ada7c3338ffc8225",
+  "parent_result": "P5A_CGW_FX001_RP_I1R_LOCAL_EXECUTION_002_ADJUDICATION",
+  "purpose": "Qualify a read-only snapshot of development-profile ownership state and referenced process identities.",
+  "artifacts": {
+    "plan": {
+      "path": "g2e/docs/P5A_CGW_FX001_RP_I1S_OWNERSHIP_SNAPSHOT_PLAN.md",
+      "git_blob": "d11a9fbebbc9b7fdcc3ad4ec0fa85648faab82bd"
+    },
+    "script": {
+      "path": "scripts/g2e/p5a_cgw_fx001_rp_i1s_ownership_snapshot.ps1",
+      "git_blob": "ee0e120c09cb0b5ecb18a7e12582e02ca76e0c15"
+    },
+    "test": {
+      "path": "tests/g2e/test_p5a_cgw_fx001_rp_i1s.py",
+      "git_blob": "e89c3f9603e6918d61fb3909371f173c70cd8e89"
+    },
+    "workflow": {
+      "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i1s-qa.yml",
+      "git_blob": "a272b38cf934e9c35d537ca5337816d71b290c99"
+    }
+  },
+  "authoritative_qa": {
+    "run_id": 36105976844,
+    "jobs": [
+      {
+        "id": 107978454922,
+        "name": "powershell-parser",
+        "conclusion": "success"
+      },
+      {
+        "id": 107978455114,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107978455164,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "safety": {
+    "health_get_only": true,
+    "responses_request": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_creation": false,
+    "replacement_attempt_activation": false
+  },
+  "next_gate": "RP-I1S_LOCAL_OWNERSHIP_SNAPSHOT"
+}
