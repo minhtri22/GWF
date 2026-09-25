@@ -1,0 +1,46 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1-RP-I2-LOCAL-EXECUTION-002-ADJUDICATION-v1",
+  "status": "BLOCKED_LAUNCHER_OWNERSHIP_MARKERS_MISSING",
+  "execution_kind": "ZERO_SCIENCE_LOCAL_PROBE",
+  "source_head": "49da95e1816cd6fa4f12a79904f212edaeeda108",
+  "probe_blob": "6f2414ed02fb8de33580d7f00eb0b6c480af2d6c",
+  "harness_integrity": {
+    "add_check_shared_container": true,
+    "initial_check_count": 4,
+    "valid": true
+  },
+  "observed": {
+    "config_exists": true,
+    "launcher_log_exists": true,
+    "supervisor_state_exists": false,
+    "browser_descriptor_exists": false,
+    "bridge_home": "C:\\Users\\minht\\.codex-chatgpt-web",
+    "launcher_data": "C:\\Users\\minht\\AppData\\Roaming\\Codex Web GPT",
+    "verdict": "BLOCKED"
+  },
+  "source_validation": {
+    "cgw_commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494",
+    "supervisor_state_expected_path": "<CORE_HOME>/runtime/launcher-supervisor.json",
+    "browser_descriptor_expected_path": "<CORE_HOME>/runtime/launcher-browser.json",
+    "paths_confirmed_correct": true,
+    "descriptor_lifecycle": "BrowserHost.writeDescriptor writes it; BrowserHost.destroy removes it for the same launcher pid"
+  },
+  "interpretation": {
+    "RP_I1": "BLOCKED",
+    "RP_I2": "NOT_REACHED",
+    "environment_verdict": "Launcher-owned instance binding not established.",
+    "causal_choice_not_yet_resolved": [
+      "launcher/browser host not active at probe time",
+      "runtime listener exists but is externally/stale-owned",
+      "launcher uses a different effective profile/home despite expected production paths"
+    ]
+  },
+  "scientific_effect": {
+    "model_executed": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_consumed": false,
+    "replacement_attempt_authorized": false
+  },
+  "next_gate": "RP-I1D_DIAGNOSTIC_COMPLETE_ZERO_SCIENCE_PROBE"
+}
