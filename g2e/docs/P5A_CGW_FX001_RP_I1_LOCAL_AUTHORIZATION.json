@@ -1,0 +1,22 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1-LOCAL-AUTHORIZATION-v1",
+  "status": "RP_I1_LOCAL_ZERO_SCIENCE_AUTHORIZED",
+  "source_head": "6c2de7b8a8a79bba7c85be20184a571638ee2e8a",
+  "allowed": {
+    "script": "scripts/g2e/p5a_cgw_fx001_route_instance_probe.ps1",
+    "operation": "read-only instance binding + GET-only local route canary",
+    "network_scope": "loopback 127.0.0.1:17841 only"
+  },
+  "forbidden": {
+    "model_execution": true,
+    "responses_post": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "scientific_attempt_creation": true,
+    "TC001_mutation": true,
+    "TC002_mutation": true,
+    "TC003_mutation": true
+  },
+  "required_pass": "PASS_INSTANCE_BOUND_ZERO_SCIENCE",
+  "replacement_attempt_authorized": false
+}
