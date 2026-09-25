@@ -1,0 +1,91 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-CUSTOM-RUNTIME-IDENTITY-LOCK-v1",
+  "status": "PASS_CUSTOM_RUNTIME_IDENTITY_BOUND",
+  "runtime_of_record": {
+    "kind": "CUSTOM_PORTABLE_BUILD",
+    "launcher_path": "D:\\WORK\\RESEARCH\\codex-chatgpt-web\\launcher\\artifacts\\codex-web-gpt-4.0.7-win-x64-portable\\Codex Web GPT.exe",
+    "launcher_sha256": "5bedc89da21594bac53edceedf929b3640ed877a63a6d80fe3d6f0b94bc2182c",
+    "launcher_size": 223980032,
+    "file_version": "4.0.7",
+    "product_version": "4.0.7.0",
+    "launch_recipe": {
+      "dev_dir": "%USERPROFILE%\\.codex-chatgpt-web-dev",
+      "CODEX_WEB_GPT_LAUNCHER_DATA_DIR": "%USERPROFILE%\\.codex-chatgpt-web-dev",
+      "CODEX_CHATGPT_WEB_HOME": "%USERPROFILE%\\.codex-chatgpt-web-dev\\core-home",
+      "CODEX_HOME": "%USERPROFILE%\\.codex-chatgpt-web-dev\\codex-home",
+      "launcher_args": []
+    }
+  },
+  "live_binding_evidence": {
+    "health": {
+      "pid": 7232,
+      "status": "ok",
+      "service": "codex-chatgpt-web",
+      "version": "4.0.7",
+      "mode": "full",
+      "port": 17841
+    },
+    "listener_process": {
+      "pid": 7232,
+      "parent_pid": 27060,
+      "name": "bun.exe",
+      "executable_path": "C:\\Users\\minht\\.codex-chatgpt-web-dev\\core-home\\versions\\4.0.7-win32-x64\\runtime\\bun.exe"
+    },
+    "launcher_process": {
+      "pid": 27060,
+      "executable_path": "D:\\WORK\\RESEARCH\\codex-chatgpt-web\\launcher\\artifacts\\codex-web-gpt-4.0.7-win-x64-portable\\Codex Web GPT.exe",
+      "sha256": "5bedc89da21594bac53edceedf929b3640ed877a63a6d80fe3d6f0b94bc2182c"
+    },
+    "derived_core_home": "C:\\Users\\minht\\.codex-chatgpt-web-dev\\core-home",
+    "supervisor": {
+      "ownerPid": 27060,
+      "daemonPid": 7232,
+      "status": "ready"
+    },
+    "descriptor": {
+      "profile": "production",
+      "pid": 27060,
+      "endpoint": "http://127.0.0.1:58208"
+    },
+    "config": {
+      "releaseVersion": "4.0.7",
+      "mode": "full",
+      "host": "127.0.0.1",
+      "port": 17841,
+      "browserHost": "launcher",
+      "purpose": null
+    },
+    "relationships": {
+      "health_equals_listener": true,
+      "supervisor_daemon_equals_listener": true,
+      "supervisor_owner_equals_listener_parent": true,
+      "descriptor_equals_supervisor_owner": true
+    },
+    "RP_I1C_classification": "PASS_DERIVED_CORE_HOME_BINDS_PRODUCTION_LAUNCHER"
+  },
+  "source_provenance": {
+    "local_repo": "D:\\WORK\\RESEARCH\\codex-chatgpt-web",
+    "observed_head": "4a01da5fdd9b01ef32b0b82c2bb7db01ebab2232",
+    "branch": "main",
+    "dirty": true,
+    "dirty_entry_count": 21,
+    "upstream_v4_0_7_tag_commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494",
+    "exact_build_source_reconstruction": "UNRESOLVED_NOT_BLOCKING_RUNTIME_IDENTITY"
+  },
+  "interpretation": {
+    "live_instance_binding_complete": true,
+    "custom_binary_identity_frozen": true,
+    "source_reproducibility_partial": true,
+    "source_reproducibility_blocks_RP_I2": false,
+    "RP_I1_binding_gate": "PASS",
+    "next_gate": "RP_I2_LOCAL_ROUTE_CANARY"
+  },
+  "science_firewall": {
+    "model_execution": false,
+    "responses_request": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  }
+}
