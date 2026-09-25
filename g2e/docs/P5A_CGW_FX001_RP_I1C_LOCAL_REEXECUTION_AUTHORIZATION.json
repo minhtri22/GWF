@@ -1,0 +1,20 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1C-LOCAL-REEXECUTION-AUTHORIZATION-v1",
+  "status": "RP_I1C_LOCAL_ZERO_SCIENCE_REEXECUTION_AUTHORIZED",
+  "qualified_source_head": "2bb9297395b586b157cff0620a1e273bdb81934c",
+  "qualified_script_blob": "f7f02ea994c7e911ad2cdeee7e594365c930ff93",
+  "allowed": {
+    "script": "scripts/g2e/p5a_cgw_fx001_rp_i1c_derived_core_home.ps1",
+    "operation": "read-only live listener path derivation, ownership/config binding, launcher identity, and profile classification",
+    "network_scope": "GET http://127.0.0.1:17841/healthz only"
+  },
+  "forbidden": {
+    "responses_request": true,
+    "model_execution": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "scientific_attempt_creation": true,
+    "replacement_attempt_activation": true
+  },
+  "interpretation": "Only a complete final JSON from this exact qualified script may establish RP-I1C local result."
+}
