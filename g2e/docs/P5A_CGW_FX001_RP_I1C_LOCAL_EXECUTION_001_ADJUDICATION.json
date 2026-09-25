@@ -1,0 +1,24 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1C-LOCAL-EXECUTION-001-ADJUDICATION-v1",
+  "status": "INVALID_NO_LOCAL_GATE_ADJUDICATION",
+  "source_head": "812b366b73c5b4901c00afbdc239b144f4e1e0f5",
+  "probe_completed": false,
+  "final_json_emitted": false,
+  "zero_science": true,
+  "runtime_failure_stage": "PROCESS_CREATION_TIME_NORMALIZATION",
+  "gate_result": {
+    "RP_I1C": null,
+    "derived_core_home_established": false,
+    "ownership_binding_established": false,
+    "launcher_profile_established": false
+  },
+  "scientific_effect": {
+    "responses_request": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  },
+  "interpretation": "No RP-I1C PASS/FAIL or profile/core-home conclusion may be inferred from this execution."
+}
