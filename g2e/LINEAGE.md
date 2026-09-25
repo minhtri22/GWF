@@ -1147,3 +1147,12 @@
 - RP-I3 remains closed and no replacement scientific attempt is authorized.
 - **Backlog:** start one fresh zero-science generation from the exact prior-qualified registered launcher, then rerun RP-I1C.
 
+### G2E-P5A-CGW — custom runtime identity binding
+
+- Runtime-of-record clarification: the intended CGW runtime is the locally modified portable build, not the separately installed launcher.
+- The custom portable runtime is frozen at SHA256 `5bedc89da21594bac53edceedf929b3640ed877a63a6d80fe3d6f0b94bc2182c`.
+- Fresh RP-I1C live binding passed: health PID, listener PID, supervisor daemon/owner PIDs, launcher parent PID, descriptor PID, derived `coreHome`, and full-mode config were mutually consistent.
+- The live launcher profile is `production` with the custom environment-bound home under `~/.codex-chatgpt-web-dev/core-home`.
+- Exact dirty-source build reconstruction remains unresolved but does not block the next zero-science observability gate because the runtime binary itself is exact-hash bound.
+- **Backlog:** proceed to RP-I2 local route canary; RP-I3 and replacement science remain closed.
+
