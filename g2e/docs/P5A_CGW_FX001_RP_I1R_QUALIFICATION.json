@@ -1,0 +1,64 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1R-QUALIFICATION-v1",
+  "status": "PASS_ZERO_SCIENCE_ACTIVE_PROFILE_BINDING_REPAIR",
+  "source_head": "33ffd6e869943f85925390eb026f768abe698d00",
+  "parent_causal_closure": "P5A_CGW_FX001_ROUTE_PATH_CAUSAL_CLOSURE",
+  "purpose": "Repair instance/evidence binding so the active CGW profile is selected from the live PID ownership chain before any config/log/diagnostics root is trusted.",
+  "artifacts": {
+    "plan": {
+      "path": "g2e/docs/P5A_CGW_FX001_RP_I1R_ACTIVE_PROFILE_REPAIR_PLAN.md",
+      "git_blob": "e5f565ecf73b62a9975b9e12dbe18624dd16d1cb"
+    },
+    "script": {
+      "path": "scripts/g2e/p5a_cgw_fx001_rp_i1r_active_profile_probe.ps1",
+      "git_blob": "051539f12f67df17ee9cdd3a06d9177f7af17c42"
+    },
+    "test": {
+      "path": "tests/g2e/test_p5a_cgw_fx001_rp_i1r.py",
+      "git_blob": "faacfc110bd86e781d06cade9f7e795ed6401a2e"
+    },
+    "workflow": {
+      "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i1r-qa.yml",
+      "git_blob": "c551a233c208cf5d817c9ebf49b1dc3512149d5c"
+    }
+  },
+  "binding_contract": [
+    "health PID == sole listener PID",
+    "listener parent PID resolved",
+    "enumerate production and development launcher profiles",
+    "exactly one supervisor state binds ownerPid to parent PID and daemonPid to health/listener PID",
+    "same profile browser descriptor pid == supervisor ownerPid",
+    "only then select active config, launcher log, and diagnostics root",
+    "active config semantic contract must pass",
+    "GET /v1/responses must return 426"
+  ],
+  "authoritative_qa": {
+    "run_id": 36099040137,
+    "jobs": [
+      {
+        "id": 107957374166,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107957374454,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107957374341,
+        "name": "powershell-parser",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "safety": {
+    "responses_post": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_creation": false,
+    "replacement_attempt_activation": false
+  },
+  "next_gate": "RP-I1R_LOCAL_ACTIVE_PROFILE_EXECUTION"
+}
