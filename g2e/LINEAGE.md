@@ -875,3 +875,15 @@
 - **Authoritative QA:** run `36092223719` PASS; Ubuntu `107936860747`, Windows `107936860693`, PowerShell parser `107936860491` all PASS.
 - **Current authorization:** RP-I1 local zero-science instance probe only. No replacement scientific attempt is authorized.
 
+### G2E-P5A-CGW — RP-I1/RP-I2 local probe harness repair
+
+- First local RP-I1/RP-I2 execution at HEAD `81d690b9712102f1f561e04832601879ac29a5ea` produced `checks={}`, `observed={}`, `verdict=BLOCKED`. This is **not** an environment verdict.
+- Root cause: `$checks=[ordered]@{}` is an `OrderedDictionary`; `Add-Check` accepted `[hashtable]`, causing PowerShell to convert to a separate Hashtable. Writes did not mutate the caller's container.
+- Formal classification: `INVALID_HARNESS_NO_ENVIRONMENT_ADJUDICATION`; zero science, no model/browser/MCP, no scientific attempt consumption.
+- Prospective repair: `Add-Check` now accepts `System.Collections.IDictionary`; the probe self-checks shared-container cardinality before environment interpretation.
+- Semantic PowerShell regression added for the exact ordered-dictionary case.
+- Superseded QA run `36093047933`: implementation regression itself printed PASS; workflow step failed only because it incorrectly inspected `LASTEXITCODE` after an internal PowerShell script. Classified QA-harness mismatch and repaired.
+- Authoritative repair QA run `36093100419`: Ubuntu `107939487478` PASS; Windows `107939487225` PASS; PowerShell parser + semantic container regression `107939487545` PASS.
+- Qualified probe blob: `6f2414ed02fb8de33580d7f00eb0b6c480af2d6c`.
+- Current authorization: exact repaired RP-I1/RP-I2 local zero-science re-execution only. RP-I3 and replacement science remain closed.
+
