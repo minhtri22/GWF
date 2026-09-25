@@ -2,7 +2,26 @@
 
 const THEME_KEY = "gwr-ui-theme";
 const SIDEBAR_KEY = "gwr-ui-sidebar";
-const state = { bootstrap: null, me: null, health: null, home: null, homeError: null, homeLoading: false };
+const state = {
+  bootstrap: null,
+  me: null,
+  health: null,
+  home: null,
+  homeError: null,
+  homeLoading: false,
+  projects: null,
+  projectsError: null,
+  projectsLoading: false,
+  projectsFilters: {
+    text: "",
+    lifecycle: "",
+    tenant: "",
+    workspace: "",
+    domain: "",
+    activity: "",
+    attention: "",
+  },
+};
 const DEFAULT_ROUTE = "/app/system/diagnostics";
 const ROUTE_COPY = {
   home: "Home unlocks in BPS-M01 after its own QA and local UAT. No KPI, run, project or activity data is fabricated in the foundation shell.",
@@ -178,6 +197,7 @@ function setActiveNav(capabilityId) {
 function renderLockedRoute(item) {
   const meta = stateMeta(item);
   $("#homeRouteView").hidden = true;
+  $("#projectsRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = true;
   $("#lockedRouteView").hidden = false;
   $("#routeStateIcon").innerHTML = iconSvg(item.id, "icon");
@@ -193,6 +213,7 @@ function renderLockedRoute(item) {
 
 function renderDiagnosticsRoute(item) {
   $("#homeRouteView").hidden = true;
+  $("#projectsRouteView").hidden = true;
   $("#lockedRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = false;
   document.title = "GWF — System Diagnostics";
@@ -359,11 +380,206 @@ async function refreshHomeSummary(render = true) {
 function renderHomeRoute(item) {
   $("#lockedRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = true;
+  $("#projectsRouteView").hidden = true;
   $("#homeRouteView").hidden = false;
   document.title = "GWF — Home";
   if (state.home) renderHomeSummary();
   else if (state.homeError) renderHomeError(state.homeError);
   else void refreshHomeSummary(true);
+}
+
+function projectDomainFilterKey(project) {
+  const domain = project.domain || {};
+  if (domain.revision_id) return "revision:" + domain.revision_id;
+  if (domain.domain_id) return "unbound:" + domain.domain_id;
+  return "unbound";
+}
+
+function projectDomainLabel(project) {
+  const domain = project.domain || {};
+  if (domain.bound) {
+    const name = domain.domain_name || domain.domain_id || "Domain";
+    const version = domain.semantic_version || (domain.revision_number != null ? ("r" + domain.revision_number) : "");
+    return [name, version].filter(Boolean).join(" · ");
+  }
+  return "Unpinned · " + (domain.domain_id || "No domain identity");
+}
+
+function setProjectsSelectOptions(selector, baseLabel, options, selectedValue) {
+  const select = $(selector);
+  const rows = ['<option value="">' + esc(baseLabel) + "</option>"];
+  for (const option of options) {
+    rows.push('<option value="' + esc(option.value) + '">' + esc(option.label) + "</option>");
+  }
+  select.innerHTML = rows.join("");
+  select.value = selectedValue || "";
+  if (select.value !== (selectedValue || "")) {
+    select.value = "";
+  }
+}
+
+function populateProjectsFilterOptions() {
+  const projects = state.projects?.projects || [];
+  const tenantMap = new Map();
+  const workspaceMap = new Map();
+  const domainMap = new Map();
+
+  for (const project of projects) {
+    const scope = project.scope || {};
+    if (scope.tenant_id) {
+      tenantMap.set(scope.tenant_id, (scope.tenant_name || "Tenant") + " · " + scope.tenant_id);
+    }
+    if (scope.workspace_id) {
+      workspaceMap.set(scope.workspace_id, (scope.workspace_name || "Workspace") + " · " + scope.workspace_id);
+    }
+    const key = projectDomainFilterKey(project);
+    domainMap.set(key, projectDomainLabel(project));
+  }
+
+  const sorted = (map) => Array.from(map, ([value, label]) => ({ value, label }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  setProjectsSelectOptions("#projectsTenantFilter", "All tenants", sorted(tenantMap), state.projectsFilters.tenant);
+  setProjectsSelectOptions("#projectsWorkspaceFilter", "All workspaces", sorted(workspaceMap), state.projectsFilters.workspace);
+  setProjectsSelectOptions("#projectsDomainFilter", "All domains", sorted(domainMap), state.projectsFilters.domain);
+}
+
+function filteredProjects() {
+  const projects = state.projects?.projects || [];
+  const f = state.projectsFilters;
+  const needle = f.text.trim().toLowerCase();
+
+  return projects.filter((project) => {
+    const scope = project.scope || {};
+    if (needle && !String(project.name || "").toLowerCase().includes(needle) &&
+        !String(project.project_id || "").toLowerCase().includes(needle)) return false;
+    if (f.lifecycle && project.lifecycle !== f.lifecycle) return false;
+    if (f.tenant && scope.tenant_id !== f.tenant) return false;
+    if (f.workspace && scope.workspace_id !== f.workspace) return false;
+    if (f.domain && projectDomainFilterKey(project) !== f.domain) return false;
+    if (f.activity && project.execution_activity !== f.activity) return false;
+    if (f.attention === "required" && Number(project.attention_required || 0) < 1) return false;
+    if (f.attention === "clear" && Number(project.attention_required || 0) !== 0) return false;
+    return true;
+  });
+}
+
+function renderProjectsRows() {
+  if (!state.projects) return;
+  const all = state.projects.projects || [];
+  const projects = filteredProjects();
+  $("#projectsVisibleCount").textContent = projects.length;
+
+  if (!all.length) {
+    $("#projectsTableBody").innerHTML = homeEmpty("No projects are available in the current authorized scope.", 8);
+    return;
+  }
+  if (!projects.length) {
+    $("#projectsTableBody").innerHTML = homeEmpty("No projects match the current page filters.", 8);
+    return;
+  }
+
+  $("#projectsTableBody").innerHTML = projects.map((project) => {
+    const scope = project.scope || {};
+    const domain = project.domain || {};
+    const boundDomain = domain.bound === true;
+    const domainTitle = boundDomain ? (domain.domain_name || domain.domain_id || "Pinned domain") : "Unpinned";
+    const domainExact = boundDomain ?
+      [domain.package_id, domain.revision_id].filter(Boolean).join(" · ") :
+      (domain.domain_id || "No pinned revision");
+    const domainVersion = boundDomain ?
+      [domain.semantic_version, domain.revision_number != null ? ("r" + domain.revision_number) : null]
+        .filter(Boolean).join(" · ") :
+      "No floating/latest revision implied";
+    const latest = project.latest_event || null;
+    const attention = Number(project.attention_required || 0);
+    const activityClass = project.execution_activity === "EXECUTING" ? "run-status" : "";
+    return "<tr>" +
+      '<td><strong>' + esc(project.name) + '</strong><code>' + esc(project.project_id) + "</code></td>" +
+      '<td><span>' + esc(scope.tenant_name || "Tenant") + '</span><code>' + esc(scope.tenant_id || "—") +
+      '</code><small>' + esc(scope.workspace_name || "Workspace") + '</small><code>' + esc(scope.workspace_id || "—") + "</code></td>" +
+      '<td><span class="data-state">' + esc(project.lifecycle || "Unavailable") +
+      '</span><small class="' + activityClass + '">' + esc(project.execution_activity || "Unavailable") + "</small></td>" +
+      '<td><span>' + esc(domainTitle) + '</span><code>' + esc(domainExact) +
+      '</code><small>' + esc(domainVersion) + "</small></td>" +
+      '<td><strong>' + esc(project.running_runs ?? 0) + ' running</strong><small>' +
+      esc(project.active_jobs ?? 0) + " active jobs</small></td>" +
+      '<td><strong>' + esc(project.pending_approvals ?? 0) + ' pending</strong><small class="' +
+      (attention > 0 ? "attention-text" : "") + '">' + esc(attention) + " attention</small></td>" +
+      '<td><span>' + esc(latest?.action || "—") + '</span><small>' + esc(formatHomeTime(latest?.timestamp)) + "</small></td>" +
+      '<td><span>' + esc(formatHomeTime(project.created_at)) + "</span></td>" +
+      "</tr>";
+  }).join("");
+}
+
+function renderProjectsError(message) {
+  $("#projectsStateBanner").hidden = false;
+  $("#projectsStateBanner").className = "home-state-banner error";
+  $("#projectsStateBanner").textContent = "Projects data unavailable — " + message;
+  $("#projectsTableBody").innerHTML = homeEmpty("Projects index unavailable.", 8);
+  $("#projectsVisibleCount").textContent = "—";
+  $("#projectsGeneratedAt").textContent = "—";
+  $("#projectsBuildSha").textContent = "—";
+}
+
+function renderProjectsIndex() {
+  const summary = state.projects;
+  if (!summary) {
+    renderProjectsError(state.projectsError || "No authoritative Projects projection returned.");
+    return;
+  }
+
+  const complete = summary.query_status === "COMPLETE";
+  $("#projectsStateBanner").hidden = complete;
+  if (!complete) {
+    $("#projectsStateBanner").className = "home-state-banner warn";
+    $("#projectsStateBanner").textContent = "Projects projection is partial. Missing authoritative fields are not treated as zero or inferred values.";
+  }
+
+  $("#projectsScopeBadge").textContent = summary.scope?.label || "Authorized scope";
+  $("#projectsGeneratedAt").textContent = formatHomeTime(summary.generated_at);
+  $("#projectsBuildSha").textContent = summary.build_sha || "unknown";
+  populateProjectsFilterOptions();
+  renderProjectsRows();
+}
+
+async function refreshProjectsIndex(render = true) {
+  if (state.projectsLoading) return;
+  state.projectsLoading = true;
+  state.projectsError = null;
+  if (render) {
+    $("#projectsStateBanner").hidden = false;
+    $("#projectsStateBanner").className = "home-state-banner loading";
+    $("#projectsStateBanner").textContent = "Loading authorized Projects projection…";
+  }
+  try {
+    state.projects = await api("/browser/projects-index");
+  } catch (error) {
+    state.projects = null;
+    state.projectsError = error.message;
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+  } finally {
+    state.projectsLoading = false;
+  }
+
+  if (render && !$("#projectsRouteView").hidden) {
+    if (state.projects) renderProjectsIndex();
+    else renderProjectsError(state.projectsError || "Unknown error");
+  }
+}
+
+function renderProjectsRoute(item) {
+  $("#homeRouteView").hidden = true;
+  $("#lockedRouteView").hidden = true;
+  $("#diagnosticsRouteView").hidden = true;
+  $("#projectsRouteView").hidden = false;
+  document.title = "GWF — Projects";
+  if (state.projects) renderProjectsIndex();
+  else if (state.projectsError) renderProjectsError(state.projectsError);
+  else void refreshProjectsIndex(true);
 }
 
 function renderRoute() {
@@ -382,6 +598,7 @@ function renderRoute() {
   setActiveNav(item.id);
   document.title = "GWF — " + displayLabel(item);
   if (item.state === "LIVE_MODULE" && item.id === "home") renderHomeRoute(item);
+  else if (item.state === "LIVE_MODULE" && item.id === "projects") renderProjectsRoute(item);
   else if (item.state === "LIVE_FOUNDATION" && item.id === "diagnostics") renderDiagnosticsRoute(item);
   else renderLockedRoute(item);
 }
@@ -559,6 +776,47 @@ window.addEventListener("popstate", () => {
 
 $("#homeRefreshButton").addEventListener("click", async () => {
   await refreshHomeSummary(true);
+});
+
+$("#projectsRefreshButton").addEventListener("click", async () => {
+  await refreshProjectsIndex(true);
+});
+
+$("#projectsTextFilter").addEventListener("input", (event) => {
+  state.projectsFilters.text = event.target.value;
+  renderProjectsRows();
+});
+
+for (const [selector, key] of [
+  ["#projectsLifecycleFilter", "lifecycle"],
+  ["#projectsTenantFilter", "tenant"],
+  ["#projectsWorkspaceFilter", "workspace"],
+  ["#projectsDomainFilter", "domain"],
+  ["#projectsActivityFilter", "activity"],
+  ["#projectsAttentionFilter", "attention"],
+]) {
+  $(selector).addEventListener("change", (event) => {
+    state.projectsFilters[key] = event.target.value;
+    renderProjectsRows();
+  });
+}
+
+$("#projectsResetFiltersButton").addEventListener("click", () => {
+  state.projectsFilters = {
+    text: "",
+    lifecycle: "",
+    tenant: "",
+    workspace: "",
+    domain: "",
+    activity: "",
+    attention: "",
+  };
+  $("#projectsTextFilter").value = "";
+  $("#projectsLifecycleFilter").value = "";
+  $("#projectsActivityFilter").value = "";
+  $("#projectsAttentionFilter").value = "";
+  populateProjectsFilterOptions();
+  renderProjectsRows();
 });
 
 $("#refreshButton").addEventListener("click", async () => {
