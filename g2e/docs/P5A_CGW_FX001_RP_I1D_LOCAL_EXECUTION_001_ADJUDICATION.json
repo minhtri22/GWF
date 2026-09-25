@@ -1,0 +1,31 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1D-LOCAL-EXECUTION-001-ADJUDICATION-v1",
+  "status": "INVALID_HARNESS_NO_ENVIRONMENT_ADJUDICATION",
+  "execution_kind": "ZERO_SCIENCE_LOCAL_DIAGNOSTIC",
+  "source_head": "4a506e96686ee8bb1afd0a5f0b03e3b5c9d2dcee",
+  "script_blob": "3e518819ff74112602eef022100538fe642e908b",
+  "observed_failure": {
+    "error": "Cannot overwrite variable Pid because it is read-only or constant.",
+    "failing_function": "Get-ProcessSnapshot",
+    "failing_call_site": "Get-ProcessSnapshot $pidValue",
+    "emitted_final_json": false
+  },
+  "root_cause": {
+    "class": "POWERSHELL_AUTOMATIC_VARIABLE_COLLISION",
+    "detail": "PowerShell variable names are case-insensitive. Function parameter [int]$Pid collides with automatic read-only variable $PID, so parameter binding fails before Get-ProcessSnapshot can execute."
+  },
+  "environment_adjudication": {
+    "permitted": false,
+    "reason": "The diagnostic did not emit its bounded final result. Any internal observations made before the exception were not returned as a complete attributable artifact.",
+    "RP_I1D": null
+  },
+  "scientific_effect": {
+    "model_executed": false,
+    "responses_request": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  },
+  "next_gate": "RP-I1D_PID_COLLISION_HARNESS_REPAIR_AND_ZERO_MODEL_QA"
+}
