@@ -1,0 +1,24 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1D-LOCAL-AUTHORIZATION-v1",
+  "status": "RP_I1D_LOCAL_ZERO_SCIENCE_AUTHORIZED",
+  "qualified_source_head": "7e8560f11711461ebdfdd0ae8ab938c71899d149",
+  "qualified_script_blob": "3e518819ff74112602eef022100538fe642e908b",
+  "allowed": {
+    "script": "scripts/g2e/p5a_cgw_fx001_route_instance_diagnostic.ps1",
+    "operation": "read-only bounded local runtime ownership diagnostic",
+    "network_scope": "GET http://127.0.0.1:17841/healthz only"
+  },
+  "forbidden": {
+    "responses_post": true,
+    "responses_get": true,
+    "model_execution": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "scientific_attempt_creation": true,
+    "replacement_attempt_activation": true,
+    "TC001_mutation": true,
+    "TC002_mutation": true,
+    "TC003_mutation": true
+  },
+  "interpretation": "Diagnostic output may classify current runtime ownership state only. It cannot PASS RP-I1 or RP-I2 by itself."
+}
