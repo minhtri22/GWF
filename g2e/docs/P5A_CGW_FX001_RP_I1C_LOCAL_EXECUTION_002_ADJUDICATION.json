@@ -1,0 +1,28 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1C-LOCAL-EXECUTION-002-ADJUDICATION-v1",
+  "status": "BLOCKED_RUNTIME_UNAVAILABLE_AT_OBSERVATION",
+  "source_head": "ebeadc3a4b70d95e16af16de8d60e77a695d09d8",
+  "probe_completed": false,
+  "final_json_emitted": false,
+  "zero_science": true,
+  "precondition": {
+    "endpoint": "http://127.0.0.1:17841/healthz",
+    "reachable": false
+  },
+  "gate_result": {
+    "RP_I1C": null,
+    "derived_core_home_established": false,
+    "ownership_binding_established": false,
+    "launcher_profile_established": false
+  },
+  "interpretation": "The qualified RP-I1C probe could not begin because the previously observed CGW service was unavailable. This is an environment precondition block, not a PASS/FAIL of the derived core-home hypothesis.",
+  "scientific_effect": {
+    "responses_request": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  },
+  "next_gate": "RP-I1U_RUNTIME_AVAILABILITY_SNAPSHOT"
+}
