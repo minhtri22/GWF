@@ -1,0 +1,59 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-TRANSPORT-CORRECTED-FORMAL-CLOSE-v1",
+  "status": "FORMALLY_CLOSED",
+  "study_id": "p5a-cgw-v4-p5-fx-001-transport-corrected-qualification",
+  "task_id": "P5-FX-001",
+  "final_attempt_id": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "final_attempt_state": "SPENT",
+  "final_classification": "INVALID_SPENT",
+  "scientific_claim_supported": false,
+  "scientific_pass": false,
+  "substantive_scientific_fail": false,
+  "reason": "The sole consumed transport-corrected attempt reached terminal completion but failed frozen evidence-integrity and live-route admissibility requirements; result.json was absent. Therefore no scientific PASS/FAIL claim is permitted.",
+  "progression": [
+    {
+      "phase": "TC-001",
+      "result": "PRECONSUMPTION_INFRASTRUCTURE_BLOCK",
+      "mechanism": "whole-file CGW config hash guard rejected semantically valid launcher-managed config",
+      "consumed": false
+    },
+    {
+      "phase": "TC-002",
+      "result": "PRECONSUMPTION_INFRASTRUCTURE_BLOCK",
+      "mechanism": "CGW health endpoint unavailable after UAC/VHDX creation but before admission",
+      "consumed": false
+    },
+    {
+      "phase": "TC-003",
+      "result": "INVALID_SPENT",
+      "mechanism": "post-consumption live route/evidence invalidation; no admitted MCP roundtrip and no result.json",
+      "consumed": true
+    }
+  ],
+  "frozen_final_metrics": {
+    "executor_completed": 1,
+    "result_schema_valid": 0,
+    "result_values_correct": 0,
+    "mutation_scope_valid": 1,
+    "attempt_attribution_valid": 1,
+    "evidence_integrity_valid": 0
+  },
+  "preserved_evidence_roots": [
+    "g2e/.local/P5A-CGW-FX001-TC-001",
+    "g2e/.local/P5A-CGW-FX001-TC-002",
+    "g2e/.local/P5A-CGW-FX001-TC-003"
+  ],
+  "prohibitions": {
+    "rerun_tc003": true,
+    "reuse_tc003_lock": true,
+    "same_attempt_rearm": true,
+    "reinterpret_zero_result_metrics_as_substantive_fail": true,
+    "replacement_attempt_without_new_governance": true
+  },
+  "allowed_next_work": [
+    "read-only route-path postmortem",
+    "source-level transport/config investigation",
+    "zero-model evidence instrumentation repair design"
+  ],
+  "replacement_scientific_attempt_requires_new_explicit_governance": true
+}
