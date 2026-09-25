@@ -1,0 +1,56 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1R-LOCAL-EXECUTION-002-ADJUDICATION-v1",
+  "status": "BLOCKED_ACTIVE_PROFILE_OWNERSHIP_UNBOUND",
+  "source_head": "0702829884cc17f30e6e3671d6f3a2c344dc6244",
+  "probe_completed": true,
+  "final_json_emitted": true,
+  "zero_science": true,
+  "observed": {
+    "health_contract": true,
+    "health_pid": 27240,
+    "sole_listener_pid": 27240,
+    "listener_matches_health": true,
+    "listener_process": "bun.exe",
+    "listener_parent_pid": 15604,
+    "listener_parent_process": "Codex Web GPT.exe",
+    "responses_get_status": 426,
+    "production_profile": {
+      "supervisor_exists": false,
+      "descriptor_exists": false,
+      "config_valid": true,
+      "bound": false
+    },
+    "development_profile": {
+      "supervisor_exists": true,
+      "descriptor_exists": true,
+      "config_valid": true,
+      "owner_matches": false,
+      "daemon_matches": false,
+      "descriptor_matches": false,
+      "bound": false
+    },
+    "bound_profile_count": 0
+  },
+  "source_contract_validation": {
+    "cgw_commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494",
+    "supervisor_owner_pid_semantics": "RuntimeSupervisor.snapshot ownerPid = process.pid",
+    "supervisor_daemon_pid_semantics": "RuntimeSupervisor.snapshot daemonPid = spawned daemon pid",
+    "browser_descriptor_pid_semantics": "BrowserHost.writeDescriptor pid = process.pid",
+    "RP_I1R_pid_contract_valid": true
+  },
+  "adjudication": {
+    "RP_I1R": "BLOCKED",
+    "pass_established": false,
+    "interpretation": "No qualified profile ownership state currently binds the live health/listener daemon and its launcher parent.",
+    "RP_I3_opened": false,
+    "replacement_attempt_authorized": false
+  },
+  "scientific_effect": {
+    "model_executed": false,
+    "responses_post": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false
+  },
+  "next_gate": "RP-I1S_DEV_OWNERSHIP_STATE_SNAPSHOT"
+}
