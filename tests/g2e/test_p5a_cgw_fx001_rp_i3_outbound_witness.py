@@ -75,3 +75,17 @@ def test_design_keeps_tool_surface_observational():
     assert d["witness_contract"]["forwarding"] is False
     assert d["interpretation_rule"].startswith("Tool-surface presence or absence is an observation")
     assert "replacement attempt activation" in d["prohibited"]
+
+
+def test_pass_requires_exactly_one_responses_post():
+    s = SCRIPT.read_text(encoding="utf-8")
+    assert "state.responses_post_count == 1" in s
+    assert "total_post_count_observed" in s
+    assert "responses_post_count_observed" in s
+
+
+def test_thread_start_local_reject_can_still_be_witnessed():
+    s = SCRIPT.read_text(encoding="utf-8")
+    assert "thread_error = None" in s
+    assert "if state.q.empty():" in s
+    assert "thread_start_error_after_local_reject" in s
