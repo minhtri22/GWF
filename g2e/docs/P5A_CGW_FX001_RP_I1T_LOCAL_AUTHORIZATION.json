@@ -1,0 +1,25 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1T-LOCAL-AUTHORIZATION-v1",
+  "status": "RP_I1T_LOCAL_ZERO_SCIENCE_AUTHORIZED",
+  "qualified_source_head": "e286742d010e7aba9cbfae6a61820cd184433a4d",
+  "qualified_script_blob": "87dec076673f96ee72d51576920f9b836878d466",
+  "allowed": {
+    "script": "scripts/g2e/p5a_cgw_fx001_rp_i1t_temporal_binding.ps1",
+    "operation": "read-only temporal binding of current listener/process/dev-profile logs to TC-003 Git-bounded execution window",
+    "network_scope": "GET http://127.0.0.1:17841/healthz only"
+  },
+  "forbidden": {
+    "responses_request": true,
+    "model_execution": true,
+    "browser_submission": true,
+    "mcp_invocation": true,
+    "scientific_attempt_creation": true,
+    "replacement_attempt_activation": true,
+    "TC001_mutation": true,
+    "TC002_mutation": true,
+    "TC003_mutation": true
+  },
+  "pass_verdict": "PASS_TC3_DEV_INSTANCE_TEMPORAL_BINDING",
+  "blocked_verdict": "BLOCKED_TEMPORAL_BINDING_INCOMPLETE",
+  "interpretation": "Only PASS may promote H-R1 from current-state mechanism evidence to historical TC-003 root-cause evidence. It still does not authorize RP-I3 or replacement science by itself."
+}
