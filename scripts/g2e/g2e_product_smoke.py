@@ -11,6 +11,8 @@ import subprocess
 import threading
 import time
 import uuid
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -194,6 +196,25 @@ def terminate(proc: subprocess.Popen[str] | None) -> None:
         proc.wait(timeout=5)
 
 
+def get_json(url: str, timeout: float = 3.0) -> dict[str, Any]:
+    req = urllib.request.Request(url, method="GET")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            raw = response.read()
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"HTTP_GET_FAILED:{url}:status={exc.code}:body={body[:500]}") from exc
+    except Exception as exc:
+        raise RuntimeError(f"HTTP_GET_FAILED:{url}:{type(exc).__name__}:{exc}") from exc
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except Exception as exc:
+        raise RuntimeError(f"HTTP_GET_BAD_JSON:{url}:{type(exc).__name__}:{exc}") from exc
+    if not isinstance(value, dict):
+        raise RuntimeError(f"HTTP_GET_JSON_OBJECT_REQUIRED:{url}")
+    return value
+
+
 def build_config(result_path: Path) -> str:
     rp = str(result_path).replace("\\", "\\\\")
     return (
@@ -255,8 +276,10 @@ def run(a: argparse.Namespace) -> dict[str, Any]:
 
     proc: subprocess.Popen[str] | None = None
     client: RpcClient | None = None
-    log_offset = 0
-    diag_before: set[str] = set()
+    launcher_log = launcher_data / "logs" / "launcher.jsonl"
+    log_offset = launcher_log.stat().st_size if launcher_log.is_file() else 0
+    diagnostics_root = bridge_home / "diagnostics" / "browser-turns"
+    diag_before: set[str] = diagnostic_dirs(diagnostics_root)
     try:
         summary["stage"] = "VERIFY_RUNTIME"
         if not codex.is_file():
@@ -266,21 +289,7 @@ def run(a: argparse.Namespace) -> dict[str, Any]:
         if codex_sha != CODEX_SHA256:
             raise RuntimeError(f"CODEX_SHA_MISMATCH:{codex_sha}")
 
-        health_raw = subprocess.run(
-            [
-                "powershell",
-                "-NoProfile",
-                "-Command",
-                "(Invoke-RestMethod -Method Get -Uri 'http://127.0.0.1:17841/healthz' -TimeoutSec 3) | ConvertTo-Json -Compress",
-            ],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        ).stdout.strip()
-        health = json.loads(health_raw)
+        health = get_json("http://127.0.0.1:17841/healthz", timeout=3.0)
         summary["runtime"]["health"] = health
         if health.get("status") != "ok" or health.get("mode") != "full":
             raise RuntimeError(f"CGW_HEALTH_NOT_READY:{health}")
@@ -320,11 +329,6 @@ def run(a: argparse.Namespace) -> dict[str, Any]:
         if not default_auth.is_file():
             raise RuntimeError("DEFAULT_CODEX_AUTH_MISSING")
         shutil.copy2(default_auth, codex_home / "auth.json")
-
-        launcher_log = launcher_data / "logs" / "launcher.jsonl"
-        log_offset = launcher_log.stat().st_size if launcher_log.is_file() else 0
-        diagnostics_root = bridge_home / "diagnostics" / "browser-turns"
-        diag_before = diagnostic_dirs(diagnostics_root)
 
         summary["stage"] = "START_CODEX"
         cmd = [str(codex)]
