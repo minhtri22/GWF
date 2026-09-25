@@ -1,0 +1,56 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1D-QUALIFICATION-v1",
+  "status": "PASS_ZERO_SCIENCE_DIAGNOSTIC",
+  "source_head": "7e8560f11711461ebdfdd0ae8ab938c71899d149",
+  "parent_gate": "RP-I1_CGW_INSTANCE_BINDING",
+  "parent_state": "BLOCKED_LAUNCHER_OWNERSHIP_MARKERS_MISSING",
+  "purpose": "Diagnose live listener/health/process/log ownership when launcher supervisor and browser descriptor markers are absent, without changing RP-I1 pass criteria.",
+  "artifacts": {
+    "plan": {
+      "path": "g2e/docs/P5A_CGW_FX001_RP_I1D_DIAGNOSTIC_PLAN.md",
+      "git_blob": "c8c3fc2fead151f427631e8de5468e49fcf39931"
+    },
+    "script": {
+      "path": "scripts/g2e/p5a_cgw_fx001_route_instance_diagnostic.ps1",
+      "git_blob": "3e518819ff74112602eef022100538fe642e908b"
+    },
+    "test": {
+      "path": "tests/g2e/test_p5a_cgw_fx001_rp_i1d.py",
+      "git_blob": "d83a6700dc05efcdfb1e52297350b909aacef703"
+    },
+    "workflow": {
+      "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i1d-qa.yml",
+      "git_blob": "527e435322d6980577a17b2df0d554b9982cc902"
+    }
+  },
+  "authoritative_qa": {
+    "run_id": 36093919701,
+    "jobs": [
+      {
+        "id": 107941992610,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107941992506,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107941992289,
+        "name": "powershell-parser",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "safety": {
+    "health_get_only": true,
+    "responses_post": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_creation": false,
+    "replacement_attempt_activation": false
+  },
+  "next_gate": "RP-I1D_LOCAL_DIAGNOSTIC_EXECUTION"
+}
