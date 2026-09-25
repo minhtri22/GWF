@@ -64,10 +64,9 @@
       <header class="topbar">
         <button id="mobileMenu" class="icon-button mobile-only" type="button" aria-label="Open navigation"></button>
 
-        <button class="command-search" type="button" disabled aria-disabled="true" title="Authoritative cross-resource search unlocks in a later slice">
+        <button class="command-search" type="button" disabled aria-disabled="true" title="Global authoritative search is not enabled yet. Use the Projects page filter for the live project index.">
           <span id="searchIcon" class="toolbar-icon" aria-hidden="true"></span>
           <span>Search projects, documents, artifacts…</span>
-          <kbd>Ctrl K</kbd>
         </button>
 
         <div class="top-actions">
@@ -76,10 +75,22 @@
             <button type="button" data-theme-option="system" aria-label="Use System theme" title="System"></button>
             <button type="button" data-theme-option="dark" aria-label="Use Dark theme" title="Dark"></button>
           </div>
-          <button class="icon-button quiet-action" type="button" disabled aria-disabled="true" title="Notifications are locked until their product slice" id="notificationButton"></button>
-          <div class="actor-chip">
-            <span class="avatar" id="actorInitial">?</span>
-            <span><strong id="actorName">—</strong><small id="authMethod">—</small></span>
+          <button class="icon-button quiet-action" type="button" title="Open Attention Required on Home" id="notificationButton"></button>
+          <div class="actor-menu-wrap">
+            <button id="actorMenuButton" class="actor-chip" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="actorMenu" title="Session and actor information">
+              <span class="avatar" id="actorInitial">?</span>
+              <span><strong id="actorName">—</strong><small id="authMethod">—</small></span>
+            </button>
+            <div id="actorMenu" class="actor-menu" role="menu" hidden>
+              <div class="actor-menu-head"><strong>Current session</strong><span>Authoritative identity</span></div>
+              <dl class="actor-menu-facts">
+                <div><dt>Principal</dt><dd id="actorMenuPrincipal">—</dd></div>
+                <div><dt>Actor ID</dt><dd><code id="actorMenuActorId">—</code></dd></div>
+                <div><dt>Auth</dt><dd id="actorMenuAuth">—</dd></div>
+                <div><dt>Expires</dt><dd id="actorMenuExpires">—</dd></div>
+                <div><dt>Memberships</dt><dd id="actorMenuMemberships">—</dd></div>
+              </dl>
+            </div>
           </div>
           <button id="logoutButton" class="ghost">Sign out</button>
         </div>
@@ -120,7 +131,7 @@
               </div>
             </article>
 
-            <article class="panel home-panel attention-panel">
+            <article id="homeAttentionPanel" class="panel home-panel attention-panel">
               <div class="panel-head">
                 <div>
                   <p class="eyebrow">Operator queue</p>
