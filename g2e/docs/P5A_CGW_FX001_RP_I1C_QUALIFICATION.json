@@ -1,0 +1,55 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1C-QUALIFICATION-v1",
+  "status": "PASS_ZERO_SCIENCE_DERIVED_CORE_HOME_QUALIFICATION",
+  "source_head": "94068671152db0d815bd4f9e6438eae9bbc869be",
+  "parent_result": "P5A_CGW_FX001_RP_I1S_LOCAL_EXECUTION_001_ADJUDICATION",
+  "purpose": "Qualify read-only derivation of the live launcher's effective coreHome from the packaged runtime executable path and bind ownership/config directly at that derived root.",
+  "artifacts": {
+    "plan": {
+      "path": "g2e/docs/P5A_CGW_FX001_RP_I1C_DERIVED_CORE_HOME_PLAN.md",
+      "git_blob": "7ea524b73193735d12c6f909111116df27a85635"
+    },
+    "script": {
+      "path": "scripts/g2e/p5a_cgw_fx001_rp_i1c_derived_core_home.ps1",
+      "git_blob": "99883295b5ee5b611c612f78c483e67bbd97bd2b"
+    },
+    "test": {
+      "path": "tests/g2e/test_p5a_cgw_fx001_rp_i1c.py",
+      "git_blob": "a27d45ee122b885bd622469632dcb4283c4074ba"
+    },
+    "workflow": {
+      "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i1c-qa.yml",
+      "git_blob": "a087da3dcd62a8903208cd705538d90323ff794d"
+    }
+  },
+  "authoritative_qa": {
+    "run_id": 36106738154,
+    "jobs": [
+      {
+        "id": 107980864541,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107980864671,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107980864838,
+        "name": "powershell-parser",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "safety": {
+    "health_get_only": true,
+    "responses_request": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_creation": false,
+    "replacement_attempt_activation": false
+  },
+  "next_gate": "RP-I1C_LOCAL_DERIVED_CORE_HOME_EXECUTION"
+}
