@@ -26,7 +26,8 @@ def test_rp_i1t_freezes_tc3_git_window():
 def test_rp_i1t_uses_dev_profile_roots():
     s = PROBE.read_text(encoding="utf-8")
     assert '.codex-chatgpt-web-dev' in s
-    assert 'launcher\\logs\\launcher.jsonl' in s
+    assert 'Join-Path $DevHome "launcher"' in s
+    assert 'Join-Path $DevLauncherData "logs\\launcher.jsonl"' in s
     assert 'launcher-supervisor.json' in s
     assert 'launcher-browser.json' in s
     assert 'runtime.daemon_started' in s
