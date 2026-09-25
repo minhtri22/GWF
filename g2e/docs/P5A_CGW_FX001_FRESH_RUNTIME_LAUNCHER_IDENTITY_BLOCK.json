@@ -1,0 +1,29 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-FRESH-RUNTIME-LAUNCHER-IDENTITY-BLOCK-v1",
+  "status": "BLOCKED_UNQUALIFIED_LAUNCHER_IDENTITY",
+  "source_head": "275af9ff18f972782d1cf0ab6309834f47c55747",
+  "zero_science": true,
+  "observed": {
+    "zero_runtime_baseline_pass": true,
+    "expected_launcher_sha256": "ac152ad499b1f41b2cafe94a3d05f5d4e4d3cd7ddbb417b9c60b118b08bc3cbb",
+    "observed_launcher_sha256": "5bedc89da21594bac53edceedf929b3640ed877a63a6d80fe3d6f0b94bc2182c",
+    "launcher_started": false,
+    "fresh_runtime_created": false,
+    "RP_I1C_executed": false
+  },
+  "gate_result": {
+    "launcher_identity_qualified": false,
+    "fresh_runtime_authorization_consumed": false,
+    "RP_I1C_result": null
+  },
+  "scientific_effect": {
+    "responses_request": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  },
+  "interpretation": "The fresh-runtime authorization was not exercised because the exact launcher binary identity did not match the qualified launcher. No conclusion about runtime/coreHome/profile may be inferred.",
+  "next_gate": "RP-L1_LAUNCHER_IDENTITY_REQUALIFICATION"
+}
