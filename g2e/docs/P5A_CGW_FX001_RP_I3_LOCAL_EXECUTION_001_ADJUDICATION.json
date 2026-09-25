@@ -1,0 +1,76 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I3-LOCAL-EXECUTION-001-ADJUDICATION-v1",
+  "status": "PASS_CODEX_OUTBOUND_CONTRACT_WITNESSED",
+  "source_head": "f9a5ea645c5dc3e072dd98d4b574878df83c1a26",
+  "qualified_probe_blob": "3f3a5a0176bcc67a988c732d6da14b465636a18e",
+  "result_sha256": "b198e13133e680fe610ab887eb280fe2e39bdd4a074caa3639cac44e235fcb99",
+  "codex": {
+    "sha256": "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b",
+    "version": "codex-cli 0.153.4"
+  },
+  "witness": {
+    "method": "POST",
+    "path": "/v1/responses",
+    "content_length": 38641,
+    "request_body_sha256": "36364ad72408d491afbf75c94783692d6eb2426994134bc0df75ade4d636413a",
+    "json": true,
+    "model": "chatgpt-web/high",
+    "tool_count": 6,
+    "forwarded_requests": 0,
+    "responses_post_count_observed": 1
+  },
+  "tool_surface": {
+    "observed": [
+      {
+        "type": "function",
+        "name": "exec_command"
+      },
+      {
+        "type": "function",
+        "name": "write_stdin"
+      },
+      {
+        "type": "function",
+        "name": "request_user_input"
+      },
+      {
+        "type": "function",
+        "name": "view_image"
+      },
+      {
+        "type": "namespace",
+        "name": "multi_agent_v1"
+      },
+      {
+        "type": "web_search",
+        "name": null
+      }
+    ],
+    "mutation_capable_known_tool_names": [
+      "exec_command",
+      "write_stdin"
+    ],
+    "mutation_capable_known_surface_present": true
+  },
+  "metadata_observation": {
+    "metadata_present": false,
+    "thread_metadata_present": false,
+    "turn_metadata_present": false
+  },
+  "science_firewall": {
+    "cgw_request": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "upstream_model_forwarding": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  },
+  "interpretation": {
+    "RP_I3": "PASS",
+    "outbound_responses_contract_proven": true,
+    "chatgpt_web_high_model_proven": true,
+    "native_mutation_tool_surface_advertised": true,
+    "historical_result_absence_not_explained_by_missing_mutation_tool_advertisement": true,
+    "next_gate": "RP_I4_EVIDENCE_SINK_SOURCE_BINDING"
+  }
+}
