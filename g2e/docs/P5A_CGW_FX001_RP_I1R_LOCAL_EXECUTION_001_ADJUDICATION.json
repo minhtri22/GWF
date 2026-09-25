@@ -1,0 +1,25 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1R-LOCAL-EXECUTION-001-ADJUDICATION-v1",
+  "status": "INVALID_NO_LOCAL_GATE_ADJUDICATION",
+  "execution_kind": "ZERO_SCIENCE_LOCAL_ACTIVE_PROFILE_PROBE",
+  "expected_head": "c61b15d8eb5f7c349b17ef8314ab5f7ad6174e37",
+  "actual_head": "f97d8725544487dbf91a934c9344adc8b0b3673c",
+  "head_difference_scope": "LINEAGE_APPEND_ONLY_COMMIT",
+  "executed_script_blob": "051539f12f67df17ee9cdd3a06d9177f7af17c42",
+  "probe_completed": false,
+  "final_json_emitted": false,
+  "runtime_error": "Unable to find type [Net.Http.HttpClient].",
+  "gate_result": {
+    "RP_I1R": null,
+    "local_pass_established": false
+  },
+  "scientific_effect": {
+    "responses_post": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  },
+  "interpretation": "No RP-I1R local PASS/FAIL may be inferred from this execution."
+}
