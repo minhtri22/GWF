@@ -1,0 +1,50 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1R-POWERSHELL51-RUNTIME-QUALIFICATION-v1",
+  "status": "PASS_ZERO_SCIENCE_RUNTIME_COMPATIBILITY_QUALIFICATION",
+  "source_head": "69fa3aed771b65af906d776ecf6adfc7d96248be",
+  "parent_qualification": "P5A_CGW_FX001_RP_I1R_QUALIFICATION",
+  "purpose": "Qualify the exact RP-I1R probe under Windows PowerShell 5.1 runtime semantics before local zero-science execution.",
+  "artifacts": {
+    "script": {
+      "path": "scripts/g2e/p5a_cgw_fx001_rp_i1r_active_profile_probe.ps1",
+      "git_blob": "784defd507c765e28d5c76f6aca5e8945a58f303"
+    },
+    "python_test": {
+      "path": "tests/g2e/test_p5a_cgw_fx001_rp_i1r.py",
+      "git_blob": "7a15b76119b60edaff3f70a4cabfb256ce28a2b2"
+    },
+    "powershell_runtime_regression": {
+      "path": "tests/g2e/p5a_cgw_fx001_rp_i1r_httpclient_regression.ps1",
+      "git_blob": "76642a932e7003b4c5bc7f5e4198197bb22b24c3"
+    },
+    "workflow": {
+      "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i1r-qa.yml",
+      "git_blob": "13f84e6a6380e0b0abafb136f42ca033fda02e21"
+    }
+  },
+  "authoritative_qa": {
+    "run_id": 36104785570,
+    "jobs": [
+      {
+        "id": 107974799597,
+        "name": "powershell-parser + HttpClient runtime regression",
+        "conclusion": "success"
+      },
+      {
+        "id": 107974799757,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107974799906,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "local_gate_effect": {
+    "RP_I1R_local_result_established": false,
+    "replacement_attempt_authorized": false
+  },
+  "next_gate": "RP-I1R_LOCAL_ACTIVE_PROFILE_REEXECUTION"
+}
