@@ -1,0 +1,70 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-ROUTE-PATH-POSTMORTEM-QUALIFICATION-v1",
+  "status": "PASS_SOURCE_POSTMORTEM_AND_INSTRUMENTATION_DESIGN",
+  "source_head": "6c2de7b8a8a79bba7c85be20184a571638ee2e8a",
+  "parent_attempt": "p5a-cgw-v4-p5-fx-001-tc-attempt-001",
+  "parent_attempt_state": "SPENT",
+  "parent_classification": "INVALID_SPENT",
+  "conclusion": {
+    "historical_route": "NOT_UNIQUELY_IDENTIFIABLE_FROM_SPENT_EVIDENCE",
+    "proven_defect": "OBSERVABILITY_INSTANCE_BINDING_GAP",
+    "scientific_model_claim": "NOT_SUPPORTED",
+    "replacement_attempt_authorized": false
+  },
+  "artifacts": {
+    "postmortem": {
+      "path": "g2e/docs/P5A_CGW_FX001_ROUTE_PATH_POSTMORTEM.md",
+      "git_blob": "c093066ed7e0f89597c819a15c6b5e784d51656f"
+    },
+    "instrumentation_design": {
+      "path": "g2e/docs/P5A_CGW_FX001_ROUTE_PATH_INSTRUMENTATION_DESIGN.json",
+      "git_blob": "7fb604e16e59c6038c303fdc1001b581982e7e43"
+    },
+    "instance_probe": {
+      "path": "scripts/g2e/p5a_cgw_fx001_route_instance_probe.ps1",
+      "git_blob": "8d0a2dfd17113e357eee8c35d34bcdbea14155f2"
+    }
+  },
+  "source_ledger": {
+    "cgw_commit": "b59d7dc51b84fb1f465ff1d00f5207f3b2b4a494",
+    "codex_commit": "3d2ee51ca2d5db578f328aa75e20aa22c0197c9a",
+    "cgw_blobs": {
+      "server": "af4cd5c3886f119f35efa4fc0e28bd2ecfc48530",
+      "config": "1444c64ab66282e72411585392e3d242773a971a",
+      "adapter": "c7e7f291ae6ea6d23818aba8803ad83e39171dbd",
+      "browser_worker": "4e82981a28158e65705f31213bfbd123a6be5e2e",
+      "turn_broker": "6017bbaafd87c58078a72dbac42e843d5bcf3209",
+      "mcp_server": "51d9c787f93c391fba70f68ce759c673d789275d",
+      "runtime_supervisor": "19b19e24b4ab02ae02f762006f750ca9054d7bc6",
+      "launcher_main": "c3f83aacac26baaa28119ff1b147fbb355c4cac9",
+      "launcher_profile": "b1a20dc7fcfffc0ab45bfe916d173a59d4b93e5a",
+      "launcher_logging": "c4149c3c8a27a9b8105d23f58655d9bdc5df9d70"
+    },
+    "codex_blobs": {
+      "model_provider_info": "3fb3e87a2aa9b034713687b20b7f11c38b182389",
+      "core_config": "dca329ab98ea218f7b96f1bd2d4cf25612a5fc1f"
+    }
+  },
+  "authoritative_qa": {
+    "run_id": 36092223719,
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 107936860747,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107936860693,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 107936860491,
+        "name": "powershell-parser",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "next_gate": "RP-I1_CGW_INSTANCE_BINDING_LOCAL_ZERO_SCIENCE"
+}
