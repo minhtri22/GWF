@@ -1,0 +1,39 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I1U-LOCAL-EXECUTION-001-ADJUDICATION-v1",
+  "status": "PASS_DIAGNOSTIC_PRIOR_RUNTIME_GENERATION_TERMINATED",
+  "source_head": "11df50531dfb7d5d238b75c3b7fa09711b21bb8d",
+  "zero_science": true,
+  "observed": {
+    "prior_listener": {
+      "pid": 27240,
+      "alive": false
+    },
+    "prior_launcher": {
+      "pid": 15604,
+      "alive": false
+    },
+    "port_17841": {
+      "listener_count": 0,
+      "unique_pids": []
+    },
+    "launcher_processes": []
+  },
+  "classification": "PRIOR_RUNTIME_GENERATION_TERMINATED",
+  "interpretation": {
+    "prior_runtime_generation_alive": false,
+    "prior_launcher_generation_alive": false,
+    "port_has_active_listener": false,
+    "RP_I1C_runtime_unavailable_block_explained": true,
+    "stale_outer_dev_ownership_state_may_not_be_used_as_current_instance_binding": true
+  },
+  "scientific_effect": {
+    "http_request": false,
+    "responses_request": false,
+    "model_execution": false,
+    "browser_submission": false,
+    "mcp_invocation": false,
+    "scientific_attempt_created": false,
+    "replacement_attempt_authorized": false
+  },
+  "next_gate": "FRESH_ZERO_SCIENCE_RUNTIME_GENERATION_THEN_RP_I1C_REEXECUTION"
+}
