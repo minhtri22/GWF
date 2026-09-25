@@ -1,0 +1,52 @@
+{
+  "schema": "G2E-P5A-CGW-FX001-RP-I2-HTTPCLIENT-REPAIR-QUALIFICATION-v1",
+  "status": "PASS_ZERO_SCIENCE_RP_I2_HTTPCLIENT_REPAIR_QUALIFICATION",
+  "source_head": "742d5f860f4b4aa2714e4153ed96c5883ffedd63",
+  "parent_invalid_execution": "g2e/docs/P5A_CGW_FX001_RP_I2_LOCAL_EXECUTION_001_ADJUDICATION.json",
+  "repaired_probe": {
+    "path": "scripts/g2e/p5a_cgw_fx001_route_instance_probe.ps1",
+    "git_blob": "852fc3c8d14bfb1feb4f809f5c1f5a529fa6bb2f",
+    "semantic_change": "Add-Type -AssemblyName System.Net.Http before HttpClient construction only"
+  },
+  "regression": {
+    "path": "tests/g2e/p5a_cgw_fx001_rp_i2_httpclient_regression.ps1",
+    "git_blob": "843457e585ecff06682e1cf541285df29e56f4a2"
+  },
+  "workflow": {
+    "path": ".github/workflows/g2e-p5a-cgw-fx001-route-path-postmortem-qa.yml",
+    "git_blob": "887726ca90893bdb9b77bcca3f3f979589a3da28"
+  },
+  "authoritative_qa": {
+    "run_id": 36148875217,
+    "jobs": [
+      {
+        "id": 108116792547,
+        "name": "powershell-parser",
+        "conclusion": "success"
+      },
+      {
+        "id": 108116792863,
+        "name": "zero-model (windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 108116792876,
+        "name": "zero-model (ubuntu-latest)",
+        "conclusion": "success"
+      }
+    ],
+    "windows_powershell_51_httpclient_regression": "PASS"
+  },
+  "invariants_preserved": {
+    "runtime_binding_logic_unchanged": true,
+    "sink_binding_logic_unchanged": true,
+    "canary_method": "GET",
+    "canary_path": "/v1/responses",
+    "expected_status": 426,
+    "responses_post_forbidden": true,
+    "model_execution_forbidden": true,
+    "browser_submission_forbidden": true,
+    "mcp_invocation_forbidden": true
+  },
+  "next_gate": "RP_I2_LOCAL_REEXECUTION"
+}
