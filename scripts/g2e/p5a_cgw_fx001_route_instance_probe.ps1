@@ -8,7 +8,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 function Add-Check {
-    param([hashtable]$Checks, [string]$Name, [bool]$Value, [string]$Detail = "")
+    param([System.Collections.IDictionary]$Checks, [string]$Name, [bool]$Value, [string]$Detail = "")
     $Checks[$Name] = [ordered]@{ pass = $Value; detail = $Detail }
 }
 
@@ -45,6 +45,10 @@ $result = [ordered]@{
     launcher_data = $LauncherData
     checks = $checks
     observed = [ordered]@{}
+    harness_integrity = [ordered]@{
+        add_check_shared_container = $false
+        initial_check_count = 0
+    }
     verdict = "BLOCKED"
 }
 
@@ -52,6 +56,14 @@ Add-Check $checks "config_exists" (Test-Path -LiteralPath $ConfigPath -PathType 
 Add-Check $checks "supervisor_state_exists" (Test-Path -LiteralPath $SupervisorPath -PathType Leaf) $SupervisorPath
 Add-Check $checks "browser_descriptor_exists" (Test-Path -LiteralPath $DescriptorPath -PathType Leaf) $DescriptorPath
 Add-Check $checks "launcher_log_exists" (Test-Path -LiteralPath $LauncherLog -PathType Leaf) $LauncherLog
+
+$result.harness_integrity.initial_check_count = $checks.Count
+$result.harness_integrity.add_check_shared_container = ($checks.Count -eq 4)
+if (-not $result.harness_integrity.add_check_shared_container) {
+    $result.verdict = "INVALID_HARNESS_CONTAINER_BINDING"
+    $result | ConvertTo-Json -Depth 12
+    return
+}
 
 if (-not $checks.config_exists.pass -or -not $checks.supervisor_state_exists.pass -or
     -not $checks.browser_descriptor_exists.pass -or -not $checks.launcher_log_exists.pass) {
