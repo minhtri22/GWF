@@ -225,7 +225,8 @@ def _seed(rt, owner, outsider, project, hidden_project):
                 "2026-09-26T12:00:00+00:00",
             ),
         )
-    rt.db.conn.commit()
+        # Direct fixture shaping must close before the next service-owned tx.
+        rt.db.conn.commit()
 
     readiness = {}
     connection, binding = _connection(
