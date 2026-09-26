@@ -359,6 +359,15 @@
               </article>
             </section>
 
+            <section class="panel project-execution-panel execution-report-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Derived view</p><h2>Final orchestration report</h2></div>
+                <button id="projectExecutionReportButton" class="text-button" type="button">Load selected report</button>
+              </div>
+              <p class="audit-boundary-note">The Markdown report is derived from persisted runtime state. It is not the source of truth.</p>
+              <pre id="projectExecutionReport" class="execution-report">Select an orchestration, then load its derived report.</pre>
+            </section>
+
             <div id="projectExecutionPhaseState" class="home-state-banner" hidden></div>
 
             <section id="projectExecutionPhaseEmpty" class="panel project-execution-panel">
