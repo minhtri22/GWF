@@ -610,10 +610,260 @@ async function refreshProjectsIndex(render = true) {
   }
 }
 
+function projectWorkspaceRoute(pathname = window.location.pathname) {
+  const path = normalizedRoute(pathname);
+  const match = path.match(/^\/app\/projects\/([^/]+)\/([^/]+)$/);
+  if (!match) return null;
+  let projectId = match[1];
+  try { projectId = decodeURIComponent(projectId); } catch {}
+  return { projectId, section: match[2].toLowerCase() };
+}
+
+function projectWorkspacePath(projectId, section = "overview") {
+  return "/app/projects/" + encodeURIComponent(projectId) + "/" + section;
+}
+
+function projectSectionLabel(section) {
+  return {
+    overview: "Overview",
+    execution: "Execution",
+    library: "Library",
+    governance: "Governance",
+    configuration: "Configuration",
+  }[section] || "Unknown project section";
+}
+
+function setProjectLocalNav(section) {
+  document.querySelectorAll("[data-project-section]").forEach((button) => {
+    const active = button.dataset.projectSection === section;
+    button.classList.toggle("active", active);
+    if (active) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
+}
+
+function renderProjectWorkspaceHeader(summary, route) {
+  const project = summary.project || {};
+  const scope = project.scope || {};
+  const domain = summary.domain || {};
+  $("#projectWorkspaceName").textContent = project.name || "Project";
+  $("#projectWorkspaceId").textContent = project.project_id || route.projectId;
+  $("#projectWorkspaceBreadcrumb").textContent =
+    "Projects / " + (project.name || route.projectId) + " / " + projectSectionLabel(route.section);
+  $("#projectWorkspaceLifecycle").textContent =
+    "Lifecycle " + (summary.lifecycle?.status || "Unavailable");
+  $("#projectWorkspaceActivity").textContent =
+    "Activity " + (summary.execution_activity || "Unavailable");
+  $("#projectWorkspaceScopeName").textContent =
+    (scope.tenant_name || "Tenant") + " / " + (scope.workspace_name || "Workspace");
+  $("#projectWorkspaceScopeIds").textContent =
+    (scope.tenant_id || "—") + " · " + (scope.workspace_id || "—");
+  $("#projectWorkspaceDomainName").textContent = domain.domain_revision_id ?
+    ((domain.domain_name || domain.domain_id || "Domain") + " · " +
+      (domain.semantic_version || ("r" + domain.revision_number))) :
+    "No pinned Domain revision";
+  $("#projectWorkspaceDomainId").textContent = domain.domain_revision_id ?
+    [domain.package_id, domain.domain_revision_id].filter(Boolean).join(" · ") :
+    (domain.domain_id || "—");
+}
+
+function projectOverviewMetric(label, value, detail = "") {
+  return '<article class="project-overview-stat"><span>' + esc(label) + '</span><strong>' +
+    esc(value ?? "—") + '</strong><small>' + esc(detail || "") + "</small></article>";
+}
+
+function renderProjectOverviewLive(summary) {
+  const orch = summary.current_orchestration;
+  const phase = summary.current_phase;
+  const run = summary.active_run;
+  $("#projectOverviewSummary").innerHTML =
+    projectOverviewMetric("Lifecycle", summary.lifecycle?.status || "Unavailable", "Project governance") +
+    projectOverviewMetric("Execution activity", summary.execution_activity || "Unavailable", "Derived independently") +
+    projectOverviewMetric("Current actor / executor", summary.current_actor || "SYSTEM",
+      summary.current_actor_source?.kind || "Fallback") +
+    projectOverviewMetric("Orchestration", orch?.orchestration_id || "—",
+      orch ? (orch.status + " · generation " + orch.generation) : "No orchestration") +
+    projectOverviewMetric("Current phase", phase?.phase_id || "—",
+      phase ? (phase.status + " · " + phase.phase_execution_id) : "No phase execution") +
+    projectOverviewMetric("Active run", run?.run_id || "—",
+      run ? (run.workunit_type + " · " + formatHomeTime(run.started_at)) : "No RUNNING run");
+
+  const approvals = summary.approvals?.pending || [];
+  const failures = summary.failures?.open || [];
+  const attention = [];
+  for (const item of approvals) {
+    attention.push(
+      '<div class="feed-item attention-item"><div><strong>Pending approval</strong><span>' +
+      esc(item.action) + '</span></div><p>' + esc(item.required_approval_policy || "No explicit policy") +
+      '</p><code>' + esc(item.proposal_id) + '</code><time>' + esc(formatHomeTime(item.created_at)) + "</time></div>"
+    );
+  }
+  for (const item of failures) {
+    const latestRecovery = (item.recoveries || []).slice(-1)[0];
+    attention.push(
+      '<div class="feed-item attention-item"><div><strong>' + esc(item.failure_class) +
+      '</strong><span>' + esc(item.severity) + '</span></div><p>' +
+      esc(latestRecovery ? ("Recovery " + latestRecovery.status + " → " + latestRecovery.resume_target) :
+        ("Resume candidate " + (item.resume_candidate || "—"))) +
+      '</p><code>' + esc(item.failure_id) + '</code><time>' + esc(formatHomeTime(item.created_at)) + "</time></div>"
+    );
+  }
+  $("#projectOverviewAttention").innerHTML = attention.length ?
+    attention.join("") : '<div class="feed-empty">No pending approvals or unresolved failures.</div>';
+
+  const handoff = summary.latest_handoff;
+  $("#projectOverviewHandoff").innerHTML = handoff ?
+    '<dl class="project-overview-facts"><div><dt>Handoff</dt><dd><code>' + esc(handoff.handoff_id) +
+    '</code></dd></div><div><dt>Phase</dt><dd><span>' + esc(handoff.phase_id) + '</span><code>' +
+    esc(handoff.phase_execution_id) + '</code></dd></div><div><dt>Payload hash</dt><dd><code>' +
+    esc(handoff.payload_hash) + '</code></dd></div><div><dt>Actor / time</dt><dd><code>' +
+    esc(handoff.actor_id) + '</code><span>' + esc(formatHomeTime(handoff.created_at)) + "</span></dd></div></dl>" :
+    '<div class="feed-empty">No persisted phase handoff exists yet.</div>';
+
+  const domain = summary.domain || {};
+  const github = summary.github || { bindings: [] };
+  const frontier = summary.validity_frontier || {};
+  const distributed = summary.distributed || {};
+  const docs = summary.document_governance || {};
+  const ghHtml = (github.bindings || []).length ? github.bindings.map((binding) =>
+    '<div class="project-config-item"><span>GitHub</span><strong>' + esc(binding.repository_full_name) +
+    '</strong><code>' + esc(binding.binding_id) + '</code><small>' +
+    esc(binding.default_branch + " · " + binding.write_policy + " · " + binding.connection_status) + "</small></div>"
+  ).join("") :
+    '<div class="project-config-item"><span>GitHub</span><strong>No repository binding</strong><small>Authoritative zero state</small></div>';
+
+  $("#projectOverviewConfiguration").innerHTML =
+    '<div class="project-config-item"><span>Domain</span><strong>' +
+      esc(domain.domain_revision_id ? ((domain.domain_name || domain.domain_id) + " · " + (domain.semantic_version || "")) : "No pinned revision") +
+      '</strong><code>' + esc(domain.domain_revision_id || "—") + '</code><small>' +
+      esc(domain.revision_status || "Unbound") + "</small></div>" +
+    ghHtml +
+    '<div class="project-config-item"><span>Validity frontier</span><strong>' +
+      esc((frontier.valid_count ?? 0) + " valid · " + (frontier.non_valid_count ?? 0) + " non-valid") +
+      '</strong><small>Current artifact revisions only</small></div>' +
+    '<div class="project-config-item"><span>Distributed runtime</span><strong>' +
+      esc((distributed.active_jobs ?? 0) + " active jobs") + '</strong><code>' +
+      esc(JSON.stringify(distributed.status_counts || {})) + '</code><small>No lease token exposed</small></div>' +
+    '<div class="project-config-item"><span>Document governance</span><strong>' +
+      esc(docs.status || "UNAVAILABLE") + '</strong><code>' + esc(docs.maturity || "—") +
+      '</code><small>' + esc(docs.reason || "No status") + "</small></div>";
+
+  const activity = summary.recent_activity || [];
+  $("#projectOverviewActivityFeed").innerHTML = activity.length ? activity.map((item) =>
+    '<div class="feed-item"><div><strong>' + esc(item.action) + '</strong><span>' +
+    esc(item.resource_type) + '</span></div><p>' + esc(item.resource_id) +
+    '</p><code>' + esc(item.actor_id || "SYSTEM") + '</code><time>' +
+    esc(formatHomeTime(item.timestamp)) + "</time></div>"
+  ).join("") : '<div class="feed-empty">No authoritative project activity yet.</div>';
+
+  $("#projectOverviewGeneratedAt").textContent = formatHomeTime(summary.generated_at);
+  $("#projectOverviewBuildSha").textContent = summary.build_sha || "unknown";
+}
+
+function renderProjectWorkspace(summary, route) {
+  renderProjectWorkspaceHeader(summary, route);
+  setProjectLocalNav(route.section);
+  const complete = summary.query_status === "COMPLETE";
+  $("#projectOverviewStateBanner").hidden = complete;
+  if (!complete) {
+    $("#projectOverviewStateBanner").className = "home-state-banner warn";
+    $("#projectOverviewStateBanner").textContent =
+      "Project projection is partial. Missing authoritative fields are not inferred.";
+  }
+  if (route.section === "overview") {
+    $("#projectLocalLockedView").hidden = true;
+    $("#projectOverviewLiveView").hidden = false;
+    renderProjectOverviewLive(summary);
+    document.title = "GWF — " + (summary.project?.name || route.projectId) + " / Overview";
+    return;
+  }
+  $("#projectOverviewLiveView").hidden = true;
+  $("#projectLocalLockedView").hidden = false;
+  const known = ["execution", "library", "governance", "configuration"].includes(route.section);
+  $("#projectLocalLockedTitle").textContent = projectSectionLabel(route.section);
+  $("#projectLocalLockedDescription").textContent = known ?
+    projectSectionLabel(route.section) + " is a real project-local route, but its owning BPS unit is not opened in M04." :
+    "This is not a recognized project-local section. Overview is not substituted silently.";
+  document.title = "GWF — " + (summary.project?.name || route.projectId) + " / " + projectSectionLabel(route.section);
+}
+
+function renderProjectWorkspaceError(route, message) {
+  setProjectLocalNav(route.section);
+  $("#projectWorkspaceName").textContent = "Project unavailable";
+  $("#projectWorkspaceId").textContent = route.projectId;
+  $("#projectWorkspaceBreadcrumb").textContent = "Projects / unavailable / " + projectSectionLabel(route.section);
+  $("#projectWorkspaceLifecycle").textContent = "Lifecycle unavailable";
+  $("#projectWorkspaceActivity").textContent = "Activity unavailable";
+  $("#projectWorkspaceScopeName").textContent = "Authorized scope unavailable";
+  $("#projectWorkspaceScopeIds").textContent = "—";
+  $("#projectWorkspaceDomainName").textContent = "Domain unavailable";
+  $("#projectWorkspaceDomainId").textContent = "—";
+  $("#projectOverviewStateBanner").hidden = false;
+  $("#projectOverviewStateBanner").className = "home-state-banner error";
+  $("#projectOverviewStateBanner").textContent = "Project unavailable — " + message;
+  $("#projectOverviewLiveView").hidden = true;
+  $("#projectLocalLockedView").hidden = true;
+}
+
+async function refreshProjectOverview(route, render = true) {
+  if (state.projectOverviewLoading) return;
+  state.projectOverviewLoading = true;
+  state.projectOverviewError = null;
+  if (render) {
+    $("#projectOverviewStateBanner").hidden = false;
+    $("#projectOverviewStateBanner").className = "home-state-banner loading";
+    $("#projectOverviewStateBanner").textContent = "Loading authoritative project Overview…";
+  }
+  try {
+    state.projectOverview = await api(
+      "/browser/projects/" + encodeURIComponent(route.projectId) + "/overview"
+    );
+    state.projectOverviewProjectId = route.projectId;
+  } catch (error) {
+    state.projectOverview = null;
+    state.projectOverviewProjectId = route.projectId;
+    state.projectOverviewError = error.status === 404 ?
+      "Project not found in your authorized scope." : error.message;
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+  } finally {
+    state.projectOverviewLoading = false;
+  }
+  if (render && !$("#projectWorkspaceView").hidden) {
+    if (state.projectOverview) renderProjectWorkspace(state.projectOverview, route);
+    else renderProjectWorkspaceError(route, state.projectOverviewError || "Unknown error");
+  }
+}
+
+function renderProjectWorkspaceRoute(route) {
+  $("#homeRouteView").hidden = true;
+  $("#projectsRouteView").hidden = true;
+  $("#accessRouteView").hidden = true;
+  $("#operationsRouteView").hidden = true;
+  $("#lockedRouteView").hidden = true;
+  $("#diagnosticsRouteView").hidden = true;
+  $("#projectWorkspaceView").hidden = false;
+  if (state.projectOverview && state.projectOverviewProjectId === route.projectId) {
+    renderProjectWorkspace(state.projectOverview, route);
+  } else if (state.projectOverviewError && state.projectOverviewProjectId === route.projectId) {
+    renderProjectWorkspaceError(route, state.projectOverviewError);
+  } else {
+    void refreshProjectOverview(route, true);
+  }
+}
+
 function renderProjectsRoute(item) {
+  const projectRoute = projectWorkspaceRoute();
+  if (projectRoute) {
+    renderProjectWorkspaceRoute(projectRoute);
+    return;
+  }
   $("#homeRouteView").hidden = true;
   $("#accessRouteView").hidden = true;
   $("#operationsRouteView").hidden = true;
+  $("#projectWorkspaceView").hidden = true;
   $("#lockedRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = true;
   $("#projectsRouteView").hidden = false;
