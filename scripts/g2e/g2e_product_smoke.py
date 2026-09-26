@@ -96,7 +96,10 @@ class RpcClient:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise TimeoutError("APP_SERVER_READ_TIMEOUT")
-            tag, raw = self.q.get(timeout=remaining)
+            try:
+                tag, raw = self.q.get(timeout=remaining)
+            except queue.Empty as exc:
+                raise TimeoutError("APP_SERVER_READ_TIMEOUT") from exc
             if tag == "stderr":
                 self.stderr_lines.append(raw)
                 continue
