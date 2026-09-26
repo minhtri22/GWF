@@ -1769,3 +1769,34 @@ HOME IMPLEMENTATION                = NOT_STARTED under Fast Lane
 ```
 
 No Home code is authorized from memory alone; document reread + checklist comes first.
+
+
+# 11. BPS delivery-cadence amendment — QA-first / final integrated UAT
+
+Effective 2026-09-26, the user approved `docs/BPS_QA_FIRST_DEFERRED_UAT.md`.
+
+For current Browser Product Surface implementation, this supersedes older passages in this plan that require user/local UAT after every ordinary screen/module before implementation may proceed.
+
+Current cadence:
+
+```text
+per screen/workflow:
+  docs -> checklist -> implement -> assistant QA
+       -> findings -> fix/re-QA
+       -> FAIL=0 / OPEN=0 / COUNT=0
+       -> QA_CLOSED / FINAL_UAT_PENDING
+       -> next legal unit
+
+after all current-product units:
+  cross-screen / cross-workflow integration QA
+       -> COUNT=0
+       -> one final integrated user UAT
+```
+
+This amendment does not alter backend wave dependencies or product semantics.
+
+Strict governance still applies before any schema, authority/authentication/security, scientific/evidence, qualified API-contract, cross-scope authorization, or authoritative/destructive mutation change.
+
+Historical BPS-I00/Home/Projects UAT evidence remains valid; it is not a prerequisite pattern for later screens.
+
+BPS-W0 is the mandatory integration-QA stage before final integrated UAT and must close all integration findings rather than defer them to the user.
