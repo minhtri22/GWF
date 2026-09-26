@@ -322,6 +322,35 @@ def test_project_overview_partial_and_unavailable_are_not_fake_empty(tmp_path, m
     rt.close()
 
 
+def test_project_overview_dangling_bound_identity_is_partial_not_zero(tmp_path, monkeypatch):
+    rt, owner, _, _, _, _, project, _ = _fixture(tmp_path, monkeypatch)
+    rt.db.conn.execute(
+        "INSERT INTO project_domain_bindings VALUES(?,?,?,?)",
+        (project, "missing_domain_revision", owner, utcnow()),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO github_repository_bindings VALUES(?,?,?,?,?,?,?,?,?)",
+        (
+            "binding_missing_connection", project, "missing_connection",
+            "minhtri22/GWF", "main", "FEATURE_BRANCH_ONLY",
+            canonical_json(["feature/*"]), owner, utcnow(),
+        ),
+    )
+    rt.db.conn.commit()
+
+    client = TestClient(_app(rt))
+    _login(client, "overview-owner")
+    body = client.get(f"/browser/projects/{project}/overview").json()
+
+    assert body["query_status"] == "PARTIAL"
+    assert body["domain"]["domain_revision_id"] == "missing_domain_revision"
+    assert body["domain"]["revision_status"] is None
+    assert body["github"]["binding_count"] == 1
+    assert body["github"]["bindings"][0]["binding_id"] == "binding_missing_connection"
+    assert body["github"]["bindings"][0]["connection_status"] is None
+    rt.close()
+
+
 def test_project_overview_deep_link_is_served_by_browser_shell(tmp_path, monkeypatch):
     rt, _, _, _, _, _, project, _ = _fixture(tmp_path, monkeypatch)
     client = TestClient(_app(rt))
