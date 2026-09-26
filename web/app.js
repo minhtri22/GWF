@@ -807,6 +807,7 @@ function renderProjectWorkspaceError(route, message) {
 
 async function refreshProjectOverview(route, render = true) {
   if (state.projectOverviewLoading) return;
+  const requestActorId = state.me?.actor_id || null;
   state.projectOverviewLoading = true;
   state.projectOverviewError = null;
   if (render) {
@@ -815,9 +816,11 @@ async function refreshProjectOverview(route, render = true) {
     $("#projectOverviewStateBanner").textContent = "Loading authoritative project Overview…";
   }
   try {
-    state.projectOverview = await api(
+    const result = await api(
       "/browser/projects/" + encodeURIComponent(route.projectId) + "/overview"
     );
+    if (!state.me || state.me.actor_id !== requestActorId) return;
+    state.projectOverview = result;
     state.projectOverviewProjectId = route.projectId;
   } catch (error) {
     state.projectOverview = null;
