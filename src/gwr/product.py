@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .errors import AuthorityDenied, NotFound
+from .errors import AuthorityDenied, NotFound, ValidationError
 from .tenancy import PROJECT_ROLE_PERMISSIONS, TENANT_ROLE_PERMISSIONS, WORKSPACE_ROLE_PERMISSIONS
 from .utils import canonical_json, parse_json, utcnow
 
@@ -2821,6 +2821,308 @@ class ProjectDashboardService:
                 "observed": observed,
             },
         }
+
+    def github_summary(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
+        """Authorized read-only GitHub/plugin projection across accessible projects."""
+        projects: list[dict[str, Any]] = []
+        complete = True
+
+        for project in self.runtime.tenancy.list_accessible_projects(actor_id):
+            project_id = project["id"]
+            scope = self.runtime.tenancy.scope_for_project(project_id)
+            if not scope:
+                complete = False
+                continue
+            tenant = self.db.one(
+                "SELECT name FROM tenants WHERE tenant_id=?",
+                (scope.tenant_id,),
+            )
+            workspace = self.db.one(
+                "SELECT name FROM workspaces WHERE workspace_id=?",
+                (scope.workspace_id,),
+            )
+            if tenant is None or workspace is None:
+                complete = False
+
+            connections: list[dict[str, Any]] = []
+            connection_by_id: dict[str, dict[str, Any]] = {}
+            for row in self.db.all(
+                "SELECT connection_id FROM plugin_connections "
+                "WHERE project_id=? AND plugin_type='github' "
+                "ORDER BY created_at,connection_id",
+                (project_id,),
+            ):
+                item = self.runtime.plugins.get(row["connection_id"])
+                shaped = {
+                    key: item.get(key)
+                    for key in (
+                        "connection_id",
+                        "project_id",
+                        "plugin_type",
+                        "external_connection_ref",
+                        "capabilities",
+                        "status",
+                        "metadata",
+                        "created_by_actor_id",
+                        "created_at",
+                        "updated_at",
+                        "adapter_attached",
+                    )
+                }
+                connections.append(shaped)
+                connection_by_id[shaped["connection_id"]] = shaped
+
+            bindings: list[dict[str, Any]] = []
+            binding_ids: set[str] = set()
+            for row in self.db.all(
+                "SELECT * FROM github_repository_bindings "
+                "WHERE project_id=? ORDER BY created_at,binding_id",
+                (project_id,),
+            ):
+                item = dict(row)
+                item["allowed_branches"] = parse_json(
+                    item["allowed_branches"], []
+                )
+                connection = connection_by_id.get(item["connection_id"])
+                if connection is None:
+                    complete = False
+                shaped = {
+                    "binding_id": item["binding_id"],
+                    "project_id": project_id,
+                    "connection_id": item["connection_id"],
+                    "repository_full_name": item["repository_full_name"],
+                    "default_branch": item["default_branch"],
+                    "write_policy": item["write_policy"],
+                    "allowed_branches": item["allowed_branches"],
+                    "created_by_actor_id": item["created_by_actor_id"],
+                    "created_at": item["created_at"],
+                    "connection_status": (
+                        connection["status"] if connection else None
+                    ),
+                    "connection_capabilities": (
+                        list(connection["capabilities"]) if connection else []
+                    ),
+                    "adapter_attached": (
+                        bool(connection["adapter_attached"])
+                        if connection else False
+                    ),
+                    "connection_identity_status": (
+                        "RESOLVED" if connection else "MISSING"
+                    ),
+                }
+                bindings.append(shaped)
+                binding_ids.add(item["binding_id"])
+
+            change_sets: list[dict[str, Any]] = []
+            for row in self.db.all(
+                "SELECT * FROM github_change_sets WHERE project_id=? "
+                "ORDER BY created_at DESC,change_set_id DESC",
+                (project_id,),
+            ):
+                manifest_raw = parse_json(row["manifest_json"], []) or []
+                manifest = [
+                    {
+                        "path": item.get("path"),
+                        "operation": item.get("operation"),
+                        "expected_blob_sha": item.get("expected_blob_sha"),
+                        "content_sha256": item.get("content_sha256"),
+                    }
+                    for item in manifest_raw
+                ]
+                checks = []
+                for check in self.db.all(
+                    "SELECT check_id,stage,expected_sha,observed_sha,status,"
+                    "details_json,created_at FROM github_sha_checks "
+                    "WHERE change_set_id=? ORDER BY created_at,check_id",
+                    (row["change_set_id"],),
+                ):
+                    checks.append({
+                        "check_id": check["check_id"],
+                        "stage": check["stage"],
+                        "expected_sha": check["expected_sha"],
+                        "observed_sha": check["observed_sha"],
+                        "status": check["status"],
+                        "details": parse_json(check["details_json"], {}) or {},
+                        "created_at": check["created_at"],
+                    })
+                if row["binding_id"] not in binding_ids:
+                    complete = False
+                change_sets.append({
+                    "change_set_id": row["change_set_id"],
+                    "project_id": project_id,
+                    "binding_id": row["binding_id"],
+                    "branch": row["branch"],
+                    "expected_head_sha": row["expected_head_sha"],
+                    "manifest": manifest,
+                    "manifest_hash": row["manifest_hash"],
+                    "commit_message": row["commit_message"],
+                    "status": row["status"],
+                    "created_by_actor_id": row["created_by_actor_id"],
+                    "created_at": row["created_at"],
+                    "committed_sha": row["committed_sha"],
+                    "verified_at": row["verified_at"],
+                    "qa_complete": row["status"] == "VERIFIED",
+                    "checks": checks,
+                })
+
+            projects.append({
+                "project_id": project_id,
+                "project_name": project["name"],
+                "scope": {
+                    "tenant_id": scope.tenant_id,
+                    "tenant_name": tenant["name"] if tenant else None,
+                    "workspace_id": scope.workspace_id,
+                    "workspace_name": workspace["name"] if workspace else None,
+                },
+                "connections": connections,
+                "bindings": bindings,
+                "change_sets": change_sets,
+            })
+
+        projects.sort(
+            key=lambda item: (item["project_name"], item["project_id"])
+        )
+        return {
+            "generated_at": utcnow(),
+            "build_sha": build_sha,
+            "query_status": "COMPLETE" if complete else "PARTIAL",
+            "scope": {
+                "mode": "ALL_AUTHORIZED_PROJECTS",
+                "label": "All authorized projects",
+                "project_count": len(projects),
+            },
+            "projects": projects,
+        }
+
+    def github_binding_readiness(
+        self,
+        actor_id: str,
+        binding_id: str,
+        *,
+        build_sha: str,
+    ) -> dict[str, Any]:
+        """Side-effect-free readiness/identity probe for one authorized binding."""
+        binding_row = self.db.one(
+            "SELECT * FROM github_repository_bindings WHERE binding_id=?",
+            (binding_id,),
+        )
+        if not binding_row:
+            raise NotFound("GitHub repository binding not found")
+        project_id = binding_row["project_id"]
+        try:
+            self.runtime.tenancy.require_project_access(
+                actor_id, project_id, "VIEW"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise NotFound("GitHub repository binding not found") from exc
+
+        binding = dict(binding_row)
+        binding["allowed_branches"] = parse_json(
+            binding["allowed_branches"], []
+        )
+        connection_row = self.db.one(
+            "SELECT connection_id FROM plugin_connections "
+            "WHERE connection_id=? AND project_id=? AND plugin_type='github'",
+            (binding["connection_id"], project_id),
+        )
+        base = {
+            "generated_at": utcnow(),
+            "build_sha": build_sha,
+            "project_id": project_id,
+            "binding_id": binding_id,
+            "connection_id": binding["connection_id"],
+            "repository_full_name": binding["repository_full_name"],
+            "default_branch": binding["default_branch"],
+        }
+        if not connection_row:
+            return {
+                **base,
+                "status": "CONNECTION_MISSING",
+                "adapter_attached": False,
+                "repository_identity": None,
+                "default_branch_head": None,
+            }
+
+        connection = self.runtime.plugins.get(binding["connection_id"])
+        if connection["status"] != "ACTIVE":
+            return {
+                **base,
+                "status": "DISABLED",
+                "adapter_attached": False,
+                "repository_identity": None,
+                "default_branch_head": None,
+            }
+        if "REPO_READ" not in set(connection["capabilities"]):
+            return {
+                **base,
+                "status": "CAPABILITY_MISSING",
+                "adapter_attached": bool(connection["adapter_attached"]),
+                "repository_identity": None,
+                "default_branch_head": None,
+            }
+        if not connection["adapter_attached"]:
+            return {
+                **base,
+                "status": "NOT_ATTACHED",
+                "adapter_attached": False,
+                "repository_identity": None,
+                "default_branch_head": None,
+            }
+
+        try:
+            adapter = self.runtime.plugins.adapter(
+                binding["connection_id"], capability="REPO_READ"
+            )
+            identity_reader = getattr(
+                adapter, "get_repository_identity", None
+            )
+            if not callable(identity_reader):
+                return {
+                    **base,
+                    "status": "IDENTITY_UNSUPPORTED",
+                    "adapter_attached": True,
+                    "repository_identity": None,
+                    "default_branch_head": None,
+                }
+            identity = identity_reader(binding["repository_full_name"])
+            repository_id = identity.get("repository_id")
+            full_name = str(identity.get("full_name") or "").strip()
+            if repository_id is None or not full_name:
+                raise ValidationError(
+                    "GitHub repository identity response is incomplete"
+                )
+            head = adapter.get_branch_head(
+                binding["repository_full_name"],
+                binding["default_branch"],
+            )
+            identity_status = (
+                "READY"
+                if full_name.casefold()
+                == binding["repository_full_name"].casefold()
+                else "IDENTITY_MISMATCH"
+            )
+            return {
+                **base,
+                "status": identity_status,
+                "adapter_attached": True,
+                "repository_identity": {
+                    "repository_id": str(repository_id),
+                    "full_name": full_name,
+                },
+                "default_branch_head": str(head or ""),
+            }
+        except (AuthorityDenied, NotFound, ValidationError) as exc:
+            return {
+                **base,
+                "status": "PROVIDER_ERROR",
+                "adapter_attached": True,
+                "repository_identity": None,
+                "default_branch_head": None,
+                "error": {
+                    "code": exc.code,
+                    "message": exc.message,
+                },
+            }
 
     def project_create_options(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
         """Authorized choices for the bounded Create Project workflow."""

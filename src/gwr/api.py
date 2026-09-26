@@ -539,6 +539,28 @@ def create_app(
             core_health=str(readiness_payload.get("core_health") or "UNKNOWN"),
         )
 
+    @app.get('/browser/github')
+    def browser_github(request: Request):
+        _, principal = browser_principal(request)
+        return product.github_summary(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    @app.get('/browser/github/bindings/{binding_id}/readiness')
+    def browser_github_binding_readiness(binding_id: str, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            return product.github_binding_readiness(
+                principal.actor_id,
+                binding_id,
+                build_sha=resolved_product_info["build_sha"],
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(
+                status_code=404, detail="repository binding not found"
+            ) from exc
+
     @app.get('/browser/packages')
     def browser_packages(request: Request):
         _, principal = browser_principal(request)
