@@ -3091,10 +3091,19 @@ class ProjectDashboardService:
                 raise ValidationError(
                     "GitHub repository identity response is incomplete"
                 )
-            head = adapter.get_branch_head(
-                binding["repository_full_name"],
-                binding["default_branch"],
-            )
+            head = str(
+                adapter.get_branch_head(
+                    binding["repository_full_name"],
+                    binding["default_branch"],
+                ) or ""
+            ).strip().lower()
+            if (
+                len(head) not in {40, 64}
+                or any(ch not in "0123456789abcdef" for ch in head)
+            ):
+                raise ValidationError(
+                    "GitHub branch head response is not a full Git SHA"
+                )
             identity_status = (
                 "READY"
                 if full_name.casefold()
@@ -3109,7 +3118,7 @@ class ProjectDashboardService:
                     "repository_id": str(repository_id),
                     "full_name": full_name,
                 },
-                "default_branch_head": str(head or ""),
+                "default_branch_head": head,
             }
         except (AuthorityDenied, NotFound, ValidationError) as exc:
             return {
@@ -3121,6 +3130,18 @@ class ProjectDashboardService:
                 "error": {
                     "code": exc.code,
                     "message": exc.message,
+                },
+            }
+        except Exception:
+            return {
+                **base,
+                "status": "PROVIDER_ERROR",
+                "adapter_attached": True,
+                "repository_identity": None,
+                "default_branch_head": None,
+                "error": {
+                    "code": "ADAPTER_READ_FAILED",
+                    "message": "GitHub readiness probe failed",
                 },
             }
 
