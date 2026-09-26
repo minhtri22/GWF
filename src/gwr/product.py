@@ -1114,7 +1114,7 @@ class ProjectDashboardService:
 
         orchestration_row = self.db.one(
             "SELECT orchestration_id,domain_id,status,current_phase_id,generation,"
-            "research_outcome,pivot_count,started_at,updated_at,terminal_checkpoint_id "
+            "research_outcome,pivot_count,started_at,updated_at,terminal_checkpoint_id,metadata "
             "FROM orchestrations WHERE project_id=? "
             "ORDER BY started_at DESC,orchestration_id DESC LIMIT 1",
             (project_id,),
@@ -1361,6 +1361,8 @@ class ProjectDashboardService:
             (project_id,),
         ):
             item = dict(row)
+            metadata = parse_json(item.pop("metadata"), {}) or {}
+            item["history"] = list(metadata.get("history") or [])
             phases = [
                 dict(phase)
                 for phase in self.db.all(

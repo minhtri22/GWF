@@ -816,6 +816,8 @@ function renderProjectExecutionNavigation() {
   $("#projectExecutionSelectedOrchestration").textContent = selected?.orchestration_id || "—";
 
   const phases = selected?.phases || [];
+  $("#projectExecutionOrchestrationHistory").textContent =
+    executionJson(selected?.history || []);
   $("#projectExecutionPhases").innerHTML = phases.length ? phases.map((phase) =>
     '<button type="button" class="execution-phase-item' +
       (phase.phase_execution_id === state.selectedExecutionPhaseId ? " active" : "") +
@@ -1372,6 +1374,8 @@ async function refreshProjectExecution(route, render = true) {
     );
     if (!state.me || state.me.actor_id !== requestActorId) return;
     if (state.projectExecutionProjectId !== route.projectId) {
+      $("#projectExecutionReport").textContent =
+        "Project changed. Select an orchestration, then load its derived report.";
       state.selectedExecutionOrchestrationId = null;
       state.selectedExecutionPhaseId = null;
       state.projectPhaseDetail = null;
@@ -2838,6 +2842,8 @@ $("#projectOverviewRefreshButton").addEventListener("click", async () => {
   const route = projectWorkspaceRoute();
   if (!route) return;
   if (route.section === "execution") {
+    $("#projectExecutionReport").textContent =
+      "Execution refreshed. Load the selected orchestration report when needed.";
     state.projectExecution = null;
     state.projectExecutionError = null;
     state.projectPhaseDetail = null;
