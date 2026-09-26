@@ -84,6 +84,15 @@ def test_access_projection_hides_other_scopes_and_member_directory(tmp_path, mon
 
     assert body["query_status"] == "COMPLETE"
     assert body["session"]["principal_id"] == "owner"
+    assert "access_token" not in body["session"]
+    assert body["roles"] == {
+        "tenant": ["ADMIN", "MEMBER", "OWNER", "VIEWER"],
+        "workspace": ["ADMIN", "MEMBER", "OWNER", "VIEWER"],
+        "project": [
+            "APPROVER", "OWNER", "RESEARCHER",
+            "RESEARCH_LEAD", "REVIEWER", "VIEWER",
+        ],
+    }
     assert {x["tenant_id"] for x in body["tenants"]} == {tenant}
     assert {x["workspace_id"] for x in body["workspaces"]} == {workspace}
     assert {x["project_id"] for x in body["projects"]} == {project}
@@ -139,6 +148,13 @@ def test_access_browser_mutations_and_negative_paths(tmp_path, monkeypatch):
     )
     assert bad_role.status_code == 422
 
+    unknown_actor = client.post(
+        f"/browser/access/projects/{project}/members",
+        json={"actor_id": "actor_unknown", "role": "VIEWER"},
+    )
+    assert unknown_actor.status_code == 422
+    assert unknown_actor.json()["detail"] == "actor is not eligible"
+
     outsider_client = _client(rt)
     _login(outsider_client, "outsider")
     assert outsider_client.post(
@@ -166,6 +182,16 @@ def test_access_browser_mutations_and_negative_paths(tmp_path, monkeypatch):
         "SELECT tenant_id FROM workspaces WHERE workspace_id=?",
         (hidden_workspace,),
     ) is not None
+
+    security_actions = {
+        row["action"] for row in rt.db.all(
+            "SELECT action FROM security_events WHERE actor_id=?",
+            (owner,),
+        )
+    }
+    assert "REVOKE_TENANT_MEMBER" in security_actions
+    assert "REVOKE_WORKSPACE_MEMBER" in security_actions
+    assert "REVOKE_PROJECT_MEMBER" in security_actions
     rt.close()
 
 
@@ -179,3 +205,29 @@ def test_access_ui_contract():
     assert "/browser/access/tenants" in js
     assert "/browser/access/workspaces/" in js
     assert "/browser/access/projects/" in js
+
+
+def test_existing_bearer_membership_api_remains_valid(tmp_path, monkeypatch):
+    rt, owner, member, _, tenant, _, project, _, _, _ = _fixture(tmp_path, monkeypatch)
+    client = _client(rt)
+    token = client.post(
+        "/auth/login",
+        json={"username": "owner", "password": PASSWORD},
+    ).json()["access_token"]
+
+    added = client.post(
+        f"/tenants/{tenant}/members",
+        json={"actor_id": member, "role": "VIEWER"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert added.status_code == 200
+    assert added.json()["status"] == "ACTIVE"
+
+    rt.tenancy.add_project_member(project, member, "VIEWER", owner)
+    revoked = client.delete(
+        f"/projects/{project}/members/{member}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert revoked.status_code == 200
+    assert revoked.json()["status"] == "REVOKED"
+    rt.close()
