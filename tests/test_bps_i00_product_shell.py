@@ -82,6 +82,10 @@ def test_i00_live_shell_and_bootstrap_are_authoritative(tmp_path, monkeypatch):
     assert capabilities["projects"]["state"] == "LIVE_MODULE"
     assert capabilities["projects"]["slice"] == "BPS-M02"
     assert capabilities["projects"]["route"] == "/app/projects"
+    assert capabilities["access"] == {
+        "id": "access", "label": "Access", "state": "LIVE_MODULE",
+        "slice": "BPS-M02", "route": "/app/system/access",
+    }
     assert capabilities["operations"]["slice"] == "BPS-M03"
     assert capabilities["packages"]["slice"] == "BPS-M06"
     assert capabilities["github"]["slice"] == "BPS-M07"
@@ -98,6 +102,7 @@ def test_i00_live_shell_and_bootstrap_are_authoritative(tmp_path, monkeypatch):
         "/app/projects",
         "/app/operations",
         "/app/research/packages",
+        "/app/system/access",
         "/app/system/diagnostics",
         "/app/system/settings",
         "/app/shared-library",
