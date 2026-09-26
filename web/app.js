@@ -612,11 +612,11 @@ async function refreshProjectsIndex(render = true) {
 
 function projectWorkspaceRoute(pathname = window.location.pathname) {
   const path = normalizedRoute(pathname);
-  const match = path.match(/^\/app\/projects\/([^/]+)\/([^/]+)$/);
+  const match = path.match(/^\/app\/projects\/([^/]+)(?:\/([^/]+))?(?:\/.*)?$/);
   if (!match) return null;
   let projectId = match[1];
   try { projectId = decodeURIComponent(projectId); } catch {}
-  return { projectId, section: match[2].toLowerCase() };
+  return { projectId, section: (match[2] || "").toLowerCase() };
 }
 
 function projectWorkspacePath(projectId, section = "overview") {
@@ -832,8 +832,14 @@ async function refreshProjectOverview(route, render = true) {
     state.projectOverviewLoading = false;
   }
   if (render && !$("#projectWorkspaceView").hidden) {
-    if (state.projectOverview) renderProjectWorkspace(state.projectOverview, route);
-    else renderProjectWorkspaceError(route, state.projectOverviewError || "Unknown error");
+    const activeRoute = projectWorkspaceRoute();
+    if (activeRoute && activeRoute.projectId !== route.projectId) {
+      void refreshProjectOverview(activeRoute, true);
+      return;
+    }
+    const targetRoute = activeRoute || route;
+    if (state.projectOverview) renderProjectWorkspace(state.projectOverview, targetRoute);
+    else renderProjectWorkspaceError(targetRoute, state.projectOverviewError || "Unknown error");
   }
 }
 
