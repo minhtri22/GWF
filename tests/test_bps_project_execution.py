@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from gwr.api import create_app
 from gwr.auth import HumanAuthService
+from gwr.product import ProjectDashboardService
 from gwr.runtime import GovernedWorkflowRuntime
 from gwr.utils import canonical_json
 
@@ -448,6 +449,74 @@ def test_project_execution_empty_and_cross_project_phase_are_truthful(tmp_path, 
     rt.close()
 
 
+def test_phase_without_protocol_and_dangling_identity_semantics(tmp_path, monkeypatch):
+    rt, _, _, _, project, _ = _fixture(tmp_path, monkeypatch)
+    rt.db.conn.execute(
+        "INSERT INTO orchestrations VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "orch_plain", project, rt.domain.domain_id, "COMPLETED",
+            "phase_plain", 0, "PASS", 0,
+            "2026-09-26T03:00:00+00:00",
+            "2026-09-26T03:02:00+00:00", None, "{}",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO phase_executions VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "phase_plain_exact", "orch_plain", "phase_plain", 0, 0,
+            None, None, "SUCCEEDED", "CONTINUE", None, None,
+            "2026-09-26T03:00:10+00:00",
+            "2026-09-26T03:01:00+00:00", "{}",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO phase_executions VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "phase_dangling_exact", "orch_plain", "phase_dangling", 1, 0,
+            "missing_workunit", None, "FAILED", "WAIT", None, None,
+            "2026-09-26T03:01:10+00:00",
+            "2026-09-26T03:01:20+00:00", "{}",
+        ),
+    )
+    rt.db.conn.commit()
+
+    client = TestClient(_app(rt))
+    _login(client)
+
+    plain = client.get(
+        f"/browser/projects/{project}/execution/phases/phase_plain_exact"
+    )
+    assert plain.status_code == 200
+    assert plain.json()["query_status"] == "COMPLETE"
+    assert plain.json()["agent_protocol"] is None
+    assert plain.json()["workunit"] is None
+    assert plain.json()["run"] is None
+
+    dangling = client.get(
+        f"/browser/projects/{project}/execution/phases/phase_dangling_exact"
+    )
+    assert dangling.status_code == 200
+    assert dangling.json()["query_status"] == "PARTIAL"
+    assert dangling.json()["phase"]["workunit_id"] == "missing_workunit"
+    assert dangling.json()["workunit"] is None
+    rt.close()
+
+
+def test_project_execution_outage_is_not_fake_zero(tmp_path, monkeypatch):
+    rt, _, _, _, project, _ = _fixture(tmp_path, monkeypatch)
+
+    def unavailable(*_args, **_kwargs):
+        raise RuntimeError("forced project execution outage")
+
+    monkeypatch.setattr(ProjectDashboardService, "project_execution", unavailable)
+    client = TestClient(_app(rt), raise_server_exceptions=False)
+    _login(client)
+    response = client.get(f"/browser/projects/{project}/execution")
+    assert response.status_code == 500
+    assert response.text
+    rt.close()
+
+
 def test_browser_phase_events_and_sse_resume_use_session_authority(tmp_path, monkeypatch):
     rt, owner, _, executor, project, hidden_project = _fixture(tmp_path, monkeypatch)
     phase_id = _seed_phase(rt, owner, executor, project)
@@ -516,6 +585,8 @@ def test_project_execution_browser_surface_is_live_read_only_and_fallback_capabl
     assert 'id="projectExecutionLiveStatus"' in html
     assert '"/execution/phases/"' in js
     assert 'new EventSource(url)' in js
+    assert "Reconnecting · Last-Event-ID" in js
+    assert "source.readyState === EventSource.OPEN" in js
     assert "Live stream unavailable · persisted events" in js
     assert "active.section !== \"execution\"" in js
     assert "state.me.actor_id !== requestActorId" in js
