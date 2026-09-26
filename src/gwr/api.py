@@ -698,6 +698,12 @@ def create_app(
             )
         except (AuthorityDenied, NotFound) as exc:
             raise HTTPException(status_code=404, detail="tenant not found") from exc
+        membership = runtime.db.one(
+            "SELECT status FROM tenant_memberships WHERE tenant_id=? AND actor_id=?",
+            (tenant_id, actor_id),
+        )
+        if not membership or membership["status"] != "ACTIVE":
+            raise HTTPException(status_code=422, detail="active tenant membership not found")
         runtime.tenancy.revoke_tenant_member(
             tenant_id, actor_id, principal.actor_id
         )
@@ -741,6 +747,12 @@ def create_app(
             )
         except (AuthorityDenied, NotFound) as exc:
             raise HTTPException(status_code=404, detail="workspace not found") from exc
+        membership = runtime.db.one(
+            "SELECT status FROM workspace_memberships WHERE workspace_id=? AND actor_id=?",
+            (workspace_id, actor_id),
+        )
+        if not membership or membership["status"] != "ACTIVE":
+            raise HTTPException(status_code=422, detail="active workspace membership not found")
         runtime.tenancy.revoke_workspace_member(
             workspace_id, actor_id, principal.actor_id
         )
@@ -784,6 +796,12 @@ def create_app(
             )
         except (AuthorityDenied, NotFound) as exc:
             raise HTTPException(status_code=404, detail="project not found") from exc
+        membership = runtime.db.one(
+            "SELECT status FROM project_memberships WHERE project_id=? AND actor_id=?",
+            (project_id, actor_id),
+        )
+        if not membership or membership["status"] != "ACTIVE":
+            raise HTTPException(status_code=422, detail="active project membership not found")
         runtime.tenancy.revoke_project_member(
             project_id, actor_id, principal.actor_id
         )
