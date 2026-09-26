@@ -18,6 +18,8 @@ from typing import Any
 
 CODEX_SHA256 = "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b"
 PROFILE_ID = "g2e_product_smoke"
+MAX_TRANSIENT_TURN_ATTEMPTS = 3
+TRANSIENT_BACKOFF_SECONDS = 5.0
 ISOLATION_OVERRIDES = (
     "mcp_servers={}",
     "features.apps=false",
@@ -395,45 +397,85 @@ def run(a: argparse.Namespace) -> dict[str, Any]:
         if not summary["checks"]["permission_profile_allowed"]:
             raise RuntimeError(f"PERMISSION_PROFILE_NOT_ALLOWED:{profile}")
 
-        client.send({
-            "method": "thread/start",
-            "id": 4,
-            "params": {
-                "cwd": str(workspace),
-                "approvalPolicy": "never",
-                "permissions": PROFILE_ID,
-                "ephemeral": True,
-            },
-        })
-        thread_result = client.wait_for_id(4, 30)
-        thread = thread_result.get("thread") if isinstance(thread_result, dict) else None
-        thread_id = thread.get("id") if isinstance(thread, dict) else None
-        if not isinstance(thread_id, str) or not thread_id:
-            raise RuntimeError("THREAD_ID_MISSING")
-        summary["protocol"]["thread_id"] = thread_id
+        summary["protocol"]["attempts"] = []
+        terminal: dict[str, Any] = {}
+        next_rpc_id = 4
 
-        summary["stage"] = "TURN"
-        client.send({
-            "method": "turn/start",
-            "id": 5,
-            "params": {
-                "threadId": thread_id,
-                "input": [{"type": "text", "text": task, "textElements": []}],
-                "cwd": str(workspace),
-                "approvalPolicy": "never",
-            },
-        })
-        turn_result = client.wait_for_id(5, 30)
-        turn = turn_result.get("turn") if isinstance(turn_result, dict) else None
-        turn_id = turn.get("id") if isinstance(turn, dict) else None
-        if not isinstance(turn_id, str) or not turn_id:
-            raise RuntimeError("TURN_ID_MISSING")
-        summary["protocol"]["turn_id"] = turn_id
+        for attempt in range(1, MAX_TRANSIENT_TURN_ATTEMPTS + 1):
+            thread_rpc_id = next_rpc_id
+            turn_rpc_id = next_rpc_id + 1
+            next_rpc_id += 2
 
-        completed = client.wait_turn_completed(turn_id, a.timeout)
-        terminal = ((completed.get("params") or {}).get("turn") or {})
-        summary["protocol"]["terminal_status"] = terminal.get("status")
-        summary["protocol"]["terminal_error"] = terminal.get("error")
+            client.send({
+                "method": "thread/start",
+                "id": thread_rpc_id,
+                "params": {
+                    "cwd": str(workspace),
+                    "approvalPolicy": "never",
+                    "permissions": PROFILE_ID,
+                    "ephemeral": True,
+                },
+            })
+            thread_result = client.wait_for_id(thread_rpc_id, 30)
+            thread = thread_result.get("thread") if isinstance(thread_result, dict) else None
+            thread_id = thread.get("id") if isinstance(thread, dict) else None
+            if not isinstance(thread_id, str) or not thread_id:
+                raise RuntimeError("THREAD_ID_MISSING")
+
+            summary["stage"] = "TURN"
+            client.send({
+                "method": "turn/start",
+                "id": turn_rpc_id,
+                "params": {
+                    "threadId": thread_id,
+                    "input": [{"type": "text", "text": task, "textElements": []}],
+                    "cwd": str(workspace),
+                    "approvalPolicy": "never",
+                },
+            })
+            turn_result = client.wait_for_id(turn_rpc_id, 30)
+            turn = turn_result.get("turn") if isinstance(turn_result, dict) else None
+            turn_id = turn.get("id") if isinstance(turn, dict) else None
+            if not isinstance(turn_id, str) or not turn_id:
+                raise RuntimeError("TURN_ID_MISSING")
+
+            completed = client.wait_turn_completed(turn_id, a.timeout)
+            terminal = ((completed.get("params") or {}).get("turn") or {})
+            terminal_status = terminal.get("status")
+            terminal_error = terminal.get("error")
+            error_info = terminal_error.get("codexErrorInfo") if isinstance(terminal_error, dict) else None
+
+            summary["protocol"]["attempts"].append({
+                "attempt": attempt,
+                "thread_id": thread_id,
+                "turn_id": turn_id,
+                "terminal_status": terminal_status,
+                "terminal_error": terminal_error,
+                "retryable_server_overloaded": error_info == "serverOverloaded",
+            })
+            summary["protocol"]["thread_id"] = thread_id
+            summary["protocol"]["turn_id"] = turn_id
+            summary["protocol"]["terminal_status"] = terminal_status
+            summary["protocol"]["terminal_error"] = terminal_error
+
+            if terminal_status != "failed":
+                break
+
+            if error_info != "serverOverloaded":
+                break
+
+            if attempt < MAX_TRANSIENT_TURN_ATTEMPTS:
+                summary["stage"] = "TRANSIENT_BACKOFF"
+                time.sleep(TRANSIENT_BACKOFF_SECONDS)
+
+        if terminal.get("status") == "failed":
+            err = terminal.get("error")
+            info = err.get("codexErrorInfo") if isinstance(err, dict) else None
+            if info == "serverOverloaded":
+                raise RuntimeError(
+                    f"SERVER_OVERLOADED_AFTER_{MAX_TRANSIENT_TURN_ATTEMPTS}_ATTEMPTS"
+                )
+            raise RuntimeError(f"TURN_FAILED:{canonical_json(err)}")
 
         summary["stage"] = "VERIFY_ARTIFACT"
         if not result_path.is_file():
