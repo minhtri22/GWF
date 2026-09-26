@@ -304,3 +304,24 @@ def test_project_overview_deep_link_is_served_by_browser_shell(tmp_path, monkeyp
     assert response.status_code == 200
     assert 'id="appView"' in response.text
     rt.close()
+
+def test_project_workspace_browser_contract_is_dynamic_and_truthful():
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+
+    assert 'id="projectWorkspaceView"' in html
+    assert 'id="projectOverviewLiveView"' in html
+    assert 'id="projectLocalLockedView"' in html
+    for section in ("overview", "execution", "library", "governance", "configuration"):
+        assert f'data-project-section="{section}"' in html
+
+    assert 'path.startsWith("/app/projects/")' in js
+    assert 'projectWorkspacePath(button.dataset.projectOpen, "overview")' in js
+    assert '"/browser/projects/"' in js and '"/overview"' in js
+    assert 'Overview is not substituted silently.' in js
+    assert 'activeRoute.projectId !== route.projectId' in js
+    assert 'void refreshProjectOverview(activeRoute, true)' in js
+
+    for forbidden in ("Rename Project", "Archive Project", "Restore Project"):
+        assert forbidden not in html
+
