@@ -2411,6 +2411,24 @@ class ProjectDashboardService:
             skill_revision_rows[revision_id] = item
             visible_skill_package_ids.add(item["skill_package_id"])
 
+        for binding in configured_bindings:
+            revision = skill_revision_rows.get(binding["skill_revision_id"])
+            binding["hash_matches_revision"] = (
+                revision is not None
+                and binding["skill_hash"] == revision["content_hash"]
+            )
+            if revision is not None and not binding["hash_matches_revision"]:
+                complete = False
+
+        for observed in observed_protocols:
+            revision = skill_revision_rows.get(observed["skill_revision_id"])
+            observed["hash_matches_revision"] = (
+                revision is not None
+                and observed["skill_hash"] == revision["content_hash"]
+            )
+            if revision is not None and not observed["hash_matches_revision"]:
+                complete = False
+
         configured_usage_by_revision: dict[str, list[dict[str, Any]]] = {}
         for binding in configured_bindings:
             revision_id = binding["skill_revision_id"]
@@ -2430,6 +2448,7 @@ class ProjectDashboardService:
                     "domain_id": binding["domain_id"],
                     "binding_id": binding["binding_id"],
                     "workunit_type": binding["workunit_type"],
+                    "hash_matches_revision": binding["hash_matches_revision"],
                 })
 
         observed_usage_by_revision: dict[str, list[dict[str, Any]]] = {}
@@ -2452,6 +2471,7 @@ class ProjectDashboardService:
                 "workunit_type": observed["phase_id"],
                 "skill_hash": observed["skill_hash"],
                 "loaded_at": observed["created_at"],
+                "hash_matches_revision": observed["hash_matches_revision"],
             })
 
         skill_packages: list[dict[str, Any]] = []
@@ -2691,6 +2711,11 @@ class ProjectDashboardService:
                             ),
                         })
                         continue
+                    hash_matches = (
+                        row["skill_hash"] == skill["content_hash"]
+                    )
+                    if not hash_matches:
+                        complete = False
                     configured.append({
                         "basis": "CONFIGURED",
                         "binding_id": row["binding_id"],
@@ -2704,6 +2729,7 @@ class ProjectDashboardService:
                         "revision_number": skill["revision_number"],
                         "version": skill["version"],
                         "content_hash": skill["content_hash"],
+                        "hash_matches_revision": hash_matches,
                         "required_tools": parse_json(
                             row["required_tools"], []
                         ),
@@ -2750,6 +2776,9 @@ class ProjectDashboardService:
                     "loaded_at": row["created_at"],
                 })
                 continue
+            hash_matches = row["skill_hash"] == skill["content_hash"]
+            if not hash_matches:
+                complete = False
             observed.append({
                 "basis": "OBSERVED",
                 "protocol_id": row["protocol_id"],
@@ -2764,6 +2793,7 @@ class ProjectDashboardService:
                 "revision_number": skill["revision_number"],
                 "version": skill["version"],
                 "content_hash": skill["content_hash"],
+                "hash_matches_revision": hash_matches,
                 "tool_requirements": parse_json(
                     skill["tool_requirements"], []
                 ),
