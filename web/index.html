@@ -274,6 +274,79 @@
           </div>
         </section>
 
+        <section id="projectWorkspaceView" class="project-workspace" hidden>
+          <section class="project-workspace-header">
+            <div class="project-workspace-topline">
+              <button id="projectBackButton" class="text-button" type="button">← Projects</button>
+              <span id="projectWorkspaceBreadcrumb" class="project-breadcrumb">Projects / — / Overview</span>
+              <button id="projectOverviewRefreshButton" class="text-button" type="button">Refresh</button>
+            </div>
+            <div class="project-workspace-title">
+              <div>
+                <p class="eyebrow">Project workspace</p>
+                <h1 id="projectWorkspaceName">Project</h1>
+                <code id="projectWorkspaceId">—</code>
+              </div>
+              <div class="project-header-states">
+                <span id="projectWorkspaceLifecycle" class="scope-badge">Lifecycle —</span>
+                <span id="projectWorkspaceActivity" class="scope-badge">Activity —</span>
+              </div>
+            </div>
+            <div class="project-header-context">
+              <div><span>Tenant / workspace</span><strong id="projectWorkspaceScopeName">—</strong><code id="projectWorkspaceScopeIds">—</code></div>
+              <div><span>Pinned Domain</span><strong id="projectWorkspaceDomainName">—</strong><code id="projectWorkspaceDomainId">—</code></div>
+            </div>
+          </section>
+
+          <nav class="project-local-nav" aria-label="Project workspace">
+            <button type="button" data-project-section="overview"><span>Overview</span><small>Live</small></button>
+            <button type="button" data-project-section="execution"><span>Execution</span><small>Locked</small></button>
+            <button type="button" data-project-section="library"><span>Library</span><small>Locked</small></button>
+            <button type="button" data-project-section="governance"><span>Governance</span><small>Locked</small></button>
+            <button type="button" data-project-section="configuration"><span>Configuration</span><small>Locked</small></button>
+          </nav>
+
+          <div id="projectOverviewStateBanner" class="home-state-banner" hidden></div>
+
+          <section id="projectOverviewLiveView" class="project-overview">
+            <section id="projectOverviewSummary" class="project-overview-summary" aria-label="Project overview summary"></section>
+
+            <section class="project-overview-primary">
+              <article class="panel project-overview-panel">
+                <div class="panel-head"><div><p class="eyebrow">Operator attention</p><h2>Approvals & recovery</h2></div></div>
+                <div id="projectOverviewAttention" class="home-feed"></div>
+              </article>
+              <article class="panel project-overview-panel">
+                <div class="panel-head"><div><p class="eyebrow">Knowledge transfer</p><h2>Latest handoff</h2></div></div>
+                <div id="projectOverviewHandoff"></div>
+              </article>
+            </section>
+
+            <section class="panel project-overview-panel">
+              <div class="panel-head"><div><p class="eyebrow">Bound configuration</p><h2>Project configuration summary</h2></div></div>
+              <div id="projectOverviewConfiguration" class="project-config-grid"></div>
+            </section>
+
+            <section class="panel project-overview-panel">
+              <div class="panel-head"><div><p class="eyebrow">Authoritative project events</p><h2>Recent activity</h2></div></div>
+              <div id="projectOverviewActivityFeed" class="home-feed"></div>
+            </section>
+
+            <div class="home-footnote">
+              <span>Projection</span><code id="projectOverviewGeneratedAt">—</code>
+              <span>Build</span><code id="projectOverviewBuildSha">—</code>
+            </div>
+          </section>
+
+          <section id="projectLocalLockedView" class="route-state-page project-local-locked" hidden>
+            <article class="route-state-card">
+              <div class="route-state-heading"><h1 id="projectLocalLockedTitle">Locked project area</h1><span class="state-pill locked">Locked</span></div>
+              <p id="projectLocalLockedDescription" class="route-state-copy"></p>
+              <div class="route-state-note"><span aria-hidden="true">◈</span><p>This project-local route is real and reload-safe. Its owning module has not been opened here, so no data or action is fabricated.</p></div>
+            </article>
+          </section>
+        </section>
+
         <section id="operationsRouteView" class="operations-page" hidden>
           <section class="operations-hero">
             <div>
