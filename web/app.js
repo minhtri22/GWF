@@ -34,6 +34,11 @@ const state = {
   packages: null,
   packagesError: null,
   packagesLoading: false,
+  github: null,
+  githubError: null,
+  githubLoading: false,
+  selectedGithubProjectId: null,
+  githubReadiness: {},
   selectedPackagesTab: "domains",
   selectedDomainPackageId: null,
   selectedSkillPackageId: null,
@@ -3031,7 +3036,245 @@ function renderOperationsRoute(item) {
   renderOperationsLocked(path);
 }
 
+
+function githubStatusClass(value) {
+  const status = String(value || "UNKNOWN").toUpperCase();
+  if (["READY", "VERIFIED", "ACTIVE", "PASS"].includes(status)) return "good";
+  if (["STALE", "VERIFICATION_FAILED", "PROVIDER_ERROR", "IDENTITY_MISMATCH", "CONNECTION_MISSING"].includes(status)) return "bad";
+  if (["DISABLED", "NOT_ATTACHED", "CAPABILITY_MISSING", "IDENTITY_UNSUPPORTED", "PARTIAL"].includes(status)) return "warn";
+  return "neutral";
+}
+
+function githubStatePill(value) {
+  const text = String(value || "UNKNOWN");
+  return '<span class="github-status ' + githubStatusClass(text) + '">' + esc(text) + "</span>";
+}
+
+function githubSelectedProject() {
+  const projects = state.github?.projects || [];
+  if (!projects.length) return null;
+  let selected = projects.find((item) => item.project_id === state.selectedGithubProjectId);
+  if (!selected) {
+    selected = projects[0];
+    state.selectedGithubProjectId = selected.project_id;
+  }
+  return selected;
+}
+
+function githubDetails(label, value) {
+  return '<div><span>' + esc(label) + '</span><code>' + esc(value ?? "—") + "</code></div>";
+}
+
+function renderGithubError(message) {
+  $("#githubStateBanner").hidden = false;
+  $("#githubStateBanner").className = "home-state-banner error";
+  $("#githubStateBanner").textContent = "GitHub read surface unavailable — " + message;
+  $("#githubProjectSelect").innerHTML = '<option value="">Unavailable</option>';
+  $("#githubProjectContext").innerHTML = "";
+  $("#githubConnectionsList").innerHTML = '<div class="feed-empty">Connection data unavailable.</div>';
+  $("#githubBindingsList").innerHTML = '<div class="feed-empty">Binding data unavailable.</div>';
+  $("#githubChangeSetsBody").innerHTML = homeEmpty("ChangeSet data unavailable.", 6);
+  for (const id of ["#githubConnectionCount","#githubBindingCount","#githubChangeSetCount","#githubVerifiedCount"]) $(id).textContent = "—";
+}
+
+function renderGithubReadiness(bindingId) {
+  const readiness = state.githubReadiness[bindingId];
+  if (!readiness) {
+    return '<div class="github-readiness empty"><span>Readiness</span><strong>Not checked</strong><small>Probe is explicit and read-only.</small></div>';
+  }
+  if (readiness.loading) {
+    return '<div class="github-readiness loading"><span>Readiness</span><strong>Checking…</strong></div>';
+  }
+  if (readiness.error) {
+    return '<div class="github-readiness error"><span>Readiness</span><strong>Request failed</strong><small>' + esc(readiness.error) + "</small></div>";
+  }
+  const value = readiness.value || {};
+  const identity = value.repository_identity || {};
+  const error = value.error || {};
+  return '<div class="github-readiness ' + githubStatusClass(value.status) + '">' +
+    '<div><span>Readiness</span>' + githubStatePill(value.status) + "</div>" +
+    '<dl>' +
+      '<div><dt>Repository</dt><dd>' + esc(identity.full_name || "—") + "</dd></div>" +
+      '<div><dt>Repository ID</dt><dd><code>' + esc(identity.repository_id || "—") + "</code></dd></div>" +
+      '<div><dt>Default HEAD</dt><dd><code>' + esc(value.default_branch_head || "—") + "</code></dd></div>" +
+      '<div><dt>Adapter attached</dt><dd>' + esc(value.adapter_attached ? "YES" : "NO") + "</dd></div>" +
+    "</dl>" +
+    (error.code ? '<p class="github-readiness-error"><strong>' + esc(error.code) + "</strong> · " + esc(error.message || "") + "</p>" : "") +
+    "</div>";
+}
+
+function renderGithubSummary() {
+  const summary = state.github;
+  if (!summary) {
+    renderGithubError(state.githubError || "No authoritative GitHub projection returned.");
+    return;
+  }
+
+  const partial = summary.query_status === "PARTIAL";
+  $("#githubStateBanner").hidden = !partial;
+  if (partial) {
+    $("#githubStateBanner").className = "home-state-banner warn";
+    $("#githubStateBanner").textContent = "GitHub projection is PARTIAL. Broken persisted identities remain visible; absence is not treated as zero.";
+  }
+  $("#githubScopeBadge").textContent = summary.scope?.label || "Authorized projects";
+  $("#githubGeneratedAt").textContent = formatHomeTime(summary.generated_at);
+  $("#githubBuildSha").textContent = summary.build_sha || "unknown";
+
+  const projects = summary.projects || [];
+  const select = $("#githubProjectSelect");
+  select.innerHTML = projects.length
+    ? projects.map((project) => '<option value="' + esc(project.project_id) + '">' +
+        esc(project.project_name + " · " + project.project_id) + "</option>").join("")
+    : '<option value="">No authorized GitHub projects</option>';
+
+  const selected = githubSelectedProject();
+  if (!selected) {
+    $("#githubProjectContext").innerHTML = '<div class="feed-empty">No authorized project is visible in this projection.</div>';
+    $("#githubConnectionsList").innerHTML = '<div class="feed-empty">No GitHub connections.</div>';
+    $("#githubBindingsList").innerHTML = '<div class="feed-empty">No repository bindings.</div>';
+    $("#githubChangeSetsBody").innerHTML = homeEmpty("No GitHub ChangeSets.", 6);
+    $("#githubConnectionCount").textContent = "0";
+    $("#githubBindingCount").textContent = "0";
+    $("#githubChangeSetCount").textContent = "0";
+    $("#githubVerifiedCount").textContent = "0";
+    return;
+  }
+  select.value = selected.project_id;
+
+  const scope = selected.scope || {};
+  $("#githubProjectContext").innerHTML =
+    githubDetails("Tenant", (scope.tenant_name || "—") + " · " + (scope.tenant_id || "—")) +
+    githubDetails("Workspace", (scope.workspace_name || "—") + " · " + (scope.workspace_id || "—"));
+
+  const connections = selected.connections || [];
+  const bindings = selected.bindings || [];
+  const changeSets = selected.change_sets || [];
+  $("#githubConnectionCount").textContent = connections.length;
+  $("#githubBindingCount").textContent = bindings.length;
+  $("#githubChangeSetCount").textContent = changeSets.length;
+  $("#githubVerifiedCount").textContent = changeSets.filter((item) => item.qa_complete === true).length;
+
+  $("#githubConnectionsList").innerHTML = connections.length ? connections.map((connection) =>
+    '<article class="github-record-card">' +
+      '<div class="github-record-head"><div><strong>' + esc(connection.metadata?.label || connection.external_connection_ref) +
+      '</strong><code>' + esc(connection.connection_id) + '</code></div>' + githubStatePill(connection.status) + "</div>" +
+      '<dl class="github-facts">' +
+        '<div><dt>External ref</dt><dd><code>' + esc(connection.external_connection_ref) + "</code></dd></div>" +
+        '<div><dt>Capabilities</dt><dd>' + esc((connection.capabilities || []).join(", ") || "—") + "</dd></div>" +
+        '<div><dt>Adapter</dt><dd>' + esc(connection.adapter_attached ? "ATTACHED" : "NOT_ATTACHED") + "</dd></div>" +
+        '<div><dt>Created by</dt><dd><code>' + esc(connection.created_by_actor_id || "—") + "</code></dd></div>" +
+      "</dl>" +
+      '<p class="github-metadata">' + esc(JSON.stringify(connection.metadata || {})) + "</p>" +
+    "</article>"
+  ).join("") : '<div class="feed-empty">No persisted GitHub PluginConnection in this project.</div>';
+
+  $("#githubBindingsList").innerHTML = bindings.length ? bindings.map((binding) => {
+    const readiness = renderGithubReadiness(binding.binding_id);
+    return '<article class="github-record-card">' +
+      '<div class="github-record-head"><div><strong>' + esc(binding.repository_full_name) +
+      '</strong><code>' + esc(binding.binding_id) + '</code></div>' +
+      githubStatePill(binding.connection_identity_status === "MISSING" ? "CONNECTION_MISSING" : binding.connection_status) + "</div>" +
+      '<dl class="github-facts">' +
+        '<div><dt>Default branch</dt><dd><code>' + esc(binding.default_branch) + "</code></dd></div>" +
+        '<div><dt>Write policy</dt><dd>' + esc(binding.write_policy) + "</dd></div>" +
+        '<div><dt>Allowlist</dt><dd>' + esc((binding.allowed_branches || []).join(", ") || "—") + "</dd></div>" +
+        '<div><dt>Connection</dt><dd><code>' + esc(binding.connection_id) + "</code></dd></div>" +
+        '<div><dt>Capabilities</dt><dd>' + esc((binding.connection_capabilities || []).join(", ") || "—") + "</dd></div>" +
+      "</dl>" +
+      '<button class="text-button github-readiness-button" type="button" data-github-readiness="' + esc(binding.binding_id) + '">Check readiness</button>' +
+      readiness +
+    "</article>";
+  }).join("") : '<div class="feed-empty">No persisted repository binding in this project.</div>';
+
+  $("#githubChangeSetsBody").innerHTML = changeSets.length ? changeSets.map((item) => {
+    const manifest = item.manifest || [];
+    const checks = item.checks || [];
+    const manifestHtml = manifest.map((entry) =>
+      '<div class="github-evidence-row"><strong>' + esc(entry.operation || "—") + '</strong><code>' + esc(entry.path || "—") +
+      '</code><small>blob ' + esc(entry.expected_blob_sha || "—") + '</small><small>content ' + esc(entry.content_sha256 || "—") + "</small></div>"
+    ).join("");
+    const checksHtml = checks.map((check) =>
+      '<div class="github-evidence-row"><strong>' + esc(check.stage) + " · " + esc(check.status) +
+      '</strong><code>expected ' + esc(check.expected_sha || "—") + '</code><code>observed ' + esc(check.observed_sha || "—") +
+      '</code><small>' + esc(formatHomeTime(check.created_at)) + "</small></div>"
+    ).join("");
+    return "<tr>" +
+      '<td><strong>' + esc(item.change_set_id) + '</strong><small>' + esc(item.commit_message || "") + "</small></td>" +
+      '<td><code>' + esc(item.binding_id) + '</code><span>' + esc(item.branch) + "</span></td>" +
+      '<td>' + githubStatePill(item.status) + '<small>qa_complete = ' + esc(item.qa_complete === true ? "true" : "false") + "</small></td>" +
+      '<td><span>expected</span><code>' + esc(item.expected_head_sha || "—") + '</code><span>committed</span><code>' + esc(item.committed_sha || "—") + "</code></td>" +
+      '<td><details><summary>' + esc(manifest.length) + ' entries</summary><div class="github-evidence-list">' +
+        (manifestHtml || '<div class="feed-empty">No manifest entries.</div>') + "</div></details></td>" +
+      '<td><details><summary>' + esc(checks.length) + ' checks</summary><div class="github-evidence-list">' +
+        (checksHtml || '<div class="feed-empty">No SHA checks recorded.</div>') + "</div></details></td>" +
+      "</tr>";
+  }).join("") : homeEmpty("No persisted GitHub ChangeSets in this project.", 6);
+}
+
+async function refreshGithubSummary(render = true) {
+  if (state.githubLoading) return;
+  state.githubLoading = true;
+  state.githubError = null;
+  if (render) {
+    $("#githubStateBanner").hidden = false;
+    $("#githubStateBanner").className = "home-state-banner loading";
+    $("#githubStateBanner").textContent = "Loading authorized GitHub projection…";
+  }
+  try {
+    state.github = await api("/browser/github");
+    const ids = new Set((state.github.projects || []).map((item) => item.project_id));
+    if (!ids.has(state.selectedGithubProjectId)) state.selectedGithubProjectId = null;
+  } catch (error) {
+    state.github = null;
+    state.githubError = error.message;
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+  } finally {
+    state.githubLoading = false;
+  }
+  if (render && !$("#githubRouteView").hidden) {
+    if (state.github) renderGithubSummary();
+    else renderGithubError(state.githubError || "Unknown error");
+  }
+}
+
+async function probeGithubReadiness(bindingId) {
+  if (!bindingId) return;
+  state.githubReadiness[bindingId] = { loading: true };
+  renderGithubSummary();
+  try {
+    const value = await api("/browser/github/bindings/" + encodeURIComponent(bindingId) + "/readiness");
+    state.githubReadiness[bindingId] = { value };
+  } catch (error) {
+    state.githubReadiness[bindingId] = { error: error.message };
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+  }
+  if (!$("#githubRouteView").hidden) renderGithubSummary();
+}
+
+function renderGithubRoute(item) {
+  $("#packagesRouteView").hidden = true;
+  $("#projectWorkspaceView").hidden = true;
+  $("#homeRouteView").hidden = true;
+  $("#projectsRouteView").hidden = true;
+  $("#accessRouteView").hidden = true;
+  $("#operationsRouteView").hidden = true;
+  $("#lockedRouteView").hidden = true;
+  $("#diagnosticsRouteView").hidden = true;
+  $("#githubRouteView").hidden = false;
+  document.title = "GWF — System / GitHub";
+  if (state.github) renderGithubSummary();
+  else if (state.githubError) renderGithubError(state.githubError);
+  else void refreshGithubSummary(true);
+}
+
 function renderRoute() {
+  $("#githubRouteView").hidden = true;
   let path = normalizedRoute();
   const activeProjectRoute = projectWorkspaceRoute(path);
   if (!activeProjectRoute || activeProjectRoute.section !== "execution") {
@@ -3055,6 +3298,7 @@ function renderRoute() {
   else if (item.state === "LIVE_MODULE" && item.id === "access") renderAccessRoute(item);
   else if (item.state === "LIVE_MODULE" && item.id === "operations") renderOperationsRoute(item);
   else if (item.state === "LIVE_MODULE" && item.id === "packages") renderPackagesRoute(item);
+  else if (item.state === "LIVE_MODULE" && item.id === "github") renderGithubRoute(item);
   else if (item.state === "LIVE_FOUNDATION" && item.id === "diagnostics") renderDiagnosticsRoute(item);
   else renderLockedRoute(item);
 }
@@ -3201,6 +3445,10 @@ function showLogin() {
   stopProjectExecutionStream();
   state.packages = null;
   state.packagesError = null;
+  state.github = null;
+  state.githubError = null;
+  state.selectedGithubProjectId = null;
+  state.githubReadiness = {};
   state.selectedPackagesTab = "domains";
   state.selectedDomainPackageId = null;
   state.selectedSkillPackageId = null;
@@ -3309,6 +3557,22 @@ $("#actorMenu").addEventListener("click", (event) => event.stopPropagation());
 document.addEventListener("click", () => setActorMenu(false));
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") setActorMenu(false);
+});
+
+$("#githubRefreshButton").addEventListener("click", async () => {
+  state.githubReadiness = {};
+  await refreshGithubSummary(true);
+});
+
+$("#githubProjectSelect").addEventListener("change", (event) => {
+  state.selectedGithubProjectId = event.target.value || null;
+  renderGithubSummary();
+});
+
+$("#githubBindingsList").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-github-readiness]");
+  if (!button) return;
+  void probeGithubReadiness(button.dataset.githubReadiness);
 });
 
 $("#packagesRefreshButton").addEventListener("click", async () => {

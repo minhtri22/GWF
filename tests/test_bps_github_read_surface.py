@@ -536,3 +536,32 @@ def test_existing_bearer_plugin_and_github_reads_remain_compatible(
     assert change.json()["status"] == "VERIFIED"
     assert change.json()["qa_complete"] is True
     rt.close()
+
+
+def test_github_browser_surface_is_live_read_only_and_routes_readiness():
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+
+    assert 'id="githubRouteView"' in html
+    assert 'id="githubProjectSelect"' in html
+    assert 'id="githubConnectionsList"' in html
+    assert 'id="githubBindingsList"' in html
+    assert 'id="githubChangeSetsBody"' in html
+
+    assert 'api("/browser/github")' in js
+    assert '"/browser/github/bindings/" + encodeURIComponent(bindingId) + "/readiness"' in js
+    assert 'item.id === "github") renderGithubRoute(item)' in js
+    assert 'data-github-readiness="' in js
+    assert "qa_complete = " in js
+
+    start = js.index("function renderGithubSummary")
+    end = js.index("function renderRoute()")
+    github_ui = js[start:end]
+    for forbidden in (
+        'method: "POST"',
+        'method: "PUT"',
+        'method: "DELETE"',
+        "/product/projects/",
+        "/product/github/change-sets/",
+    ):
+        assert forbidden not in github_ui

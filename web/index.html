@@ -853,6 +853,67 @@
           </div>
         </section>
 
+        <section id="githubRouteView" class="github-page" hidden>
+          <section class="github-hero">
+            <div>
+              <p class="eyebrow">System · GitHub</p>
+              <h1>GitHub</h1>
+              <p>Inspect persisted GitHub connections, repository bindings, exact SHA evidence and runtime readiness without exposing credentials or performing mutations.</p>
+            </div>
+            <div class="github-head-actions">
+              <span id="githubScopeBadge" class="scope-badge">All authorized projects</span>
+              <button id="githubRefreshButton" class="text-button" type="button">Refresh</button>
+            </div>
+          </section>
+
+          <div id="githubStateBanner" class="home-state-banner" hidden></div>
+
+          <section class="panel github-project-panel">
+            <label class="projects-filter github-project-filter">
+              <span>Authorized project</span>
+              <select id="githubProjectSelect"></select>
+            </label>
+            <div id="githubProjectContext" class="github-project-context"></div>
+          </section>
+
+          <section class="github-summary-grid">
+            <article class="home-kpi"><span>Connections</span><strong id="githubConnectionCount">0</strong><small>Persisted PluginConnection</small></article>
+            <article class="home-kpi"><span>Bindings</span><strong id="githubBindingCount">0</strong><small>Repository identity</small></article>
+            <article class="home-kpi"><span>ChangeSets</span><strong id="githubChangeSetCount">0</strong><small>SHA-safe history</small></article>
+            <article class="home-kpi"><span>Verified</span><strong id="githubVerifiedCount">0</strong><small>qa_complete = true</small></article>
+          </section>
+
+          <section class="github-primary-grid">
+            <article class="panel github-panel">
+              <div class="panel-head"><div><p class="eyebrow">Plugin identity</p><h2>Connections</h2></div></div>
+              <div id="githubConnectionsList" class="github-card-list"></div>
+            </article>
+
+            <article class="panel github-panel">
+              <div class="panel-head"><div><p class="eyebrow">Repository identity</p><h2>Bindings & readiness</h2></div><span class="scope-badge">On-demand probe</span></div>
+              <div id="githubBindingsList" class="github-card-list"></div>
+            </article>
+          </section>
+
+          <article class="panel github-panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">Persisted SHA evidence</p><h2>ChangeSets</h2></div>
+              <span id="githubChangeSetScope" class="scope-badge">Read only</span>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table github-changeset-table">
+                <thead><tr><th>ChangeSet</th><th>Binding / branch</th><th>Status</th><th>Expected / committed SHA</th><th>Manifest</th><th>SHA checks</th></tr></thead>
+                <tbody id="githubChangeSetsBody"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <div class="home-footnote">
+            <span>Projection</span><code id="githubGeneratedAt">—</code>
+            <span>Build</span><code id="githubBuildSha">—</code>
+          </div>
+        </section>
+
         <section id="lockedRouteView" class="route-state-page" hidden>
           <article class="route-state-card">
             <div id="routeStateIcon" class="route-state-icon" aria-hidden="true"></div>

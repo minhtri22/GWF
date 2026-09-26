@@ -203,7 +203,7 @@ def create_app(
         {"id": "projects", "label": "Projects", "state": "LIVE_MODULE", "slice": "BPS-M02", "route": "/app/projects"},
         {"id": "operations", "label": "Operations", "state": "LIVE_MODULE", "slice": "BPS-M03", "route": "/app/operations"},
         {"id": "packages", "label": "Packages", "state": "LIVE_MODULE", "slice": "BPS-M06", "route": "/app/research/packages"},
-        {"id": "github", "label": "GitHub", "state": "SKELETON_LOCKED", "slice": "BPS-M07", "route": "/app/system/github"},
+        {"id": "github", "label": "GitHub", "state": "LIVE_MODULE", "slice": "BPS-M07", "route": "/app/system/github"},
         {"id": "access", "label": "Access", "state": "LIVE_MODULE", "slice": "BPS-M02", "route": "/app/system/access"},
         {"id": "shared-library", "label": "Shared Library", "state": "PLANNED_BLOCKED", "slice": "BPS-GAC", "route": "/app/shared-library"},
         {"id": "reference-acquisition", "label": "Reference Acquisition", "state": "PLANNED_BLOCKED", "slice": "BPS-RA", "route": "/app/research/reference-acquisition"},
