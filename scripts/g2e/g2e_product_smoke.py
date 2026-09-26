@@ -18,8 +18,10 @@ from typing import Any
 
 CODEX_SHA256 = "444a3f0008050605cae73cd9b7a2dcac61294062dfaab56dd20430fd6498518b"
 PROFILE_ID = "g2e_product_smoke"
-MAX_TRANSIENT_TURN_ATTEMPTS = 3
-TRANSIENT_BACKOFF_SECONDS = 5.0
+MODEL_ATTEMPTS = (
+    ("chatgpt-web/high", "High"),
+    ("chatgpt-web/light", "Instant"),
+)
 ISOLATION_OVERRIDES = (
     "mcp_servers={}",
     "features.apps=false",
@@ -66,6 +68,10 @@ def safe_projection(msg: dict[str, Any]) -> dict[str, Any]:
         if turn.get("error") is not None:
             out["turn_error"] = turn.get("error")
     return out
+
+
+class ExternalCapacityBlocked(RuntimeError):
+    pass
 
 
 class RpcClient:
@@ -400,8 +406,9 @@ def run(a: argparse.Namespace) -> dict[str, Any]:
         summary["protocol"]["attempts"] = []
         terminal: dict[str, Any] = {}
         next_rpc_id = 4
+        all_capacity = True
 
-        for attempt in range(1, MAX_TRANSIENT_TURN_ATTEMPTS + 1):
+        for attempt, (model_slug, model_label) in enumerate(MODEL_ATTEMPTS, start=1):
             thread_rpc_id = next_rpc_id
             turn_rpc_id = next_rpc_id + 1
             next_rpc_id += 2
@@ -411,6 +418,7 @@ def run(a: argparse.Namespace) -> dict[str, Any]:
                 "id": thread_rpc_id,
                 "params": {
                     "cwd": str(workspace),
+                    "model": model_slug,
                     "approvalPolicy": "never",
                     "permissions": PROFILE_ID,
                     "ephemeral": True,
@@ -444,37 +452,38 @@ def run(a: argparse.Namespace) -> dict[str, Any]:
             terminal_status = terminal.get("status")
             terminal_error = terminal.get("error")
             error_info = terminal_error.get("codexErrorInfo") if isinstance(terminal_error, dict) else None
+            capacity = error_info == "serverOverloaded"
 
             summary["protocol"]["attempts"].append({
                 "attempt": attempt,
+                "model": model_slug,
+                "model_label": model_label,
                 "thread_id": thread_id,
                 "turn_id": turn_id,
                 "terminal_status": terminal_status,
                 "terminal_error": terminal_error,
-                "retryable_server_overloaded": error_info == "serverOverloaded",
+                "external_capacity_block": capacity,
             })
             summary["protocol"]["thread_id"] = thread_id
             summary["protocol"]["turn_id"] = turn_id
+            summary["protocol"]["model"] = model_slug
+            summary["protocol"]["model_label"] = model_label
             summary["protocol"]["terminal_status"] = terminal_status
             summary["protocol"]["terminal_error"] = terminal_error
 
             if terminal_status != "failed":
+                all_capacity = False
                 break
 
-            if error_info != "serverOverloaded":
+            if not capacity:
+                all_capacity = False
                 break
-
-            if attempt < MAX_TRANSIENT_TURN_ATTEMPTS:
-                summary["stage"] = "TRANSIENT_BACKOFF"
-                time.sleep(TRANSIENT_BACKOFF_SECONDS)
 
         if terminal.get("status") == "failed":
             err = terminal.get("error")
             info = err.get("codexErrorInfo") if isinstance(err, dict) else None
-            if info == "serverOverloaded":
-                raise RuntimeError(
-                    f"SERVER_OVERLOADED_AFTER_{MAX_TRANSIENT_TURN_ATTEMPTS}_ATTEMPTS"
-                )
+            if all_capacity and info == "serverOverloaded":
+                raise ExternalCapacityBlocked("CHATGPT_WEB_MODELS_AT_CAPACITY")
             raise RuntimeError(f"TURN_FAILED:{canonical_json(err)}")
 
         summary["stage"] = "VERIFY_ARTIFACT"
@@ -496,6 +505,11 @@ def run(a: argparse.Namespace) -> dict[str, Any]:
         summary["success"] = True
         summary["stage"] = "DONE"
 
+    except ExternalCapacityBlocked as exc:
+        summary["status"] = "BLOCKED_EXTERNAL_CAPACITY"
+        summary["success"] = False
+        summary["stage"] = "BLOCKED_EXTERNAL_CAPACITY"
+        summary["error"] = f"{type(exc).__name__}:{exc}"
     except Exception as exc:
         summary["status"] = "FAIL"
         summary["success"] = False
@@ -545,7 +559,11 @@ def main() -> int:
         a.output_root = str(Path(a.repo) / "g2e" / ".local" / "product-smokes" / f"{stamp}-{os.getpid()}")
 
     result = run(a)
-    return 0 if result.get("success") else 2
+    if result.get("success"):
+        return 0
+    if result.get("status") == "BLOCKED_EXTERNAL_CAPACITY":
+        return 3
+    return 2
 
 
 if __name__ == "__main__":
