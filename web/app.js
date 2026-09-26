@@ -2141,6 +2141,30 @@ document.addEventListener("keydown", (event) => {
 $("#projectsRefreshButton").addEventListener("click", async () => {
   await refreshProjectsIndex(true);
 });
+$("#projectsTableBody").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-project-open]");
+  if (!button) return;
+  navigateTo(projectWorkspacePath(button.dataset.projectOpen, "overview"));
+});
+
+$("#projectBackButton").addEventListener("click", () => navigateTo("/app/projects"));
+
+$("#projectOverviewRefreshButton").addEventListener("click", async () => {
+  const route = projectWorkspaceRoute();
+  if (!route) return;
+  state.projectOverview = null;
+  state.projectOverviewError = null;
+  await refreshProjectOverview(route, true);
+});
+
+$("#projectWorkspaceView").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-project-section]");
+  if (!button) return;
+  const route = projectWorkspaceRoute();
+  if (!route) return;
+  navigateTo(projectWorkspacePath(route.projectId, button.dataset.projectSection));
+});
+
 
 $("#accessRefreshButton").addEventListener("click", async () => {
   await refreshAccessSummary(true);
