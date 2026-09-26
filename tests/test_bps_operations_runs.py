@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from gwr.api import create_app
 from gwr.auth import HumanAuthService
 from gwr.runtime import GovernedWorkflowRuntime
+from gwr.product import ProjectDashboardService
 
 
 ROOT = Path(__file__).parents[1]
@@ -158,3 +159,36 @@ def test_operations_runs_zero_and_browser_contract(tmp_path, monkeypatch):
     assert "No runs exist in the current authorized scope." in js
     assert "/app/projects/" not in js
     rt.close()
+
+
+def test_operations_runs_unavailable_is_not_encoded_as_empty(tmp_path, monkeypatch):
+    rt, _, _, _ = _runtime(tmp_path, monkeypatch)
+
+    def unavailable(self, actor_id, *, build_sha):
+        raise RuntimeError("controlled operations-runs outage")
+
+    monkeypatch.setattr(ProjectDashboardService, "operations_runs", unavailable)
+    client = TestClient(_app(rt), raise_server_exceptions=False)
+    assert client.post(
+        "/browser/auth/login",
+        json={"username": "runs-operator", "password": PASSWORD},
+    ).status_code == 200
+    response = client.get("/browser/operations/runs")
+    assert response.status_code == 500
+
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+    assert "Runs data unavailable — " in js
+    assert 'homeEmpty("Runs index unavailable.", 7)' in js
+    rt.close()
+
+
+def test_operations_route_renderers_hide_each_other():
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+    for fn in (
+        "renderLockedRoute", "renderDiagnosticsRoute", "renderHomeRoute",
+        "renderProjectsRoute", "renderAccessRoute",
+    ):
+        start = js.index("function " + fn)
+        end = js.find("\nfunction ", start + 10)
+        block = js[start:end if end >= 0 else len(js)]
+        assert '$("#operationsRouteView").hidden = true;' in block

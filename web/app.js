@@ -208,6 +208,7 @@ function renderLockedRoute(item) {
   $("#homeRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
   $("#accessRouteView").hidden = true;
+  $("#operationsRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = true;
   $("#lockedRouteView").hidden = false;
   $("#routeStateIcon").innerHTML = iconSvg(item.id, "icon");
@@ -225,6 +226,7 @@ function renderDiagnosticsRoute(item) {
   $("#homeRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
   $("#accessRouteView").hidden = true;
+  $("#operationsRouteView").hidden = true;
   $("#lockedRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = false;
   document.title = "GWF — System Diagnostics";
@@ -393,6 +395,7 @@ function renderHomeRoute(item) {
   $("#diagnosticsRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
   $("#accessRouteView").hidden = true;
+  $("#operationsRouteView").hidden = true;
   $("#homeRouteView").hidden = false;
   document.title = "GWF — Home";
   if (state.home) renderHomeSummary();
@@ -586,6 +589,7 @@ async function refreshProjectsIndex(render = true) {
 function renderProjectsRoute(item) {
   $("#homeRouteView").hidden = true;
   $("#accessRouteView").hidden = true;
+  $("#operationsRouteView").hidden = true;
   $("#lockedRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = true;
   $("#projectsRouteView").hidden = false;
@@ -815,6 +819,7 @@ function renderAccessRoute(item) {
   $("#projectsRouteView").hidden = true;
   $("#lockedRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = true;
+  $("#operationsRouteView").hidden = true;
   $("#accessRouteView").hidden = false;
   document.title = "GWF — Access";
   if (state.access) renderAccessSummary();
