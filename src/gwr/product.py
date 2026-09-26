@@ -492,6 +492,78 @@ class ProjectDashboardService:
             "projects": rows,
         }
 
+    def operations_approvals(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
+        """Authorized cross-project pending approval inbox and decision history."""
+        projects = self.runtime.tenancy.list_accessible_projects(actor_id)
+        pending: list[dict[str, Any]] = []
+        decisions: list[dict[str, Any]] = []
+
+        for project in projects:
+            project_id = project["id"]
+            tenant = self.db.one("SELECT name FROM tenants WHERE tenant_id=?", (project["tenant_id"],))
+            workspace = self.db.one("SELECT name FROM workspaces WHERE workspace_id=?", (project["workspace_id"],))
+            can_approve = True
+            try:
+                self.runtime.tenancy.require_project_access(actor_id, project_id, "APPROVE")
+            except (AuthorityDenied, NotFound):
+                can_approve = False
+            scope = {
+                "tenant_id": project["tenant_id"],
+                "tenant_name": tenant["name"] if tenant else None,
+                "workspace_id": project["workspace_id"],
+                "workspace_name": workspace["name"] if workspace else None,
+            }
+
+            for row in self.db.all(
+                "SELECT * FROM proposals WHERE project_id=? AND status='PENDING_APPROVAL' "
+                "ORDER BY created_at,proposal_id",
+                (project_id,),
+            ):
+                item = _parsed(row, ("resource_refs", "frozen_payload"))
+                item.update({
+                    "project_name": project["name"],
+                    "scope": scope,
+                    "can_approve": can_approve,
+                    "approval_history": [
+                        _parsed(history, ("scope", "conditions"))
+                        for history in self.db.all(
+                            "SELECT * FROM approvals WHERE proposal_id=? "
+                            "ORDER BY created_at,approval_id",
+                            (row["proposal_id"],),
+                        )
+                    ],
+                })
+                pending.append(item)
+
+            for history in self.db.all(
+                "SELECT a.*,p.action,p.status AS proposal_status,p.proposer_actor_id,"
+                "p.required_approval_policy,p.created_at AS proposal_created_at "
+                "FROM approvals a JOIN proposals p ON p.proposal_id=a.proposal_id "
+                "WHERE a.project_id=? ORDER BY a.created_at DESC,a.approval_id DESC",
+                (project_id,),
+            ):
+                item = _parsed(history, ("scope", "conditions"))
+                item.update({
+                    "project_name": project["name"],
+                    "scope_context": scope,
+                })
+                decisions.append(item)
+
+        pending.sort(key=lambda row: (row["created_at"], row["proposal_id"]))
+        decisions.sort(key=lambda row: (row["created_at"], row["approval_id"]), reverse=True)
+        return {
+            "generated_at": utcnow(),
+            "build_sha": build_sha,
+            "query_status": "COMPLETE",
+            "scope": {
+                "mode": "ALL_AUTHORIZED",
+                "label": "All authorized projects",
+                "project_count": len(projects),
+            },
+            "pending": pending,
+            "decisions": decisions,
+        }
+
     def operations_runs(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
         """Authorized cross-project Runs projection for Global Operations."""
         projects = self.runtime.tenancy.list_accessible_projects(actor_id)

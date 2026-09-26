@@ -20,6 +20,10 @@ const state = {
   operationsRunsError: null,
   operationsRunsLoading: false,
   operationsRunsFilters: { text: "", tenant: "", workspace: "", project: "", status: "" },
+  operationsApprovals: null,
+  operationsApprovalsError: null,
+  operationsApprovalsLoading: false,
+  selectedApprovalId: null,
   projectsFilters: {
     text: "",
     lifecycle: "",
@@ -984,6 +988,162 @@ async function refreshOperationsRuns(render = true) {
   }
 }
 
+function selectedApproval() {
+  return (state.operationsApprovals?.pending || []).find(
+    (item) => item.proposal_id === state.selectedApprovalId
+  ) || null;
+}
+
+function renderApprovalInspector() {
+  const proposal = selectedApproval();
+  const empty = $("#operationsApprovalInspectorEmpty");
+  const inspector = $("#operationsApprovalInspector");
+  if (!proposal) {
+    empty.hidden = false;
+    inspector.hidden = true;
+    return;
+  }
+  empty.hidden = true;
+  inspector.hidden = false;
+  $("#approvalProposalId").textContent = proposal.proposal_id;
+  $("#approvalProjectName").textContent = proposal.project_name || "Project";
+  $("#approvalProjectId").textContent = proposal.project_id;
+  $("#approvalAction").textContent = proposal.action;
+  $("#approvalProposer").textContent = proposal.proposer_actor_id;
+  $("#approvalPolicy").textContent = proposal.required_approval_policy || "No explicit policy";
+  $("#approvalPayloadHash").textContent = proposal.payload_hash;
+  $("#approvalResourceRefs").textContent = JSON.stringify(proposal.resource_refs || [], null, 2);
+  $("#approvalFrozenPayload").textContent = JSON.stringify(proposal.frozen_payload || {}, null, 2);
+  $("#approvalDecisionControls").hidden = !proposal.can_approve;
+  $("#approvalNoAuthority").hidden = proposal.can_approve;
+}
+
+function renderOperationsApprovals() {
+  const summary = state.operationsApprovals;
+  if (!summary) {
+    $("#operationsApprovalsStateBanner").hidden = false;
+    $("#operationsApprovalsStateBanner").className = "home-state-banner error";
+    $("#operationsApprovalsStateBanner").textContent = "Approvals data unavailable — " +
+      (state.operationsApprovalsError || "No authoritative projection returned.");
+    $("#operationsApprovalsPendingList").innerHTML = '<div class="feed-empty">Pending approvals unavailable.</div>';
+    $("#operationsApprovalDecisionBody").innerHTML = homeEmpty("Decision history unavailable.", 6);
+    return;
+  }
+
+  $("#operationsApprovalsStateBanner").hidden = summary.query_status === "COMPLETE";
+  $("#operationsApprovalsScope").textContent = summary.scope?.label || "Authorized scope";
+  $("#operationsApprovalsGeneratedAt").textContent = formatHomeTime(summary.generated_at);
+  $("#operationsApprovalsBuildSha").textContent = summary.build_sha || "unknown";
+
+  const pending = summary.pending || [];
+  if (state.selectedApprovalId && !pending.some((item) => item.proposal_id === state.selectedApprovalId)) {
+    state.selectedApprovalId = null;
+  }
+  $("#operationsApprovalsPendingCount").textContent = pending.length;
+  $("#operationsApprovalsPendingList").innerHTML = pending.length ? pending.map((proposal) =>
+    '<button type="button" class="approval-list-item' +
+      (proposal.proposal_id === state.selectedApprovalId ? " active" : "") +
+      '" data-proposal-id="' + esc(proposal.proposal_id) + '">' +
+      '<span><strong>' + esc(proposal.action) + '</strong><small>' + esc(proposal.project_name || proposal.project_id) + '</small></span>' +
+      '<code>' + esc(proposal.proposal_id) + '</code><time>' + esc(formatHomeTime(proposal.created_at)) + '</time>' +
+      (proposal.can_approve ? '<span class="approval-authority">Can approve</span>' : '<span class="approval-viewonly">View only</span>') +
+    "</button>"
+  ).join("") : '<div class="feed-empty">No pending approvals in the current authorized scope.</div>';
+
+  const decisions = summary.decisions || [];
+  $("#operationsApprovalDecisionCount").textContent = decisions.length;
+  $("#operationsApprovalDecisionBody").innerHTML = decisions.length ? decisions.map((item) =>
+    "<tr>" +
+      '<td><strong>' + esc(item.decision) + '</strong><code>' + esc(item.approval_id) + "</code></td>" +
+      '<td><code>' + esc(item.proposal_id) + '</code><small>' + esc(item.action || "—") + "</small></td>" +
+      '<td><strong>' + esc(item.project_name || "Project") + '</strong><code>' + esc(item.project_id) + "</code></td>" +
+      '<td><code>' + esc(item.approver_actor_id) + "</code></td>" +
+      '<td><code>' + esc(item.proposal_hash) + "</code></td>" +
+      '<td><span>' + esc(formatHomeTime(item.created_at)) + "</span></td>" +
+    "</tr>"
+  ).join("") : homeEmpty("No approval decisions in the current authorized scope.", 6);
+
+  renderApprovalInspector();
+}
+
+async function refreshOperationsApprovals(render = true) {
+  if (state.operationsApprovalsLoading) return;
+  state.operationsApprovalsLoading = true;
+  state.operationsApprovalsError = null;
+  if (render) {
+    $("#operationsApprovalsStateBanner").hidden = false;
+    $("#operationsApprovalsStateBanner").className = "home-state-banner loading";
+    $("#operationsApprovalsStateBanner").textContent = "Loading authorized approval inbox…";
+  }
+  try {
+    state.operationsApprovals = await api("/browser/operations/approvals");
+  } catch (error) {
+    state.operationsApprovals = null;
+    state.operationsApprovalsError = error.message;
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+  } finally {
+    state.operationsApprovalsLoading = false;
+  }
+  if (render && !$("#operationsApprovalsView").hidden) renderOperationsApprovals();
+}
+
+async function decideApproval(decision) {
+  const proposal = selectedApproval();
+  if (!proposal || !proposal.can_approve) return;
+  const isReject = decision === "reject";
+  const reason = $("#approvalRejectReason").value.trim();
+  if (isReject && !reason) {
+    $("#operationsApprovalsStateBanner").hidden = false;
+    $("#operationsApprovalsStateBanner").className = "home-state-banner error";
+    $("#operationsApprovalsStateBanner").textContent = "Reject requires a reason.";
+    return;
+  }
+  const confirmed = await confirmGovernedAction({
+    title: isReject ? "Reject exact proposal hash" : "Approve exact proposal hash",
+    action: isReject ? "REJECT PROPOSAL" : "APPROVE PROPOSAL",
+    target: proposal.proposal_id + " · " + proposal.payload_hash,
+    scope: proposal.project_name + " · " + proposal.project_id,
+    consequence: isReject ?
+      "Records a REJECTED decision with your reason for this exact frozen payload hash. It does not apply any underlying change." :
+      "Records an APPROVED decision for this exact frozen payload hash. It does not apply the underlying governed change.",
+  });
+  if (!confirmed) return;
+
+  $("#operationsApprovalsStateBanner").hidden = false;
+  $("#operationsApprovalsStateBanner").className = "home-state-banner loading";
+  $("#operationsApprovalsStateBanner").textContent = "Recording authoritative decision…";
+  try {
+    await api(
+      "/browser/operations/approvals/" + encodeURIComponent(proposal.proposal_id) + "/" + decision,
+      {
+        method: "POST",
+        body: isReject ?
+          { expected_hash: proposal.payload_hash, reason } :
+          { expected_hash: proposal.payload_hash },
+      }
+    );
+    state.selectedApprovalId = null;
+    $("#approvalRejectReason").value = "";
+    await refreshOperationsApprovals(false);
+    state.home = null;
+    state.homeError = null;
+    await refreshHomeSummary(false);
+    renderOperationsApprovals();
+    renderAttentionIndicator();
+  } catch (error) {
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+    $("#operationsApprovalsStateBanner").hidden = false;
+    $("#operationsApprovalsStateBanner").className = "home-state-banner error";
+    $("#operationsApprovalsStateBanner").textContent = "Approval decision failed — " + error.message;
+  }
+}
+
 function setOperationsSubnavActive(path) {
   document.querySelectorAll("[data-operations-route]").forEach((button) => {
     button.classList.toggle("active", normalizedRoute(button.dataset.operationsRoute) === normalizedRoute(path));
@@ -995,6 +1155,7 @@ function renderOperationsLocked(path) {
   const labels = { approvals: "Approvals", audit: "Audit", runtime: "Runtime" };
   const label = labels[section] || "Operations";
   $("#operationsRunsView").hidden = true;
+  $("#operationsApprovalsView").hidden = true;
   $("#operationsLockedView").hidden = false;
   $("#operationsLockedIcon").innerHTML = iconSvg("operations", "icon");
   $("#operationsLockedShield").innerHTML = iconSvg("shield", "icon");
@@ -1019,6 +1180,7 @@ function renderOperationsRoute(item) {
   setOperationsSubnavActive(path);
   if (path === "/app/operations/runs") {
     $("#operationsLockedView").hidden = true;
+    $("#operationsApprovalsView").hidden = true;
     $("#operationsRunsView").hidden = false;
     document.title = "GWF — Operations / Runs";
     if (state.operationsRuns) renderOperationsRuns();
@@ -1026,6 +1188,16 @@ function renderOperationsRoute(item) {
     else void refreshOperationsRuns(true);
     return;
   }
+  if (path === "/app/operations/approvals") {
+    $("#operationsLockedView").hidden = true;
+    $("#operationsRunsView").hidden = true;
+    $("#operationsApprovalsView").hidden = false;
+    document.title = "GWF — Operations / Approvals";
+    if (state.operationsApprovals) renderOperationsApprovals();
+    else void refreshOperationsApprovals(true);
+    return;
+  }
+  $("#operationsApprovalsView").hidden = true;
   document.title = "GWF — Operations / " + (path.split("/").pop() || "");
   renderOperationsLocked(path);
 }
@@ -1184,6 +1356,9 @@ function showLogin() {
   state.accessError = null;
   state.operationsRuns = null;
   state.operationsRunsError = null;
+  state.operationsApprovals = null;
+  state.operationsApprovalsError = null;
+  state.selectedApprovalId = null;
   setActorMenu(false);
   $("#appView").hidden = true;
   $("#loginView").hidden = false;
@@ -1289,6 +1464,25 @@ $("#accessRefreshButton").addEventListener("click", async () => {
 
 $("#operationsRunsRefreshButton").addEventListener("click", async () => {
   await refreshOperationsRuns(true);
+});
+
+$("#operationsApprovalsRefreshButton").addEventListener("click", async () => {
+  await refreshOperationsApprovals(true);
+});
+
+$("#operationsApprovalsPendingList").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-proposal-id]");
+  if (!button) return;
+  state.selectedApprovalId = button.dataset.proposalId;
+  renderOperationsApprovals();
+});
+
+$("#approvalApproveButton").addEventListener("click", async () => {
+  await decideApproval("approve");
+});
+
+$("#approvalRejectButton").addEventListener("click", async () => {
+  await decideApproval("reject");
 });
 
 $("#operationsRouteView").addEventListener("click", (event) => {

@@ -285,7 +285,7 @@
 
           <nav class="operations-subnav" aria-label="Operations views">
             <button type="button" data-operations-route="/app/operations/runs"><span>Runs</span><small>Live</small></button>
-            <button type="button" data-operations-route="/app/operations/approvals"><span>Approvals</span><small>Locked</small></button>
+            <button type="button" data-operations-route="/app/operations/approvals"><span>Approvals</span><small>Live</small></button>
             <button type="button" data-operations-route="/app/operations/audit"><span>Audit</span><small>Locked</small></button>
             <button type="button" data-operations-route="/app/operations/runtime"><span>Runtime</span><small>Locked</small></button>
           </nav>
@@ -327,6 +327,63 @@
             <div class="home-footnote">
               <span>Projection</span><code id="operationsRunsGeneratedAt">—</code>
               <span>Build</span><code id="operationsRunsBuildSha">—</code>
+            </div>
+          </section>
+
+          <section id="operationsApprovalsView" class="operations-screen" hidden>
+            <div class="operations-screen-head">
+              <div><p class="eyebrow">Governed decisions</p><h2>Approvals</h2></div>
+              <div class="operations-head-actions">
+                <span id="operationsApprovalsScope" class="scope-badge">All authorized projects</span>
+                <button id="operationsApprovalsRefreshButton" class="text-button" type="button">Refresh</button>
+              </div>
+            </div>
+            <div id="operationsApprovalsStateBanner" class="home-state-banner" hidden></div>
+
+            <section class="operations-approval-grid">
+              <article class="panel operations-table-panel">
+                <div class="panel-head"><div><p class="eyebrow">Pending inbox</p><h2>Pending proposals</h2></div><span id="operationsApprovalsPendingCount" class="panel-count">0</span></div>
+                <div id="operationsApprovalsPendingList" class="approval-list"></div>
+              </article>
+
+              <article class="panel approval-inspector">
+                <div class="panel-head"><div><p class="eyebrow">Exact frozen decision target</p><h2>Proposal inspector</h2></div></div>
+                <div id="operationsApprovalInspectorEmpty" class="feed-empty">Select a pending proposal to inspect its frozen payload and exact hash.</div>
+                <div id="operationsApprovalInspector" hidden>
+                  <dl class="approval-facts">
+                    <div><dt>Proposal</dt><dd><code id="approvalProposalId">—</code></dd></div>
+                    <div><dt>Project</dt><dd><span id="approvalProjectName">—</span><code id="approvalProjectId">—</code></dd></div>
+                    <div><dt>Action</dt><dd id="approvalAction">—</dd></div>
+                    <div><dt>Proposer</dt><dd><code id="approvalProposer">—</code></dd></div>
+                    <div><dt>Policy</dt><dd id="approvalPolicy">—</dd></div>
+                    <div><dt>Payload hash</dt><dd><code id="approvalPayloadHash">—</code></dd></div>
+                  </dl>
+                  <div class="approval-payload-block"><span>Resource refs</span><pre id="approvalResourceRefs"></pre></div>
+                  <div class="approval-payload-block"><span>Frozen payload</span><pre id="approvalFrozenPayload"></pre></div>
+                  <div id="approvalDecisionControls" class="approval-decision-controls">
+                    <button id="approvalApproveButton" class="primary" type="button">Approve exact hash</button>
+                    <label><span>Reject reason</span><textarea id="approvalRejectReason" rows="3" placeholder="Required reason"></textarea></label>
+                    <button id="approvalRejectButton" class="ghost" type="button">Reject exact hash</button>
+                  </div>
+                  <p id="approvalNoAuthority" class="boundary-note" hidden>You may inspect this proposal but do not have project APPROVE authority.</p>
+                  <p class="approval-apply-note">A decision changes proposal status only. APPROVED does not mean the underlying governed change has been applied.</p>
+                </div>
+              </article>
+            </section>
+
+            <section class="panel operations-table-panel">
+              <div class="panel-head"><div><p class="eyebrow">Decision history</p><h2>Recent approval decisions</h2></div><span id="operationsApprovalDecisionCount" class="panel-count">0</span></div>
+              <div class="table-scroll">
+                <table class="data-table approval-history-table">
+                  <thead><tr><th>Decision</th><th>Proposal / action</th><th>Project</th><th>Approver</th><th>Exact hash</th><th>Time</th></tr></thead>
+                  <tbody id="operationsApprovalDecisionBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <div class="home-footnote">
+              <span>Projection</span><code id="operationsApprovalsGeneratedAt">—</code>
+              <span>Build</span><code id="operationsApprovalsBuildSha">—</code>
             </div>
           </section>
 

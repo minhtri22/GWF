@@ -547,6 +547,59 @@ def create_app(
             build_sha=resolved_product_info["build_sha"],
         )
 
+    @app.get('/browser/operations/approvals')
+    def browser_operations_approvals(request: Request):
+        _, principal = browser_principal(request)
+        return product.operations_approvals(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    def browser_pending_proposal(proposal_id: str, actor_id: str, permission: str = "VIEW"):
+        row = runtime.db.one(
+            "SELECT * FROM proposals WHERE proposal_id=?",
+            (proposal_id,),
+        )
+        if not row:
+            raise HTTPException(status_code=404, detail="proposal not found")
+        try:
+            runtime.tenancy.require_project_access(actor_id, row["project_id"], permission)
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="proposal not found") from exc
+        if row["status"] != "PENDING_APPROVAL":
+            raise HTTPException(status_code=409, detail="proposal is not pending approval")
+        return row
+
+    @app.post('/browser/operations/approvals/{proposal_id}/approve')
+    def browser_approve_proposal(proposal_id: str, body: ApprovalBody, request: Request):
+        token, principal = browser_principal(request)
+        browser_pending_proposal(proposal_id, principal.actor_id, "APPROVE")
+        approval_id = runtime.governance.approve_proposal_authenticated(
+            proposal_id, token, body.expected_hash
+        )
+        return {
+            "approval_id": approval_id,
+            "proposal_id": proposal_id,
+            "status": "APPROVED",
+        }
+
+    @app.post('/browser/operations/approvals/{proposal_id}/reject')
+    def browser_reject_proposal(proposal_id: str, body: RejectBody, request: Request):
+        token, principal = browser_principal(request)
+        browser_pending_proposal(proposal_id, principal.actor_id, "APPROVE")
+        reason = (body.reason or "").strip()
+        if not reason:
+            raise HTTPException(status_code=422, detail="rejection reason is required")
+        approval_id = runtime.governance.reject_proposal_authenticated(
+            proposal_id, token, body.expected_hash, reason
+        )
+        return {
+            "approval_id": approval_id,
+            "proposal_id": proposal_id,
+            "status": "REJECTED",
+            "reason": reason,
+        }
+
     @app.get('/browser/operations/runs')
     def browser_operations_runs(request: Request):
         _, principal = browser_principal(request)
