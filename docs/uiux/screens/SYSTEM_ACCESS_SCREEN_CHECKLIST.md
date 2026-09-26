@@ -95,27 +95,32 @@ Project-local Members & Access will later reuse these semantics in the Project W
 
 Findings opened during assistant QA:
 
-| Finding | Result |
-| --- | --- |
-| AC-F01 Targeted QA did not initially lock role catalogs, unknown actor, revoke security events and bearer regression | FIXED / RECHECKED |
-| AC-F02 Compact viewport CSS hid the now-live actor/session menu | FIXED / RECHECKED |
-| AC-F03 Member revoke executed without the required exact-target governed-action confirmation | FIXED / RECHECKED |
-| AC-F04 Shared-shell regression test initially referenced CSS without loading the stylesheet fixture | FIXED / RECHECKED |
+| Finding | Observation | Correction | State |
+| --- | --- | --- | --- |
+| AC-F01 | initial targeted QA did not lock role catalogs, unknown actor, revoke security events and bearer regression | added exact role, unknown actor, security-event and bearer regression assertions | PASS |
+| AC-F02 | compact viewport CSS hid the live actor/session menu | retained avatar/button and hid only actor text on compact viewports | PASS |
+| AC-F03 | member revoke lacked exact-target governed-action confirmation | added governed confirmation with exact actor/scope and REVOKED consequence | PASS |
+| AC-F04 | shared-shell compact actor regression test referenced CSS without loading it | loaded `styles.css` in the test fixture | PASS |
+| AC-F05 | browser revoke accepted nonexistent/already-revoked direct membership as successful no-op | browser revoke now requires an exact ACTIVE membership before invoking the native service | PASS |
+| AC-F06 | workspace/project projection exposed role/source but not authoritative membership status | added and rendered `actor_membership_status` | PASS |
+| AC-F07 | inactive target actor and hidden-member leakage were not explicitly locked | added inactive-actor rejection and hidden-member absence tests | PASS |
 
 Deterministic assistant checks:
 
 - full `web/app.js` parses successfully in a JavaScript engine;
-- all 107 static `$("#id")` selectors resolve to real unique IDs in `web/index.html`;
+- all static `$("#id")` selectors resolve to real unique IDs in `web/index.html`;
 - no duplicate HTML IDs were found;
 - `/app/system/access` is covered by the canonical `/app/system/{path}` deep-link route;
 - Access mutation UI uses only cookie-authenticated `/browser/access/*` contracts; no bearer token is exposed to JavaScript;
 - member directories are emitted only for scopes where the current actor has `MANAGE_MEMBERS`;
-- revoke confirmation names exact actor, exact scope and the consequence that direct membership becomes REVOKED while inherited access may remain;
+- revoke confirmation names exact actor, exact scope and the direct-membership consequence;
+- nonexistent/already-revoked membership is not represented as a successful browser mutation;
+- workspace/project role and membership status are both authoritative;
 - no schema migration, role addition or permission weakening was introduced.
 
 Targeted automated tests are committed in `tests/test_bps_system_access.py`, and BPS-I00 routing/shared-shell regression assertions are extended in `tests/test_bps_i00_product_shell.py`.
 
-At adjudication time, exact-head GitHub Actions are capacity-blocked in `queued` state. They are recorded as pending external execution, never as PASS. Any later failure reopens this screen before integrated QA/final UAT.
+Exact-head GitHub Actions remain externally capacity-queued. This is recorded separately and is never represented as PASS. Any later CI failure reopens the affected unit before integrated QA/final UAT.
 
 ```text
 TOTAL_IMPLEMENTATION_ITEMS      = 36
@@ -129,27 +134,6 @@ QA_FINDINGS_OPEN                = 0
 QA_FINDINGS_COUNT               = 0
 
 CI_EXECUTION                    = PENDING_EXTERNAL_CAPACITY
-CI_EXAMPLE_DG_P10_RUN           = 36214785995
 FINAL_UAT                       = DEFERRED
 UNIT_STATE                      = QA_FINDINGS_CLOSED / CI_PENDING / FINAL_UAT_PENDING
-```
-
-
-## QA finding ledger
-
-| Finding | Class | Observation | Correction | State |
-| --- | --- | --- | --- | --- |
-| AC-F01 | QA harness | compact actor-menu regression assertion referenced CSS without loading CSS in that test | load `styles.css` in the test before assertions | PASS |
-| AC-F02 | UI regression | actor/session chip was fully hidden at viewport <=1080px, making the actor menu unreachable | retain avatar/button; hide only actor text on compact viewport | PASS |
-| AC-F03 | mutation semantics | browser revoke accepted a non-member/already-revoked Actor ID as a successful no-op | browser revoke endpoints now require an ACTIVE exact membership before mutation | PASS |
-| AC-F04 | projection completeness | workspace/project access rows exposed role/source but not authoritative membership status | add `actor_membership_status` to workspace/project projections and render it | PASS |
-| AC-F05 | negative-path coverage | inactive target actor and hidden-member leakage were not explicitly locked by tests | add inactive-actor rejection and hidden-member absence assertions | PASS |
-
-Current executable regression is pending on the exact implementation HEAD. The checklist does not become `QA_CLOSED` until those tests execute successfully.
-
-```text
-FINDINGS_OPEN = 0
-FAIL          = 0
-OPEN          = 1   # executable regression evidence only
-COUNT         = 1
 ```
