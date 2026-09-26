@@ -268,6 +268,8 @@ def test_i00_topbar_has_no_dead_shortcut_and_exposes_live_actor_attention_afford
     assert 'id="actorMenuExpires"' in html
     assert '$("#actorMenuButton").addEventListener("click"' in js
     assert "me.memberships || {}" in js
+    assert ".actor-chip{display:none}" not in css
+    assert ".actor-chip>span:not(.avatar){display:none}" in css
 
 
 def test_i00_spa_router_has_no_module_data_or_fake_actions():
