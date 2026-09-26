@@ -12,6 +12,10 @@ const state = {
   projects: null,
   projectsError: null,
   projectsLoading: false,
+  access: null,
+  accessError: null,
+  accessLoading: false,
+  accessMutation: false,
   projectsFilters: {
     text: "",
     lifecycle: "",
@@ -26,6 +30,7 @@ const DEFAULT_ROUTE = "/app/system/diagnostics";
 const ROUTE_COPY = {
   home: "Home unlocks in BPS-M01 after its own QA and local UAT. No KPI, run, project or activity data is fabricated in the foundation shell.",
   projects: "Projects and access management unlock in BPS-M02. No project entities or lifecycle actions are fabricated here.",
+  access: "Tenant, workspace, project membership and session access administration is owned by BPS-M02.",
   operations: "Global Runs, Approvals, Audit and Runtime unlock in BPS-M03. This foundation route contains no synthetic operational data.",
   packages: "Research package registry and usage unlock in BPS-M06. No package or project-usage records are fabricated here.",
   github: "GitHub product surfaces unlock in BPS-M07. No repository binding or ChangeSet action is fabricated here.",
@@ -49,6 +54,7 @@ const ICON_PATHS = {
   "shared-library": '<path d="M4 4h5v16H4zM10 4h5v16h-5zM16 6h4v14h-4z"/>',
   agents: '<circle cx="12" cy="8" r="3"/><path d="M5 20c.8-4 3.1-6 7-6s6.2 2 7 6"/><path d="M18 4h3v3"/>',
   github: '<path d="M8 6h8M8 12h8M8 18h8"/><circle cx="5" cy="6" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="18" r="1.5"/>',
+  access: '<circle cx="9" cy="8" r="3"/><path d="M3.5 20c.6-3.7 2.5-5.5 5.5-5.5s4.9 1.8 5.5 5.5"/><path d="M16 11h5M18.5 8.5v5"/>',
   diagnostics: '<path d="M12 3 4.5 6v5.2c0 4.7 3.2 8 7.5 9.8 4.3-1.8 7.5-5.1 7.5-9.8V6z"/><path d="m9 12 2 2 4-4"/>',
   settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
@@ -144,7 +150,7 @@ function navGroups(capabilities) {
     ["RESEARCH", ["packages", "reference-acquisition"]],
     ["SHARED", ["shared-library"]],
     ["AI", ["agents"]],
-    ["SYSTEM", ["github", "diagnostics", "settings"]],
+    ["SYSTEM", ["github", "access", "diagnostics", "settings"]],
   ].map(([group, ids]) => [group, ids.map((id) => byId[id]).filter(Boolean)]);
 }
 
@@ -197,6 +203,7 @@ function renderLockedRoute(item) {
   const meta = stateMeta(item);
   $("#homeRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
+  $("#accessRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = true;
   $("#lockedRouteView").hidden = false;
   $("#routeStateIcon").innerHTML = iconSvg(item.id, "icon");
@@ -213,6 +220,7 @@ function renderLockedRoute(item) {
 function renderDiagnosticsRoute(item) {
   $("#homeRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
+  $("#accessRouteView").hidden = true;
   $("#lockedRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = false;
   document.title = "GWF — System Diagnostics";
@@ -380,6 +388,7 @@ function renderHomeRoute(item) {
   $("#lockedRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
+  $("#accessRouteView").hidden = true;
   $("#homeRouteView").hidden = false;
   document.title = "GWF — Home";
   if (state.home) renderHomeSummary();
@@ -572,6 +581,7 @@ async function refreshProjectsIndex(render = true) {
 
 function renderProjectsRoute(item) {
   $("#homeRouteView").hidden = true;
+  $("#accessRouteView").hidden = true;
   $("#lockedRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = true;
   $("#projectsRouteView").hidden = false;
@@ -579,6 +589,216 @@ function renderProjectsRoute(item) {
   if (state.projects) renderProjectsIndex();
   else if (state.projectsError) renderProjectsError(state.projectsError);
   else void refreshProjectsIndex(true);
+}
+
+function accessScopeRows(kind) {
+  if (!state.access) return [];
+  if (kind === "tenant") return state.access.tenants || [];
+  if (kind === "workspace") return state.access.workspaces || [];
+  return state.access.projects || [];
+}
+
+function accessScopeId(kind, row) {
+  if (kind === "tenant") return row.tenant_id;
+  if (kind === "workspace") return row.workspace_id;
+  return row.project_id;
+}
+
+function accessScopeLabel(kind, row) {
+  if (kind === "tenant") return (row.name || "Tenant") + " · " + row.tenant_id;
+  if (kind === "workspace") return (row.workspace_name || "Workspace") + " · " + row.workspace_id;
+  return (row.project_name || "Project") + " · " + row.project_id;
+}
+
+function accessSelectedScope() {
+  const kind = $("#accessScopeKind").value;
+  const id = $("#accessScopeTarget").value;
+  return accessScopeRows(kind).find((row) => accessScopeId(kind, row) === id) || null;
+}
+
+function renderAccessMembers() {
+  const selected = accessSelectedScope();
+  const root = $("#accessCurrentMembers");
+  if (!selected) {
+    root.innerHTML = '<div class="feed-empty">No manageable scope selected.</div>';
+    return;
+  }
+  const members = selected.members || [];
+  root.innerHTML = members.length ? members.map((member) =>
+    '<div class="access-member-row"><code>' + esc(member.actor_id) + '</code><strong>' +
+    esc(member.role) + '</strong><span>' + esc(member.status) + '</span><small>' +
+    esc(formatHomeTime(member.created_at)) + "</small></div>"
+  ).join("") : '<div class="feed-empty">No direct membership records in this scope.</div>';
+}
+
+function populateAccessControls() {
+  const summary = state.access;
+  if (!summary) return;
+
+  const workspaceTenants = (summary.tenants || []).filter((row) => row.can_manage_workspaces);
+  $("#createWorkspaceTenant").innerHTML = workspaceTenants.length ?
+    workspaceTenants.map((row) =>
+      '<option value="' + esc(row.tenant_id) + '">' + esc(row.name + " · " + row.tenant_id) + "</option>"
+    ).join("") :
+    '<option value="">No manageable tenant</option>';
+
+  const kind = $("#accessScopeKind").value;
+  const scopes = accessScopeRows(kind).filter((row) => row.can_manage_members);
+  const prior = $("#accessScopeTarget").value;
+  $("#accessScopeTarget").innerHTML = scopes.length ?
+    scopes.map((row) =>
+      '<option value="' + esc(accessScopeId(kind, row)) + '">' + esc(accessScopeLabel(kind, row)) + "</option>"
+    ).join("") :
+    '<option value="">No manageable scope</option>';
+  if (scopes.some((row) => accessScopeId(kind, row) === prior)) {
+    $("#accessScopeTarget").value = prior;
+  }
+
+  const roles = summary.roles?.[kind] || [];
+  $("#accessMemberRole").innerHTML = roles.map((role) =>
+    '<option value="' + esc(role) + '">' + esc(role) + "</option>"
+  ).join("");
+  renderAccessMembers();
+}
+
+function renderAccessError(message) {
+  $("#accessStateBanner").hidden = false;
+  $("#accessStateBanner").className = "home-state-banner error";
+  $("#accessStateBanner").textContent = "Access data unavailable — " + message;
+  $("#accessTenantBody").innerHTML = homeEmpty("Tenant access unavailable.", 4);
+  $("#accessWorkspaceBody").innerHTML = homeEmpty("Workspace access unavailable.", 4);
+  $("#accessProjectBody").innerHTML = homeEmpty("Project access unavailable.", 4);
+  $("#accessCurrentMembers").innerHTML = '<div class="feed-empty">Membership data unavailable.</div>';
+}
+
+function renderAccessSummary() {
+  const summary = state.access;
+  if (!summary) {
+    renderAccessError(state.accessError || "No authoritative Access projection returned.");
+    return;
+  }
+
+  $("#accessStateBanner").hidden = true;
+  const session = summary.session || state.me || {};
+  $("#accessPrincipal").textContent = session.principal_id || summary.actor?.principal_id || "—";
+  $("#accessActorId").textContent = session.actor_id || summary.actor?.actor_id || "—";
+  $("#accessAuthMethod").textContent = session.auth_method || state.me?.auth_method || "—";
+  $("#accessExpiry").textContent = "Expires " + formatHomeTime(session.expires_at || state.me?.expires_at);
+  $("#accessScopeCounts").textContent =
+    (summary.tenants?.length || 0) + " · " +
+    (summary.workspaces?.length || 0) + " · " +
+    (summary.projects?.length || 0);
+  $("#accessGeneratedAt").textContent = formatHomeTime(summary.generated_at);
+  $("#accessBuildSha").textContent = summary.build_sha || "unknown";
+
+  const tenants = summary.tenants || [];
+  $("#accessTenantCount").textContent = tenants.length;
+  $("#accessTenantBody").innerHTML = tenants.length ? tenants.map((row) =>
+    "<tr>" +
+      '<td><strong>' + esc(row.name) + '</strong><code>' + esc(row.tenant_id) + "</code></td>" +
+      '<td><strong>' + esc(row.actor_role || "—") + '</strong><small>' + esc(row.actor_membership_status || "—") + "</small></td>" +
+      '<td><span>' + esc(row.can_manage_members ? "Manage members" : "View") + '</span><small>' +
+      esc(row.can_manage_workspaces ? "Create workspaces" : "No workspace mutation") + "</small></td>" +
+      '<td><span>' + esc(formatHomeTime(row.created_at)) + '</span><code>' + esc(row.created_by_actor_id || "—") + "</code></td>" +
+    "</tr>"
+  ).join("") : homeEmpty("No tenant memberships are visible.", 4);
+
+  const workspaces = summary.workspaces || [];
+  $("#accessWorkspaceCount").textContent = workspaces.length;
+  $("#accessWorkspaceBody").innerHTML = workspaces.length ? workspaces.map((row) =>
+    "<tr>" +
+      '<td><strong>' + esc(row.workspace_name) + '</strong><code>' + esc(row.workspace_id) + "</code></td>" +
+      '<td><span>' + esc(row.tenant_name || "Tenant") + '</span><code>' + esc(row.tenant_id) + "</code></td>" +
+      '<td><strong>' + esc(row.actor_role || "—") + '</strong><small>' + esc(row.role_source || "—") + "</small></td>" +
+      '<td><span>' + esc(row.can_manage_members ? "Manage members" : "View") + '</span><small>' +
+      esc(row.can_manage_projects ? "Create projects" : "No project mutation") + "</small></td>" +
+    "</tr>"
+  ).join("") : homeEmpty("No workspaces are visible.", 4);
+
+  const projects = summary.projects || [];
+  $("#accessProjectCount").textContent = projects.length;
+  $("#accessProjectBody").innerHTML = projects.length ? projects.map((row) =>
+    "<tr>" +
+      '<td><strong>' + esc(row.project_name) + '</strong><code>' + esc(row.project_id) + "</code></td>" +
+      '<td><span>' + esc(row.tenant_name || "Tenant") + '</span><small>' + esc(row.workspace_name || "Workspace") +
+      '</small><code>' + esc(row.tenant_id + " · " + row.workspace_id) + "</code></td>" +
+      '<td><strong>' + esc(row.actor_role || "—") + '</strong><small>' + esc(row.role_source || "—") + "</small></td>" +
+      '<td><span>' + esc(row.can_manage_members ? "Manage members" : "View") + "</span></td>" +
+    "</tr>"
+  ).join("") : homeEmpty("No projects are visible.", 4);
+
+  populateAccessControls();
+}
+
+async function refreshAccessSummary(render = true) {
+  if (state.accessLoading) return;
+  state.accessLoading = true;
+  state.accessError = null;
+  if (render) {
+    $("#accessStateBanner").hidden = false;
+    $("#accessStateBanner").className = "home-state-banner loading";
+    $("#accessStateBanner").textContent = "Loading authoritative Access projection…";
+  }
+  try {
+    state.access = await api("/browser/access-summary");
+  } catch (error) {
+    state.access = null;
+    state.accessError = error.message;
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+  } finally {
+    state.accessLoading = false;
+  }
+  if (render && !$("#accessRouteView").hidden) {
+    if (state.access) renderAccessSummary();
+    else renderAccessError(state.accessError || "Unknown error");
+  }
+}
+
+async function performAccessMutation(path, options) {
+  if (state.accessMutation) return;
+  state.accessMutation = true;
+  $("#accessStateBanner").hidden = false;
+  $("#accessStateBanner").className = "home-state-banner loading";
+  $("#accessStateBanner").textContent = "Applying authoritative Access change…";
+  try {
+    await api(path, options);
+    state.me = await api("/browser/auth/me");
+    renderIdentity();
+    state.home = null;
+    state.homeError = null;
+    state.projects = null;
+    state.projectsError = null;
+    await refreshAccessSummary(false);
+    renderAccessSummary();
+    $("#accessStateBanner").hidden = false;
+    $("#accessStateBanner").className = "home-state-banner";
+    $("#accessStateBanner").textContent = "Authoritative Access state refreshed.";
+  } catch (error) {
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+    $("#accessStateBanner").hidden = false;
+    $("#accessStateBanner").className = "home-state-banner error";
+    $("#accessStateBanner").textContent = "Access change failed — " + error.message;
+  } finally {
+    state.accessMutation = false;
+  }
+}
+
+function renderAccessRoute(item) {
+  $("#homeRouteView").hidden = true;
+  $("#projectsRouteView").hidden = true;
+  $("#lockedRouteView").hidden = true;
+  $("#diagnosticsRouteView").hidden = true;
+  $("#accessRouteView").hidden = false;
+  document.title = "GWF — Access";
+  if (state.access) renderAccessSummary();
+  else if (state.accessError) renderAccessError(state.accessError);
+  else void refreshAccessSummary(true);
 }
 
 function renderRoute() {
@@ -598,6 +818,7 @@ function renderRoute() {
   document.title = "GWF — " + displayLabel(item);
   if (item.state === "LIVE_MODULE" && item.id === "home") renderHomeRoute(item);
   else if (item.state === "LIVE_MODULE" && item.id === "projects") renderProjectsRoute(item);
+  else if (item.state === "LIVE_MODULE" && item.id === "access") renderAccessRoute(item);
   else if (item.state === "LIVE_FOUNDATION" && item.id === "diagnostics") renderDiagnosticsRoute(item);
   else renderLockedRoute(item);
 }
@@ -729,6 +950,8 @@ function showLogin() {
   state.homeError = null;
   state.projects = null;
   state.projectsError = null;
+  state.access = null;
+  state.accessError = null;
   setActorMenu(false);
   $("#appView").hidden = true;
   $("#loginView").hidden = false;
@@ -826,6 +1049,68 @@ document.addEventListener("keydown", (event) => {
 
 $("#projectsRefreshButton").addEventListener("click", async () => {
   await refreshProjectsIndex(true);
+});
+
+$("#accessRefreshButton").addEventListener("click", async () => {
+  await refreshAccessSummary(true);
+});
+
+$("#accessScopeKind").addEventListener("change", () => {
+  populateAccessControls();
+});
+
+$("#accessScopeTarget").addEventListener("change", () => {
+  renderAccessMembers();
+});
+
+$("#createTenantForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const name = $("#createTenantName").value.trim();
+  if (!name) return;
+  await performAccessMutation("/browser/access/tenants", {
+    method: "POST",
+    body: { name },
+  });
+  if (state.access) $("#createTenantName").value = "";
+});
+
+$("#createWorkspaceForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const tenantId = $("#createWorkspaceTenant").value;
+  const name = $("#createWorkspaceName").value.trim();
+  if (!tenantId || !name) return;
+  await performAccessMutation("/browser/access/tenants/" + encodeURIComponent(tenantId) + "/workspaces", {
+    method: "POST",
+    body: { name },
+  });
+  if (state.access) $("#createWorkspaceName").value = "";
+});
+
+$("#accessMemberForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const kind = $("#accessScopeKind").value;
+  const scopeId = $("#accessScopeTarget").value;
+  const actorId = $("#accessMemberActorId").value.trim();
+  const role = $("#accessMemberRole").value;
+  if (!scopeId || !actorId || !role) return;
+  const plural = kind === "tenant" ? "tenants" : (kind === "workspace" ? "workspaces" : "projects");
+  await performAccessMutation(
+    "/browser/access/" + plural + "/" + encodeURIComponent(scopeId) + "/members",
+    { method: "POST", body: { actor_id: actorId, role } }
+  );
+});
+
+$("#accessMemberRevokeButton").addEventListener("click", async () => {
+  const kind = $("#accessScopeKind").value;
+  const scopeId = $("#accessScopeTarget").value;
+  const actorId = $("#accessMemberActorId").value.trim();
+  if (!scopeId || !actorId) return;
+  const plural = kind === "tenant" ? "tenants" : (kind === "workspace" ? "workspaces" : "projects");
+  await performAccessMutation(
+    "/browser/access/" + plural + "/" + encodeURIComponent(scopeId) +
+      "/members/" + encodeURIComponent(actorId),
+    { method: "DELETE" }
+  );
 });
 
 $("#projectsTextFilter").addEventListener("input", (event) => {
