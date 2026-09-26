@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from gwr.api import create_app
 from gwr.auth import HumanAuthService
+from gwr.product import ProjectDashboardService
 from gwr.runtime import GovernedWorkflowRuntime
 from gwr.utils import canonical_json, utcnow
 
@@ -297,6 +298,30 @@ def test_project_overview_empty_state_is_truthful(tmp_path, monkeypatch):
     rt.close()
 
 
+def test_project_overview_partial_and_unavailable_are_not_fake_empty(tmp_path, monkeypatch):
+    rt, _, _, _, _, _, project, _ = _fixture(tmp_path, monkeypatch)
+    client = TestClient(_app(rt))
+    _login(client, "overview-owner")
+
+    rt.db.conn.execute("DELETE FROM project_lifecycle WHERE project_id=?", (project,))
+    rt.db.conn.commit()
+    partial = client.get(f"/browser/projects/{project}/overview")
+    assert partial.status_code == 200
+    assert partial.json()["query_status"] == "PARTIAL"
+    assert partial.json()["lifecycle"] is None
+
+    def unavailable(*_args, **_kwargs):
+        raise RuntimeError("forced project overview outage")
+
+    monkeypatch.setattr(ProjectDashboardService, "project_overview", unavailable)
+    failed_client = TestClient(_app(rt), raise_server_exceptions=False)
+    _login(failed_client, "overview-owner")
+    failed = failed_client.get(f"/browser/projects/{project}/overview")
+    assert failed.status_code == 500
+    assert failed.text
+    rt.close()
+
+
 def test_project_overview_deep_link_is_served_by_browser_shell(tmp_path, monkeypatch):
     rt, _, _, _, _, _, project, _ = _fixture(tmp_path, monkeypatch)
     client = TestClient(_app(rt))
@@ -321,6 +346,8 @@ def test_project_workspace_browser_contract_is_dynamic_and_truthful():
     assert 'Overview is not substituted silently.' in js
     assert 'activeRoute.projectId !== route.projectId' in js
     assert 'void refreshProjectOverview(activeRoute, true)' in js
+    assert 'const requestActorId = state.me?.actor_id || null;' in js
+    assert 'state.me.actor_id !== requestActorId' in js
 
     for forbidden in ("Rename Project", "Archive Project", "Restore Project"):
         assert forbidden not in html
