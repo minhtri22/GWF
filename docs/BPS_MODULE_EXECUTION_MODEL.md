@@ -182,3 +182,43 @@ BPS-M01…M10 remain architectural ownership groupings. `MODULE_FINAL_PASS` is n
 A module/screen returns to strict governance only when it crosses backend/schema/authority/security/scientific-evidence/API-contract/destructive-mutation boundaries.
 
 BPS-W0 remains useful as a later cross-screen integration check, but it must not slow ordinary sequential screen delivery.
+
+
+## 10. Amendment — QA-first continuous implementation / deferred final UAT
+
+Effective 2026-09-26, `docs/BPS_QA_FIRST_DEFERRED_UAT.md` supersedes the earlier requirement for per-screen/per-module user UAT before continuing.
+
+The active implementation cadence is:
+
+```text
+screen/workflow
+  -> checklist
+  -> implement
+  -> assistant QA
+  -> findings
+  -> fix/re-QA
+  -> COUNT=0
+  -> QA_CLOSED / FINAL_UAT_PENDING
+  -> next screen/workflow
+```
+
+This repeats through the currently authorized browser product.
+
+Only after all implementation units and cross-module integration QA have `COUNT=0` is one integrated user UAT performed.
+
+Consequences:
+
+- `MODULE_FINAL_PASS` is not required to unlock the next ordinary implementation screen;
+- previously collected screen/module UAT remains historical evidence but is not the required cadence going forward;
+- BPS-W0 evolves from “integration after individually user-accepted modules” into the mandatory integration-QA round before final product UAT;
+- strict-governance triggers remain unchanged;
+- blocked prerequisites are handled topologically rather than with fake interim UI;
+- a unit that requires a real product/semantic choice may still require explicit user decision, but ordinary UAT does not.
+
+Pre-final-UAT implementation state:
+
+```text
+QA_CLOSED / FINAL_UAT_PENDING
+```
+
+Final integrated acceptance remains user-owned.
