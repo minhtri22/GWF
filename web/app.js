@@ -12,6 +12,10 @@ const state = {
   projects: null,
   projectsError: null,
   projectsLoading: false,
+  projectOverview: null,
+  projectOverviewProjectId: null,
+  projectOverviewError: null,
+  projectOverviewLoading: false,
   access: null,
   accessError: null,
   accessLoading: false,
@@ -205,6 +209,7 @@ function capabilityForRoute(pathname = window.location.pathname) {
   if (path === "/app") return capabilityById("diagnostics");
   const exact = state.bootstrap.capabilities.find((item) => item.route === path);
   if (exact) return exact;
+  if (path.startsWith("/app/projects/")) return capabilityById("projects");
   if (path.startsWith("/app/operations/")) return capabilityById("operations");
   return null;
 }
@@ -220,6 +225,7 @@ function setActiveNav(capabilityId) {
 
 function renderLockedRoute(item) {
   const meta = stateMeta(item);
+  $("#projectWorkspaceView").hidden = true;
   $("#homeRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
   $("#accessRouteView").hidden = true;
@@ -238,6 +244,7 @@ function renderLockedRoute(item) {
 }
 
 function renderDiagnosticsRoute(item) {
+  $("#projectWorkspaceView").hidden = true;
   $("#homeRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
   $("#accessRouteView").hidden = true;
@@ -406,6 +413,7 @@ async function refreshHomeSummary(render = true) {
 }
 
 function renderHomeRoute(item) {
+  $("#projectWorkspaceView").hidden = true;
   $("#lockedRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
@@ -525,7 +533,8 @@ function renderProjectsRows() {
     const attention = Number(project.attention_required || 0);
     const activityClass = project.execution_activity === "EXECUTING" ? "run-status" : "";
     return "<tr>" +
-      '<td><strong>' + esc(project.name) + '</strong><code>' + esc(project.project_id) + "</code></td>" +
+      '<td><button type="button" class="project-open-button" data-project-open="' + esc(project.project_id) +
+      '"><strong>' + esc(project.name) + '</strong><code>' + esc(project.project_id) + "</code></button></td>" +
       '<td><span>' + esc(scope.tenant_name || "Tenant") + '</span><code>' + esc(scope.tenant_id || "—") +
       '</code><small>' + esc(scope.workspace_name || "Workspace") + '</small><code>' + esc(scope.workspace_id || "—") + "</code></td>" +
       '<td><span class="data-state">' + esc(project.lifecycle || "Unavailable") +
@@ -832,6 +841,7 @@ async function performAccessMutation(path, options) {
 }
 
 function renderAccessRoute(item) {
+  $("#projectWorkspaceView").hidden = true;
   $("#homeRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
   $("#lockedRouteView").hidden = true;
@@ -1552,6 +1562,7 @@ function renderOperationsLocked(path) {
 }
 
 function renderOperationsRoute(item) {
+  $("#projectWorkspaceView").hidden = true;
   $("#homeRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
   $("#accessRouteView").hidden = true;
@@ -1767,6 +1778,9 @@ function showLogin() {
   state.homeError = null;
   state.projects = null;
   state.projectsError = null;
+  state.projectOverview = null;
+  state.projectOverviewProjectId = null;
+  state.projectOverviewError = null;
   state.access = null;
   state.accessError = null;
   state.operationsRuns = null;
