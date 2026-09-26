@@ -1084,6 +1084,269 @@ function renderProjectPhaseDetail(detail) {
   ).join("") : '<div class="feed-empty">No persisted phase events.</div>';
 }
 
+function renderProjectExecutionLiveEvents() {
+  const events = state.projectExecutionLiveEvents || [];
+  $("#projectExecutionLiveEvents").innerHTML = events.length ? events.map((event) =>
+    '<div class="feed-item"><div><strong>' + esc(event.event_type) + '</strong><span>' +
+    esc(event.stage || "—") + " · " + esc(event.actor_id || "SYSTEM") +
+    '</span></div><p>' + esc(event.message || "Persisted protocol event") +
+    '</p><code>' + esc(event.event_id) + '</code><time>' +
+    esc(formatHomeTime(event.created_at)) + "</time></div>"
+  ).join("") : '<div class="feed-empty">No live/persisted protocol events for this phase.</div>';
+}
+
+async function loadProjectExecutionPersistedEvents(projectId, phaseId, statusLabel) {
+  const requestActorId = state.me?.actor_id || null;
+  try {
+    const result = await api(
+      "/browser/projects/" + encodeURIComponent(projectId) +
+      "/execution/phases/" + encodeURIComponent(phaseId) + "/events"
+    );
+    if (!state.me || state.me.actor_id !== requestActorId) return;
+    if (state.selectedExecutionPhaseId !== phaseId) return;
+    state.projectExecutionLiveEvents = result.events || [];
+    $("#projectExecutionLiveStatus").textContent = statusLabel;
+    renderProjectExecutionLiveEvents();
+  } catch (error) {
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+    if (state.selectedExecutionPhaseId === phaseId) {
+      $("#projectExecutionLiveStatus").textContent = "Events unavailable";
+      $("#projectExecutionLiveEvents").innerHTML =
+        '<div class="feed-empty">Persisted event fallback unavailable — ' + esc(error.message) + "</div>";
+    }
+  }
+}
+
+function startProjectExecutionStream(projectId, phaseId) {
+  stopProjectExecutionStream();
+  state.projectExecutionLiveEvents = [];
+  renderProjectExecutionLiveEvents();
+
+  const terminal = ["SUCCEEDED", "FAILED", "SKIPPED"].includes(
+    state.projectPhaseDetail?.phase?.status
+  );
+  if (terminal) {
+    $("#projectExecutionLiveStatus").textContent = "Terminal · persisted events";
+    void loadProjectExecutionPersistedEvents(projectId, phaseId, "Terminal · persisted events");
+    return;
+  }
+
+  $("#projectExecutionLiveStatus").textContent = "Connecting";
+  const url =
+    "/browser/projects/" + encodeURIComponent(projectId) +
+    "/execution/phases/" + encodeURIComponent(phaseId) + "/events/stream";
+  const source = new EventSource(url);
+  state.projectExecutionStream = source;
+  state.projectExecutionStreamPhaseId = phaseId;
+
+  source.onopen = () => {
+    if (state.projectExecutionStream !== source) return;
+    $("#projectExecutionLiveStatus").textContent = "Live";
+  };
+  source.onmessage = (event) => {
+    if (state.projectExecutionStream !== source || state.selectedExecutionPhaseId !== phaseId) return;
+    try {
+      const payload = JSON.parse(event.data);
+      if (!state.projectExecutionLiveEvents.some((item) => item.event_id === payload.event_id)) {
+        state.projectExecutionLiveEvents.push(payload);
+        renderProjectExecutionLiveEvents();
+      }
+    } catch {
+      $("#projectExecutionLiveStatus").textContent = "Live · invalid event ignored";
+    }
+  };
+  source.onerror = () => {
+    if (state.projectExecutionStream !== source) return;
+    source.close();
+    state.projectExecutionStream = null;
+    state.projectExecutionStreamPhaseId = null;
+    $("#projectExecutionLiveStatus").textContent = "Live stream unavailable";
+    void loadProjectExecutionPersistedEvents(
+      projectId, phaseId, "Live stream unavailable · persisted events"
+    );
+  };
+}
+
+async function refreshProjectPhaseDetail(route, phaseId, render = true) {
+  if (!phaseId || state.projectPhaseDetailLoading) return;
+  const requestActorId = state.me?.actor_id || null;
+  const key = route.projectId + ":" + phaseId;
+  state.projectPhaseDetailLoading = true;
+  state.projectPhaseDetailError = null;
+  if (render) {
+    $("#projectExecutionPhaseState").hidden = false;
+    $("#projectExecutionPhaseState").className = "home-state-banner loading";
+    $("#projectExecutionPhaseState").textContent = "Loading exact phase execution…";
+  }
+  try {
+    const result = await api(
+      "/browser/projects/" + encodeURIComponent(route.projectId) +
+      "/execution/phases/" + encodeURIComponent(phaseId)
+    );
+    if (!state.me || state.me.actor_id !== requestActorId) return;
+    state.projectPhaseDetail = result;
+    state.projectPhaseDetailKey = key;
+  } catch (error) {
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+    state.projectPhaseDetail = null;
+    state.projectPhaseDetailKey = key;
+    state.projectPhaseDetailError = error.status === 404 ?
+      "Phase execution not found in this authorized project." : error.message;
+  } finally {
+    state.projectPhaseDetailLoading = false;
+  }
+
+  const active = projectWorkspaceRoute();
+  if (!render || !active || active.projectId !== route.projectId ||
+      active.section !== "execution" || state.selectedExecutionPhaseId !== phaseId) return;
+
+  if (state.projectPhaseDetail) {
+    const complete = state.projectPhaseDetail.query_status === "COMPLETE";
+    $("#projectExecutionPhaseState").hidden = complete;
+    if (!complete) {
+      $("#projectExecutionPhaseState").className = "home-state-banner warn";
+      $("#projectExecutionPhaseState").textContent =
+        "Phase projection is partial. Dangling persisted identities are not inferred.";
+    }
+    renderProjectPhaseDetail(state.projectPhaseDetail);
+    startProjectExecutionStream(route.projectId, phaseId);
+  } else {
+    stopProjectExecutionStream();
+    $("#projectExecutionPhaseState").hidden = false;
+    $("#projectExecutionPhaseState").className = "home-state-banner error";
+    $("#projectExecutionPhaseState").textContent =
+      "Phase execution unavailable — " + (state.projectPhaseDetailError || "Unknown error");
+    $("#projectExecutionPhaseEmpty").hidden = false;
+    $("#projectExecutionPhaseInspector").hidden = true;
+  }
+}
+
+function renderProjectExecution(summary, route) {
+  renderProjectWorkspaceHeader(summary, route);
+  setProjectLocalNav("execution");
+  $("#projectOverviewLiveView").hidden = true;
+  $("#projectLocalLockedView").hidden = true;
+  $("#projectExecutionLiveView").hidden = false;
+
+  const complete = summary.query_status === "COMPLETE";
+  $("#projectOverviewStateBanner").hidden = complete;
+  if (!complete) {
+    $("#projectOverviewStateBanner").className = "home-state-banner warn";
+    $("#projectOverviewStateBanner").textContent =
+      "Execution index is partial. Missing authoritative project context is not inferred.";
+  }
+
+  const orchestrations = summary.orchestrations || [];
+  if (!orchestrations.some((item) => item.orchestration_id === state.selectedExecutionOrchestrationId)) {
+    state.selectedExecutionOrchestrationId = orchestrations[0]?.orchestration_id || null;
+  }
+  const selected = orchestrations.find(
+    (item) => item.orchestration_id === state.selectedExecutionOrchestrationId
+  ) || null;
+  const phases = selected?.phases || [];
+  if (!phases.some((item) => item.phase_execution_id === state.selectedExecutionPhaseId)) {
+    state.selectedExecutionPhaseId =
+      selected?.current_phase_execution_id ||
+      phases[phases.length - 1]?.phase_execution_id ||
+      null;
+    state.projectPhaseDetail = null;
+    state.projectPhaseDetailKey = null;
+    state.projectPhaseDetailError = null;
+  }
+
+  renderProjectExecutionNavigation();
+  $("#projectExecutionGeneratedAt").textContent = formatHomeTime(summary.generated_at);
+  $("#projectExecutionBuildSha").textContent = summary.build_sha || "unknown";
+  document.title = "GWF — " + (summary.project?.name || route.projectId) + " / Execution";
+
+  const phaseId = state.selectedExecutionPhaseId;
+  if (!phaseId) {
+    stopProjectExecutionStream();
+    $("#projectExecutionPhaseState").hidden = true;
+    $("#projectExecutionPhaseEmpty").hidden = false;
+    $("#projectExecutionPhaseInspector").hidden = true;
+    $("#projectExecutionLiveStatus").textContent = "Not connected";
+    return;
+  }
+
+  const key = route.projectId + ":" + phaseId;
+  if (state.projectPhaseDetail && state.projectPhaseDetailKey === key) {
+    const phaseComplete = state.projectPhaseDetail.query_status === "COMPLETE";
+    $("#projectExecutionPhaseState").hidden = phaseComplete;
+    if (!phaseComplete) {
+      $("#projectExecutionPhaseState").className = "home-state-banner warn";
+      $("#projectExecutionPhaseState").textContent =
+        "Phase projection is partial. Dangling persisted identities are not inferred.";
+    }
+    renderProjectPhaseDetail(state.projectPhaseDetail);
+    if (state.projectExecutionStreamPhaseId !== phaseId) {
+      startProjectExecutionStream(route.projectId, phaseId);
+    }
+  } else if (state.projectPhaseDetailError && state.projectPhaseDetailKey === key) {
+    stopProjectExecutionStream();
+    $("#projectExecutionPhaseState").hidden = false;
+    $("#projectExecutionPhaseState").className = "home-state-banner error";
+    $("#projectExecutionPhaseState").textContent =
+      "Phase execution unavailable — " + state.projectPhaseDetailError;
+    $("#projectExecutionPhaseEmpty").hidden = false;
+    $("#projectExecutionPhaseInspector").hidden = true;
+  } else {
+    $("#projectExecutionPhaseEmpty").hidden = false;
+    $("#projectExecutionPhaseInspector").hidden = true;
+    void refreshProjectPhaseDetail(route, phaseId, true);
+  }
+}
+
+async function refreshProjectExecution(route, render = true) {
+  if (state.projectExecutionLoading) return;
+  const requestActorId = state.me?.actor_id || null;
+  state.projectExecutionLoading = true;
+  state.projectExecutionError = null;
+  if (render) {
+    $("#projectOverviewStateBanner").hidden = false;
+    $("#projectOverviewStateBanner").className = "home-state-banner loading";
+    $("#projectOverviewStateBanner").textContent = "Loading authoritative project Execution…";
+  }
+  try {
+    const result = await api(
+      "/browser/projects/" + encodeURIComponent(route.projectId) + "/execution"
+    );
+    if (!state.me || state.me.actor_id !== requestActorId) return;
+    if (state.projectExecutionProjectId !== route.projectId) {
+      state.selectedExecutionOrchestrationId = null;
+      state.selectedExecutionPhaseId = null;
+      state.projectPhaseDetail = null;
+      state.projectPhaseDetailKey = null;
+      state.projectPhaseDetailError = null;
+      stopProjectExecutionStream();
+    }
+    state.projectExecution = result;
+    state.projectExecutionProjectId = route.projectId;
+  } catch (error) {
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+    state.projectExecution = null;
+    state.projectExecutionProjectId = route.projectId;
+    state.projectExecutionError = error.status === 404 ?
+      "Project not found in your authorized scope." : error.message;
+  } finally {
+    state.projectExecutionLoading = false;
+  }
+
+  const active = projectWorkspaceRoute();
+  if (!render || !active || active.projectId !== route.projectId || active.section !== "execution") return;
+  if (state.projectExecution) renderProjectExecution(state.projectExecution, active);
+  else renderProjectWorkspaceError(active, state.projectExecutionError || "Unknown error");
+}
+
 function renderProjectWorkspace(summary, route) {
   renderProjectWorkspaceHeader(summary, route);
   setProjectLocalNav(route.section);
