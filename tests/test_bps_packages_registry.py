@@ -207,6 +207,29 @@ def _seed(rt, owner, outsider, tenant, workspace, hidden_tenant, hidden_workspac
     )
     rev2 = rt.domains.add_revision(package, yaml_text, owner)
     rt.domains.publish_revision(rev2, owner)
+    rev3 = "domainrev_packages_draft"
+    rt.db.conn.execute(
+        "INSERT INTO domain_package_revisions VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            rev3,
+            package,
+            3,
+            "draft-3",
+            "domain_id: example.workflow\n",
+            "draft-payload-hash",
+            canonical_json({
+                "ok": False,
+                "errors": [{"code": "TEST_DRAFT", "message": "persisted draft"}],
+                "warnings": [],
+                "counts": {},
+            }),
+            "DRAFT",
+            owner,
+            "2026-09-26T11:05:00+00:00",
+            None,
+        ),
+    )
+    rt.db.conn.commit()
 
     hidden_package = rt.domains.create_package(
         hidden_tenant, domain_id, "Hidden Example Domain", outsider
@@ -274,6 +297,7 @@ def _seed(rt, owner, outsider, tenant, workspace, hidden_tenant, hidden_workspac
         "package": package,
         "rev1": rev1,
         "rev2": rev2,
+        "rev3": rev3,
         "project": project,
         "hidden_package": hidden_package,
         "hidden_rev": hidden_rev,
@@ -337,16 +361,21 @@ def test_global_packages_projection_scopes_domains_and_reachable_skills(
     domain = body["domains"][0]
     assert domain["tenant_id"] == "tenant_packages"
     assert domain["domain_id"] == seeded["domain_id"]
-    assert domain["revision_count"] == 2
-    assert domain["latest_revision"]["revision_id"] == seeded["rev2"]
+    assert domain["revision_count"] == 3
+    assert domain["latest_revision"]["revision_id"] == seeded["rev3"]
+    assert domain["latest_revision"]["status"] == "DRAFT"
     assert domain["latest_published_revision"]["revision_id"] == seeded["rev2"]
+    assert domain["latest_published_revision"]["status"] == "PUBLISHED"
     assert domain["authorized_project_usage_count"] == 1
     assert [r["status"] for r in domain["revisions"]] == [
-        "PUBLISHED", "PUBLISHED"
+        "PUBLISHED", "PUBLISHED", "DRAFT"
     ]
+    assert domain["revisions"][2]["validation_report"]["ok"] is False
+    assert domain["revisions"][2]["validation_report"]["errors"][0]["code"] == "TEST_DRAFT"
     assert domain["revisions"][0]["projects"][0]["project_id"] == seeded["project"]
     assert domain["revisions"][0]["projects"][0]["basis"] == "PINNED"
     assert domain["revisions"][1]["projects"] == []
+    assert domain["revisions"][2]["projects"] == []
 
     skill_ids = {item["skill_id"] for item in body["skills"]}
     assert {
@@ -546,3 +575,34 @@ def test_unreferenced_skill_created_by_bearer_api_remains_unexposed(
     assert browser.status_code == 200
     assert "bearer-unreferenced-skill" not in str(browser.json())
     rt.close()
+
+def test_packages_browser_surface_is_live_tabbed_and_read_only():
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+    api = (ROOT / "src" / "gwr" / "api.py").read_text(encoding="utf-8")
+
+    assert 'id="packagesRouteView"' in html
+    assert 'data-packages-tab="domains"' in html
+    assert 'data-packages-tab="skills"' in html
+    assert 'data-packages-tab="usage"' in html
+    assert 'id="packagesDomainList"' in html
+    assert 'id="packagesSkillList"' in html
+    assert 'id="packagesUsageBody"' in html
+    assert 'item.id === "packages") renderPackagesRoute(item)' in js
+    assert 'await api("/browser/packages")' in js
+    assert 'visibility_scope' in js
+    assert 'CONFIGURED' in js
+    assert 'OBSERVED' in js
+    assert "Hash matches revision" in js
+    assert '"state": "LIVE_MODULE", "slice": "BPS-M06"' in api
+
+    for forbidden in (
+        "Create Domain Package",
+        "Publish revision",
+        "Validate revision",
+        "Upgrade to latest",
+        "Install Skill",
+        "Create Skill",
+    ):
+        assert forbidden not in html
+
