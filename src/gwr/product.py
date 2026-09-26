@@ -492,6 +492,99 @@ class ProjectDashboardService:
             "projects": rows,
         }
 
+    def operations_runs(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
+        """Authorized cross-project Runs projection for Global Operations."""
+        projects = self.runtime.tenancy.list_accessible_projects(actor_id)
+        rows: list[dict[str, Any]] = []
+        complete = True
+
+        for project in projects:
+            project_id = project["id"]
+            tenant = self.db.one(
+                "SELECT name FROM tenants WHERE tenant_id=?",
+                (project["tenant_id"],),
+            )
+            workspace = self.db.one(
+                "SELECT name FROM workspaces WHERE workspace_id=?",
+                (project["workspace_id"],),
+            )
+            if tenant is None or workspace is None:
+                complete = False
+
+            for run_row in self.db.all(
+                "SELECT r.*,w.workunit_type,w.status AS workunit_status "
+                "FROM runs r JOIN workunits w ON w.workunit_id=r.workunit_id "
+                "WHERE w.project_id=? ORDER BY r.started_at DESC,r.run_id DESC",
+                (project_id,),
+            ):
+                run = _parsed(
+                    run_row,
+                    ("input_revision_ids", "exit_metadata", "produced_revision_ids", "evidence_ids"),
+                )
+                phase = self.db.one(
+                    "SELECT phase_execution_id,orchestration_id,phase_id,status "
+                    "FROM phase_executions WHERE run_id=? "
+                    "ORDER BY started_at DESC,phase_execution_id DESC LIMIT 1",
+                    (run["run_id"],),
+                )
+                latest_event = self.db.one(
+                    "SELECT event_id,action,timestamp FROM audit_events "
+                    "WHERE project_id=? AND run_id=? "
+                    "ORDER BY timestamp DESC,event_id DESC LIMIT 1",
+                    (project_id, run["run_id"]),
+                )
+                rows.append({
+                    "run_id": run["run_id"],
+                    "project_id": project_id,
+                    "project_name": project["name"],
+                    "scope": {
+                        "tenant_id": project["tenant_id"],
+                        "tenant_name": tenant["name"] if tenant else None,
+                        "workspace_id": project["workspace_id"],
+                        "workspace_name": workspace["name"] if workspace else None,
+                    },
+                    "workunit_id": run["workunit_id"],
+                    "workunit_type": run["workunit_type"],
+                    "workunit_status": run["workunit_status"],
+                    "phase": {
+                        "phase_execution_id": phase["phase_execution_id"] if phase else None,
+                        "orchestration_id": phase["orchestration_id"] if phase else None,
+                        "phase_id": phase["phase_id"] if phase else None,
+                        "status": phase["status"] if phase else None,
+                    },
+                    "attempt_number": run["attempt_number"],
+                    "executor_actor_id": run["executor_actor_id"],
+                    "runtime_status": run["runtime_status"],
+                    "started_at": run["started_at"],
+                    "finished_at": run["finished_at"],
+                    "input_revision_ids": run["input_revision_ids"] or [],
+                    "produced_revision_ids": run["produced_revision_ids"] or [],
+                    "evidence_ids": run["evidence_ids"] or [],
+                    "checkpoint_id": run["checkpoint_id"],
+                    "correlation_id": run["correlation_id"],
+                    "latest_event": {
+                        "event_id": latest_event["event_id"],
+                        "action": latest_event["action"],
+                        "timestamp": latest_event["timestamp"],
+                    } if latest_event else None,
+                })
+
+        rows.sort(
+            key=lambda row: (row["started_at"] or "", row["run_id"]),
+            reverse=True,
+        )
+        return {
+            "generated_at": utcnow(),
+            "build_sha": build_sha,
+            "query_status": "COMPLETE" if complete else "PARTIAL",
+            "scope": {
+                "mode": "ALL_AUTHORIZED",
+                "label": "All authorized projects",
+                "project_count": len(projects),
+            },
+            "runs": rows,
+        }
+
     def access_summary(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
         """Authorized read projection for System -> Access."""
         actor = self.db.one(

@@ -16,6 +16,10 @@ const state = {
   accessError: null,
   accessLoading: false,
   accessMutation: false,
+  operationsRuns: null,
+  operationsRunsError: null,
+  operationsRunsLoading: false,
+  operationsRunsFilters: { text: "", tenant: "", workspace: "", project: "", status: "" },
   projectsFilters: {
     text: "",
     lifecycle: "",
@@ -818,6 +822,209 @@ function renderAccessRoute(item) {
   else void refreshAccessSummary(true);
 }
 
+function operationsIdentityDetails(values) {
+  const ids = values || [];
+  if (!ids.length) return '<span class="identity-none">0</span>';
+  return '<details class="identity-details"><summary>' + esc(ids.length) + '</summary>' +
+    ids.map((id) => '<code>' + esc(id) + '</code>').join("") + "</details>";
+}
+
+function setOperationsSelect(selector, label, map, selected) {
+  const options = Array.from(map, ([value, text]) => ({ value, text }))
+    .sort((a, b) => a.text.localeCompare(b.text));
+  const node = $(selector);
+  node.innerHTML = '<option value="">' + esc(label) + "</option>" +
+    options.map((item) => '<option value="' + esc(item.value) + '">' + esc(item.text) + "</option>").join("");
+  node.value = selected || "";
+  if (node.value !== (selected || "")) node.value = "";
+}
+
+function populateOperationsRunFilters() {
+  const runs = state.operationsRuns?.runs || [];
+  const tenants = new Map(), workspaces = new Map(), projects = new Map(), statuses = new Map();
+  for (const run of runs) {
+    const scope = run.scope || {};
+    if (scope.tenant_id) tenants.set(scope.tenant_id, (scope.tenant_name || "Tenant") + " · " + scope.tenant_id);
+    if (scope.workspace_id) workspaces.set(scope.workspace_id, (scope.workspace_name || "Workspace") + " · " + scope.workspace_id);
+    projects.set(run.project_id, (run.project_name || "Project") + " · " + run.project_id);
+    if (run.runtime_status) statuses.set(run.runtime_status, run.runtime_status);
+  }
+  const f = state.operationsRunsFilters;
+  setOperationsSelect("#operationsRunsTenantFilter", "All tenants", tenants, f.tenant);
+  setOperationsSelect("#operationsRunsWorkspaceFilter", "All workspaces", workspaces, f.workspace);
+  setOperationsSelect("#operationsRunsProjectFilter", "All projects", projects, f.project);
+  setOperationsSelect("#operationsRunsStatusFilter", "All statuses", statuses, f.status);
+}
+
+function filteredOperationsRuns() {
+  const f = state.operationsRunsFilters;
+  const needle = f.text.trim().toLowerCase();
+  return (state.operationsRuns?.runs || []).filter((run) => {
+    const scope = run.scope || {};
+    if (needle && ![
+      run.run_id, run.project_id, run.project_name, run.workunit_id, run.workunit_type
+    ].some((value) => String(value || "").toLowerCase().includes(needle))) return false;
+    if (f.tenant && scope.tenant_id !== f.tenant) return false;
+    if (f.workspace && scope.workspace_id !== f.workspace) return false;
+    if (f.project && run.project_id !== f.project) return false;
+    if (f.status && run.runtime_status !== f.status) return false;
+    return true;
+  });
+}
+
+function formatRunDuration(startedAt, finishedAt) {
+  const start = new Date(startedAt).getTime();
+  const end = finishedAt ? new Date(finishedAt).getTime() : Date.now();
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return "—";
+  const seconds = Math.max(0, Math.floor((end - start) / 1000));
+  if (seconds < 60) return seconds + "s";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return minutes + "m";
+  const hours = Math.floor(minutes / 60);
+  return hours + "h " + (minutes % 60) + "m";
+}
+
+function renderOperationsRunsRows() {
+  const all = state.operationsRuns?.runs || [];
+  const runs = filteredOperationsRuns();
+  $("#operationsRunsVisibleCount").textContent = runs.length;
+  if (!all.length) {
+    $("#operationsRunsBody").innerHTML = homeEmpty("No runs exist in the current authorized scope.", 7);
+    return;
+  }
+  if (!runs.length) {
+    $("#operationsRunsBody").innerHTML = homeEmpty("No runs match the current page filters.", 7);
+    return;
+  }
+  $("#operationsRunsBody").innerHTML = runs.map((run) => {
+    const scope = run.scope || {};
+    const phase = run.phase || {};
+    const latest = run.latest_event || null;
+    return "<tr>" +
+      '<td><code>' + esc(run.run_id) + '</code><small>attempt ' + esc(run.attempt_number) + "</small></td>" +
+      '<td><strong>' + esc(run.project_name) + '</strong><code>' + esc(run.project_id) +
+      '</code><small>' + esc((scope.tenant_name || "Tenant") + " / " + (scope.workspace_name || "Workspace")) +
+      '</small><code>' + esc((scope.tenant_id || "—") + " · " + (scope.workspace_id || "—")) + "</code></td>" +
+      '<td><strong>' + esc(run.workunit_type || "—") + '</strong><code>' + esc(run.workunit_id) +
+      '</code><small>' + esc(phase.phase_id || "No linked phase") + '</small><code>' +
+      esc([phase.orchestration_id, phase.phase_execution_id].filter(Boolean).join(" · ") || "—") + "</code></td>" +
+      '<td><strong class="' + (run.runtime_status === "RUNNING" ? "run-status" : "") + '">' + esc(run.runtime_status) +
+      '</strong><small>' + esc(formatHomeTime(run.started_at)) + '</small><small>' +
+      esc((run.finished_at ? "finished " + formatHomeTime(run.finished_at) : "running") + " · " +
+      formatRunDuration(run.started_at, run.finished_at)) + "</small></td>" +
+      '<td><code>' + esc(run.executor_actor_id || "SYSTEM") + '</code><small>correlation</small><code>' +
+      esc(run.correlation_id || "—") + "</code></td>" +
+      '<td><span>Inputs</span>' + operationsIdentityDetails(run.input_revision_ids) +
+      '<span>Outputs</span>' + operationsIdentityDetails(run.produced_revision_ids) +
+      '<span>Evidence</span>' + operationsIdentityDetails(run.evidence_ids) + "</td>" +
+      '<td><strong>' + esc(latest?.action || "—") + '</strong><code>' + esc(latest?.event_id || "—") +
+      '</code><small>' + esc(formatHomeTime(latest?.timestamp)) + "</small></td>" +
+    "</tr>";
+  }).join("");
+}
+
+function renderOperationsRunsError(message) {
+  $("#operationsRunsStateBanner").hidden = false;
+  $("#operationsRunsStateBanner").className = "home-state-banner error";
+  $("#operationsRunsStateBanner").textContent = "Runs data unavailable — " + message;
+  $("#operationsRunsBody").innerHTML = homeEmpty("Runs index unavailable.", 7);
+  $("#operationsRunsVisibleCount").textContent = "—";
+  $("#operationsRunsGeneratedAt").textContent = "—";
+  $("#operationsRunsBuildSha").textContent = "—";
+}
+
+function renderOperationsRuns() {
+  const summary = state.operationsRuns;
+  if (!summary) {
+    renderOperationsRunsError(state.operationsRunsError || "No authoritative Runs projection returned.");
+    return;
+  }
+  const complete = summary.query_status === "COMPLETE";
+  $("#operationsRunsStateBanner").hidden = complete;
+  if (!complete) {
+    $("#operationsRunsStateBanner").className = "home-state-banner warn";
+    $("#operationsRunsStateBanner").textContent = "Runs projection is partial. Missing authoritative fields are not inferred.";
+  }
+  $("#operationsRunsScope").textContent = summary.scope?.label || "Authorized scope";
+  $("#operationsRunsGeneratedAt").textContent = formatHomeTime(summary.generated_at);
+  $("#operationsRunsBuildSha").textContent = summary.build_sha || "unknown";
+  populateOperationsRunFilters();
+  renderOperationsRunsRows();
+}
+
+async function refreshOperationsRuns(render = true) {
+  if (state.operationsRunsLoading) return;
+  state.operationsRunsLoading = true;
+  state.operationsRunsError = null;
+  if (render) {
+    $("#operationsRunsStateBanner").hidden = false;
+    $("#operationsRunsStateBanner").className = "home-state-banner loading";
+    $("#operationsRunsStateBanner").textContent = "Loading authorized Runs projection…";
+  }
+  try {
+    state.operationsRuns = await api("/browser/operations/runs");
+  } catch (error) {
+    state.operationsRuns = null;
+    state.operationsRunsError = error.message;
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+  } finally {
+    state.operationsRunsLoading = false;
+  }
+  if (render && !$("#operationsRunsView").hidden) {
+    if (state.operationsRuns) renderOperationsRuns();
+    else renderOperationsRunsError(state.operationsRunsError || "Unknown error");
+  }
+}
+
+function setOperationsSubnavActive(path) {
+  document.querySelectorAll("[data-operations-route]").forEach((button) => {
+    button.classList.toggle("active", normalizedRoute(button.dataset.operationsRoute) === normalizedRoute(path));
+  });
+}
+
+function renderOperationsLocked(path) {
+  const section = path.split("/").filter(Boolean).pop() || "operations";
+  const labels = { approvals: "Approvals", audit: "Audit", runtime: "Runtime" };
+  const label = labels[section] || "Operations";
+  $("#operationsRunsView").hidden = true;
+  $("#operationsLockedView").hidden = false;
+  $("#operationsLockedIcon").innerHTML = iconSvg("operations", "icon");
+  $("#operationsLockedShield").innerHTML = iconSvg("shield", "icon");
+  $("#operationsLockedTitle").textContent = label;
+  $("#operationsLockedDescription").textContent =
+    label + " is the next BPS-M03 screen in the QA-first sequence. Its route is real, but no data or action is fabricated before implementation.";
+}
+
+function renderOperationsRoute(item) {
+  $("#homeRouteView").hidden = true;
+  $("#projectsRouteView").hidden = true;
+  $("#accessRouteView").hidden = true;
+  $("#lockedRouteView").hidden = true;
+  $("#diagnosticsRouteView").hidden = true;
+  $("#operationsRouteView").hidden = false;
+
+  let path = normalizedRoute();
+  if (path === "/app/operations") {
+    path = "/app/operations/runs";
+    history.replaceState({ route: path }, "", path);
+  }
+  setOperationsSubnavActive(path);
+  if (path === "/app/operations/runs") {
+    $("#operationsLockedView").hidden = true;
+    $("#operationsRunsView").hidden = false;
+    document.title = "GWF — Operations / Runs";
+    if (state.operationsRuns) renderOperationsRuns();
+    else if (state.operationsRunsError) renderOperationsRunsError(state.operationsRunsError);
+    else void refreshOperationsRuns(true);
+    return;
+  }
+  document.title = "GWF — Operations / " + (path.split("/").pop() || "");
+  renderOperationsLocked(path);
+}
+
 function renderRoute() {
   let path = normalizedRoute();
   if (path === "/app") {
@@ -836,6 +1043,7 @@ function renderRoute() {
   if (item.state === "LIVE_MODULE" && item.id === "home") renderHomeRoute(item);
   else if (item.state === "LIVE_MODULE" && item.id === "projects") renderProjectsRoute(item);
   else if (item.state === "LIVE_MODULE" && item.id === "access") renderAccessRoute(item);
+  else if (item.state === "LIVE_MODULE" && item.id === "operations") renderOperationsRoute(item);
   else if (item.state === "LIVE_FOUNDATION" && item.id === "diagnostics") renderDiagnosticsRoute(item);
   else renderLockedRoute(item);
 }
@@ -969,6 +1177,8 @@ function showLogin() {
   state.projectsError = null;
   state.access = null;
   state.accessError = null;
+  state.operationsRuns = null;
+  state.operationsRunsError = null;
   setActorMenu(false);
   $("#appView").hidden = true;
   $("#loginView").hidden = false;
@@ -1070,6 +1280,40 @@ $("#projectsRefreshButton").addEventListener("click", async () => {
 
 $("#accessRefreshButton").addEventListener("click", async () => {
   await refreshAccessSummary(true);
+});
+
+$("#operationsRunsRefreshButton").addEventListener("click", async () => {
+  await refreshOperationsRuns(true);
+});
+
+$("#operationsRouteView").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-operations-route]");
+  if (!button) return;
+  navigateTo(button.dataset.operationsRoute);
+});
+
+$("#operationsRunsTextFilter").addEventListener("input", (event) => {
+  state.operationsRunsFilters.text = event.target.value;
+  renderOperationsRunsRows();
+});
+
+for (const [selector, key] of [
+  ["#operationsRunsTenantFilter", "tenant"],
+  ["#operationsRunsWorkspaceFilter", "workspace"],
+  ["#operationsRunsProjectFilter", "project"],
+  ["#operationsRunsStatusFilter", "status"],
+]) {
+  $(selector).addEventListener("change", (event) => {
+    state.operationsRunsFilters[key] = event.target.value;
+    renderOperationsRunsRows();
+  });
+}
+
+$("#operationsRunsResetFiltersButton").addEventListener("click", () => {
+  state.operationsRunsFilters = { text: "", tenant: "", workspace: "", project: "", status: "" };
+  $("#operationsRunsTextFilter").value = "";
+  populateOperationsRunFilters();
+  renderOperationsRunsRows();
 });
 
 $("#accessScopeKind").addEventListener("change", () => {

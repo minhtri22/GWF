@@ -274,6 +274,73 @@
           </div>
         </section>
 
+        <section id="operationsRouteView" class="operations-page" hidden>
+          <section class="operations-hero">
+            <div>
+              <p class="eyebrow">Cross-project operations</p>
+              <h1>Operations</h1>
+              <p>Inspect authoritative operational state across every project in your current authorized scope.</p>
+            </div>
+          </section>
+
+          <nav class="operations-subnav" aria-label="Operations views">
+            <button type="button" data-operations-route="/app/operations/runs"><span>Runs</span><small>Live</small></button>
+            <button type="button" data-operations-route="/app/operations/approvals"><span>Approvals</span><small>Locked</small></button>
+            <button type="button" data-operations-route="/app/operations/audit"><span>Audit</span><small>Locked</small></button>
+            <button type="button" data-operations-route="/app/operations/runtime"><span>Runtime</span><small>Locked</small></button>
+          </nav>
+
+          <section id="operationsRunsView" class="operations-screen">
+            <div class="operations-screen-head">
+              <div><p class="eyebrow">Execution registry</p><h2>Runs</h2></div>
+              <div class="operations-head-actions">
+                <span id="operationsRunsScope" class="scope-badge">All authorized projects</span>
+                <button id="operationsRunsRefreshButton" class="text-button" type="button">Refresh</button>
+              </div>
+            </div>
+            <div id="operationsRunsStateBanner" class="home-state-banner" hidden></div>
+
+            <section class="panel operations-filter-panel" aria-label="Run filters">
+              <div class="operations-filter-grid">
+                <label class="projects-filter operations-search-filter"><span>Page filter</span><input id="operationsRunsTextFilter" type="search" placeholder="Run, project or WorkUnit ID" autocomplete="off"></label>
+                <label class="projects-filter"><span>Tenant</span><select id="operationsRunsTenantFilter"><option value="">All tenants</option></select></label>
+                <label class="projects-filter"><span>Workspace</span><select id="operationsRunsWorkspaceFilter"><option value="">All workspaces</option></select></label>
+                <label class="projects-filter"><span>Project</span><select id="operationsRunsProjectFilter"><option value="">All projects</option></select></label>
+                <label class="projects-filter"><span>Runtime status</span><select id="operationsRunsStatusFilter"><option value="">All statuses</option></select></label>
+                <button id="operationsRunsResetFiltersButton" class="ghost projects-reset" type="button">Reset</button>
+              </div>
+            </section>
+
+            <section class="panel operations-table-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Authoritative records</p><h2>Visible Runs</h2></div>
+                <div class="projects-result-count"><strong id="operationsRunsVisibleCount">0</strong><span>visible</span></div>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table operations-runs-table">
+                  <thead><tr><th>Run</th><th>Project / scope</th><th>WorkUnit / phase</th><th>Status / time</th><th>Executor</th><th>Inputs / outputs / evidence</th><th>Latest event</th></tr></thead>
+                  <tbody id="operationsRunsBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <div class="home-footnote">
+              <span>Projection</span><code id="operationsRunsGeneratedAt">—</code>
+              <span>Build</span><code id="operationsRunsBuildSha">—</code>
+            </div>
+          </section>
+
+          <section id="operationsLockedView" class="route-state-page operations-locked" hidden>
+            <article class="route-state-card">
+              <div class="route-state-icon" id="operationsLockedIcon" aria-hidden="true"></div>
+              <p class="eyebrow">Operations screen</p>
+              <div class="route-state-heading"><h1 id="operationsLockedTitle">Locked</h1><span class="state-pill locked">Locked</span></div>
+              <p id="operationsLockedDescription" class="route-state-copy"></p>
+              <div class="route-state-note"><span id="operationsLockedShield" aria-hidden="true"></span><p>This subroute is real and reload-safe. No synthetic operational data or fake action is rendered before its checklist closes.</p></div>
+            </article>
+          </section>
+        </section>
+
         <section id="accessRouteView" class="access-page" hidden>
           <section class="access-hero">
             <div>
