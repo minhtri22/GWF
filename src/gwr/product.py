@@ -743,12 +743,12 @@ class ProjectDashboardService:
                 attempts: list[dict[str, Any]] = []
                 for attempt_row in self.db.all(
                     "SELECT attempt_id,job_id,attempt_number,worker_id,run_id,status,"
-                    "started_at,heartbeat_at,lease_expires_at,finished_at,error_code,metadata "
+                    "started_at,heartbeat_at,lease_expires_at,finished_at,error_code "
                     "FROM job_attempts WHERE job_id=? "
                     "ORDER BY attempt_number,attempt_id",
                     (job["job_id"],),
                 ):
-                    attempt = _parsed(attempt_row, ("metadata",))
+                    attempt = dict(attempt_row)
                     referenced_worker_ids.add(attempt["worker_id"])
                     run_status = None
                     if attempt.get("run_id"):

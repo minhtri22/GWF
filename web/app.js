@@ -1435,6 +1435,7 @@ function renderOperationsRuntimeRows() {
       '<td><strong>' + esc(job.workunit_type || "—") + '</strong><code>' + esc(job.workunit_id) +
       '</code><small>' + esc(job.workunit_status || "—") + "</small></td>" +
       '<td><strong>' + esc(job.status) + '</strong><small>priority ' + esc(job.priority) +
+      '</small><small>available ' + esc(formatHomeTime(job.available_at)) +
       '</small><small>updated ' + esc(formatHomeTime(job.updated_at)) + "</small></td>" +
       '<td><code>' + esc(lease.worker_id || "—") + '</code><small>token ' +
       esc(lease.has_token ? "present · redacted" : "absent") + '</small><small>' +

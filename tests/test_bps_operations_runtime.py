@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from gwr.api import create_app
 from gwr.auth import HumanAuthService
+from gwr.product import ProjectDashboardService
 from gwr.runtime import GovernedWorkflowRuntime
 from gwr.utils import canonical_json
 
@@ -220,6 +221,7 @@ def test_operations_runtime_projection_is_authorized_redacted_and_historical(tmp
 
     encoded = json.dumps(body)
     assert "lease_token" not in encoded
+    assert '"metadata"' not in json.dumps(recovered["attempts"])
     assert first["lease_token"] not in encoded
     assert second["lease_token"] not in encoded
 
@@ -234,6 +236,21 @@ def test_operations_runtime_zero_state_is_truthful(tmp_path, monkeypatch):
     assert body["query_status"] == "COMPLETE"
     assert body["jobs"] == []
     assert body["workers"] == []
+    rt.close()
+
+
+def test_operations_runtime_unavailable_is_not_fake_zero(tmp_path, monkeypatch):
+    rt, _, _, _, _, _, _ = _runtime(tmp_path, monkeypatch)
+    client = TestClient(_app(rt), raise_server_exceptions=False)
+    _login(client, "runtime-owner")
+
+    def unavailable(*_args, **_kwargs):
+        raise RuntimeError("forced runtime projection failure")
+
+    monkeypatch.setattr(ProjectDashboardService, "operations_runtime", unavailable)
+    response = client.get("/browser/operations/runtime")
+    assert response.status_code == 500
+    assert response.json() != {"jobs": [], "workers": []}
     rt.close()
 
 
