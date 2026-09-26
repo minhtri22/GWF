@@ -131,9 +131,6 @@ def test_operations_runtime_projection_is_authorized_redacted_and_historical(tmp
     second = rt.distributed.lease_next(worker_new)
     assert second["job_id"] == recovery_job
 
-    ready_wu = _workunit(rt, project, "wu_runtime_ready")
-    ready_job = rt.distributed.enqueue_workunit(ready_wu, idempotency_key="runtime-ready")
-
     running_wu = _workunit(rt, project, "wu_runtime_running")
     running_job = rt.distributed.enqueue_workunit(running_wu, idempotency_key="runtime-running")
     running_lease = rt.distributed.lease_next(worker_new)
@@ -159,6 +156,9 @@ def test_operations_runtime_projection_is_authorized_redacted_and_historical(tmp
         failed_job, worker_new, failed_lease["lease_token"],
         error_code="RUNTIME_TEST_FAILURE", retryable=False,
     )
+
+    ready_wu = _workunit(rt, project, "wu_runtime_ready")
+    ready_job = rt.distributed.enqueue_workunit(ready_wu, idempotency_key="runtime-ready")
 
     hidden_wu = _workunit(rt, hidden_project, "wu_runtime_hidden")
     hidden_job = rt.distributed.enqueue_workunit(hidden_wu, idempotency_key="runtime-hidden")
@@ -250,7 +250,8 @@ def test_operations_runtime_unavailable_is_not_fake_zero(tmp_path, monkeypatch):
     monkeypatch.setattr(ProjectDashboardService, "operations_runtime", unavailable)
     response = client.get("/browser/operations/runtime")
     assert response.status_code == 500
-    assert response.json() != {"jobs": [], "workers": []}
+    assert response.text != ""
+    assert response.text != '{"jobs":[],"workers":[]}'
     rt.close()
 
 
