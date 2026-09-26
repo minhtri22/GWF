@@ -246,6 +246,7 @@ function setActiveNav(capabilityId) {
 
 function renderLockedRoute(item) {
   const meta = stateMeta(item);
+  $("#packagesRouteView").hidden = true;
   $("#projectWorkspaceView").hidden = true;
   $("#homeRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
@@ -265,6 +266,7 @@ function renderLockedRoute(item) {
 }
 
 function renderDiagnosticsRoute(item) {
+  $("#packagesRouteView").hidden = true;
   $("#projectWorkspaceView").hidden = true;
   $("#homeRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
@@ -434,6 +436,7 @@ async function refreshHomeSummary(render = true) {
 }
 
 function renderHomeRoute(item) {
+  $("#packagesRouteView").hidden = true;
   $("#projectWorkspaceView").hidden = true;
   $("#lockedRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = true;
@@ -1674,6 +1677,7 @@ async function refreshProjectOverview(route, render = true) {
 }
 
 function renderProjectWorkspaceRoute(route) {
+  $("#packagesRouteView").hidden = true;
   $("#homeRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
   $("#accessRouteView").hidden = true;
@@ -1709,6 +1713,7 @@ function renderProjectWorkspaceRoute(route) {
 }
 
 function renderProjectsRoute(item) {
+  $("#packagesRouteView").hidden = true;
   const projectRoute = projectWorkspaceRoute();
   if (projectRoute) {
     renderProjectWorkspaceRoute(projectRoute);
@@ -2237,6 +2242,7 @@ async function performAccessMutation(path, options) {
 }
 
 function renderAccessRoute(item) {
+  $("#packagesRouteView").hidden = true;
   $("#projectWorkspaceView").hidden = true;
   $("#homeRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
@@ -2958,6 +2964,7 @@ function renderOperationsLocked(path) {
 }
 
 function renderOperationsRoute(item) {
+  $("#packagesRouteView").hidden = true;
   $("#projectWorkspaceView").hidden = true;
   $("#homeRouteView").hidden = true;
   $("#projectsRouteView").hidden = true;
@@ -3047,6 +3054,7 @@ function renderRoute() {
   else if (item.state === "LIVE_MODULE" && item.id === "projects") renderProjectsRoute(item);
   else if (item.state === "LIVE_MODULE" && item.id === "access") renderAccessRoute(item);
   else if (item.state === "LIVE_MODULE" && item.id === "operations") renderOperationsRoute(item);
+  else if (item.state === "LIVE_MODULE" && item.id === "packages") renderPackagesRoute(item);
   else if (item.state === "LIVE_FOUNDATION" && item.id === "diagnostics") renderDiagnosticsRoute(item);
   else renderLockedRoute(item);
 }
@@ -3191,6 +3199,11 @@ function showLogin() {
   state.projectPhaseDetailError = null;
   state.projectExecutionLiveEvents = [];
   stopProjectExecutionStream();
+  state.packages = null;
+  state.packagesError = null;
+  state.selectedPackagesTab = "domains";
+  state.selectedDomainPackageId = null;
+  state.selectedSkillPackageId = null;
   state.access = null;
   state.accessError = null;
   state.operationsRuns = null;
@@ -3296,6 +3309,30 @@ $("#actorMenu").addEventListener("click", (event) => event.stopPropagation());
 document.addEventListener("click", () => setActorMenu(false));
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") setActorMenu(false);
+});
+
+$("#packagesRefreshButton").addEventListener("click", async () => {
+  await refreshPackagesSummary(true);
+});
+
+$("#packagesRouteView").addEventListener("click", (event) => {
+  const tab = event.target.closest("[data-packages-tab]");
+  if (tab) {
+    state.selectedPackagesTab = tab.dataset.packagesTab;
+    renderPackagesTab();
+    return;
+  }
+  const domain = event.target.closest("[data-domain-package]");
+  if (domain) {
+    state.selectedDomainPackageId = domain.dataset.domainPackage;
+    renderPackagesSummary();
+    return;
+  }
+  const skill = event.target.closest("[data-skill-package]");
+  if (skill) {
+    state.selectedSkillPackageId = skill.dataset.skillPackage;
+    renderPackagesSummary();
+  }
 });
 
 $("#projectsRefreshButton").addEventListener("click", async () => {
