@@ -7,7 +7,7 @@ SCREEN_ID        = PROJECTS_INDEX
 OWNER            = BPS-M02
 ROUTE            = /app/projects
 PROTOCOL         = BPS-SCREEN-FAST-LANE-v1
-STATUS           = USER_UAT_OPEN / P10_PENDING / SHELL_RERUN_PENDING
+STATUS           = SCREEN_PASS
 BASE_HEAD        = d35c8d498e378784227d9f454fb186885213a7b0
 ```
 
@@ -190,4 +190,53 @@ USER_UAT_PENDING    = 1
 SHELL_FINDINGS      = REPAIRED / RERUN_PENDING
 PROJECTS_INDEX      = OPEN
 NEXT_SCREEN_ALLOWED = false
+```
+
+
+## Final User UAT closure — 2026-09-26
+
+Final operator rerun:
+
+```text
+SHELL-01 = P
+SHELL-02 = P
+SHELL-03 = P
+P-UAT-10 = P
+```
+
+Combined Projects Index UAT:
+
+```text
+P-UAT-01 = P
+P-UAT-02 = P
+P-UAT-03 = P
+P-UAT-04 = P
+P-UAT-05 = P
+P-UAT-06 = P
+P-UAT-07 = P
+P-UAT-08 = P
+P-UAT-09 = P
+P-UAT-10 = P
+
+SHELL-01 = P
+SHELL-02 = P
+SHELL-03 = P
+```
+
+Adjudication:
+
+- dead `Ctrl K` hint is absent;
+- attention bell routes to the authoritative Home Attention Required surface;
+- actor/avatar opens the read-only authoritative session/identity menu;
+- controlled Projects projection failure renders unavailable/error state rather than a successful empty result.
+
+Final state:
+
+```text
+USER_UAT_PASS       = 10
+USER_UAT_FAIL       = 0
+USER_UAT_PENDING    = 0
+SHELL_RERUN_PASS    = 3
+PROJECTS_INDEX      = SCREEN_PASS
+NEXT_SCREEN_ALLOWED = true
 ```
