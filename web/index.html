@@ -286,7 +286,7 @@
           <nav class="operations-subnav" aria-label="Operations views">
             <button type="button" data-operations-route="/app/operations/runs"><span>Runs</span><small>Live</small></button>
             <button type="button" data-operations-route="/app/operations/approvals"><span>Approvals</span><small>Live</small></button>
-            <button type="button" data-operations-route="/app/operations/audit"><span>Audit</span><small>Locked</small></button>
+            <button type="button" data-operations-route="/app/operations/audit"><span>Audit</span><small>Live</small></button>
             <button type="button" data-operations-route="/app/operations/runtime"><span>Runtime</span><small>Locked</small></button>
           </nav>
 
@@ -384,6 +384,50 @@
             <div class="home-footnote">
               <span>Projection</span><code id="operationsApprovalsGeneratedAt">—</code>
               <span>Build</span><code id="operationsApprovalsBuildSha">—</code>
+            </div>
+          </section>
+
+          <section id="operationsAuditView" class="operations-screen" hidden>
+            <div class="operations-screen-head">
+              <div><p class="eyebrow">Append-only provenance</p><h2>Audit</h2></div>
+              <div class="operations-head-actions">
+                <span id="operationsAuditScope" class="scope-badge">All authorized projects</span>
+                <button id="operationsAuditRefreshButton" class="text-button" type="button">Refresh</button>
+              </div>
+            </div>
+            <div id="operationsAuditStateBanner" class="home-state-banner" hidden></div>
+
+            <section class="panel operations-filter-panel">
+              <div class="audit-filter-grid">
+                <label class="projects-filter audit-search-filter"><span>Page filter</span><input id="operationsAuditTextFilter" type="search" placeholder="Event, project, actor, action or resource" autocomplete="off"></label>
+                <label class="projects-filter"><span>Tenant</span><select id="operationsAuditTenantFilter"><option value="">All tenants</option></select></label>
+                <label class="projects-filter"><span>Workspace</span><select id="operationsAuditWorkspaceFilter"><option value="">All workspaces</option></select></label>
+                <label class="projects-filter"><span>Project</span><select id="operationsAuditProjectFilter"><option value="">All projects</option></select></label>
+                <label class="projects-filter"><span>Actor</span><select id="operationsAuditActorFilter"><option value="">All actors</option></select></label>
+                <label class="projects-filter"><span>Action</span><select id="operationsAuditActionFilter"><option value="">All actions</option></select></label>
+                <label class="projects-filter"><span>Resource</span><select id="operationsAuditResourceFilter"><option value="">All resource types</option></select></label>
+                <label class="projects-filter"><span>From</span><input id="operationsAuditFromFilter" type="datetime-local"></label>
+                <label class="projects-filter"><span>To</span><input id="operationsAuditToFilter" type="datetime-local"></label>
+                <button id="operationsAuditResetFiltersButton" class="ghost projects-reset" type="button">Reset</button>
+              </div>
+            </section>
+
+            <section class="panel operations-table-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Authoritative events</p><h2>Audit timeline</h2></div>
+                <div class="projects-result-count"><strong id="operationsAuditVisibleCount">0</strong><span>visible</span></div>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table operations-audit-table">
+                  <thead><tr><th>Event</th><th>Project / scope</th><th>Actor / action</th><th>Resource</th><th>Linked identities</th><th>Reason</th><th>Versions / metadata</th><th>Time</th></tr></thead>
+                  <tbody id="operationsAuditBody"></tbody>
+                </table>
+              </div>
+            </section>
+            <p class="audit-boundary-note">Audit rows are append-only authoritative records. “Reason” is the persisted reason_code; no generic outcome is inferred.</p>
+            <div class="home-footnote">
+              <span>Projection</span><code id="operationsAuditGeneratedAt">—</code>
+              <span>Build</span><code id="operationsAuditBuildSha">—</code>
             </div>
           </section>
 

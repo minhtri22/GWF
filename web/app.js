@@ -24,6 +24,12 @@ const state = {
   operationsApprovalsError: null,
   operationsApprovalsLoading: false,
   selectedApprovalId: null,
+  operationsAudit: null,
+  operationsAuditError: null,
+  operationsAuditLoading: false,
+  operationsAuditFilters: {
+    text: "", tenant: "", workspace: "", project: "", actor: "", action: "", resource: "", from: "", to: ""
+  },
   projectsFilters: {
     text: "",
     lifecycle: "",
@@ -988,6 +994,145 @@ async function refreshOperationsRuns(render = true) {
   }
 }
 
+function populateOperationsAuditFilters() {
+  const events = state.operationsAudit?.events || [];
+  const tenants = new Map(), workspaces = new Map(), projects = new Map();
+  const actors = new Map(), actions = new Map(), resources = new Map();
+  for (const event of events) {
+    const scope = event.scope || {};
+    if (scope.tenant_id) tenants.set(scope.tenant_id, (scope.tenant_name || "Tenant") + " · " + scope.tenant_id);
+    if (scope.workspace_id) workspaces.set(scope.workspace_id, (scope.workspace_name || "Workspace") + " · " + scope.workspace_id);
+    projects.set(event.project_id, (event.project_name || "Project") + " · " + event.project_id);
+    if (event.actor_id) actors.set(event.actor_id, event.actor_id);
+    if (event.action) actions.set(event.action, event.action);
+    if (event.resource_type) resources.set(event.resource_type, event.resource_type);
+  }
+  const f = state.operationsAuditFilters;
+  setOperationsSelect("#operationsAuditTenantFilter", "All tenants", tenants, f.tenant);
+  setOperationsSelect("#operationsAuditWorkspaceFilter", "All workspaces", workspaces, f.workspace);
+  setOperationsSelect("#operationsAuditProjectFilter", "All projects", projects, f.project);
+  setOperationsSelect("#operationsAuditActorFilter", "All actors", actors, f.actor);
+  setOperationsSelect("#operationsAuditActionFilter", "All actions", actions, f.action);
+  setOperationsSelect("#operationsAuditResourceFilter", "All resource types", resources, f.resource);
+}
+
+function filteredOperationsAudit() {
+  const f = state.operationsAuditFilters;
+  const needle = f.text.trim().toLowerCase();
+  const fromMs = f.from ? new Date(f.from).getTime() : null;
+  const toMs = f.to ? new Date(f.to).getTime() : null;
+  return (state.operationsAudit?.events || []).filter((event) => {
+    const scope = event.scope || {};
+    if (needle && ![
+      event.event_id, event.project_id, event.project_name, event.actor_id,
+      event.action, event.resource_type, event.resource_id, event.proposal_id,
+      event.approval_id, event.run_id, event.decision_id, event.correlation_id,
+      event.reason_code
+    ].some((value) => String(value || "").toLowerCase().includes(needle))) return false;
+    if (f.tenant && scope.tenant_id !== f.tenant) return false;
+    if (f.workspace && scope.workspace_id !== f.workspace) return false;
+    if (f.project && event.project_id !== f.project) return false;
+    if (f.actor && event.actor_id !== f.actor) return false;
+    if (f.action && event.action !== f.action) return false;
+    if (f.resource && event.resource_type !== f.resource) return false;
+    const timestamp = new Date(event.timestamp).getTime();
+    if (fromMs != null && Number.isFinite(fromMs) && timestamp < fromMs) return false;
+    if (toMs != null && Number.isFinite(toMs) && timestamp > toMs) return false;
+    return true;
+  });
+}
+
+function linkedAuditIdentities(event) {
+  const pairs = [
+    ["proposal", event.proposal_id], ["approval", event.approval_id],
+    ["run", event.run_id], ["decision", event.decision_id],
+    ["correlation", event.correlation_id],
+  ].filter(([, value]) => value);
+  return pairs.length ? pairs.map(([label, value]) =>
+    '<span>' + esc(label) + '</span><code>' + esc(value) + "</code>"
+  ).join("") : '<span class="identity-none">No linked identity</span>';
+}
+
+function renderOperationsAuditRows() {
+  const all = state.operationsAudit?.events || [];
+  const events = filteredOperationsAudit();
+  $("#operationsAuditVisibleCount").textContent = events.length;
+  if (!all.length) {
+    $("#operationsAuditBody").innerHTML = homeEmpty("No audit events exist in the current authorized scope.", 8);
+    return;
+  }
+  if (!events.length) {
+    $("#operationsAuditBody").innerHTML = homeEmpty("No audit events match the current page filters.", 8);
+    return;
+  }
+  $("#operationsAuditBody").innerHTML = events.map((event) => {
+    const scope = event.scope || {};
+    return "<tr>" +
+      '<td><code>' + esc(event.event_id) + "</code></td>" +
+      '<td><strong>' + esc(event.project_name || "Project") + '</strong><code>' + esc(event.project_id) +
+      '</code><small>' + esc((scope.tenant_name || "Tenant") + " / " + (scope.workspace_name || "Workspace")) +
+      '</small><code>' + esc((scope.tenant_id || "—") + " · " + (scope.workspace_id || "—")) + "</code></td>" +
+      '<td><code>' + esc(event.actor_id) + '</code><strong>' + esc(event.action) + "</strong></td>" +
+      '<td><strong>' + esc(event.resource_type) + '</strong><code>' + esc(event.resource_id) + "</code></td>" +
+      '<td class="audit-links">' + linkedAuditIdentities(event) + "</td>" +
+      '<td><code>' + esc(event.reason_code) + "</code></td>" +
+      '<td><span>before</span><code>' + esc(event.before_version || "—") + '</code><span>after</span><code>' +
+      esc(event.after_version || "—") + '</code><span>metadata</span><code>' + esc(event.metadata_hash || "—") + "</code></td>" +
+      '<td><span>' + esc(formatHomeTime(event.timestamp)) + "</span></td>" +
+    "</tr>";
+  }).join("");
+}
+
+function renderOperationsAudit() {
+  const summary = state.operationsAudit;
+  if (!summary) {
+    $("#operationsAuditStateBanner").hidden = false;
+    $("#operationsAuditStateBanner").className = "home-state-banner error";
+    $("#operationsAuditStateBanner").textContent = "Audit data unavailable — " +
+      (state.operationsAuditError || "No authoritative projection returned.");
+    $("#operationsAuditBody").innerHTML = homeEmpty("Audit timeline unavailable.", 8);
+    $("#operationsAuditVisibleCount").textContent = "—";
+    $("#operationsAuditGeneratedAt").textContent = "—";
+    $("#operationsAuditBuildSha").textContent = "—";
+    return;
+  }
+  const complete = summary.query_status === "COMPLETE";
+  $("#operationsAuditStateBanner").hidden = complete;
+  if (!complete) {
+    $("#operationsAuditStateBanner").className = "home-state-banner warn";
+    $("#operationsAuditStateBanner").textContent = "Audit projection is partial. Missing scope names are not inferred.";
+  }
+  $("#operationsAuditScope").textContent = summary.scope?.label || "Authorized scope";
+  $("#operationsAuditGeneratedAt").textContent = formatHomeTime(summary.generated_at);
+  $("#operationsAuditBuildSha").textContent = summary.build_sha || "unknown";
+  populateOperationsAuditFilters();
+  renderOperationsAuditRows();
+}
+
+async function refreshOperationsAudit(render = true) {
+  if (state.operationsAuditLoading) return;
+  state.operationsAuditLoading = true;
+  state.operationsAuditError = null;
+  if (render) {
+    $("#operationsAuditStateBanner").hidden = false;
+    $("#operationsAuditStateBanner").className = "home-state-banner loading";
+    $("#operationsAuditStateBanner").textContent = "Loading authorized audit timeline…";
+  }
+  try {
+    state.operationsAudit = await api("/browser/operations/audit");
+  } catch (error) {
+    state.operationsAudit = null;
+    state.operationsAuditError = error.message;
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+  } finally {
+    state.operationsAuditLoading = false;
+  }
+  if (render && !$("#operationsAuditView").hidden) renderOperationsAudit();
+}
+
 function selectedApproval() {
   return (state.operationsApprovals?.pending || []).find(
     (item) => item.proposal_id === state.selectedApprovalId
@@ -1164,6 +1309,7 @@ function renderOperationsLocked(path) {
   const label = labels[section] || "Operations";
   $("#operationsRunsView").hidden = true;
   $("#operationsApprovalsView").hidden = true;
+  $("#operationsAuditView").hidden = true;
   $("#operationsLockedView").hidden = false;
   $("#operationsLockedIcon").innerHTML = iconSvg("operations", "icon");
   $("#operationsLockedShield").innerHTML = iconSvg("shield", "icon");
@@ -1189,6 +1335,7 @@ function renderOperationsRoute(item) {
   if (path === "/app/operations/runs") {
     $("#operationsLockedView").hidden = true;
     $("#operationsApprovalsView").hidden = true;
+    $("#operationsAuditView").hidden = true;
     $("#operationsRunsView").hidden = false;
     document.title = "GWF — Operations / Runs";
     if (state.operationsRuns) renderOperationsRuns();
@@ -1199,13 +1346,25 @@ function renderOperationsRoute(item) {
   if (path === "/app/operations/approvals") {
     $("#operationsLockedView").hidden = true;
     $("#operationsRunsView").hidden = true;
+    $("#operationsAuditView").hidden = true;
     $("#operationsApprovalsView").hidden = false;
     document.title = "GWF — Operations / Approvals";
     if (state.operationsApprovals) renderOperationsApprovals();
     else void refreshOperationsApprovals(true);
     return;
   }
+  if (path === "/app/operations/audit") {
+    $("#operationsLockedView").hidden = true;
+    $("#operationsRunsView").hidden = true;
+    $("#operationsApprovalsView").hidden = true;
+    $("#operationsAuditView").hidden = false;
+    document.title = "GWF — Operations / Audit";
+    if (state.operationsAudit) renderOperationsAudit();
+    else void refreshOperationsAudit(true);
+    return;
+  }
   $("#operationsApprovalsView").hidden = true;
+  $("#operationsAuditView").hidden = true;
   document.title = "GWF — Operations / " + (path.split("/").pop() || "");
   renderOperationsLocked(path);
 }
@@ -1367,6 +1526,8 @@ function showLogin() {
   state.operationsApprovals = null;
   state.operationsApprovalsError = null;
   state.selectedApprovalId = null;
+  state.operationsAudit = null;
+  state.operationsAuditError = null;
   setActorMenu(false);
   $("#appView").hidden = true;
   $("#loginView").hidden = false;
@@ -1476,6 +1637,42 @@ $("#operationsRunsRefreshButton").addEventListener("click", async () => {
 
 $("#operationsApprovalsRefreshButton").addEventListener("click", async () => {
   await refreshOperationsApprovals(true);
+});
+
+$("#operationsAuditRefreshButton").addEventListener("click", async () => {
+  await refreshOperationsAudit(true);
+});
+
+$("#operationsAuditTextFilter").addEventListener("input", (event) => {
+  state.operationsAuditFilters.text = event.target.value;
+  renderOperationsAuditRows();
+});
+
+for (const [selector, key] of [
+  ["#operationsAuditTenantFilter", "tenant"],
+  ["#operationsAuditWorkspaceFilter", "workspace"],
+  ["#operationsAuditProjectFilter", "project"],
+  ["#operationsAuditActorFilter", "actor"],
+  ["#operationsAuditActionFilter", "action"],
+  ["#operationsAuditResourceFilter", "resource"],
+  ["#operationsAuditFromFilter", "from"],
+  ["#operationsAuditToFilter", "to"],
+]) {
+  $(selector).addEventListener("change", (event) => {
+    state.operationsAuditFilters[key] = event.target.value;
+    renderOperationsAuditRows();
+  });
+}
+
+$("#operationsAuditResetFiltersButton").addEventListener("click", () => {
+  state.operationsAuditFilters = {
+    text: "", tenant: "", workspace: "", project: "", actor: "", action: "", resource: "", from: "", to: ""
+  };
+  $("#operationsAuditTextFilter").value = "";
+  $("#operationsAuditFromFilter").value = "";
+  $("#operationsAuditToFilter").value = "";
+  populateOperationsAuditFilters();
+  renderOperationsAuditRows();
 });
 
 $("#operationsApprovalsPendingList").addEventListener("click", (event) => {

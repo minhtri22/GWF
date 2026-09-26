@@ -492,6 +492,47 @@ class ProjectDashboardService:
             "projects": rows,
         }
 
+    def operations_audit(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
+        """Authorized cross-project append-only audit projection."""
+        projects = self.runtime.tenancy.list_accessible_projects(actor_id)
+        events: list[dict[str, Any]] = []
+        complete = True
+
+        for project in projects:
+            tenant = self.db.one("SELECT name FROM tenants WHERE tenant_id=?", (project["tenant_id"],))
+            workspace = self.db.one("SELECT name FROM workspaces WHERE workspace_id=?", (project["workspace_id"],))
+            if tenant is None or workspace is None:
+                complete = False
+            for row in self.db.all(
+                "SELECT * FROM audit_events WHERE project_id=? "
+                "ORDER BY timestamp DESC,event_id DESC",
+                (project["id"],),
+            ):
+                item = dict(row)
+                item.update({
+                    "project_name": project["name"],
+                    "scope": {
+                        "tenant_id": project["tenant_id"],
+                        "tenant_name": tenant["name"] if tenant else None,
+                        "workspace_id": project["workspace_id"],
+                        "workspace_name": workspace["name"] if workspace else None,
+                    },
+                })
+                events.append(item)
+
+        events.sort(key=lambda row: (row["timestamp"], row["event_id"]), reverse=True)
+        return {
+            "generated_at": utcnow(),
+            "build_sha": build_sha,
+            "query_status": "COMPLETE" if complete else "PARTIAL",
+            "scope": {
+                "mode": "ALL_AUTHORIZED",
+                "label": "All authorized projects",
+                "project_count": len(projects),
+            },
+            "events": events,
+        }
+
     def operations_approvals(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
         """Authorized cross-project pending approval inbox and decision history."""
         projects = self.runtime.tenancy.list_accessible_projects(actor_id)

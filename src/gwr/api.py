@@ -547,6 +547,14 @@ def create_app(
             build_sha=resolved_product_info["build_sha"],
         )
 
+    @app.get('/browser/operations/audit')
+    def browser_operations_audit(request: Request):
+        _, principal = browser_principal(request)
+        return product.operations_audit(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
     @app.get('/browser/operations/approvals')
     def browser_operations_approvals(request: Request):
         _, principal = browser_principal(request)
