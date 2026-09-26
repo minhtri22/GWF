@@ -609,23 +609,17 @@ def create_app(
             )
         except (AuthorityDenied, NotFound) as exc:
             raise HTTPException(status_code=404, detail="project not found") from exc
-        row = runtime.db.one(
-            "SELECT project_id FROM orchestrations WHERE orchestration_id=?",
-            (orchestration_id,),
-        )
-        if not row or row["project_id"] != project_id:
-            raise HTTPException(status_code=404, detail="orchestration not found")
-        from .research_orchestrator import ResearchOrchestrator
-        return {
-            "generated_at": utcnow(),
-            "build_sha": resolved_product_info["build_sha"],
-            "project_id": project_id,
-            "orchestration_id": orchestration_id,
-            "authority": "DERIVED_VIEW",
-            "markdown": ResearchOrchestrator(
-                runtime, {}, human_approver_id=None
-            ).render_report(orchestration_id),
-        }
+        try:
+            return product.project_execution_report(
+                principal.actor_id,
+                project_id,
+                orchestration_id,
+                build_sha=resolved_product_info["build_sha"],
+            )
+        except NotFound as exc:
+            raise HTTPException(
+                status_code=404, detail="orchestration not found"
+            ) from exc
 
     @app.get('/browser/projects/{project_id}/execution/phases/{phase_execution_id}')
     def browser_project_phase_execution(

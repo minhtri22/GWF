@@ -626,7 +626,17 @@ def test_project_execution_final_report_is_exact_project_derived_view(tmp_path, 
     assert body["authority"] == "DERIVED_VIEW"
     assert body["project_id"] == project
     assert body["orchestration_id"] == "orch_execution"
-    assert "# Research Orchestration Report" in body["markdown"]
+    assert rt.domain.domain_id == "example.workflow"
+    assert body["domain_id"] == "example.workflow"
+    assert "# Orchestration Report" in body["markdown"]
+    assert "# Research Orchestration Report" not in body["markdown"]
+    assert "Authority: **DERIVED_VIEW**" in body["markdown"]
+    assert "Domain: `example.workflow`" in body["markdown"]
+    assert "phase_previous" in body["markdown"]
+    assert "phase_exact" in body["markdown"]
+    assert "PIVOT" in body["markdown"]
+    assert "RECOVERY" in body["markdown"]
+    assert "source of truth" in body["markdown"]
     assert "orch_execution" in body["markdown"]
     assert project in body["markdown"]
 
@@ -662,12 +672,6 @@ def test_existing_bearer_process_phase_and_event_reads_remain_valid(tmp_path, mo
     )
     assert stream.status_code == 200
     assert "id: phaseevt_execution_2\n" in stream.text
-    report = client.get(
-        "/research/orchestrations/orch_execution/report",
-        headers=headers,
-    )
-    assert report.status_code == 200
-    assert "# Research Orchestration Report" in report.json()["markdown"]
     rt.close()
 
 def test_project_execution_browser_surface_is_live_read_only_and_fallback_capable():

@@ -1891,6 +1891,250 @@ class ProjectDashboardService:
             "agent_protocol": protocol,
         }
 
+    def project_execution_report(
+        self,
+        actor_id: str,
+        project_id: str,
+        orchestration_id: str,
+        *,
+        build_sha: str,
+    ) -> dict[str, Any]:
+        """Generic derived orchestration report from persisted runtime state."""
+        self.runtime.tenancy.require_project_access(actor_id, project_id, "VIEW")
+        row = self.db.one(
+            "SELECT orchestration_id,project_id,domain_id,status,current_phase_id,"
+            "generation,research_outcome,pivot_count,started_at,updated_at,"
+            "terminal_checkpoint_id,metadata FROM orchestrations "
+            "WHERE orchestration_id=? AND project_id=?",
+            (orchestration_id, project_id),
+        )
+        if not row:
+            raise NotFound("Orchestration not found")
+        orchestration = _parsed(row, ("metadata",))
+        metadata = orchestration.get("metadata") or {}
+        history = list(metadata.get("history") or [])
+
+        phases = [
+            dict(item)
+            for item in self.db.all(
+                "SELECT phase_execution_id,phase_id,phase_index,generation,workunit_id,"
+                "run_id,status,decision_outcome,failure_id,checkpoint_id,started_at,finished_at "
+                "FROM phase_executions WHERE orchestration_id=? "
+                "ORDER BY started_at,phase_index,phase_execution_id",
+                (orchestration_id,),
+            )
+        ]
+        phase_identity = {
+            str(value)
+            for phase in phases
+            for value in (
+                phase.get("phase_execution_id"),
+                phase.get("workunit_id"),
+                phase.get("run_id"),
+                phase.get("failure_id"),
+                phase.get("checkpoint_id"),
+            )
+            if value
+        }
+        failure_ids = {
+            phase["failure_id"] for phase in phases if phase.get("failure_id")
+        }
+        checkpoint_ids = {
+            phase["checkpoint_id"] for phase in phases if phase.get("checkpoint_id")
+        }
+        if orchestration.get("terminal_checkpoint_id"):
+            checkpoint_ids.add(orchestration["terminal_checkpoint_id"])
+
+        gates: list[dict[str, Any]] = []
+        gate_ids: set[str] = set()
+        for gate_row in self.db.all(
+            "SELECT * FROM gates WHERE project_id=? ORDER BY evaluated_at,gate_id",
+            (project_id,),
+        ):
+            gate = _parsed(
+                gate_row,
+                (
+                    "scope",
+                    "required_inputs",
+                    "required_evidence",
+                    "violation_codes",
+                    "evaluated_refs",
+                ),
+            )
+            refs = set(gate.get("evaluated_refs") or [])
+            related = bool(
+                refs.intersection(phase_identity)
+                or self._execution_scope_contains(gate.get("scope"), phase_identity)
+            )
+            if related:
+                gates.append(gate)
+                gate_ids.add(gate["gate_id"])
+
+        decisions: list[dict[str, Any]] = []
+        for decision_row in self.db.all(
+            "SELECT * FROM decisions WHERE project_id=? ORDER BY created_at,decision_id",
+            (project_id,),
+        ):
+            decision = _parsed(
+                decision_row,
+                ("scope", "source_gate_ids", "reason_codes"),
+            )
+            related = bool(
+                (
+                    decision.get("source_failure_id")
+                    and decision["source_failure_id"] in failure_ids
+                )
+                or set(decision.get("source_gate_ids") or []).intersection(gate_ids)
+                or self._execution_scope_contains(
+                    decision.get("scope"), phase_identity | {orchestration_id}
+                )
+            )
+            if related:
+                decisions.append(decision)
+
+        failures = [
+            _parsed(item, ("evidence_ids",))
+            for item in self.db.all(
+                "SELECT * FROM failures WHERE project_id=? "
+                "ORDER BY created_at,failure_id",
+                (project_id,),
+            )
+            if item["failure_id"] in failure_ids
+        ]
+        checkpoints = [
+            _parsed(
+                item,
+                (
+                    "active_workunit_ids",
+                    "completed_workunit_ids",
+                    "current_stage_labels",
+                    "valid_revision_ids",
+                    "dirty_revision_ids",
+                    "stale_revision_ids",
+                    "blocking_failure_ids",
+                    "pending_decision_ids",
+                    "pending_approval_ids",
+                    "resume_candidates",
+                    "runtime_metadata",
+                ),
+            )
+            for item in self.db.all(
+                "SELECT * FROM checkpoints WHERE project_id=? "
+                "ORDER BY created_at,checkpoint_id",
+                (project_id,),
+            )
+            if item["checkpoint_id"] in checkpoint_ids
+        ]
+
+        lines = [
+            "# Orchestration Report",
+            "",
+            "- Authority: **DERIVED_VIEW**",
+            f"- Orchestration: `{orchestration_id}`",
+            f"- Project: `{project_id}`",
+            f"- Domain: `{orchestration['domain_id']}`",
+            f"- Status: **{orchestration['status']}**",
+            f"- Persisted outcome: **{orchestration.get('research_outcome') or 'N/A'}**",
+            f"- Generation: **{orchestration['generation']}**",
+            f"- Pivot count: **{orchestration['pivot_count']}**",
+            f"- Started: `{orchestration['started_at']}`",
+            f"- Updated: `{orchestration['updated_at']}`",
+            "",
+            "## Phase history",
+            "",
+            "| Index | Generation | Phase | Status | Decision | Failure | Checkpoint |",
+            "|---:|---:|---|---|---|---|---|",
+        ]
+        if phases:
+            for phase in phases:
+                lines.append(
+                    "| "
+                    + " | ".join(
+                        [
+                            str(phase["phase_index"]),
+                            str(phase["generation"]),
+                            f"`{phase['phase_id']}`",
+                            str(phase["status"]),
+                            str(phase.get("decision_outcome") or ""),
+                            str(phase.get("failure_id") or ""),
+                            str(phase.get("checkpoint_id") or ""),
+                        ]
+                    )
+                    + " |"
+                )
+        else:
+            lines.append("| - | - | No persisted phase executions | - | - | - | - |")
+
+        lines += ["", "## Persisted orchestration history", ""]
+        if history:
+            for item in history:
+                event = item.get("event") if isinstance(item, dict) else None
+                lines.append(
+                    f"- **{event or 'EVENT'}** — `{canonical_json(item)}`"
+                )
+        else:
+            lines.append("- No persisted orchestration history entries.")
+
+        lines += ["", "## Gates", ""]
+        if gates:
+            for gate in gates:
+                lines.append(
+                    f"- `{gate['gate_id']}` — {gate['gate_type']} = "
+                    f"**{gate['result']}** (policy `{gate['policy_version']}`)."
+                )
+        else:
+            lines.append("- No attributable Gate records.")
+
+        lines += ["", "## Decisions", ""]
+        if decisions:
+            for decision in decisions:
+                lines.append(
+                    f"- `{decision['decision_id']}` — "
+                    f"**{decision['decision_type']}** → "
+                    f"`{decision.get('target_ref') or '-'}`."
+                )
+        else:
+            lines.append("- No attributable Decision records.")
+
+        lines += ["", "## Failures", ""]
+        if failures:
+            for failure in failures:
+                lines.append(
+                    f"- `{failure['failure_id']}` — {failure['failure_class']} / "
+                    f"{failure['status']} / severity {failure['severity']}."
+                )
+        else:
+            lines.append("- No attributable FailureRecord.")
+
+        lines += ["", "## Checkpoints", ""]
+        if checkpoints:
+            for checkpoint in checkpoints:
+                lines.append(
+                    f"- `{checkpoint['checkpoint_id']}` — scope "
+                    f"`{checkpoint['scope_id']}`; resume candidates "
+                    f"`{canonical_json(checkpoint.get('resume_candidates') or [])}`."
+                )
+        else:
+            lines.append("- No attributable Checkpoint.")
+
+        lines += [
+            "",
+            "## Authority note",
+            "",
+            "This Markdown is a derived browser view of persisted runtime records. "
+            "It is not authoritative execution state and is never the source of truth.",
+            "",
+        ]
+        return {
+            "generated_at": utcnow(),
+            "build_sha": build_sha,
+            "project_id": project_id,
+            "orchestration_id": orchestration_id,
+            "domain_id": orchestration["domain_id"],
+            "authority": "DERIVED_VIEW",
+            "markdown": "\n".join(lines),
+        }
+
     def project_create_options(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
         """Authorized choices for the bounded Create Project workflow."""
         # Validate actor status through the public tenancy read contract.
