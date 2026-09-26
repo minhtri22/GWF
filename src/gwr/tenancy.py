@@ -106,7 +106,7 @@ class TenantService:
         self.db.conn.commit()
         return wid
 
-    def bind_project(self, project_id: str, tenant_id: str, workspace_id: str, actor_id: str, *, owner_role: str = "OWNER") -> None:
+    def bind_project(self, project_id: str, tenant_id: str, workspace_id: str, actor_id: str, *, owner_role: str = "OWNER", commit: bool = True) -> None:
         project = self.db.one("SELECT id FROM projects WHERE id=?", (project_id,))
         if not project:
             raise NotFound("Project not found")
@@ -128,7 +128,8 @@ class TenantService:
         )
         self._grant_legacy_project_scope(actor_id, project_id)
         self._security_event(actor_id, "BIND_PROJECT", "Project", project_id, tenant_id=tenant_id, metadata={"workspace_id": workspace_id})
-        self.db.conn.commit()
+        if commit:
+            self.db.conn.commit()
 
     def scope_for_project(self, project_id: str) -> ProjectScope | None:
         row = self.db.one("SELECT * FROM project_scopes WHERE project_id=?", (project_id,))
@@ -165,6 +166,46 @@ class TenantService:
         else:
             self.db.conn.execute("INSERT INTO workspace_memberships VALUES(?,?,?,?,?)", (workspace_id, actor_id, role, "ACTIVE", utcnow()))
         self._security_event(granted_by_actor_id, "ADD_WORKSPACE_MEMBER", "Actor", actor_id, tenant_id=ws["tenant_id"], metadata={"workspace_id": workspace_id, "role": role})
+        self.db.conn.commit()
+
+    def revoke_tenant_member(self, tenant_id: str, actor_id: str, revoked_by_actor_id: str) -> None:
+        self.require_tenant_access(revoked_by_actor_id, tenant_id, "MANAGE_MEMBERS")
+        tenant = self.db.one("SELECT tenant_id FROM tenants WHERE tenant_id=?", (tenant_id,))
+        if not tenant:
+            raise NotFound("Tenant not found")
+        self.db.conn.execute(
+            "UPDATE tenant_memberships SET status='REVOKED' WHERE tenant_id=? AND actor_id=?",
+            (tenant_id, actor_id),
+        )
+        self._security_event(
+            revoked_by_actor_id,
+            "REVOKE_TENANT_MEMBER",
+            "Actor",
+            actor_id,
+            tenant_id=tenant_id,
+        )
+        self.db.conn.commit()
+
+    def revoke_workspace_member(self, workspace_id: str, actor_id: str, revoked_by_actor_id: str) -> None:
+        self.require_workspace_access(revoked_by_actor_id, workspace_id, "MANAGE_MEMBERS")
+        workspace = self.db.one(
+            "SELECT tenant_id FROM workspaces WHERE workspace_id=?",
+            (workspace_id,),
+        )
+        if not workspace:
+            raise NotFound("Workspace not found")
+        self.db.conn.execute(
+            "UPDATE workspace_memberships SET status='REVOKED' WHERE workspace_id=? AND actor_id=?",
+            (workspace_id, actor_id),
+        )
+        self._security_event(
+            revoked_by_actor_id,
+            "REVOKE_WORKSPACE_MEMBER",
+            "Actor",
+            actor_id,
+            tenant_id=workspace["tenant_id"],
+            metadata={"workspace_id": workspace_id},
+        )
         self.db.conn.commit()
 
     def add_project_member(self, project_id: str, actor_id: str, role: str, granted_by_actor_id: str) -> None:

@@ -1,17 +1,20 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException, Header, Query
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, HTTPException, Header, Query, Request, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from pydantic import BaseModel
 
 from .runtime import GovernedWorkflowRuntime
 from .errors import GWRException, AuthorityDenied, NotFound, ValidationError
 from .domain_sdk import DomainSDK
-from .utils import parse_json
+from .utils import parse_json, utcnow
 from .product import ProjectDashboardService
 import asyncio
 import json
+import os
+import tempfile
 import yaml
+from pathlib import Path
 
 
 class LoginBody(BaseModel):
@@ -57,6 +60,12 @@ class WorkspaceCreateBody(BaseModel):
 class ProjectCreateBody(BaseModel):
     name: str
     project_id: str | None = None
+    domain_revision_id: str | None = None
+
+
+class BrowserProjectCreateBody(BaseModel):
+    workspace_id: str
+    name: str
     domain_revision_id: str | None = None
 
 
@@ -171,8 +180,37 @@ class GitHubExecuteBody(BaseModel):
     changes: list[dict]
 
 
-def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
+def create_app(
+    runtime: GovernedWorkflowRuntime,
+    *,
+    product_info: dict | None = None,
+    web_root: str | Path | None = None,
+    browser_cookie_secure: bool = False,
+) -> FastAPI:
     app = FastAPI(title="Governed Workflow Runtime", version="0.8.5")
+    resolved_product_info = {
+        "product": "Governed Workflow Runtime",
+        "version": "0.8.5",
+        "build_sha": "unknown",
+        "domain_id": runtime.domain.domain_id,
+        "backend": getattr(runtime.db, "backend_name", "unknown"),
+        "server_mode": "embedded",
+    }
+    resolved_product_info.update(product_info or {})
+    browser_cookie_name = "gwr_browser_session"
+    browser_capabilities = [
+        {"id": "home", "label": "Home", "state": "LIVE_MODULE", "slice": "BPS-M01", "route": "/app/home"},
+        {"id": "projects", "label": "Projects", "state": "LIVE_MODULE", "slice": "BPS-M02", "route": "/app/projects"},
+        {"id": "operations", "label": "Operations", "state": "LIVE_MODULE", "slice": "BPS-M03", "route": "/app/operations"},
+        {"id": "packages", "label": "Packages", "state": "LIVE_MODULE", "slice": "BPS-M06", "route": "/app/research/packages"},
+        {"id": "github", "label": "GitHub", "state": "LIVE_MODULE", "slice": "BPS-M07", "route": "/app/system/github"},
+        {"id": "access", "label": "Access", "state": "LIVE_MODULE", "slice": "BPS-M02", "route": "/app/system/access"},
+        {"id": "shared-library", "label": "Shared Library", "state": "PLANNED_BLOCKED", "slice": "BPS-GAC", "route": "/app/shared-library"},
+        {"id": "reference-acquisition", "label": "Reference Acquisition", "state": "PLANNED_BLOCKED", "slice": "BPS-RA", "route": "/app/research/reference-acquisition"},
+        {"id": "agents", "label": "Agents / Codex", "state": "PLANNED_BLOCKED", "slice": "BPS-CODEX", "route": "/app/agents"},
+        {"id": "diagnostics", "label": "Diagnostics", "state": "LIVE_FOUNDATION", "slice": "BPS-I00", "route": "/app/system/diagnostics"},
+        {"id": "settings", "label": "Settings", "state": "SKELETON_LOCKED", "slice": "BPS-M07", "route": "/app/system/settings"},
+    ]
 
     @app.exception_handler(GWRException)
     async def gwr_error(_, exc: GWRException):
@@ -194,6 +232,15 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
         token = authorization.split(" ", 1)[1].strip()
         return token, runtime.auth.verify(token)
 
+    def browser_principal(request: Request):
+        token = request.cookies.get(browser_cookie_name)
+        if not token:
+            raise HTTPException(status_code=401, detail="browser session required")
+        try:
+            return token, runtime.auth.verify(token)
+        except AuthorityDenied as exc:
+            raise HTTPException(status_code=401, detail="browser session invalid or expired") from exc
+
     def project_principal(project_id: str, authorization: str | None, permission: str = "VIEW", *, hide_existence: bool = True):
         scope = runtime.tenancy.scope_for_project(project_id)
         if not scope:
@@ -206,6 +253,63 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
             if hide_existence:
                 raise HTTPException(status_code=404, detail="project not found")
             raise
+
+    @app.post('/browser/auth/login')
+    def browser_login(body: LoginBody, response: Response):
+        try:
+            token = runtime.auth.authenticate(body.username, body.password, client_metadata={"client": "browser"})
+            principal = runtime.auth.verify(token)
+        except AuthorityDenied as exc:
+            raise HTTPException(status_code=401, detail="invalid credentials") from exc
+        response.set_cookie(
+            key=browser_cookie_name,
+            value=token,
+            max_age=runtime.auth.session_ttl_seconds,
+            httponly=True,
+            secure=browser_cookie_secure,
+            samesite="strict",
+            path="/",
+        )
+        return {
+            "ok": True,
+            "actor_id": principal.actor_id,
+            "principal_id": principal.principal_id,
+            "auth_method": principal.auth_method,
+            "expires_at": principal.expires_at,
+        }
+
+    @app.get('/browser/auth/me')
+    def browser_me(request: Request):
+        _, principal = browser_principal(request)
+        return {
+            "actor_id": principal.actor_id,
+            "principal_id": principal.principal_id,
+            "auth_method": principal.auth_method,
+            "expires_at": principal.expires_at,
+            "memberships": runtime.tenancy.memberships_for_actor(principal.actor_id),
+        }
+
+    @app.post('/browser/auth/logout')
+    def browser_logout(request: Request, response: Response):
+        token, _ = browser_principal(request)
+        runtime.auth.revoke(token)
+        response.delete_cookie(browser_cookie_name, path="/")
+        return {"ok": True}
+
+    @app.get('/browser/bootstrap')
+    def browser_bootstrap(request: Request):
+        authenticated = False
+        try:
+            browser_principal(request)
+            authenticated = True
+        except HTTPException:
+            authenticated = False
+        return {
+            "product": resolved_product_info,
+            "capabilities": browser_capabilities,
+            "authenticated": authenticated,
+            "shell_authority": "BPS-I00",
+        }
 
     @app.post('/auth/login')
     def login(body: LoginBody):
@@ -327,7 +431,748 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
 
     @app.get('/health')
     def health():
-        return {"ok": True, "domain": runtime.domain.domain_id, "version": "0.8.5"}
+        return {
+            "ok": True,
+            "domain": runtime.domain.domain_id,
+            "version": resolved_product_info["version"],
+            "build_sha": resolved_product_info["build_sha"],
+            "backend": getattr(runtime.db, "backend_name", "unknown"),
+        }
+
+    @app.get('/ready')
+    def ready():
+        checks: dict[str, str] = {}
+        try:
+            runtime.db.one("SELECT 1")
+            checks["database"] = "PASS"
+            migrations = runtime.db.migrations.status() if getattr(runtime.db, "migrations", None) else {"pending": []}
+            pending = list(migrations.get("pending") or [])
+            checks["migrations"] = "PASS" if not pending else "FAIL"
+            if pending:
+                return JSONResponse(
+                    status_code=503,
+                    content={
+                        "ok": False,
+                        "core_health": "DEGRADED",
+                        "reason": "pending_migrations",
+                        "checks": checks,
+                        "pending_migrations": pending,
+                    },
+                )
+        except Exception:
+            checks["database"] = "FAIL"
+            return JSONResponse(
+                status_code=503,
+                content={"ok": False, "core_health": "UNHEALTHY", "reason": "database_probe_failed", "checks": checks},
+            )
+
+        if runtime.object_store is None:
+            checks["object_store"] = "FAIL"
+            return JSONResponse(
+                status_code=503,
+                content={"ok": False, "core_health": "DEGRADED", "reason": "object_store_not_configured", "checks": checks},
+            )
+        try:
+            probe = runtime.object_store.put_bytes(
+                b"GWF_BPS_I00_READINESS_PROBE_V1",
+                content_type="application/vnd.gwf.readiness-probe",
+            )
+            if not runtime.object_store.verify(probe.sha256):
+                raise RuntimeError("object-store hash verification failed")
+            checks["object_store"] = "PASS"
+        except Exception:
+            checks["object_store"] = "FAIL"
+            return JSONResponse(
+                status_code=503,
+                content={"ok": False, "core_health": "DEGRADED", "reason": "object_store_probe_failed", "checks": checks},
+            )
+
+        observer_path = getattr(runtime.observer, "path", None)
+        if observer_path is None:
+            checks["observability"] = "FAIL"
+            return JSONResponse(
+                status_code=503,
+                content={"ok": False, "core_health": "DEGRADED", "reason": "observability_not_configured", "checks": checks},
+            )
+        temp_path = None
+        try:
+            observer_parent = Path(observer_path).parent
+            observer_parent.mkdir(parents=True, exist_ok=True)
+            fd, temp_path = tempfile.mkstemp(prefix="gwr-ready-", dir=str(observer_parent))
+            os.close(fd)
+            Path(temp_path).write_bytes(b"gwr-observability-ready")
+            Path(temp_path).unlink()
+            temp_path = None
+            runtime.observer.metrics()
+            checks["observability"] = "PASS"
+        except Exception:
+            if temp_path:
+                try:
+                    Path(temp_path).unlink(missing_ok=True)
+                except Exception:
+                    pass
+            checks["observability"] = "FAIL"
+            return JSONResponse(
+                status_code=503,
+                content={"ok": False, "core_health": "DEGRADED", "reason": "observability_probe_failed", "checks": checks},
+            )
+
+        return {
+            "ok": True,
+            "core_health": "HEALTHY",
+            "backend": getattr(runtime.db, "backend_name", "unknown"),
+            "build_sha": resolved_product_info["build_sha"],
+            "checks": checks,
+        }
+
+    @app.get('/browser/home-summary')
+    def browser_home_summary(request: Request):
+        _, principal = browser_principal(request)
+        readiness = ready()
+        if isinstance(readiness, JSONResponse):
+            readiness_payload = json.loads(readiness.body.decode("utf-8"))
+        else:
+            readiness_payload = readiness
+        return product.home_summary(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+            core_health=str(readiness_payload.get("core_health") or "UNKNOWN"),
+        )
+
+    @app.get('/browser/github')
+    def browser_github(request: Request):
+        _, principal = browser_principal(request)
+        return product.github_summary(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    @app.get('/browser/github/bindings/{binding_id}/readiness')
+    def browser_github_binding_readiness(binding_id: str, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            return product.github_binding_readiness(
+                principal.actor_id,
+                binding_id,
+                build_sha=resolved_product_info["build_sha"],
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(
+                status_code=404, detail="repository binding not found"
+            ) from exc
+
+    @app.get('/browser/packages')
+    def browser_packages(request: Request):
+        _, principal = browser_principal(request)
+        return product.packages_summary(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    @app.get('/browser/projects/{project_id}/packages')
+    def browser_project_packages(project_id: str, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_project_access(
+                principal.actor_id, project_id, "VIEW"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        return product.project_packages(
+            principal.actor_id,
+            project_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    @app.get('/browser/projects-index')
+    def browser_projects_index(request: Request):
+        _, principal = browser_principal(request)
+        return product.projects_index(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    @app.get('/browser/projects/{project_id}/overview')
+    def browser_project_overview(project_id: str, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_project_access(
+                principal.actor_id, project_id, "VIEW"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        return product.project_overview(
+            principal.actor_id,
+            project_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    def browser_project_phase(
+        project_id: str,
+        phase_execution_id: str,
+        actor_id: str,
+    ):
+        try:
+            runtime.tenancy.require_project_access(actor_id, project_id, "VIEW")
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        row = runtime.db.one(
+            "SELECT o.project_id FROM phase_executions p "
+            "JOIN orchestrations o ON o.orchestration_id=p.orchestration_id "
+            "WHERE p.phase_execution_id=?",
+            (phase_execution_id,),
+        )
+        if not row or row["project_id"] != project_id:
+            raise HTTPException(status_code=404, detail="phase execution not found")
+        return row
+
+    @app.get('/browser/projects/{project_id}/execution')
+    def browser_project_execution(project_id: str, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_project_access(
+                principal.actor_id, project_id, "VIEW"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        return product.project_execution(
+            principal.actor_id,
+            project_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    @app.get('/browser/projects/{project_id}/execution/orchestrations/{orchestration_id}/report')
+    def browser_project_execution_report(
+        project_id: str,
+        orchestration_id: str,
+        request: Request,
+    ):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_project_access(
+                principal.actor_id, project_id, "VIEW"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        try:
+            return product.project_execution_report(
+                principal.actor_id,
+                project_id,
+                orchestration_id,
+                build_sha=resolved_product_info["build_sha"],
+            )
+        except NotFound as exc:
+            raise HTTPException(
+                status_code=404, detail="orchestration not found"
+            ) from exc
+
+    @app.get('/browser/projects/{project_id}/execution/phases/{phase_execution_id}')
+    def browser_project_phase_execution(
+        project_id: str,
+        phase_execution_id: str,
+        request: Request,
+    ):
+        _, principal = browser_principal(request)
+        browser_project_phase(project_id, phase_execution_id, principal.actor_id)
+        return product.project_phase_execution(
+            principal.actor_id,
+            project_id,
+            phase_execution_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    @app.post('/browser/projects/{project_id}/execution/phases/{phase_execution_id}/recovery-proposals/{proposal_id}/decision')
+    def browser_project_recovery_decision(
+        project_id: str,
+        phase_execution_id: str,
+        proposal_id: str,
+        body: RecoveryDecisionBody,
+        request: Request,
+    ):
+        _, principal = browser_principal(request)
+        browser_project_phase(
+            project_id, phase_execution_id, principal.actor_id
+        )
+        proposal = runtime.db.one(
+            "SELECT r.proposal_id,r.status,p.phase_execution_id,x.project_id "
+            "FROM phase_recovery_proposals r "
+            "JOIN phase_problem_records p ON p.problem_id=r.problem_id "
+            "JOIN phase_execution_protocols x "
+            "ON x.phase_execution_id=p.phase_execution_id "
+            "WHERE r.proposal_id=?",
+            (proposal_id,),
+        )
+        if (
+            not proposal
+            or proposal["project_id"] != project_id
+            or proposal["phase_execution_id"] != phase_execution_id
+        ):
+            raise HTTPException(
+                status_code=404, detail="recovery proposal not found"
+            )
+        decision_id = runtime.agent_protocol.decide_recovery(
+            proposal_id,
+            principal.actor_id,
+            body.decision,
+            reason=body.reason,
+        )
+        updated = runtime.db.one(
+            "SELECT r.status,x.status AS protocol_status "
+            "FROM phase_recovery_proposals r "
+            "JOIN phase_problem_records p ON p.problem_id=r.problem_id "
+            "JOIN phase_execution_protocols x "
+            "ON x.phase_execution_id=p.phase_execution_id "
+            "WHERE r.proposal_id=?",
+            (proposal_id,),
+        )
+        return {
+            "project_id": project_id,
+            "phase_execution_id": phase_execution_id,
+            "proposal_id": proposal_id,
+            "decision_id": decision_id,
+            "decision": body.decision,
+            "proposal_status": updated["status"],
+            "protocol_status": updated["protocol_status"],
+        }
+
+    @app.get('/browser/projects/{project_id}/execution/phases/{phase_execution_id}/events')
+    def browser_project_phase_events(
+        project_id: str,
+        phase_execution_id: str,
+        request: Request,
+    ):
+        _, principal = browser_principal(request)
+        browser_project_phase(project_id, phase_execution_id, principal.actor_id)
+        rows = runtime.db.all(
+            "SELECT event_id,phase_execution_id,stage,event_type,actor_id,message,"
+            "metadata,created_at FROM phase_stage_events "
+            "WHERE phase_execution_id=? ORDER BY created_at,event_id",
+            (phase_execution_id,),
+        )
+        return {
+            "phase_execution_id": phase_execution_id,
+            "events": [
+                {
+                    "event_id": row["event_id"],
+                    "phase_execution_id": row["phase_execution_id"],
+                    "stage": row["stage"],
+                    "event_type": row["event_type"],
+                    "actor_id": row["actor_id"],
+                    "message": row["message"],
+                    "metadata": parse_json(row["metadata"], {}),
+                    "created_at": row["created_at"],
+                }
+                for row in rows
+            ],
+        }
+
+    @app.get('/browser/projects/{project_id}/execution/phases/{phase_execution_id}/events/stream')
+    async def browser_project_phase_event_stream(
+        project_id: str,
+        phase_execution_id: str,
+        request: Request,
+        last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
+        follow: bool = Query(default=True),
+        poll_interval_ms: int = Query(default=500, ge=100, le=5000),
+    ):
+        _, principal = browser_principal(request)
+        browser_project_phase(project_id, phase_execution_id, principal.actor_id)
+
+        async def stream():
+            seen: set[str] = set()
+            if last_event_id:
+                prior = runtime.db.all(
+                    "SELECT event_id FROM phase_stage_events "
+                    "WHERE phase_execution_id=? ORDER BY created_at,event_id",
+                    (phase_execution_id,),
+                )
+                found = False
+                for item in prior:
+                    seen.add(item["event_id"])
+                    if item["event_id"] == last_event_id:
+                        found = True
+                        break
+                if not found:
+                    seen.clear()
+            while True:
+                emitted = False
+                rows = runtime.db.all(
+                    "SELECT event_id,phase_execution_id,stage,event_type,actor_id,"
+                    "message,metadata,created_at FROM phase_stage_events "
+                    "WHERE phase_execution_id=? ORDER BY created_at,event_id",
+                    (phase_execution_id,),
+                )
+                for item in rows:
+                    if item["event_id"] in seen:
+                        continue
+                    payload = {
+                        "event_id": item["event_id"],
+                        "phase_execution_id": item["phase_execution_id"],
+                        "stage": item["stage"],
+                        "event_type": item["event_type"],
+                        "actor_id": item["actor_id"],
+                        "message": item["message"],
+                        "metadata": parse_json(item["metadata"], {}),
+                        "created_at": item["created_at"],
+                    }
+                    yield (
+                        f"id: {item['event_id']}\n"
+                        f"data: {json.dumps(payload, separators=(',', ':'))}\n\n"
+                    )
+                    seen.add(item["event_id"])
+                    emitted = True
+                if not follow:
+                    break
+                phase = runtime.db.one(
+                    "SELECT status FROM phase_executions WHERE phase_execution_id=?",
+                    (phase_execution_id,),
+                )
+                if phase and phase["status"] in {"SUCCEEDED", "FAILED", "SKIPPED"} and not emitted:
+                    break
+                await asyncio.sleep(poll_interval_ms / 1000.0)
+
+        return StreamingResponse(
+            stream(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
+    @app.get('/browser/operations/audit')
+    def browser_operations_audit(request: Request):
+        _, principal = browser_principal(request)
+        return product.operations_audit(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    @app.get('/browser/operations/approvals')
+    def browser_operations_approvals(request: Request):
+        _, principal = browser_principal(request)
+        return product.operations_approvals(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    def browser_pending_proposal(proposal_id: str, actor_id: str, permission: str = "VIEW"):
+        row = runtime.db.one(
+            "SELECT * FROM proposals WHERE proposal_id=?",
+            (proposal_id,),
+        )
+        if not row:
+            raise HTTPException(status_code=404, detail="proposal not found")
+        try:
+            runtime.tenancy.require_project_access(actor_id, row["project_id"], permission)
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="proposal not found") from exc
+        if row["status"] != "PENDING_APPROVAL":
+            raise HTTPException(status_code=409, detail="proposal is not pending approval")
+        return row
+
+    @app.post('/browser/operations/approvals/{proposal_id}/approve')
+    def browser_approve_proposal(proposal_id: str, body: ApprovalBody, request: Request):
+        token, principal = browser_principal(request)
+        browser_pending_proposal(proposal_id, principal.actor_id, "APPROVE")
+        approval_id = runtime.governance.approve_proposal_authenticated(
+            proposal_id, token, body.expected_hash
+        )
+        return {
+            "approval_id": approval_id,
+            "proposal_id": proposal_id,
+            "status": "APPROVED",
+        }
+
+    @app.post('/browser/operations/approvals/{proposal_id}/reject')
+    def browser_reject_proposal(proposal_id: str, body: RejectBody, request: Request):
+        token, principal = browser_principal(request)
+        browser_pending_proposal(proposal_id, principal.actor_id, "APPROVE")
+        reason = (body.reason or "").strip()
+        if not reason:
+            raise HTTPException(status_code=422, detail="rejection reason is required")
+        approval_id = runtime.governance.reject_proposal_authenticated(
+            proposal_id, token, body.expected_hash, reason
+        )
+        return {
+            "approval_id": approval_id,
+            "proposal_id": proposal_id,
+            "status": "REJECTED",
+            "reason": reason,
+        }
+
+    @app.get('/browser/operations/runs')
+    def browser_operations_runs(request: Request):
+        _, principal = browser_principal(request)
+        return product.operations_runs(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    @app.get('/browser/operations/runtime')
+    def browser_operations_runtime(request: Request):
+        _, principal = browser_principal(request)
+        return product.operations_runtime(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    @app.get('/browser/access-summary')
+    def browser_access_summary(request: Request):
+        _, principal = browser_principal(request)
+        result = product.access_summary(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+        result["session"] = {
+            "actor_id": principal.actor_id,
+            "principal_id": principal.principal_id,
+            "auth_method": principal.auth_method,
+            "issued_at": principal.issued_at,
+            "expires_at": principal.expires_at,
+        }
+        return result
+
+    @app.post('/browser/access/tenants')
+    def browser_create_tenant(body: TenantCreateBody, request: Request):
+        _, principal = browser_principal(request)
+        tenant_id = runtime.tenancy.create_tenant(body.name, principal.actor_id)
+        return {
+            "ok": True,
+            "tenant_id": tenant_id,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.post('/browser/access/tenants/{tenant_id}/workspaces')
+    def browser_create_workspace(tenant_id: str, body: WorkspaceCreateBody, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_tenant_access(
+                principal.actor_id, tenant_id, "MANAGE_WORKSPACE"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="tenant not found") from exc
+        workspace_id = runtime.tenancy.create_workspace(
+            tenant_id, body.name, principal.actor_id
+        )
+        return {
+            "ok": True,
+            "workspace_id": workspace_id,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.post('/browser/access/tenants/{tenant_id}/members')
+    def browser_add_tenant_member(tenant_id: str, body: MembershipBody, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_tenant_access(
+                principal.actor_id, tenant_id, "MANAGE_MEMBERS"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="tenant not found") from exc
+        try:
+            runtime.tenancy.add_tenant_member(
+                tenant_id, body.actor_id, body.role, principal.actor_id
+            )
+        except AuthorityDenied as exc:
+            raise HTTPException(status_code=422, detail="actor is not eligible") from exc
+        return {
+            "ok": True,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.delete('/browser/access/tenants/{tenant_id}/members/{actor_id}')
+    def browser_revoke_tenant_member(tenant_id: str, actor_id: str, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_tenant_access(
+                principal.actor_id, tenant_id, "MANAGE_MEMBERS"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="tenant not found") from exc
+        membership = runtime.db.one(
+            "SELECT status FROM tenant_memberships WHERE tenant_id=? AND actor_id=?",
+            (tenant_id, actor_id),
+        )
+        if not membership or membership["status"] != "ACTIVE":
+            raise HTTPException(status_code=422, detail="active tenant membership not found")
+        runtime.tenancy.revoke_tenant_member(
+            tenant_id, actor_id, principal.actor_id
+        )
+        return {
+            "ok": True,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.post('/browser/access/workspaces/{workspace_id}/members')
+    def browser_add_workspace_member(workspace_id: str, body: MembershipBody, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_workspace_access(
+                principal.actor_id, workspace_id, "MANAGE_MEMBERS"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="workspace not found") from exc
+        try:
+            runtime.tenancy.add_workspace_member(
+                workspace_id, body.actor_id, body.role, principal.actor_id
+            )
+        except AuthorityDenied as exc:
+            raise HTTPException(status_code=422, detail="actor is not eligible") from exc
+        return {
+            "ok": True,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.delete('/browser/access/workspaces/{workspace_id}/members/{actor_id}')
+    def browser_revoke_workspace_member(workspace_id: str, actor_id: str, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_workspace_access(
+                principal.actor_id, workspace_id, "MANAGE_MEMBERS"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="workspace not found") from exc
+        membership = runtime.db.one(
+            "SELECT status FROM workspace_memberships WHERE workspace_id=? AND actor_id=?",
+            (workspace_id, actor_id),
+        )
+        if not membership or membership["status"] != "ACTIVE":
+            raise HTTPException(status_code=422, detail="active workspace membership not found")
+        runtime.tenancy.revoke_workspace_member(
+            workspace_id, actor_id, principal.actor_id
+        )
+        return {
+            "ok": True,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.post('/browser/access/projects/{project_id}/members')
+    def browser_add_project_member(project_id: str, body: MembershipBody, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_project_access(
+                principal.actor_id, project_id, "MANAGE_MEMBERS"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        try:
+            runtime.tenancy.add_project_member(
+                project_id, body.actor_id, body.role, principal.actor_id
+            )
+        except AuthorityDenied as exc:
+            raise HTTPException(status_code=422, detail="actor is not eligible") from exc
+        return {
+            "ok": True,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.delete('/browser/access/projects/{project_id}/members/{actor_id}')
+    def browser_revoke_project_member(project_id: str, actor_id: str, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_project_access(
+                principal.actor_id, project_id, "MANAGE_MEMBERS"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        membership = runtime.db.one(
+            "SELECT status FROM project_memberships WHERE project_id=? AND actor_id=?",
+            (project_id, actor_id),
+        )
+        if not membership or membership["status"] != "ACTIVE":
+            raise HTTPException(status_code=422, detail="active project membership not found")
+        runtime.tenancy.revoke_project_member(
+            project_id, actor_id, principal.actor_id
+        )
+        return {
+            "ok": True,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.get('/browser/projects/create-options')
+    def browser_project_create_options(request: Request):
+        _, principal = browser_principal(request)
+        return product.project_create_options(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    @app.post('/browser/projects')
+    def browser_create_project(body: BrowserProjectCreateBody, request: Request):
+        _, principal = browser_principal(request)
+        workspace = runtime.db.one(
+            "SELECT workspace_id,tenant_id FROM workspaces "
+            "WHERE workspace_id=? AND status='ACTIVE'",
+            (body.workspace_id,),
+        )
+        if not workspace:
+            raise HTTPException(status_code=404, detail="workspace not found")
+        try:
+            runtime.tenancy.require_workspace_access(
+                principal.actor_id, body.workspace_id, "MANAGE_PROJECT"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="workspace not found") from exc
+
+        name = (body.name or "").strip()
+        if not name:
+            raise HTTPException(status_code=422, detail="project name is required")
+
+        if body.domain_revision_id:
+            eligible = runtime.db.one(
+                "SELECT r.revision_id FROM domain_package_revisions r "
+                "JOIN domain_packages p ON p.package_id=r.package_id "
+                "WHERE r.revision_id=? AND r.status='PUBLISHED' "
+                "AND p.status='ACTIVE' AND p.tenant_id=?",
+                (body.domain_revision_id, workspace["tenant_id"]),
+            )
+            if not eligible:
+                raise HTTPException(
+                    status_code=422,
+                    detail="domain revision is not eligible for selected workspace",
+                )
+
+        project_id = runtime.create_scoped_project(
+            name,
+            workspace["tenant_id"],
+            body.workspace_id,
+            principal.actor_id,
+            domain_revision_id=body.domain_revision_id,
+        )
+        project_row = next(
+            row for row in product.projects_index(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            )["projects"]
+            if row["project_id"] == project_id
+        )
+        return {
+            "ok": True,
+            "project": project_row,
+            "destination": f"/app/projects/{project_id}/overview",
+        }
 
     @app.get('/projects/{project_id}/audit')
     def audit(project_id: str, authorization: str | None = Header(default=None)):
@@ -367,13 +1212,9 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
 
     @app.get('/product/meta')
     def product_meta():
-        return {
-            "product": "GWR Research Product Alpha",
-            "version": "0.8.5",
-            "domain_id": runtime.domain.domain_id,
-            "backend": getattr(runtime.db, "backend_name", "unknown"),
-            "capabilities": ["domain_sdk", "domain_registry", "research_study_lock", "software_delivery_domain", "linear_domain_orchestration", "pilot_profiles", "one_click_windows_install", "project_lifecycle", "project_archive", "skill_registry", "observable_agent_protocol", "protocol_driven_orchestration", "handoff_chain", "live_operational_events", "recovery_configuration_hierarchy", "auto_recovery", "human_recovery_approval", "plugin_registry", "github_sha_safe_commit", "standard_sha_qa", "process_inspector", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"],
-        }
+        result = dict(resolved_product_info)
+        result["capabilities"] = ["domain_sdk", "domain_registry", "research_study_lock", "software_delivery_domain", "linear_domain_orchestration", "pilot_profiles", "one_click_windows_install", "project_lifecycle", "project_archive", "skill_registry", "observable_agent_protocol", "protocol_driven_orchestration", "handoff_chain", "live_operational_events", "recovery_configuration_hierarchy", "auto_recovery", "human_recovery_approval", "plugin_registry", "github_sha_safe_commit", "standard_sha_qa", "process_inspector", "project_dashboard", "human_approval", "failure_recovery", "distributed_runtime"]
+        return result
 
     @app.get('/product/domains/current')
     def current_domain(authorization: str = Header(...)):
@@ -762,5 +1603,38 @@ def create_app(runtime: GovernedWorkflowRuntime) -> FastAPI:
     def product_distributed(project_id: str, authorization: str = Header(...)):
         project_principal(project_id, authorization, "VIEW")
         return product.distributed(project_id)
+
+    if web_root is not None:
+        static_root = Path(web_root).resolve()
+        index_file = static_root / "index.html"
+        app_js = static_root / "app.js"
+        styles_css = static_root / "styles.css"
+        for required in (index_file, app_js, styles_css):
+            if not required.is_file():
+                raise RuntimeError(f"Required browser shell asset missing: {required}")
+
+        @app.get('/', include_in_schema=False)
+        def root_redirect():
+            return RedirectResponse(url="/app", status_code=307)
+
+        @app.get('/app', include_in_schema=False)
+        @app.get('/app/', include_in_schema=False)
+        def browser_app():
+            return FileResponse(index_file, media_type="text/html")
+
+        @app.get('/app/{path:path}', include_in_schema=False)
+        def browser_app_deep_link(path: str):
+            root_segment = path.strip('/').split('/', 1)[0] if path.strip('/') else ""
+            if root_segment not in {"home", "projects", "operations", "research", "system", "shared-library", "agents"}:
+                raise HTTPException(status_code=404, detail="browser route not found")
+            return FileResponse(index_file, media_type="text/html")
+
+        @app.get('/assets/app.js', include_in_schema=False)
+        def browser_app_js():
+            return FileResponse(app_js, media_type="text/javascript")
+
+        @app.get('/assets/styles.css', include_in_schema=False)
+        def browser_styles():
+            return FileResponse(styles_css, media_type="text/css")
 
     return app

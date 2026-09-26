@@ -191,11 +191,15 @@ def main():
             all(
                 token in installer
                 for token in (
-                    '"pip", "install", "-e", ".[dev,postgres]"',
+                    "[switch]$Qualification",
+                    '$InstallTarget = if ($QualificationMode) { ".[dev,postgres]" } else { "." }',
                     '"tools/gwr_domain.py", "validate", "domains/research.workflow.yaml"',
                     '"tools/gwr_domain.py", "validate", "domains/software.workflow.yaml"',
                     '"tools/gwr_pilot.py", "validate", "pilots/cqg.research.yaml"',
                     '"tools/gwr_pilot.py", "validate", "pilots/gwf.self-upgrade.yaml"',
+                    'if ($QualificationMode -and -not $SkipTests)',
+                    'if ($QualificationMode -and -not $SkipUat)',
+                    "timings_seconds = $Timings",
                     "install-report.json",
                     "dsn_persisted = $false",
                 )

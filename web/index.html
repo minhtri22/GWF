@@ -1,97 +1,1018 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="system">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="color-scheme" content="dark light" />
-  <title>GWR v0.8.2 UAT</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="gwr-shell-maturity" content="LIVE FOUNDATION">
+  <title>GWF — Governed Knowledge Studio</title>
+  <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
-<div class="shell">
-  <aside class="sidebar">
-    <div class="brand"><div class="brand-mark">G</div><div><strong>GWR</strong><span>v0.8.2 UAT</span></div></div>
-    <label class="field"><span>Project</span><select id="projectSelect"></select></label>
-    <button id="newProjectBtn" class="primary">+ New Project</button>
-    <nav id="nav">
-      <button class="nav-item active" data-view="dashboard">Dashboard</button>
-      <button class="nav-item" data-view="process">Process Inspector</button>
-      <button class="nav-item" data-view="approvals">Approvals <span class="count" id="approvalCount">0</span></button>
-      <button class="nav-item" data-view="recovery">Failure & recovery</button>
-      <button class="nav-item" data-view="distributed">Distributed runtime</button>
-      <button class="nav-item" data-view="domains">Domain Registry</button>
-    </nav>
-    <div class="side-note"><strong>Static UAT mode</strong><p>Lifecycle mutations are simulated in browser localStorage. They never mutate GWR authoritative backend state.</p></div>
-  </aside>
-
-  <main>
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Operator console</p>
-        <h1 id="projectTitle">Loading…</h1>
-        <div class="meta-line"><span id="projectStatus" class="badge">—</span><span id="projectScope">—</span></div>
+  <div id="loginView" class="login-layout">
+    <section class="login-brand">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true">G</div>
+        <div class="brand-copy"><strong>GWF</strong><span>Governed Knowledge Workflow</span></div>
       </div>
-      <div class="top-actions">
-        <span class="live-dot"><i></i> UAT fixture</span>
-        <button id="renameProjectBtn" class="ghost">Rename project</button>
-        <button id="archiveProjectBtn" class="ghost">Archive project</button>
-        <button id="newDomainBtn" class="ghost">+ New Domain</button>
-        <button id="resetUat" class="ghost">Reset UAT</button>
+      <div class="login-copy">
+        <p class="eyebrow">Research operations · governed execution</p>
+        <h1>Governed Knowledge Studio</h1>
+        <p>Traceable research work, exact identity, evidence, approvals and recovery — without turning the browser into a second source of truth.</p>
       </div>
-    </header>
-
-    <section class="view active" id="view-dashboard">
-      <div class="metrics" id="metrics"></div>
-      <div class="grid two">
-        <article class="panel"><div class="panel-head"><div><p class="eyebrow">Research execution</p><h2>Phase timeline</h2></div><span id="phaseSummary" class="subtle"></span></div><div id="phaseTimeline" class="timeline"></div></article>
-        <article class="panel"><div class="panel-head"><div><p class="eyebrow">Current attention</p><h2>Operator queue</h2></div></div><div id="attentionQueue"></div></article>
-      </div>
-      <article class="panel"><div class="panel-head"><div><p class="eyebrow">Domain pin</p><h2>Immutable project domain revision</h2></div></div><div id="domainPin"></div></article>
-      <article class="panel"><div class="panel-head"><div><p class="eyebrow">Research state</p><h2>Artifact validity frontier</h2></div></div><div id="frontier" class="frontier"></div></article>
+      <div class="foundation-note"><span class="status-dot"></span><span>Browser foundation · BPS-I00</span></div>
     </section>
 
-    <section class="view" id="view-process">
-      <div class="grid two">
-        <article class="panel"><div class="panel-head"><div><p class="eyebrow">Current process</p><h2 id="currentPhaseTitle">—</h2></div><span id="aiWorkingLegend" class="ai-working"><i class="breathing-dot"></i> AI Working</span></div><div id="currentPhaseCard"></div></article>
-        <article class="panel"><div class="panel-head"><div><p class="eyebrow">Lineage</p><h2>Generation & recovery</h2></div></div><div id="lineageCard"></div></article>
+    <section class="login-panel">
+      <form id="loginForm" class="auth-card">
+        <p class="eyebrow">Canonical product server</p>
+        <h2>Sign in</h2>
+        <p class="muted">Authentication is handled by the live GWF runtime. Credentials and reusable session tokens are never stored in browser local storage.</p>
+        <label>Username<input id="username" autocomplete="username" required></label>
+        <label>Password<input id="password" type="password" autocomplete="current-password" required></label>
+        <button class="primary wide" type="submit">Sign in</button>
+        <p id="loginError" class="form-error" role="alert"></p>
+        <div id="loginProduct" class="product-fingerprint"></div>
+      </form>
+    </section>
+  </div>
+
+  <div id="appView" class="app-shell" hidden>
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-head">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">G</div>
+          <div class="brand-copy"><strong>GWF</strong><span>Governed Knowledge Workflow</span></div>
+        </div>
+        <button id="sidebarToggle" class="icon-button sidebar-toggle" type="button" aria-label="Collapse sidebar" title="Collapse sidebar"></button>
       </div>
-      <article class="panel">
-        <div class="panel-head"><div><p class="eyebrow">Process history</p><h2>All phase executions</h2></div><span class="subtle">Click a phase to inspect results and logs</span></div>
-        <div id="processHistory" class="table-wrap"></div>
-      </article>
-      <article class="panel"><div class="panel-head"><div><p class="eyebrow">Project audit</p><h2>Recent process events</h2></div></div><div id="processLog" class="table-wrap"></div></article>
-    </section>
 
-    <section class="view" id="view-approvals"><article class="panel"><div class="panel-head"><div><p class="eyebrow">Human authority</p><h2>Pending approvals</h2></div><span class="subtle">Exact proposal hash required</span></div><div id="approvalList" class="cards"></div></article></section>
+      <nav id="mainNav" class="main-nav" aria-label="Primary navigation"></nav>
 
-    <section class="view" id="view-recovery">
-      <article class="panel"><div class="panel-head"><div><p class="eyebrow">Failure topology</p><h2>Detection → root → recovery → resume</h2></div></div><div id="recoveryGraph" class="recovery-graph"></div></article>
-      <article class="panel"><div class="panel-head"><div><p class="eyebrow">Failure records</p><h2>Evidence & recovery plans</h2></div></div><div id="failureList" class="cards"></div></article>
-    </section>
+      <div class="sidebar-foot">
+        <div class="foundation-id">
+          <span id="healthDot" class="health-dot"></span>
+          <div class="brand-copy">
+            <strong>BPS-I00</strong>
+            <small id="foundationBuild">Loading build…</small>
+          </div>
+        </div>
+      </div>
+    </aside>
 
-    <section class="view" id="view-distributed"><div class="grid two"><article class="panel"><div class="panel-head"><div><p class="eyebrow">Scheduler</p><h2>Distributed jobs</h2></div></div><div id="jobTable" class="table-wrap"></div></article><article class="panel"><div class="panel-head"><div><p class="eyebrow">Workers</p><h2>Lease & capacity</h2></div></div><div id="workerList" class="cards compact"></div></article></div></section>
+    <div class="workspace">
+      <header class="topbar">
+        <button id="mobileMenu" class="icon-button mobile-only" type="button" aria-label="Open navigation"></button>
 
-    <section class="view" id="view-domains">
-      <article class="panel">
-        <div class="panel-head"><div><p class="eyebrow">Domain lifecycle</p><h2>Domain Registry</h2></div><button id="newDomainBtn2" class="primary">+ New Domain</button></div>
-        <p class="subtle">Create → add YAML revision → validate → publish. UAT mutations are local only.</p>
-        <div id="domainRegistry" class="cards"></div>
-      </article>
-      <article class="panel"><div class="panel-head"><div><p class="eyebrow">Domain SDK</p><h2>Production commands</h2></div></div><pre class="code">python tools/gwr_domain.py validate domains/research.workflow.yaml
-python tools/gwr_domain.py inspect domains/research.workflow.yaml
-python tools/gwr_domain.py scaffold my.domain --out my.workflow.yaml</pre></article>
-    </section>
-  </main>
-</div>
+        <button class="command-search" type="button" disabled aria-disabled="true" title="Global authoritative search is not enabled yet. Use the Projects page filter for the live project index.">
+          <span id="searchIcon" class="toolbar-icon" aria-hidden="true"></span>
+          <span>Search projects, documents, artifacts…</span>
+        </button>
 
-<dialog id="approvalDialog"><form method="dialog" class="dialog-card"><button class="dialog-close" value="cancel">×</button><p class="eyebrow">Human approval review</p><h2 id="dialogTitle"></h2><div class="review-grid"><div><span class="label">Action</span><strong id="dialogAction"></strong></div><div><span class="label">Policy</span><strong id="dialogPolicy"></strong></div></div><label class="label">Exact payload hash</label><code id="dialogHash" class="hash"></code><label class="label">Frozen payload</label><pre id="dialogPayload" class="payload"></pre><div class="decision-row"><button type="button" class="danger" id="rejectBtn">Reject</button><button type="button" class="primary" id="approveBtn">Approve exact hash</button></div><p class="dialog-note">UAT simulation only.</p></form></dialog>
+        <div class="top-actions">
+          <div class="theme-switch" role="group" aria-label="Theme">
+            <button type="button" data-theme-option="light" aria-label="Use Light theme" title="Light"></button>
+            <button type="button" data-theme-option="system" aria-label="Use System theme" title="System"></button>
+            <button type="button" data-theme-option="dark" aria-label="Use Dark theme" title="Dark"></button>
+          </div>
+          <button class="icon-button quiet-action" type="button" title="Open Attention Required on Home" id="notificationButton"></button>
+          <div class="actor-menu-wrap">
+            <button id="actorMenuButton" class="actor-chip" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="actorMenu" title="Session and actor information">
+              <span class="avatar" id="actorInitial">?</span>
+              <span><strong id="actorName">—</strong><small id="authMethod">—</small></span>
+            </button>
+            <div id="actorMenu" class="actor-menu" role="menu" hidden>
+              <div class="actor-menu-head"><strong>Current session</strong><span>Authoritative identity</span></div>
+              <dl class="actor-menu-facts">
+                <div><dt>Principal</dt><dd id="actorMenuPrincipal">—</dd></div>
+                <div><dt>Actor ID</dt><dd><code id="actorMenuActorId">—</code></dd></div>
+                <div><dt>Auth</dt><dd id="actorMenuAuth">—</dd></div>
+                <div><dt>Expires</dt><dd id="actorMenuExpires">—</dd></div>
+                <div><dt>Memberships</dt><dd id="actorMenuMemberships">—</dd></div>
+              </dl>
+            </div>
+          </div>
+          <button id="logoutButton" class="ghost">Sign out</button>
+        </div>
+      </header>
 
-<dialog id="domainDialog"><form method="dialog" class="dialog-card" id="domainForm"><button class="dialog-close" value="cancel">×</button><p class="eyebrow">Domain lifecycle</p><h2>Create Domain Package</h2><label class="label">Domain ID</label><input id="domainIdInput" required placeholder="my.domain" /><label class="label">Display name</label><input id="domainNameInput" required placeholder="My Domain" /><label class="label">YAML revision</label><textarea id="domainYamlInput" rows="12"></textarea><div class="decision-row"><button value="cancel" class="ghost">Cancel</button><button type="button" class="primary" id="saveDomainBtn">Create & validate</button></div><p class="dialog-note">Static UAT stores package/revision in localStorage only.</p></form></dialog>
+      <main class="content">
+        <section id="homeRouteView" class="home-page" hidden>
+          <section class="home-hero">
+            <div>
+              <p class="eyebrow">Operational command dashboard</p>
+              <h1>Home</h1>
+              <p>What is GWF doing right now, and what needs your attention?</p>
+            </div>
+            <div class="home-hero-actions">
+              <span id="homeScopeBadge" class="scope-badge">All authorized projects</span>
+              <button id="homeRefreshButton" class="text-button" type="button">Refresh</button>
+            </div>
+          </section>
 
-<dialog id="projectDialog"><form method="dialog" class="dialog-card"><button class="dialog-close" value="cancel">×</button><p class="eyebrow">Project lifecycle</p><h2>New Project</h2><label class="label">Project name</label><input id="projectNameInput" required placeholder="My Research Project" /><label class="label">Workspace</label><input id="projectWorkspaceInput" value="UAT Workspace" /><label class="label">Published domain revision</label><select id="projectDomainSelect"></select><div class="decision-row"><button value="cancel" class="ghost">Cancel</button><button type="button" class="primary" id="createProjectBtn">Create Project</button></div><p class="dialog-note">The selected revision is pinned immutably in this UAT simulation.</p></form></dialog>
+          <div id="homeStateBanner" class="home-state-banner" hidden></div>
 
-<dialog id="phaseDialog"><form method="dialog" class="dialog-card phase-dialog"><button class="dialog-close" value="cancel">×</button><p class="eyebrow">Phase Inspector</p><h2 id="phaseDialogTitle">Phase Inspector</h2><div class="protocol-toolbar"><span class="label" style="margin:0">Recovery mode</span><select id="recoveryModeSelect"><option value="AUTO">AUTO</option><option value="HUMAN_APPROVE">HUMAN APPROVE</option></select><button type="button" class="danger" id="simulateIssueBtn">Simulate issue</button><button type="button" class="primary" id="approveRecoveryBtn" hidden>Approve recovery</button><button type="button" class="ghost" id="rejectRecoveryBtn" hidden>Reject recovery</button></div><div id="phaseInspector"></div></form></dialog>
+          <section id="homeKpis" class="home-kpi-grid" aria-label="Home operational metrics"></section>
 
-<script src="./app.js"></script>
+          <section class="home-primary-grid">
+            <article class="panel home-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Execution activity</p>
+                  <h2>Executing Projects</h2>
+                </div>
+                <span id="executingProjectsCount" class="panel-count">0</span>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead><tr><th>Project</th><th>Lifecycle / activity</th><th>Domain</th><th>Current phase</th><th>Actor</th><th>Run</th><th>Latest event</th><th>Attention</th></tr></thead>
+                  <tbody id="executingProjectsBody"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <article id="homeAttentionPanel" class="panel home-panel attention-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Operator queue</p>
+                  <h2>Attention Required</h2>
+                </div>
+                <span id="homeAttentionCount" class="panel-count">0</span>
+              </div>
+              <div id="homeAttentionList" class="home-feed"></div>
+            </article>
+          </section>
+
+          <section class="home-secondary-grid">
+            <article class="panel home-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Runtime</p>
+                  <h2>Live Runs / Executions</h2>
+                </div>
+                <span id="liveRunsCount" class="panel-count">0</span>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table compact">
+                  <thead><tr><th>Run</th><th>Project</th><th>Workunit / phase</th><th>Started / duration</th><th>Actor</th><th>Latest event</th></tr></thead>
+                  <tbody id="liveRunsBody"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="panel home-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Authoritative event feed</p>
+                  <h2>Recent Activity</h2>
+                </div>
+              </div>
+              <div id="recentActivityList" class="home-feed activity-feed"></div>
+            </article>
+          </section>
+
+          <div class="home-footnote">
+            <span>Projection</span><code id="homeGeneratedAt">—</code>
+            <span>Build</span><code id="homeBuildSha">—</code>
+          </div>
+        </section>
+
+        <section id="projectsRouteView" class="projects-page" hidden>
+          <section class="projects-hero">
+            <div>
+              <p class="eyebrow">Authorized project registry</p>
+              <h1>Projects</h1>
+              <p>Browse governed projects you are authorized to view. Lifecycle and execution activity are shown separately.</p>
+            </div>
+            <div class="projects-hero-actions">
+              <span id="projectsScopeBadge" class="scope-badge">All authorized projects</span>
+              <button id="projectsRefreshButton" class="text-button" type="button">Refresh</button>
+            </div>
+          </section>
+
+          <div id="projectsStateBanner" class="home-state-banner" hidden></div>
+
+          <section class="panel projects-filter-panel" aria-label="Projects filters">
+            <div class="projects-filter-grid">
+              <label class="projects-filter search-filter">
+                <span>Page filter</span>
+                <input id="projectsTextFilter" type="search" placeholder="Name or exact project ID" autocomplete="off">
+              </label>
+              <label class="projects-filter">
+                <span>Lifecycle</span>
+                <select id="projectsLifecycleFilter">
+                  <option value="">All lifecycle</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="ARCHIVING">Archiving</option>
+                  <option value="ARCHIVED">Archived</option>
+                </select>
+              </label>
+              <label class="projects-filter">
+                <span>Tenant</span>
+                <select id="projectsTenantFilter"><option value="">All tenants</option></select>
+              </label>
+              <label class="projects-filter">
+                <span>Workspace</span>
+                <select id="projectsWorkspaceFilter"><option value="">All workspaces</option></select>
+              </label>
+              <label class="projects-filter">
+                <span>Domain</span>
+                <select id="projectsDomainFilter"><option value="">All domains</option></select>
+              </label>
+              <label class="projects-filter">
+                <span>Activity</span>
+                <select id="projectsActivityFilter">
+                  <option value="">All activity</option>
+                  <option value="EXECUTING">Executing</option>
+                  <option value="PAUSED">Paused</option>
+                  <option value="QUEUED">Queued</option>
+                  <option value="IDLE">Idle</option>
+                </select>
+              </label>
+              <label class="projects-filter">
+                <span>Attention</span>
+                <select id="projectsAttentionFilter">
+                  <option value="">All</option>
+                  <option value="required">Attention required</option>
+                  <option value="clear">No attention</option>
+                </select>
+              </label>
+              <button id="projectsResetFiltersButton" class="ghost projects-reset" type="button">Reset filters</button>
+            </div>
+          </section>
+
+          <section class="panel projects-list-panel">
+            <div class="panel-head projects-list-head">
+              <div>
+                <p class="eyebrow">Governed scope</p>
+                <h2>Authorized Projects</h2>
+              </div>
+              <div class="projects-result-count"><strong id="projectsVisibleCount">0</strong><span>visible</span></div>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table projects-table">
+                <thead>
+                  <tr>
+                    <th>Project</th>
+                    <th>Tenant / workspace</th>
+                    <th>Lifecycle / activity</th>
+                    <th>Domain package / revision</th>
+                    <th>Runs / jobs</th>
+                    <th>Approvals / attention</th>
+                    <th>Last authoritative event</th>
+                    <th>Created</th>
+                  </tr>
+                </thead>
+                <tbody id="projectsTableBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <div class="home-footnote">
+            <span>Projection</span><code id="projectsGeneratedAt">—</code>
+            <span>Build</span><code id="projectsBuildSha">—</code>
+          </div>
+        </section>
+
+        <section id="projectWorkspaceView" class="project-workspace" hidden>
+          <section class="project-workspace-header">
+            <div class="project-workspace-topline">
+              <button id="projectBackButton" class="text-button" type="button">← Projects</button>
+              <span id="projectWorkspaceBreadcrumb" class="project-breadcrumb">Projects / — / Overview</span>
+              <button id="projectOverviewRefreshButton" class="text-button" type="button">Refresh</button>
+            </div>
+            <div class="project-workspace-title">
+              <div>
+                <p class="eyebrow">Project workspace</p>
+                <h1 id="projectWorkspaceName">Project</h1>
+                <code id="projectWorkspaceId">—</code>
+              </div>
+              <div class="project-header-states">
+                <span id="projectWorkspaceLifecycle" class="scope-badge">Lifecycle —</span>
+                <span id="projectWorkspaceActivity" class="scope-badge">Activity —</span>
+              </div>
+            </div>
+            <div class="project-header-context">
+              <div><span>Tenant / workspace</span><strong id="projectWorkspaceScopeName">—</strong><code id="projectWorkspaceScopeIds">—</code></div>
+              <div><span>Pinned Domain</span><strong id="projectWorkspaceDomainName">—</strong><code id="projectWorkspaceDomainId">—</code></div>
+            </div>
+          </section>
+
+          <nav class="project-local-nav" aria-label="Project workspace">
+            <button type="button" data-project-section="overview"><span>Overview</span><small>Live</small></button>
+            <button type="button" data-project-section="execution"><span>Execution</span><small>Live</small></button>
+            <button type="button" data-project-section="library"><span>Library</span><small>Locked</small></button>
+            <button type="button" data-project-section="governance"><span>Governance</span><small>Locked</small></button>
+            <button type="button" data-project-section="configuration"><span>Configuration</span><small>Locked</small></button>
+          </nav>
+
+          <div id="projectOverviewStateBanner" class="home-state-banner" hidden></div>
+
+          <section id="projectOverviewLiveView" class="project-overview">
+            <section id="projectOverviewSummary" class="project-overview-summary" aria-label="Project overview summary"></section>
+
+            <section class="project-overview-primary">
+              <article class="panel project-overview-panel">
+                <div class="panel-head"><div><p class="eyebrow">Operator attention</p><h2>Approvals & recovery</h2></div></div>
+                <div id="projectOverviewAttention" class="home-feed"></div>
+              </article>
+              <article class="panel project-overview-panel">
+                <div class="panel-head"><div><p class="eyebrow">Knowledge transfer</p><h2>Latest handoff</h2></div></div>
+                <div id="projectOverviewHandoff"></div>
+              </article>
+            </section>
+
+            <section class="panel project-overview-panel">
+              <div class="panel-head"><div><p class="eyebrow">Bound configuration</p><h2>Project configuration summary</h2></div></div>
+              <div id="projectOverviewConfiguration" class="project-config-grid"></div>
+            </section>
+
+            <section class="panel project-overview-panel">
+              <div class="panel-head"><div><p class="eyebrow">Authoritative project events</p><h2>Recent activity</h2></div></div>
+              <div id="projectOverviewActivityFeed" class="home-feed"></div>
+            </section>
+
+            <div class="home-footnote">
+              <span>Projection</span><code id="projectOverviewGeneratedAt">—</code>
+              <span>Build</span><code id="projectOverviewBuildSha">—</code>
+            </div>
+          </section>
+
+          <section id="projectExecutionLiveView" class="project-execution" hidden>
+            <div class="project-execution-head">
+              <div>
+                <p class="eyebrow">Authoritative execution history</p>
+                <h2>Execution</h2>
+                <p>Inspect persisted orchestration, phase, WorkUnit, run, decision, recovery and protocol state.</p>
+              </div>
+              <span id="projectExecutionCount" class="scope-badge">0 orchestrations</span>
+            </div>
+
+            <section class="project-execution-browser">
+              <article class="panel project-execution-nav-panel">
+                <div class="panel-head"><div><p class="eyebrow">History</p><h2>Orchestrations</h2></div></div>
+                <div id="projectExecutionOrchestrations" class="execution-orchestration-list"></div>
+              </article>
+              <article class="panel project-execution-nav-panel">
+                <div class="panel-head"><div><p class="eyebrow">Selected orchestration</p><h2>Phase timeline</h2></div><code id="projectExecutionSelectedOrchestration">—</code></div>
+                <div id="projectExecutionPhases" class="execution-phase-list"></div>
+                <div class="execution-orchestration-history">
+                  <span>Persisted orchestration history</span>
+                  <pre id="projectExecutionOrchestrationHistory">[]</pre>
+                </div>
+              </article>
+            </section>
+
+            <section class="panel project-execution-panel execution-report-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Derived view</p><h2>Final orchestration report</h2></div>
+                <button id="projectExecutionReportButton" class="text-button" type="button">Load selected report</button>
+              </div>
+              <p class="audit-boundary-note">The Markdown report is derived from persisted runtime state. It is not the source of truth.</p>
+              <pre id="projectExecutionReport" class="execution-report">Select an orchestration, then load its derived report.</pre>
+            </section>
+
+            <div id="projectExecutionPhaseState" class="home-state-banner" hidden></div>
+
+            <section id="projectExecutionPhaseEmpty" class="panel project-execution-panel">
+              <div class="feed-empty">Select a persisted phase execution to inspect exact execution state.</div>
+            </section>
+
+            <section id="projectExecutionPhaseInspector" class="project-execution-inspector" hidden>
+              <section id="projectExecutionPhaseSummary" class="project-overview-summary" aria-label="Selected phase summary"></section>
+
+              <section class="project-execution-two-column">
+                <article class="panel project-execution-panel">
+                  <div class="panel-head"><div><p class="eyebrow">Execution contract</p><h2>WorkUnit</h2></div></div>
+                  <div id="projectExecutionWorkunit"></div>
+                </article>
+                <article class="panel project-execution-panel">
+                  <div class="panel-head"><div><p class="eyebrow">Runtime attempt</p><h2>Run</h2></div></div>
+                  <div id="projectExecutionRun"></div>
+                </article>
+              </section>
+
+              <section class="project-execution-two-column">
+                <article class="panel project-execution-panel">
+                  <div class="panel-head"><div><p class="eyebrow">Governed evaluation</p><h2>Gates & decisions</h2></div></div>
+                  <div id="projectExecutionGovernance"></div>
+                </article>
+                <article class="panel project-execution-panel">
+                  <div class="panel-head"><div><p class="eyebrow">Failure semantics</p><h2>Failure, recovery & impact</h2></div></div>
+                  <div id="projectExecutionRecovery"></div>
+                </article>
+              </section>
+
+              <section class="project-execution-two-column">
+                <article class="panel project-execution-panel">
+                  <div class="panel-head"><div><p class="eyebrow">Resume state</p><h2>Checkpoint</h2></div></div>
+                  <div id="projectExecutionCheckpoint"></div>
+                </article>
+                <article class="panel project-execution-panel">
+                  <div class="panel-head"><div><p class="eyebrow">Persisted agent protocol</p><h2>LOAD → COMPLETE</h2></div></div>
+                  <div id="projectExecutionProtocol"></div>
+                </article>
+              </section>
+
+              <section class="project-execution-two-column">
+                <article class="panel project-execution-panel">
+                  <div class="panel-head">
+                    <div><p class="eyebrow">Authoritative timeline</p><h2>Phase events</h2></div>
+                    <span id="projectExecutionEventCount" class="panel-count">0</span>
+                  </div>
+                  <div id="projectExecutionEvents" class="home-feed execution-event-feed"></div>
+                </article>
+                <article class="panel project-execution-panel">
+                  <div class="panel-head">
+                    <div><p class="eyebrow">Transport state</p><h2>Live events</h2></div>
+                    <span id="projectExecutionLiveStatus" class="scope-badge">Not connected</span>
+                  </div>
+                  <div id="projectExecutionLiveEvents" class="home-feed execution-event-feed">
+                    <div class="feed-empty">Select a phase to connect to its live event stream.</div>
+                  </div>
+                </article>
+              </section>
+            </section>
+
+            <div class="home-footnote">
+              <span>Projection</span><code id="projectExecutionGeneratedAt">—</code>
+              <span>Build</span><code id="projectExecutionBuildSha">—</code>
+            </div>
+          </section>
+
+          <section id="projectLocalLockedView" class="route-state-page project-local-locked" hidden>
+            <article class="route-state-card">
+              <div class="route-state-heading"><h1 id="projectLocalLockedTitle">Locked project area</h1><span class="state-pill locked">Locked</span></div>
+              <p id="projectLocalLockedDescription" class="route-state-copy"></p>
+              <div class="route-state-note"><span aria-hidden="true">◈</span><p>This project-local route is real and reload-safe. Its owning module has not been opened here, so no data or action is fabricated.</p></div>
+            </article>
+          </section>
+        </section>
+
+        <section id="packagesRouteView" class="packages-page" hidden>
+          <section class="packages-hero">
+            <div>
+              <p class="eyebrow">Research registry</p>
+              <h1>Packages</h1>
+              <p>Inspect authorized Domain packages, reachable Skill revisions, and exact configured/observed usage.</p>
+            </div>
+            <div class="packages-head-actions">
+              <span id="packagesScopeBadge" class="scope-badge">Authorized packages</span>
+              <button id="packagesRefreshButton" class="text-button" type="button">Refresh</button>
+            </div>
+          </section>
+
+          <nav class="packages-subnav" aria-label="Package registry views">
+            <button type="button" data-packages-tab="domains" class="active"><span>Domains</span><small id="packagesDomainCount">0</small></button>
+            <button type="button" data-packages-tab="skills"><span>Skills</span><small id="packagesSkillCount">0</small></button>
+            <button type="button" data-packages-tab="usage"><span>Usage</span><small id="packagesUsageCount">0</small></button>
+          </nav>
+
+          <div id="packagesStateBanner" class="home-state-banner" hidden></div>
+
+          <section id="packagesDomainsView" class="packages-tab-view">
+            <section class="packages-master-detail">
+              <article class="panel packages-list-panel">
+                <div class="panel-head"><div><p class="eyebrow">Tenant-scoped registry</p><h2>Domain Packages</h2></div></div>
+                <div id="packagesDomainList" class="packages-select-list"></div>
+              </article>
+              <article class="panel packages-detail-panel">
+                <div class="panel-head"><div><p class="eyebrow">Exact package</p><h2 id="packagesDomainDetailTitle">Select a Domain package</h2></div></div>
+                <div id="packagesDomainDetail"><div class="feed-empty">Select an authorized Domain package to inspect its revision history.</div></div>
+              </article>
+            </section>
+          </section>
+
+          <section id="packagesSkillsView" class="packages-tab-view" hidden>
+            <section class="packages-master-detail">
+              <article class="panel packages-list-panel">
+                <div class="panel-head"><div><p class="eyebrow">Authorized reachable registry</p><h2>Skill Packages</h2></div></div>
+                <p class="audit-boundary-note">Skills have no tenant owner in the current schema. This view exposes only revisions reachable through authorized configured bindings or observed project executions.</p>
+                <div id="packagesSkillList" class="packages-select-list"></div>
+              </article>
+              <article class="panel packages-detail-panel">
+                <div class="panel-head"><div><p class="eyebrow">Immutable revisions</p><h2 id="packagesSkillDetailTitle">Select a Skill package</h2></div></div>
+                <div id="packagesSkillDetail"><div class="feed-empty">Select an authorized-reachable Skill package to inspect exact revisions and bindings.</div></div>
+              </article>
+            </section>
+          </section>
+
+          <section id="packagesUsageView" class="packages-tab-view" hidden>
+            <article class="panel packages-usage-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Derived reverse lookup</p><h2>Package → Projects</h2></div>
+                <span class="scope-badge">Read projection only</span>
+              </div>
+              <p class="audit-boundary-note">Domain usage is exact PINNED revision usage. Skill usage preserves CONFIGURED and OBSERVED as separate authoritative bases; no duplicate usage table exists.</p>
+              <div class="table-scroll">
+                <table class="data-table packages-usage-table">
+                  <thead><tr><th>Kind</th><th>Package / revision</th><th>Basis</th><th>Project</th><th>Context</th><th>Integrity</th></tr></thead>
+                  <tbody id="packagesUsageBody"></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+
+          <div class="home-footnote">
+            <span>Projection</span><code id="packagesGeneratedAt">—</code>
+            <span>Build</span><code id="packagesBuildSha">—</code>
+          </div>
+        </section>
+
+        <section id="operationsRouteView" class="operations-page" hidden>
+          <section class="operations-hero">
+            <div>
+              <p class="eyebrow">Cross-project operations</p>
+              <h1>Operations</h1>
+              <p>Inspect authoritative operational state across every project in your current authorized scope.</p>
+            </div>
+          </section>
+
+          <nav class="operations-subnav" aria-label="Operations views">
+            <button type="button" data-operations-route="/app/operations/runs"><span>Runs</span><small>Live</small></button>
+            <button type="button" data-operations-route="/app/operations/approvals"><span>Approvals</span><small>Live</small></button>
+            <button type="button" data-operations-route="/app/operations/audit"><span>Audit</span><small>Live</small></button>
+            <button type="button" data-operations-route="/app/operations/runtime"><span>Runtime</span><small>Live</small></button>
+          </nav>
+
+          <section id="operationsRunsView" class="operations-screen">
+            <div class="operations-screen-head">
+              <div><p class="eyebrow">Execution registry</p><h2>Runs</h2></div>
+              <div class="operations-head-actions">
+                <span id="operationsRunsScope" class="scope-badge">All authorized projects</span>
+                <button id="operationsRunsRefreshButton" class="text-button" type="button">Refresh</button>
+              </div>
+            </div>
+            <div id="operationsRunsStateBanner" class="home-state-banner" hidden></div>
+
+            <section class="panel operations-filter-panel" aria-label="Run filters">
+              <div class="operations-filter-grid">
+                <label class="projects-filter operations-search-filter"><span>Page filter</span><input id="operationsRunsTextFilter" type="search" placeholder="Run, project or WorkUnit ID" autocomplete="off"></label>
+                <label class="projects-filter"><span>Tenant</span><select id="operationsRunsTenantFilter"><option value="">All tenants</option></select></label>
+                <label class="projects-filter"><span>Workspace</span><select id="operationsRunsWorkspaceFilter"><option value="">All workspaces</option></select></label>
+                <label class="projects-filter"><span>Project</span><select id="operationsRunsProjectFilter"><option value="">All projects</option></select></label>
+                <label class="projects-filter"><span>Runtime status</span><select id="operationsRunsStatusFilter"><option value="">All statuses</option></select></label>
+                <button id="operationsRunsResetFiltersButton" class="ghost projects-reset" type="button">Reset</button>
+              </div>
+            </section>
+
+            <section class="panel operations-table-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Authoritative records</p><h2>Visible Runs</h2></div>
+                <div class="projects-result-count"><strong id="operationsRunsVisibleCount">0</strong><span>visible</span></div>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table operations-runs-table">
+                  <thead><tr><th>Run</th><th>Project / scope</th><th>WorkUnit / phase</th><th>Status / time</th><th>Executor</th><th>Inputs / outputs / evidence</th><th>Latest event</th></tr></thead>
+                  <tbody id="operationsRunsBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <div class="home-footnote">
+              <span>Projection</span><code id="operationsRunsGeneratedAt">—</code>
+              <span>Build</span><code id="operationsRunsBuildSha">—</code>
+            </div>
+          </section>
+
+          <section id="operationsApprovalsView" class="operations-screen" hidden>
+            <div class="operations-screen-head">
+              <div><p class="eyebrow">Governed decisions</p><h2>Approvals</h2></div>
+              <div class="operations-head-actions">
+                <span id="operationsApprovalsScope" class="scope-badge">All authorized projects</span>
+                <button id="operationsApprovalsRefreshButton" class="text-button" type="button">Refresh</button>
+              </div>
+            </div>
+            <div id="operationsApprovalsStateBanner" class="home-state-banner" hidden></div>
+
+            <section class="operations-approval-grid">
+              <article class="panel operations-table-panel">
+                <div class="panel-head"><div><p class="eyebrow">Pending inbox</p><h2>Pending proposals</h2></div><span id="operationsApprovalsPendingCount" class="panel-count">0</span></div>
+                <div id="operationsApprovalsPendingList" class="approval-list"></div>
+              </article>
+
+              <article class="panel approval-inspector">
+                <div class="panel-head"><div><p class="eyebrow">Exact frozen decision target</p><h2>Proposal inspector</h2></div></div>
+                <div id="operationsApprovalInspectorEmpty" class="feed-empty">Select a pending proposal to inspect its frozen payload and exact hash.</div>
+                <div id="operationsApprovalInspector" hidden>
+                  <dl class="approval-facts">
+                    <div><dt>Proposal</dt><dd><code id="approvalProposalId">—</code></dd></div>
+                    <div><dt>Project</dt><dd><span id="approvalProjectName">—</span><code id="approvalProjectId">—</code></dd></div>
+                    <div><dt>Action</dt><dd id="approvalAction">—</dd></div>
+                    <div><dt>Proposer</dt><dd><code id="approvalProposer">—</code></dd></div>
+                    <div><dt>Policy</dt><dd id="approvalPolicy">—</dd></div>
+                    <div><dt>Payload hash</dt><dd><code id="approvalPayloadHash">—</code></dd></div>
+                  </dl>
+                  <div class="approval-payload-block"><span>Resource refs</span><pre id="approvalResourceRefs"></pre></div>
+                  <div class="approval-payload-block"><span>Frozen payload</span><pre id="approvalFrozenPayload"></pre></div>
+                  <div id="approvalDecisionControls" class="approval-decision-controls">
+                    <button id="approvalApproveButton" class="primary" type="button">Approve exact hash</button>
+                    <label><span>Reject reason</span><textarea id="approvalRejectReason" rows="3" placeholder="Required reason"></textarea></label>
+                    <button id="approvalRejectButton" class="ghost" type="button">Reject exact hash</button>
+                  </div>
+                  <p id="approvalNoAuthority" class="boundary-note" hidden>You may inspect this proposal but do not have project APPROVE authority.</p>
+                  <p class="approval-apply-note">A decision changes proposal status only. APPROVED does not mean the underlying governed change has been applied.</p>
+                </div>
+              </article>
+            </section>
+
+            <section class="panel operations-table-panel">
+              <div class="panel-head"><div><p class="eyebrow">Decision history</p><h2>Recent approval decisions</h2></div><span id="operationsApprovalDecisionCount" class="panel-count">0</span></div>
+              <div class="table-scroll">
+                <table class="data-table approval-history-table">
+                  <thead><tr><th>Decision</th><th>Proposal / action</th><th>Project</th><th>Approver</th><th>Exact hash</th><th>Reason</th><th>Time</th></tr></thead>
+                  <tbody id="operationsApprovalDecisionBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <div class="home-footnote">
+              <span>Projection</span><code id="operationsApprovalsGeneratedAt">—</code>
+              <span>Build</span><code id="operationsApprovalsBuildSha">—</code>
+            </div>
+          </section>
+
+          <section id="operationsAuditView" class="operations-screen" hidden>
+            <div class="operations-screen-head">
+              <div><p class="eyebrow">Append-only provenance</p><h2>Audit</h2></div>
+              <div class="operations-head-actions">
+                <span id="operationsAuditScope" class="scope-badge">All authorized projects</span>
+                <button id="operationsAuditRefreshButton" class="text-button" type="button">Refresh</button>
+              </div>
+            </div>
+            <div id="operationsAuditStateBanner" class="home-state-banner" hidden></div>
+
+            <section class="panel operations-filter-panel">
+              <div class="audit-filter-grid">
+                <label class="projects-filter audit-search-filter"><span>Page filter</span><input id="operationsAuditTextFilter" type="search" placeholder="Event, project, actor, action or resource" autocomplete="off"></label>
+                <label class="projects-filter"><span>Tenant</span><select id="operationsAuditTenantFilter"><option value="">All tenants</option></select></label>
+                <label class="projects-filter"><span>Workspace</span><select id="operationsAuditWorkspaceFilter"><option value="">All workspaces</option></select></label>
+                <label class="projects-filter"><span>Project</span><select id="operationsAuditProjectFilter"><option value="">All projects</option></select></label>
+                <label class="projects-filter"><span>Actor</span><select id="operationsAuditActorFilter"><option value="">All actors</option></select></label>
+                <label class="projects-filter"><span>Action</span><select id="operationsAuditActionFilter"><option value="">All actions</option></select></label>
+                <label class="projects-filter"><span>Resource</span><select id="operationsAuditResourceFilter"><option value="">All resource types</option></select></label>
+                <label class="projects-filter"><span>From</span><input id="operationsAuditFromFilter" type="datetime-local"></label>
+                <label class="projects-filter"><span>To</span><input id="operationsAuditToFilter" type="datetime-local"></label>
+                <button id="operationsAuditResetFiltersButton" class="ghost projects-reset" type="button">Reset</button>
+              </div>
+            </section>
+
+            <section class="panel operations-table-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Authoritative events</p><h2>Audit timeline</h2></div>
+                <div class="projects-result-count"><strong id="operationsAuditVisibleCount">0</strong><span>visible</span></div>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table operations-audit-table">
+                  <thead><tr><th>Event</th><th>Project / scope</th><th>Actor / action</th><th>Resource</th><th>Linked identities</th><th>Reason</th><th>Versions / metadata</th><th>Time</th></tr></thead>
+                  <tbody id="operationsAuditBody"></tbody>
+                </table>
+              </div>
+            </section>
+            <p class="audit-boundary-note">Audit rows are append-only authoritative records. “Reason” is the persisted reason_code; no generic outcome is inferred.</p>
+            <div class="home-footnote">
+              <span>Projection</span><code id="operationsAuditGeneratedAt">—</code>
+              <span>Build</span><code id="operationsAuditBuildSha">—</code>
+            </div>
+          </section>
+
+          <section id="operationsRuntimeView" class="operations-screen" hidden>
+            <div class="operations-screen-head">
+              <div><p class="eyebrow">Distributed scheduler state</p><h2>Runtime</h2></div>
+              <div class="operations-head-actions">
+                <span id="operationsRuntimeScope" class="scope-badge">All authorized projects</span>
+                <button id="operationsRuntimeRefreshButton" class="text-button" type="button">Refresh</button>
+              </div>
+            </div>
+            <div id="operationsRuntimeStateBanner" class="home-state-banner" hidden></div>
+
+            <section class="panel operations-filter-panel" aria-label="Runtime filters">
+              <div class="runtime-filter-grid">
+                <label class="projects-filter runtime-search-filter"><span>Page filter</span><input id="operationsRuntimeTextFilter" type="search" placeholder="Job, project, WorkUnit or worker ID" autocomplete="off"></label>
+                <label class="projects-filter"><span>Tenant</span><select id="operationsRuntimeTenantFilter"><option value="">All tenants</option></select></label>
+                <label class="projects-filter"><span>Workspace</span><select id="operationsRuntimeWorkspaceFilter"><option value="">All workspaces</option></select></label>
+                <label class="projects-filter"><span>Project</span><select id="operationsRuntimeProjectFilter"><option value="">All projects</option></select></label>
+                <label class="projects-filter"><span>Job status</span><select id="operationsRuntimeStatusFilter"><option value="">All statuses</option></select></label>
+                <label class="projects-filter"><span>Worker</span><select id="operationsRuntimeWorkerFilter"><option value="">All workers</option></select></label>
+                <button id="operationsRuntimeResetFiltersButton" class="ghost projects-reset" type="button">Reset</button>
+              </div>
+            </section>
+
+            <section class="panel operations-table-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Authorized queue</p><h2>Distributed jobs</h2></div>
+                <div class="projects-result-count"><strong id="operationsRuntimeVisibleCount">0</strong><span>visible</span></div>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table runtime-jobs-table">
+                  <thead><tr><th>Job</th><th>Project / scope</th><th>WorkUnit</th><th>Status</th><th>Lease</th><th>Attempts</th><th>Requirements</th><th>Conflict keys</th></tr></thead>
+                  <tbody id="operationsRuntimeJobsBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="runtime-detail-grid">
+              <article class="panel operations-table-panel">
+                <div class="panel-head"><div><p class="eyebrow">Selected job</p><h2>Attempts</h2></div><code id="operationsRuntimeSelectedJob">—</code></div>
+                <div id="operationsRuntimeAttemptsEmpty" class="feed-empty">Select a job to inspect attempt/run history.</div>
+                <div id="operationsRuntimeAttemptsWrap" class="table-scroll" hidden>
+                  <table class="data-table runtime-attempts-table">
+                    <thead><tr><th>Attempt</th><th>Worker</th><th>Status</th><th>Run</th><th>Heartbeat / lease</th><th>Finished / error</th></tr></thead>
+                    <tbody id="operationsRuntimeAttemptsBody"></tbody>
+                  </table>
+                </div>
+              </article>
+              <article class="panel operations-table-panel">
+                <div class="panel-head"><div><p class="eyebrow">Scheduler provenance</p><h2>Recovery / requeue events</h2></div></div>
+                <div id="operationsRuntimeEvents" class="home-feed runtime-event-feed"><div class="feed-empty">Select a job to inspect scheduler events.</div></div>
+              </article>
+            </section>
+
+            <section class="panel operations-table-panel">
+              <div class="panel-head"><div><p class="eyebrow">Referenced capacity</p><h2>Workers</h2></div><span id="operationsRuntimeWorkerCount" class="panel-count">0</span></div>
+              <div class="table-scroll">
+                <table class="data-table runtime-workers-table">
+                  <thead><tr><th>Worker / actor</th><th>Status</th><th>Capabilities</th><th>Capacity</th><th>Heartbeat</th><th>Registered</th></tr></thead>
+                  <tbody id="operationsRuntimeWorkersBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <p class="audit-boundary-note">Runtime is read-only in the browser. Worker registration/status/heartbeat, lease protocol and effect commits remain worker/runtime protocol operations.</p>
+            <div class="home-footnote">
+              <span>Projection</span><code id="operationsRuntimeGeneratedAt">—</code>
+              <span>Build</span><code id="operationsRuntimeBuildSha">—</code>
+            </div>
+          </section>
+
+          <section id="operationsLockedView" class="route-state-page operations-locked" hidden>
+            <article class="route-state-card">
+              <div class="route-state-icon" id="operationsLockedIcon" aria-hidden="true"></div>
+              <p class="eyebrow">Operations screen</p>
+              <div class="route-state-heading"><h1 id="operationsLockedTitle">Locked</h1><span class="state-pill locked">Locked</span></div>
+              <p id="operationsLockedDescription" class="route-state-copy"></p>
+              <div class="route-state-note"><span id="operationsLockedShield" aria-hidden="true"></span><p>This subroute is real and reload-safe. No synthetic operational data or fake action is rendered before its checklist closes.</p></div>
+            </article>
+          </section>
+        </section>
+
+        <section id="accessRouteView" class="access-page" hidden>
+          <section class="access-hero">
+            <div>
+              <p class="eyebrow">Identity and scope administration</p>
+              <h1>Access</h1>
+              <p>Inspect the current session and administer only the tenant, workspace and project scopes you are authorized to manage.</p>
+            </div>
+            <button id="accessRefreshButton" class="text-button" type="button">Refresh</button>
+          </section>
+
+          <div id="accessStateBanner" class="home-state-banner" hidden></div>
+
+          <section class="access-session-grid" aria-label="Current session">
+            <article class="panel access-session-card"><span>Principal</span><strong id="accessPrincipal">—</strong><code id="accessActorId">—</code></article>
+            <article class="panel access-session-card"><span>Authentication</span><strong id="accessAuthMethod">—</strong><small id="accessExpiry">—</small></article>
+            <article class="panel access-session-card"><span>Visible scopes</span><strong id="accessScopeCounts">—</strong><small>tenant · workspace · project</small></article>
+          </section>
+
+          <section class="access-action-grid">
+            <article class="panel access-form-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Authoritative mutation</p><h2>Create tenant</h2></div>
+              </div>
+              <form id="createTenantForm" class="access-form">
+                <label><span>Name</span><input id="createTenantName" required maxlength="120" autocomplete="off"></label>
+                <button class="primary" type="submit">Create tenant</button>
+              </form>
+            </article>
+
+            <article class="panel access-form-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Authorized tenant</p><h2>Create workspace</h2></div>
+              </div>
+              <form id="createWorkspaceForm" class="access-form">
+                <label><span>Tenant</span><select id="createWorkspaceTenant" required></select></label>
+                <label><span>Workspace name</span><input id="createWorkspaceName" required maxlength="120" autocomplete="off"></label>
+                <button class="primary" type="submit">Create workspace</button>
+              </form>
+            </article>
+          </section>
+
+          <section class="panel access-membership-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Exact actor ID only</p>
+                <h2>Membership administration</h2>
+              </div>
+              <span class="scope-badge">No global actor directory</span>
+            </div>
+            <form id="accessMemberForm" class="access-member-form">
+              <label><span>Scope kind</span>
+                <select id="accessScopeKind">
+                  <option value="tenant">Tenant</option>
+                  <option value="workspace">Workspace</option>
+                  <option value="project">Project</option>
+                </select>
+              </label>
+              <label class="access-scope-target"><span>Manageable scope</span><select id="accessScopeTarget" required></select></label>
+              <label><span>Actor ID</span><input id="accessMemberActorId" required autocomplete="off" placeholder="actor_…"></label>
+              <label><span>Role</span><select id="accessMemberRole" required></select></label>
+              <div class="access-member-actions">
+                <button class="primary" type="submit">Add / update</button>
+                <button id="accessMemberRevokeButton" class="ghost" type="button">Revoke</button>
+              </div>
+            </form>
+            <div id="accessCurrentMembers" class="access-current-members"></div>
+          </section>
+
+          <section class="access-resource-grid">
+            <article class="panel access-resource-panel">
+              <div class="panel-head"><div><p class="eyebrow">Organization</p><h2>Tenants</h2></div><span id="accessTenantCount" class="panel-count">0</span></div>
+              <div class="table-scroll">
+                <table class="data-table access-table"><thead><tr><th>Tenant</th><th>Your role</th><th>Authority</th><th>Created</th></tr></thead><tbody id="accessTenantBody"></tbody></table>
+              </div>
+            </article>
+
+            <article class="panel access-resource-panel">
+              <div class="panel-head"><div><p class="eyebrow">Organization</p><h2>Workspaces</h2></div><span id="accessWorkspaceCount" class="panel-count">0</span></div>
+              <div class="table-scroll">
+                <table class="data-table access-table"><thead><tr><th>Workspace</th><th>Tenant</th><th>Your role</th><th>Authority</th></tr></thead><tbody id="accessWorkspaceBody"></tbody></table>
+              </div>
+            </article>
+          </section>
+
+          <section class="panel access-resource-panel">
+            <div class="panel-head"><div><p class="eyebrow">Project membership</p><h2>Projects</h2></div><span id="accessProjectCount" class="panel-count">0</span></div>
+            <div class="table-scroll">
+              <table class="data-table access-table"><thead><tr><th>Project</th><th>Tenant / workspace</th><th>Your role</th><th>Authority</th></tr></thead><tbody id="accessProjectBody"></tbody></table>
+            </div>
+          </section>
+
+          <div class="home-footnote">
+            <span>Projection</span><code id="accessGeneratedAt">—</code>
+            <span>Build</span><code id="accessBuildSha">—</code>
+          </div>
+        </section>
+
+        <section id="githubRouteView" class="github-page" hidden>
+          <section class="github-hero">
+            <div>
+              <p class="eyebrow">System · GitHub</p>
+              <h1>GitHub</h1>
+              <p>Inspect persisted GitHub connections, repository bindings, exact SHA evidence and runtime readiness without exposing credentials or performing mutations.</p>
+            </div>
+            <div class="github-head-actions">
+              <span id="githubScopeBadge" class="scope-badge">All authorized projects</span>
+              <button id="githubRefreshButton" class="text-button" type="button">Refresh</button>
+            </div>
+          </section>
+
+          <div id="githubStateBanner" class="home-state-banner" hidden></div>
+
+          <section class="panel github-project-panel">
+            <label class="projects-filter github-project-filter">
+              <span>Authorized project</span>
+              <select id="githubProjectSelect"></select>
+            </label>
+            <div id="githubProjectContext" class="github-project-context"></div>
+          </section>
+
+          <section class="github-summary-grid">
+            <article class="home-kpi"><span>Connections</span><strong id="githubConnectionCount">0</strong><small>Persisted PluginConnection</small></article>
+            <article class="home-kpi"><span>Bindings</span><strong id="githubBindingCount">0</strong><small>Repository identity</small></article>
+            <article class="home-kpi"><span>ChangeSets</span><strong id="githubChangeSetCount">0</strong><small>SHA-safe history</small></article>
+            <article class="home-kpi"><span>Verified</span><strong id="githubVerifiedCount">0</strong><small>qa_complete = true</small></article>
+          </section>
+
+          <section class="github-primary-grid">
+            <article class="panel github-panel">
+              <div class="panel-head"><div><p class="eyebrow">Plugin identity</p><h2>Connections</h2></div></div>
+              <div id="githubConnectionsList" class="github-card-list"></div>
+            </article>
+
+            <article class="panel github-panel">
+              <div class="panel-head"><div><p class="eyebrow">Repository identity</p><h2>Bindings & readiness</h2></div><span class="scope-badge">On-demand probe</span></div>
+              <div id="githubBindingsList" class="github-card-list"></div>
+            </article>
+          </section>
+
+          <article class="panel github-panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">Persisted SHA evidence</p><h2>ChangeSets</h2></div>
+              <span id="githubChangeSetScope" class="scope-badge">Read only</span>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table github-changeset-table">
+                <thead><tr><th>ChangeSet</th><th>Binding / branch</th><th>Status</th><th>Expected / committed SHA</th><th>Manifest</th><th>SHA checks</th></tr></thead>
+                <tbody id="githubChangeSetsBody"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <div class="home-footnote">
+            <span>Projection</span><code id="githubGeneratedAt">—</code>
+            <span>Build</span><code id="githubBuildSha">—</code>
+          </div>
+        </section>
+
+        <section id="lockedRouteView" class="route-state-page" hidden>
+          <article class="route-state-card">
+            <div id="routeStateIcon" class="route-state-icon" aria-hidden="true"></div>
+            <p class="eyebrow">Product module route</p>
+            <div class="route-state-heading">
+              <h1 id="routeStateTitle">Locked module</h1>
+              <span id="routeStateBadge" class="state-pill locked">Locked</span>
+            </div>
+            <p id="routeStateDescription" class="route-state-copy"></p>
+            <dl class="route-state-facts">
+              <div><dt>Canonical route</dt><dd><code id="routeStatePath">—</code></dd></div>
+              <div><dt>Owning module</dt><dd><code id="routeStateOwner">—</code></dd></div>
+              <div><dt>Maturity</dt><dd id="routeStateMaturity">—</dd></div>
+            </dl>
+            <div class="route-state-note">
+              <span id="routeStateShield" aria-hidden="true"></span>
+              <p>This route is real and reload-safe. Its product functionality remains unavailable until the owning module passes its own QA and local UAT. No placeholder data or fake action is rendered here.</p>
+            </div>
+          </article>
+        </section>
+
+        <div id="diagnosticsRouteView">
+        <section class="welcome-section">
+          <p class="welcome-kicker">Welcome to GWF</p>
+          <h1>Governed Knowledge Workflow</h1>
+          <p class="welcome-copy">Traceable research work, exact identity, evidence, approvals and recovery — without turning the browser into a second source of truth.</p>
+        </section>
+
+        <section id="foundationCards" class="foundation-cards" aria-label="Product areas"></section>
+
+        <section class="home-grid">
+          <article class="panel compact-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Foundation boundary</p>
+                <h2>Capability maturity</h2>
+              </div>
+              <span class="state-pill live">BPS-I00</span>
+            </div>
+            <div id="capabilityList" class="capability-list"></div>
+          </article>
+
+          <article class="panel compact-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Authoritative runtime</p>
+                <h2>System status</h2>
+              </div>
+              <button class="text-button" id="refreshButton" type="button">Refresh</button>
+            </div>
+            <div id="systemStatus" class="status-list"></div>
+          </article>
+        </section>
+
+        <section class="identity-strip">
+          <div>
+            <span>Exact build</span>
+            <code id="exactBuild">—</code>
+          </div>
+          <div>
+            <span>Domain</span>
+            <code id="exactDomain">—</code>
+          </div>
+          <div>
+            <span>Backend</span>
+            <code id="exactBackend">—</code>
+          </div>
+          <div>
+            <span>Session</span>
+            <code id="exactActor">—</code>
+          </div>
+        </section>
+
+        <section class="boundary-note">
+          <span class="boundary-icon" id="boundaryIcon" aria-hidden="true"></span>
+          <p><strong>Foundation only.</strong> Product areas whose modules have not passed remain navigable for orientation but cannot execute fake actions. Documents, Relations graph and full-screen Reader remain future authorized modules.</p>
+        </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <dialog id="governedActionDialog" class="governed-dialog">
+    <form method="dialog" class="governed-dialog-card">
+      <p class="eyebrow">Governed action confirmation</p>
+      <h2 id="governedActionTitle">Confirm action</h2>
+      <dl class="governed-dialog-facts">
+        <div><dt>Action</dt><dd id="governedActionName">—</dd></div>
+        <div><dt>Target</dt><dd><code id="governedActionTarget">—</code></dd></div>
+        <div><dt>Scope</dt><dd><code id="governedActionScope">—</code></dd></div>
+      </dl>
+      <p id="governedActionConsequence" class="governed-dialog-consequence"></p>
+      <div class="governed-dialog-actions">
+        <button value="cancel" class="ghost" type="submit">Cancel</button>
+        <button id="governedActionConfirmButton" value="confirm" class="primary" type="submit">Confirm exact action</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/assets/app.js"></script>
 </body>
 </html>

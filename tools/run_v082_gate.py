@@ -28,7 +28,8 @@ def main():
 
     prior=json.loads((out/"v081_regression"/"V081_GATE.json").read_text())
     qs=json.loads((out/"QA_SQLITE.json").read_text()); qp=json.loads((out/"QA_POSTGRES.json").read_text())
-    html=(site/"index.html").read_text(encoding="utf-8"); js=(site/"app.js").read_text(encoding="utf-8"); css=(site/"styles.css").read_text(encoding="utf-8")
+    meta=json.loads((site/"build-meta.json").read_text(encoding="utf-8")); html=(site/"index.html").read_text(encoding="utf-8"); js=(site/"app.js").read_text(encoding="utf-8"); css=(site/"styles.css").read_text(encoding="utf-8")
+    shell_boundary=(meta.get("mode")=="STATIC_SHELL_SNAPSHOT" and meta.get("slice")=="BPS-I00" and meta.get("authoritative_backend") is False and "Governed Knowledge Studio" in html and "/browser/bootstrap" in js and all(m not in js for m in ("simulateProtocolIssue","approveProtocolRecovery","renameCurrentProject","archiveCurrentProject","gwr-uat-projects")))
     def q(q,name): return next(c["pass"] for c in q["checks"] if c["name"]==name)
     result={
       "version":"0.8.2","status":"PASS","v081_regression_pass":prior.get("status")=="PASS","postgres_live_tested":True,
@@ -36,11 +37,14 @@ def main():
       "project_governance_pass":all(q(x,"rename_audit") and q(x,"archive_drain") and q(x,"archive_read_only") for x in (qs,qp)),
       "observable_agent_protocol_pass":all(q(x,"observable_protocol") and q(x,"problem_before_retry") for x in (qs,qp)),
       "human_recovery_mode_pass":all(q(x,"human_mode_pause") and q(x,"no_retry_before_approval") for x in (qs,qp)),
-      "uat_observability_ui_pass":all(m in html for m in ("AI Working","Recovery mode","Rename project","Archive project")) and "breathe" in css and all(m in js for m in ("simulateProtocolIssue","approveProtocolRecovery","renameCurrentProject","archiveCurrentProject")),
+      # Compatibility key now validates absence of legacy simulated mutation UX.
+      "uat_observability_ui_pass":shell_boundary,
+      "static_shell_boundary_pass":shell_boundary,
+      "authoritative_browser_uat":False,
       "ready_for_uat":False,
     }
     required=[v for k,v in result.items() if k.endswith("_pass")]
-    result["status"]="PASS" if all(required) else "FAIL"; result["ready_for_uat"]=result["status"]=="PASS"
+    result["status"]="PASS" if all(required) else "FAIL"; result["ready_for_uat"]=False
     (out/"V082_GATE.json").write_text(json.dumps(result,indent=2),encoding="utf-8"); print(json.dumps(result,indent=2))
     raise SystemExit(0 if result["status"]=="PASS" else 1)
 if __name__=="__main__": main()
