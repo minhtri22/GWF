@@ -204,6 +204,7 @@ def create_app(
         {"id": "operations", "label": "Operations", "state": "SKELETON_LOCKED", "slice": "BPS-M03", "route": "/app/operations"},
         {"id": "packages", "label": "Packages", "state": "SKELETON_LOCKED", "slice": "BPS-M06", "route": "/app/research/packages"},
         {"id": "github", "label": "GitHub", "state": "SKELETON_LOCKED", "slice": "BPS-M07", "route": "/app/system/github"},
+        {"id": "access", "label": "Access", "state": "LIVE_MODULE", "slice": "BPS-M02", "route": "/app/system/access"},
         {"id": "shared-library", "label": "Shared Library", "state": "PLANNED_BLOCKED", "slice": "BPS-GAC", "route": "/app/shared-library"},
         {"id": "reference-acquisition", "label": "Reference Acquisition", "state": "PLANNED_BLOCKED", "slice": "BPS-RA", "route": "/app/research/reference-acquisition"},
         {"id": "agents", "label": "Agents / Codex", "state": "PLANNED_BLOCKED", "slice": "BPS-CODEX", "route": "/app/agents"},
@@ -545,6 +546,185 @@ def create_app(
             principal.actor_id,
             build_sha=resolved_product_info["build_sha"],
         )
+
+    @app.get('/browser/access-summary')
+    def browser_access_summary(request: Request):
+        _, principal = browser_principal(request)
+        result = product.access_summary(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+        result["session"] = {
+            "actor_id": principal.actor_id,
+            "principal_id": principal.principal_id,
+            "auth_method": principal.auth_method,
+            "issued_at": principal.issued_at,
+            "expires_at": principal.expires_at,
+        }
+        return result
+
+    @app.post('/browser/access/tenants')
+    def browser_create_tenant(body: TenantCreateBody, request: Request):
+        _, principal = browser_principal(request)
+        tenant_id = runtime.tenancy.create_tenant(body.name, principal.actor_id)
+        return {
+            "ok": True,
+            "tenant_id": tenant_id,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.post('/browser/access/tenants/{tenant_id}/workspaces')
+    def browser_create_workspace(tenant_id: str, body: WorkspaceCreateBody, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_tenant_access(
+                principal.actor_id, tenant_id, "MANAGE_WORKSPACE"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="tenant not found") from exc
+        workspace_id = runtime.tenancy.create_workspace(
+            tenant_id, body.name, principal.actor_id
+        )
+        return {
+            "ok": True,
+            "workspace_id": workspace_id,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.post('/browser/access/tenants/{tenant_id}/members')
+    def browser_add_tenant_member(tenant_id: str, body: MembershipBody, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_tenant_access(
+                principal.actor_id, tenant_id, "MANAGE_MEMBERS"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="tenant not found") from exc
+        try:
+            runtime.tenancy.add_tenant_member(
+                tenant_id, body.actor_id, body.role, principal.actor_id
+            )
+        except AuthorityDenied as exc:
+            raise HTTPException(status_code=422, detail="actor is not eligible") from exc
+        return {
+            "ok": True,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.delete('/browser/access/tenants/{tenant_id}/members/{actor_id}')
+    def browser_revoke_tenant_member(tenant_id: str, actor_id: str, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_tenant_access(
+                principal.actor_id, tenant_id, "MANAGE_MEMBERS"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="tenant not found") from exc
+        runtime.tenancy.revoke_tenant_member(
+            tenant_id, actor_id, principal.actor_id
+        )
+        return {
+            "ok": True,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.post('/browser/access/workspaces/{workspace_id}/members')
+    def browser_add_workspace_member(workspace_id: str, body: MembershipBody, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_workspace_access(
+                principal.actor_id, workspace_id, "MANAGE_MEMBERS"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="workspace not found") from exc
+        try:
+            runtime.tenancy.add_workspace_member(
+                workspace_id, body.actor_id, body.role, principal.actor_id
+            )
+        except AuthorityDenied as exc:
+            raise HTTPException(status_code=422, detail="actor is not eligible") from exc
+        return {
+            "ok": True,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.delete('/browser/access/workspaces/{workspace_id}/members/{actor_id}')
+    def browser_revoke_workspace_member(workspace_id: str, actor_id: str, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_workspace_access(
+                principal.actor_id, workspace_id, "MANAGE_MEMBERS"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="workspace not found") from exc
+        runtime.tenancy.revoke_workspace_member(
+            workspace_id, actor_id, principal.actor_id
+        )
+        return {
+            "ok": True,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.post('/browser/access/projects/{project_id}/members')
+    def browser_add_project_member(project_id: str, body: MembershipBody, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_project_access(
+                principal.actor_id, project_id, "MANAGE_MEMBERS"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        try:
+            runtime.tenancy.add_project_member(
+                project_id, body.actor_id, body.role, principal.actor_id
+            )
+        except AuthorityDenied as exc:
+            raise HTTPException(status_code=422, detail="actor is not eligible") from exc
+        return {
+            "ok": True,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.delete('/browser/access/projects/{project_id}/members/{actor_id}')
+    def browser_revoke_project_member(project_id: str, actor_id: str, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_project_access(
+                principal.actor_id, project_id, "MANAGE_MEMBERS"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        runtime.tenancy.revoke_project_member(
+            project_id, actor_id, principal.actor_id
+        )
+        return {
+            "ok": True,
+            "access": product.access_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
 
     @app.get('/browser/projects/create-options')
     def browser_project_create_options(request: Request):
