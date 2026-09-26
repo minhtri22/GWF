@@ -1358,15 +1358,19 @@ function renderProjectWorkspace(summary, route) {
       "Project projection is partial. Missing authoritative fields are not inferred.";
   }
   if (route.section === "overview") {
+    stopProjectExecutionStream();
     $("#projectLocalLockedView").hidden = true;
+    $("#projectExecutionLiveView").hidden = true;
     $("#projectOverviewLiveView").hidden = false;
     renderProjectOverviewLive(summary);
     document.title = "GWF — " + (summary.project?.name || route.projectId) + " / Overview";
     return;
   }
+  stopProjectExecutionStream();
   $("#projectOverviewLiveView").hidden = true;
+  $("#projectExecutionLiveView").hidden = true;
   $("#projectLocalLockedView").hidden = false;
-  const known = ["execution", "library", "governance", "configuration"].includes(route.section);
+  const known = ["library", "governance", "configuration"].includes(route.section);
   $("#projectLocalLockedTitle").textContent = projectSectionLabel(route.section);
   $("#projectLocalLockedDescription").textContent = known ?
     projectSectionLabel(route.section) + " is a real project-local route, but its owning BPS unit is not opened in M04." :
@@ -1389,7 +1393,9 @@ function renderProjectWorkspaceError(route, message) {
   $("#projectOverviewStateBanner").className = "home-state-banner error";
   $("#projectOverviewStateBanner").textContent = "Project unavailable — " + message;
   $("#projectOverviewLiveView").hidden = true;
+  $("#projectExecutionLiveView").hidden = true;
   $("#projectLocalLockedView").hidden = true;
+  stopProjectExecutionStream();
 }
 
 async function refreshProjectOverview(route, render = true) {
@@ -1441,6 +1447,18 @@ function renderProjectWorkspaceRoute(route) {
   $("#lockedRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = true;
   $("#projectWorkspaceView").hidden = false;
+
+  if (route.section === "execution") {
+    if (state.projectExecution && state.projectExecutionProjectId === route.projectId) {
+      renderProjectExecution(state.projectExecution, route);
+    } else if (state.projectExecutionError && state.projectExecutionProjectId === route.projectId) {
+      renderProjectWorkspaceError(route, state.projectExecutionError);
+    } else {
+      void refreshProjectExecution(route, true);
+    }
+    return;
+  }
+
   if (state.projectOverview && state.projectOverviewProjectId === route.projectId) {
     renderProjectWorkspace(state.projectOverview, route);
   } else if (state.projectOverviewError && state.projectOverviewProjectId === route.projectId) {
@@ -2476,6 +2494,10 @@ function renderOperationsRoute(item) {
 
 function renderRoute() {
   let path = normalizedRoute();
+  const activeProjectRoute = projectWorkspaceRoute(path);
+  if (!activeProjectRoute || activeProjectRoute.section !== "execution") {
+    stopProjectExecutionStream();
+  }
   if (path === "/app") {
     history.replaceState({ route: DEFAULT_ROUTE }, "", DEFAULT_ROUTE);
     path = DEFAULT_ROUTE;
@@ -2758,6 +2780,16 @@ $("#projectBackButton").addEventListener("click", () => navigateTo("/app/project
 $("#projectOverviewRefreshButton").addEventListener("click", async () => {
   const route = projectWorkspaceRoute();
   if (!route) return;
+  if (route.section === "execution") {
+    state.projectExecution = null;
+    state.projectExecutionError = null;
+    state.projectPhaseDetail = null;
+    state.projectPhaseDetailKey = null;
+    state.projectPhaseDetailError = null;
+    stopProjectExecutionStream();
+    await refreshProjectExecution(route, true);
+    return;
+  }
   state.projectOverview = null;
   state.projectOverviewError = null;
   await refreshProjectOverview(route, true);
@@ -2769,6 +2801,43 @@ $("#projectWorkspaceView").addEventListener("click", (event) => {
   const route = projectWorkspaceRoute();
   if (!route) return;
   navigateTo(projectWorkspacePath(route.projectId, button.dataset.projectSection));
+});
+
+$("#projectExecutionOrchestrations").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-execution-orchestration]");
+  if (!button || !state.projectExecution) return;
+  state.selectedExecutionOrchestrationId = button.dataset.executionOrchestration;
+  const selected = (state.projectExecution.orchestrations || []).find(
+    (item) => item.orchestration_id === state.selectedExecutionOrchestrationId
+  );
+  const phases = selected?.phases || [];
+  state.selectedExecutionPhaseId =
+    selected?.current_phase_execution_id ||
+    phases[phases.length - 1]?.phase_execution_id ||
+    null;
+  state.projectPhaseDetail = null;
+  state.projectPhaseDetailKey = null;
+  state.projectPhaseDetailError = null;
+  stopProjectExecutionStream();
+  const route = projectWorkspaceRoute();
+  if (route?.section === "execution") renderProjectExecution(state.projectExecution, route);
+});
+
+$("#projectExecutionPhases").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-execution-phase]");
+  if (!button || !state.projectExecution) return;
+  state.selectedExecutionPhaseId = button.dataset.executionPhase;
+  state.projectPhaseDetail = null;
+  state.projectPhaseDetailKey = null;
+  state.projectPhaseDetailError = null;
+  stopProjectExecutionStream();
+  const route = projectWorkspaceRoute();
+  if (route?.section === "execution") {
+    renderProjectExecutionNavigation();
+    $("#projectExecutionPhaseEmpty").hidden = false;
+    $("#projectExecutionPhaseInspector").hidden = true;
+    void refreshProjectPhaseDetail(route, state.selectedExecutionPhaseId, true);
+  }
 });
 
 
