@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .errors import AuthorityDenied, NotFound
+from .tenancy import PROJECT_ROLE_PERMISSIONS, TENANT_ROLE_PERMISSIONS, WORKSPACE_ROLE_PERMISSIONS
 from .utils import parse_json, utcnow
 
 
@@ -489,6 +490,220 @@ class ProjectDashboardService:
                 "project_count": len(rows),
             },
             "projects": rows,
+        }
+
+    def access_summary(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
+        """Authorized read projection for System -> Access."""
+        actor = self.db.one(
+            "SELECT actor_id,actor_type,principal_id,status FROM actors WHERE actor_id=?",
+            (actor_id,),
+        )
+        if not actor or actor["status"] != "ACTIVE":
+            raise AuthorityDenied("Actor is not active")
+
+        def can(callable_):
+            try:
+                callable_()
+                return True
+            except (AuthorityDenied, NotFound):
+                return False
+
+        tenants: list[dict[str, Any]] = []
+        tenant_rows = self.db.all(
+            "SELECT t.tenant_id,t.name,t.status,t.created_by_actor_id,t.created_at,"
+            "m.role AS actor_role,m.status AS actor_membership_status "
+            "FROM tenants t JOIN tenant_memberships m ON m.tenant_id=t.tenant_id "
+            "WHERE m.actor_id=? AND m.status='ACTIVE' "
+            "ORDER BY t.name,t.tenant_id",
+            (actor_id,),
+        )
+        visible_tenant_ids: set[str] = set()
+        for row in tenant_rows:
+            tenant_id = row["tenant_id"]
+            visible_tenant_ids.add(tenant_id)
+            manageable = can(
+                lambda tenant_id=tenant_id: self.runtime.tenancy.require_tenant_access(
+                    actor_id, tenant_id, "MANAGE_MEMBERS"
+                )
+            )
+            members = []
+            if manageable:
+                members = [
+                    dict(item) for item in self.db.all(
+                        "SELECT actor_id,role,status,created_at "
+                        "FROM tenant_memberships WHERE tenant_id=? "
+                        "ORDER BY status,role,actor_id",
+                        (tenant_id,),
+                    )
+                ]
+            tenants.append({
+                "tenant_id": tenant_id,
+                "name": row["name"],
+                "status": row["status"],
+                "actor_role": row["actor_role"],
+                "actor_membership_status": row["actor_membership_status"],
+                "can_manage_members": manageable,
+                "can_manage_workspaces": can(
+                    lambda tenant_id=tenant_id: self.runtime.tenancy.require_tenant_access(
+                        actor_id, tenant_id, "MANAGE_WORKSPACE"
+                    )
+                ),
+                "members": members,
+                "created_by_actor_id": row["created_by_actor_id"],
+                "created_at": row["created_at"],
+            })
+
+        workspaces: list[dict[str, Any]] = []
+        for row in self.db.all(
+            "SELECT w.workspace_id,w.tenant_id,w.name,w.status,w.created_by_actor_id,w.created_at,"
+            "t.name AS tenant_name FROM workspaces w "
+            "JOIN tenants t ON t.tenant_id=w.tenant_id "
+            "WHERE w.status='ACTIVE' ORDER BY t.name,w.name,w.workspace_id"
+        ):
+            workspace_id = row["workspace_id"]
+            if not can(
+                lambda workspace_id=workspace_id: self.runtime.tenancy.require_workspace_access(
+                    actor_id, workspace_id, "VIEW"
+                )
+            ):
+                continue
+            direct = self.db.one(
+                "SELECT role,status FROM workspace_memberships "
+                "WHERE workspace_id=? AND actor_id=?",
+                (workspace_id, actor_id),
+            )
+            tenant_membership = self.db.one(
+                "SELECT role,status FROM tenant_memberships "
+                "WHERE tenant_id=? AND actor_id=?",
+                (row["tenant_id"], actor_id),
+            )
+            manageable = can(
+                lambda workspace_id=workspace_id: self.runtime.tenancy.require_workspace_access(
+                    actor_id, workspace_id, "MANAGE_MEMBERS"
+                )
+            )
+            members = []
+            if manageable:
+                members = [
+                    dict(item) for item in self.db.all(
+                        "SELECT actor_id,role,status,created_at "
+                        "FROM workspace_memberships WHERE workspace_id=? "
+                        "ORDER BY status,role,actor_id",
+                        (workspace_id,),
+                    )
+                ]
+            inherited = bool(
+                not direct
+                and tenant_membership
+                and tenant_membership["status"] == "ACTIVE"
+                and tenant_membership["role"] in {"OWNER", "ADMIN"}
+            )
+            workspaces.append({
+                "workspace_id": workspace_id,
+                "workspace_name": row["name"],
+                "tenant_id": row["tenant_id"],
+                "tenant_name": row["tenant_name"],
+                "status": row["status"],
+                "actor_role": direct["role"] if direct else (
+                    tenant_membership["role"] if inherited else None
+                ),
+                "role_source": "WORKSPACE" if direct else (
+                    "TENANT_INHERITED" if inherited else None
+                ),
+                "can_manage_members": manageable,
+                "can_manage_projects": can(
+                    lambda workspace_id=workspace_id: self.runtime.tenancy.require_workspace_access(
+                        actor_id, workspace_id, "MANAGE_PROJECT"
+                    )
+                ),
+                "members": members,
+                "created_by_actor_id": row["created_by_actor_id"],
+                "created_at": row["created_at"],
+            })
+            visible_tenant_ids.add(row["tenant_id"])
+
+        projects: list[dict[str, Any]] = []
+        for project in self.runtime.tenancy.list_accessible_projects(actor_id):
+            project_id = project["id"]
+            scope = self.runtime.tenancy.scope_for_project(project_id)
+            if not scope:
+                continue
+            direct = self.db.one(
+                "SELECT role,status FROM project_memberships "
+                "WHERE project_id=? AND actor_id=?",
+                (project_id, actor_id),
+            )
+            workspace_membership = self.db.one(
+                "SELECT role,status FROM workspace_memberships "
+                "WHERE workspace_id=? AND actor_id=?",
+                (scope.workspace_id, actor_id),
+            )
+            tenant_membership = self.db.one(
+                "SELECT role,status FROM tenant_memberships "
+                "WHERE tenant_id=? AND actor_id=?",
+                (scope.tenant_id, actor_id),
+            )
+            if direct and direct["status"] == "ACTIVE":
+                actor_role = direct["role"]
+                role_source = "PROJECT"
+            elif workspace_membership and workspace_membership["status"] == "ACTIVE":
+                actor_role = workspace_membership["role"]
+                role_source = "WORKSPACE_INHERITED"
+            elif tenant_membership and tenant_membership["status"] == "ACTIVE":
+                actor_role = tenant_membership["role"]
+                role_source = "TENANT_INHERITED"
+            else:
+                actor_role = None
+                role_source = None
+            manageable = can(
+                lambda project_id=project_id: self.runtime.tenancy.require_project_access(
+                    actor_id, project_id, "MANAGE_MEMBERS"
+                )
+            )
+            members = []
+            if manageable:
+                members = [
+                    dict(item) for item in self.db.all(
+                        "SELECT actor_id,role,status,created_at "
+                        "FROM project_memberships WHERE project_id=? "
+                        "ORDER BY status,role,actor_id",
+                        (project_id,),
+                    )
+                ]
+            workspace = self.db.one(
+                "SELECT name FROM workspaces WHERE workspace_id=?",
+                (scope.workspace_id,),
+            )
+            tenant = self.db.one(
+                "SELECT name FROM tenants WHERE tenant_id=?",
+                (scope.tenant_id,),
+            )
+            projects.append({
+                "project_id": project_id,
+                "project_name": project["name"],
+                "tenant_id": scope.tenant_id,
+                "tenant_name": tenant["name"] if tenant else None,
+                "workspace_id": scope.workspace_id,
+                "workspace_name": workspace["name"] if workspace else None,
+                "actor_role": actor_role,
+                "role_source": role_source,
+                "can_manage_members": manageable,
+                "members": members,
+            })
+
+        return {
+            "generated_at": utcnow(),
+            "build_sha": build_sha,
+            "query_status": "COMPLETE",
+            "actor": dict(actor),
+            "roles": {
+                "tenant": sorted(TENANT_ROLE_PERMISSIONS),
+                "workspace": sorted(WORKSPACE_ROLE_PERMISSIONS),
+                "project": sorted(PROJECT_ROLE_PERMISSIONS),
+            },
+            "tenants": tenants,
+            "workspaces": workspaces,
+            "projects": projects,
         }
 
     def project_create_options(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
