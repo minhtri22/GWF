@@ -352,3 +352,43 @@ read screen documents
 Backend-before-UI, no-fake-data, authoritative-state, auth/security, exact identity, and stop conditions remain fully in force.
 
 If implementation crosses a strict-mode trigger defined in `docs/BPS_SCREEN_FAST_LANE.md`, stop Fast Lane and return to the stricter governance path before mutation.
+
+
+## 17. QA-first deferred-UAT override
+
+Effective 2026-09-26, user-approved browser delivery uses:
+
+- `docs/BPS_QA_FIRST_DEFERRED_UAT.md` — current UAT cadence;
+- `docs/BPS_SCREEN_FAST_LANE.md` — retained screen-bounded implementation + strict-governance trigger rules.
+
+For ordinary browser screens/workflows, §§4 and 7–12 no longer require per-screen local/user UAT before implementation may continue.
+
+The active browser loop is:
+
+```text
+read relevant docs
+ -> freeze checklist
+ -> implement
+ -> assistant QA
+ -> record findings
+ -> fix/re-QA
+ -> FAIL=0 / OPEN=0 / COUNT=0
+ -> QA_CLOSED / FINAL_UAT_PENDING
+ -> next legal screen/workflow
+```
+
+After all currently authorized browser work is implemented, perform cross-screen/integration QA until its checklist also reaches `COUNT=0`. Only then hand the user one integrated product UAT.
+
+The following remain fully mandatory and are **not** relaxed:
+
+- backend-before-UI;
+- no fake state/actions;
+- exact actor/project/resource identity;
+- tenant/workspace/project authorization;
+- security/authentication invariants;
+- scientific/evidence invariants;
+- strict governance before schema/API-contract/authority/destructive-mutation changes;
+- negative-path testing;
+- failed evidence preservation.
+
+If strict governance is triggered, the assistant must perform the necessary specification/contract/atomicity review before implementation. This does not itself require user UAT. Ask the user only when an actual unresolved product/semantic decision requires their choice.
