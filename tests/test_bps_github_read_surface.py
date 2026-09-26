@@ -158,7 +158,7 @@ def _change_set(rt, project, binding, actor, suffix):
         project,
         binding,
         "feature/bps-" + suffix,
-        (suffix[0] if suffix else "a") * 40,
+        "a" * 40,
         [
             {
                 "path": f"docs/{suffix}.md",
@@ -474,13 +474,11 @@ def test_github_binding_readiness_states_are_explicit(
 def test_dangling_connection_is_partial_and_readiness_is_not_zero(
     tmp_path, monkeypatch
 ):
-    rt, _, project, _, seeded = _fixture(tmp_path, monkeypatch)
+    rt, owner, project, _, seeded = _fixture(tmp_path, monkeypatch)
     dangling_connection, dangling_binding = _connection(
         rt,
         project,
-        rt.db.one(
-            "SELECT actor_id FROM actors WHERE principal_id='github-owner'"
-        )["actor_id"],
+        owner,
         "dangling",
         repository="example/dangling",
     )
