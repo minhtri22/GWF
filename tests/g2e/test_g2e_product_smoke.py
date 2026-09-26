@@ -56,3 +56,12 @@ def test_rpc_queue_timeout_is_normalized():
     src = SCRIPT.read_text(encoding="utf-8")
     assert 'except queue.Empty as exc:' in src
     assert 'raise TimeoutError("APP_SERVER_READ_TIMEOUT") from exc' in src
+
+
+def test_product_smoke_retries_only_server_overload():
+    src = SCRIPT.read_text(encoding="utf-8")
+    assert "MAX_TRANSIENT_TURN_ATTEMPTS = 3" in src
+    assert 'error_info == "serverOverloaded"' in src
+    assert 'if error_info != "serverOverloaded":' in src
+    assert "SERVER_OVERLOADED_AFTER_" in src
+    assert '"protocol"]["attempts"]' in src
