@@ -31,6 +31,12 @@ const state = {
   projectExecutionStreamFallbackTimer: null,
   projectExecutionLiveEvents: [],
   projectRecoveryMutation: false,
+  packages: null,
+  packagesError: null,
+  packagesLoading: false,
+  selectedPackagesTab: "domains",
+  selectedDomainPackageId: null,
+  selectedSkillPackageId: null,
   access: null,
   accessError: null,
   accessLoading: false,
@@ -1816,6 +1822,298 @@ function renderAccessError(message) {
   $("#accessWorkspaceBody").innerHTML = homeEmpty("Workspace access unavailable.", 4);
   $("#accessProjectBody").innerHTML = homeEmpty("Project access unavailable.", 4);
   $("#accessCurrentMembers").innerHTML = '<div class="feed-empty">Membership data unavailable.</div>';
+}
+
+function packageUsageBasisPill(basis) {
+  const value = String(basis || "—");
+  const cls = value === "OBSERVED" ? "observed" :
+    (value === "CONFIGURED" ? "configured" : "pinned");
+  return '<span class="package-basis ' + cls + '">' + esc(value) + "</span>";
+}
+
+function renderPackagesDomainDetail() {
+  const rows = state.packages?.domains || [];
+  const selected = rows.find(
+    (item) => item.package_id === state.selectedDomainPackageId
+  ) || null;
+  if (!selected) {
+    $("#packagesDomainDetailTitle").textContent = "Select a Domain package";
+    $("#packagesDomainDetail").innerHTML =
+      '<div class="feed-empty">No authorized Domain package is selected.</div>';
+    return;
+  }
+  $("#packagesDomainDetailTitle").textContent =
+    selected.name + " · " + selected.domain_id;
+  const latest = selected.latest_revision;
+  const published = selected.latest_published_revision;
+  let html =
+    '<dl class="execution-facts package-detail-facts">' +
+      '<div><dt>Tenant</dt><dd><strong>' + esc(selected.tenant_name || "—") +
+      '</strong><code>' + esc(selected.tenant_id) + '</code></dd></div>' +
+      '<div><dt>Package</dt><dd><code>' + esc(selected.package_id) +
+      '</code><span>' + esc(selected.status) + '</span></dd></div>' +
+      '<div><dt>Domain ID</dt><dd><code>' + esc(selected.domain_id) + '</code></dd></div>' +
+      '<div><dt>Description</dt><dd><span>' + esc(selected.description || "—") + '</span></dd></div>' +
+      '<div><dt>Latest revision</dt><dd><code>' + esc(latest?.revision_id || "—") +
+      '</code><span>' + esc(latest ? ("r" + latest.revision_number + " · " + latest.status) : "No revision") +
+      '</span></dd></div>' +
+      '<div><dt>Latest published</dt><dd><code>' + esc(published?.revision_id || "—") +
+      '</code><span>' + esc(published ? ("r" + published.revision_number + " · " + (published.semantic_version || "—")) : "None") +
+      '</span></dd></div>' +
+      '<div><dt>Authorized usage</dt><dd><strong>' +
+      esc(selected.authorized_project_usage_count ?? 0) + '</strong><span>project(s)</span></dd></div>' +
+    '</dl>';
+
+  const revisions = selected.revisions || [];
+  html += '<section class="execution-subsection"><h3>Revision history</h3>' +
+    (revisions.length ? revisions.map((revision) => {
+      const projects = revision.projects || [];
+      return '<article class="package-revision-card">' +
+        '<div class="package-revision-head"><div><strong>r' + esc(revision.revision_number) +
+        ' · ' + esc(revision.semantic_version || "—") + '</strong><code>' +
+        esc(revision.revision_id) + '</code></div><span>' + esc(revision.status) + '</span></div>' +
+        '<dl class="execution-facts">' +
+          '<div><dt>Payload hash</dt><dd><code>' + esc(revision.payload_hash) + '</code></dd></div>' +
+          '<div><dt>Created</dt><dd><span>' + esc(formatHomeTime(revision.created_at)) +
+          '</span><code>' + esc(revision.created_by_actor_id || "—") + '</code></dd></div>' +
+          '<div><dt>Published</dt><dd><span>' + esc(formatHomeTime(revision.published_at)) + '</span></dd></div>' +
+          '<div><dt>Validation</dt><dd><pre>' + esc(executionJson(revision.validation_report || {})) + '</pre></dd></div>' +
+        '</dl>' +
+        '<div class="package-revision-usage"><span>Projects pinned to this exact revision</span>' +
+          (projects.length ? projects.map((usage) =>
+            '<div><strong>' + esc(usage.project_name) + '</strong><code>' +
+            esc(usage.project_id) + '</code><small>' +
+            esc((usage.tenant_name || "Tenant") + " / " + (usage.workspace_name || "Workspace") +
+              " · " + formatHomeTime(usage.bound_at)) + '</small></div>'
+          ).join("") : '<div class="feed-empty">No authorized project is pinned to this revision.</div>') +
+        '</div>' +
+      '</article>';
+    }).join("") : '<div class="feed-empty">No revisions exist for this package.</div>') +
+    '</section>';
+  $("#packagesDomainDetail").innerHTML = html;
+}
+
+function renderPackagesSkillDetail() {
+  const rows = state.packages?.skills || [];
+  const selected = rows.find(
+    (item) => item.skill_package_id === state.selectedSkillPackageId
+  ) || null;
+  if (!selected) {
+    $("#packagesSkillDetailTitle").textContent = "Select a Skill package";
+    $("#packagesSkillDetail").innerHTML =
+      '<div class="feed-empty">No authorized-reachable Skill package is selected.</div>';
+    return;
+  }
+  $("#packagesSkillDetailTitle").textContent =
+    selected.name + " · " + selected.skill_id;
+  const revisions = selected.revisions || [];
+  $("#packagesSkillDetail").innerHTML =
+    '<dl class="execution-facts package-detail-facts">' +
+      '<div><dt>Package</dt><dd><code>' + esc(selected.skill_package_id) + '</code></dd></div>' +
+      '<div><dt>Skill ID</dt><dd><code>' + esc(selected.skill_id) + '</code></dd></div>' +
+      '<div><dt>Visibility</dt><dd><span>' + esc(selected.visibility_scope) +
+      '</span><span>' + esc((selected.visibility_bases || []).join(" + ") || "—") + '</span></dd></div>' +
+      '<div><dt>Description</dt><dd><span>' + esc(selected.description || "—") + '</span></dd></div>' +
+      '<div><dt>Created</dt><dd><span>' + esc(formatHomeTime(selected.created_at)) +
+      '</span><code>' + esc(selected.created_by_actor_id || "—") + '</code></dd></div>' +
+    '</dl>' +
+    '<section class="execution-subsection"><h3>Immutable revisions</h3>' +
+    (revisions.length ? revisions.map((revision) => {
+      const bindings = revision.bindings || [];
+      const usage = revision.usage || [];
+      return '<article class="package-revision-card">' +
+        '<div class="package-revision-head"><div><strong>r' + esc(revision.revision_number) +
+        ' · ' + esc(revision.version || "—") + '</strong><code>' +
+        esc(revision.skill_revision_id) + '</code></div><span>' +
+        esc((revision.visibility_bases || []).join(" + ") || "—") + '</span></div>' +
+        '<dl class="execution-facts">' +
+          '<div><dt>Content hash</dt><dd><code>' + esc(revision.content_hash) + '</code></dd></div>' +
+          '<div><dt>Tools</dt><dd><pre>' + esc(executionJson(revision.tool_requirements || [])) + '</pre></dd></div>' +
+          '<div><dt>QA contract</dt><dd><pre>' + esc(executionJson(revision.qa_contract || {})) + '</pre></dd></div>' +
+          '<div><dt>Created</dt><dd><span>' + esc(formatHomeTime(revision.created_at)) +
+          '</span><code>' + esc(revision.created_by_actor_id || "—") + '</code></dd></div>' +
+        '</dl>' +
+        '<section class="package-binding-list"><span>Domain / WorkUnit bindings</span>' +
+          (bindings.length ? bindings.map((binding) =>
+            '<div><strong>' + esc(binding.domain_id + " · " + binding.workunit_type) +
+            '</strong><code>' + esc(binding.binding_id) + '</code><small>hash ' +
+            esc(binding.skill_hash) + ' · ' +
+            esc(binding.hash_matches_revision === false ? "MISMATCH" : "MATCH") + '</small></div>'
+          ).join("") : '<div class="feed-empty">No configured binding is visible.</div>') +
+        '</section>' +
+        '<section class="package-binding-list"><span>Authorized usage</span>' +
+          (usage.length ? usage.map((item) =>
+            '<div><strong>' + packageUsageBasisPill(item.basis) + " " +
+            esc(item.project_name) + '</strong><code>' + esc(item.project_id) +
+            '</code><small>' + esc(item.workunit_type || "—") +
+            (item.phase_execution_id ? (" · " + item.phase_execution_id) : "") +
+            '</small></div>'
+          ).join("") : '<div class="feed-empty">No authorized project usage is visible.</div>') +
+        '</section>' +
+      '</article>';
+    }).join("") : '<div class="feed-empty">No reachable revision is visible.</div>') +
+    '</section>';
+}
+
+function renderPackagesUsage() {
+  const usage = state.packages?.usage || {};
+  const rows = [...(usage.domains || []), ...(usage.skills || [])];
+  $("#packagesUsageCount").textContent = rows.length;
+  $("#packagesUsageBody").innerHTML = rows.length ? rows.map((item) => {
+    const isDomain = item.package_kind === "DOMAIN";
+    const packageIdentity = isDomain ?
+      ((item.domain_id || "Domain") + " · " + (item.revision_id || "—")) :
+      ((item.skill_id || "Skill") + " · " + (item.skill_revision_id || "—"));
+    const context = isDomain ?
+      ("bound " + formatHomeTime(item.bound_at)) :
+      [
+        item.workunit_type,
+        item.binding_id,
+        item.protocol_id,
+        item.phase_execution_id,
+      ].filter(Boolean).join(" · ");
+    const integrity = isDomain ? "Exact pinned revision" :
+      (item.hash_matches_revision === false ? "HASH MISMATCH" : "Hash matches revision");
+    return "<tr>" +
+      '<td><strong>' + esc(item.package_kind) + "</strong></td>" +
+      '<td><span>' + esc(packageIdentity) + '</span><code>' +
+      esc(item.package_id || item.skill_package_id || "—") + "</code></td>" +
+      '<td>' + packageUsageBasisPill(item.basis) + "</td>" +
+      '<td><strong>' + esc(item.project_name) + '</strong><code>' +
+      esc(item.project_id) + "</code></td>" +
+      '<td><span>' + esc(context || "—") + '</span><small>' +
+      esc((item.tenant_name || "Tenant") + " / " + (item.workspace_name || "Workspace")) +
+      "</small></td>" +
+      '<td><span class="' + (integrity.includes("MISMATCH") ? "attention-text" : "") +
+      '">' + esc(integrity) + "</span></td>" +
+    "</tr>";
+  }).join("") : homeEmpty("No authorized package usage records.", 6);
+}
+
+function renderPackagesSummary() {
+  const summary = state.packages;
+  if (!summary) return;
+  const complete = summary.query_status === "COMPLETE";
+  $("#packagesStateBanner").hidden = complete;
+  if (!complete) {
+    $("#packagesStateBanner").className = "home-state-banner warn";
+    $("#packagesStateBanner").textContent =
+      "Package projection is partial. Dangling identities or hash mismatches are not treated as authoritative.";
+  }
+  $("#packagesScopeBadge").textContent = summary.scope?.label || "Authorized packages";
+  $("#packagesGeneratedAt").textContent = formatHomeTime(summary.generated_at);
+  $("#packagesBuildSha").textContent = summary.build_sha || "unknown";
+
+  const domains = summary.domains || [];
+  const skills = summary.skills || [];
+  $("#packagesDomainCount").textContent = domains.length;
+  $("#packagesSkillCount").textContent = skills.length;
+
+  if (!domains.some((item) => item.package_id === state.selectedDomainPackageId)) {
+    state.selectedDomainPackageId = domains[0]?.package_id || null;
+  }
+  if (!skills.some((item) => item.skill_package_id === state.selectedSkillPackageId)) {
+    state.selectedSkillPackageId = skills[0]?.skill_package_id || null;
+  }
+
+  $("#packagesDomainList").innerHTML = domains.length ? domains.map((item) =>
+    '<button type="button" class="package-select-item' +
+      (item.package_id === state.selectedDomainPackageId ? " active" : "") +
+      '" data-domain-package="' + esc(item.package_id) + '">' +
+      '<strong>' + esc(item.name) + '</strong><span>' + esc(item.domain_id) +
+      '</span><code>' + esc(item.package_id) + '</code><small>' +
+      esc((item.tenant_name || "Tenant") + " · " + item.revision_count +
+        " revision(s) · " + item.authorized_project_usage_count + " project(s)") +
+      "</small></button>"
+  ).join("") : '<div class="feed-empty">No Domain package is visible in authorized tenants.</div>';
+
+  $("#packagesSkillList").innerHTML = skills.length ? skills.map((item) =>
+    '<button type="button" class="package-select-item' +
+      (item.skill_package_id === state.selectedSkillPackageId ? " active" : "") +
+      '" data-skill-package="' + esc(item.skill_package_id) + '">' +
+      '<strong>' + esc(item.name) + '</strong><span>' + esc(item.skill_id) +
+      '</span><code>' + esc(item.skill_package_id) + '</code><small>' +
+      esc((item.visibility_bases || []).join(" + ") || "AUTHORIZED_REACHABLE") +
+      " · " + esc((item.revisions || []).length) + " revision(s)</small></button>"
+  ).join("") : '<div class="feed-empty">No Skill revision is reachable from your authorized scope.</div>';
+
+  renderPackagesDomainDetail();
+  renderPackagesSkillDetail();
+  renderPackagesUsage();
+  renderPackagesTab();
+}
+
+function renderPackagesError(message) {
+  $("#packagesStateBanner").hidden = false;
+  $("#packagesStateBanner").className = "home-state-banner error";
+  $("#packagesStateBanner").textContent = "Packages unavailable — " + message;
+  $("#packagesDomainList").innerHTML = '<div class="feed-empty">Domain registry unavailable.</div>';
+  $("#packagesSkillList").innerHTML = '<div class="feed-empty">Skill registry unavailable.</div>';
+  $("#packagesUsageBody").innerHTML = homeEmpty("Package usage unavailable.", 6);
+  $("#packagesDomainDetail").innerHTML = '<div class="feed-empty">Domain detail unavailable.</div>';
+  $("#packagesSkillDetail").innerHTML = '<div class="feed-empty">Skill detail unavailable.</div>';
+  $("#packagesGeneratedAt").textContent = "—";
+  $("#packagesBuildSha").textContent = "—";
+}
+
+function renderPackagesTab() {
+  const tab = ["domains", "skills", "usage"].includes(state.selectedPackagesTab) ?
+    state.selectedPackagesTab : "domains";
+  state.selectedPackagesTab = tab;
+  document.querySelectorAll("[data-packages-tab]").forEach((button) => {
+    const active = button.dataset.packagesTab === tab;
+    button.classList.toggle("active", active);
+    if (active) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
+  $("#packagesDomainsView").hidden = tab !== "domains";
+  $("#packagesSkillsView").hidden = tab !== "skills";
+  $("#packagesUsageView").hidden = tab !== "usage";
+}
+
+async function refreshPackagesSummary(render = true) {
+  if (state.packagesLoading) return;
+  const requestActorId = state.me?.actor_id || null;
+  state.packagesLoading = true;
+  state.packagesError = null;
+  if (render) {
+    $("#packagesStateBanner").hidden = false;
+    $("#packagesStateBanner").className = "home-state-banner loading";
+    $("#packagesStateBanner").textContent = "Loading authorized package registry…";
+  }
+  try {
+    const result = await api("/browser/packages");
+    if (!state.me || state.me.actor_id !== requestActorId) return;
+    state.packages = result;
+  } catch (error) {
+    state.packages = null;
+    state.packagesError = error.message;
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+  } finally {
+    state.packagesLoading = false;
+  }
+  if (render && !$("#packagesRouteView").hidden) {
+    if (state.packages) renderPackagesSummary();
+    else renderPackagesError(state.packagesError || "Unknown error");
+  }
+}
+
+function renderPackagesRoute(item) {
+  $("#projectWorkspaceView").hidden = true;
+  $("#homeRouteView").hidden = true;
+  $("#projectsRouteView").hidden = true;
+  $("#accessRouteView").hidden = true;
+  $("#operationsRouteView").hidden = true;
+  $("#lockedRouteView").hidden = true;
+  $("#diagnosticsRouteView").hidden = true;
+  $("#packagesRouteView").hidden = false;
+  document.title = "GWF — Packages";
+  if (state.packages) renderPackagesSummary();
+  else if (state.packagesError) renderPackagesError(state.packagesError);
+  else void refreshPackagesSummary(true);
 }
 
 function renderAccessSummary() {
