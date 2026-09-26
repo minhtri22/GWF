@@ -142,6 +142,16 @@ def test_access_browser_mutations_and_negative_paths(tmp_path, monkeypatch):
     assert client.delete(f"/browser/access/workspaces/{workspace}/members/{member}").status_code == 200
     assert client.delete(f"/browser/access/tenants/{tenant}/members/{member}").status_code == 200
 
+    assert client.delete(
+        f"/browser/access/projects/{project}/members/{member}"
+    ).status_code == 422
+    assert client.delete(
+        f"/browser/access/workspaces/{workspace}/members/{member}"
+    ).status_code == 422
+    assert client.delete(
+        f"/browser/access/tenants/{tenant}/members/{member}"
+    ).status_code == 422
+
     bad_role = client.post(
         f"/browser/access/projects/{project}/members",
         json={"actor_id": member, "role": "INVALID_ROLE"},
