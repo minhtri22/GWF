@@ -30,6 +30,11 @@ const state = {
   operationsAuditFilters: {
     text: "", tenant: "", workspace: "", project: "", actor: "", action: "", resource: "", from: "", to: ""
   },
+  operationsRuntime: null,
+  operationsRuntimeError: null,
+  operationsRuntimeLoading: false,
+  selectedRuntimeJobId: null,
+  operationsRuntimeFilters: { text: "", tenant: "", workspace: "", project: "", status: "", worker: "" },
   projectsFilters: {
     text: "",
     lifecycle: "",
@@ -1310,6 +1315,219 @@ async function decideApproval(decision) {
   }
 }
 
+function runtimeJobWorkerIds(job) {
+  const ids = new Set();
+  if (job?.lease?.worker_id) ids.add(job.lease.worker_id);
+  for (const attempt of (job?.attempts || [])) if (attempt.worker_id) ids.add(attempt.worker_id);
+  return Array.from(ids);
+}
+
+function populateOperationsRuntimeFilters() {
+  const jobs = state.operationsRuntime?.jobs || [];
+  const tenants = new Map(), workspaces = new Map(), projects = new Map();
+  const statuses = new Map(), workers = new Map();
+  for (const job of jobs) {
+    const scope = job.scope || {};
+    if (scope.tenant_id) tenants.set(scope.tenant_id, (scope.tenant_name || "Tenant") + " · " + scope.tenant_id);
+    if (scope.workspace_id) workspaces.set(scope.workspace_id, (scope.workspace_name || "Workspace") + " · " + scope.workspace_id);
+    projects.set(job.project_id, (job.project_name || "Project") + " · " + job.project_id);
+    if (job.status) statuses.set(job.status, job.status);
+    for (const workerId of runtimeJobWorkerIds(job)) workers.set(workerId, workerId);
+  }
+  const f = state.operationsRuntimeFilters;
+  setOperationsSelect("#operationsRuntimeTenantFilter", "All tenants", tenants, f.tenant);
+  setOperationsSelect("#operationsRuntimeWorkspaceFilter", "All workspaces", workspaces, f.workspace);
+  setOperationsSelect("#operationsRuntimeProjectFilter", "All projects", projects, f.project);
+  setOperationsSelect("#operationsRuntimeStatusFilter", "All statuses", statuses, f.status);
+  setOperationsSelect("#operationsRuntimeWorkerFilter", "All workers", workers, f.worker);
+}
+
+function filteredOperationsRuntimeJobs() {
+  const f = state.operationsRuntimeFilters;
+  const needle = f.text.trim().toLowerCase();
+  return (state.operationsRuntime?.jobs || []).filter((job) => {
+    const scope = job.scope || {};
+    const workerIds = runtimeJobWorkerIds(job);
+    if (needle && ![
+      job.job_id, job.project_id, job.project_name, job.workunit_id,
+      job.workunit_type, job.status, ...workerIds
+    ].some((value) => String(value || "").toLowerCase().includes(needle))) return false;
+    if (f.tenant && scope.tenant_id !== f.tenant) return false;
+    if (f.workspace && scope.workspace_id !== f.workspace) return false;
+    if (f.project && job.project_id !== f.project) return false;
+    if (f.status && job.status !== f.status) return false;
+    if (f.worker && !workerIds.includes(f.worker)) return false;
+    return true;
+  });
+}
+
+function runtimeCompactJson(value) {
+  const text = JSON.stringify(value ?? (Array.isArray(value) ? [] : {}));
+  return text === "{}" || text === "[]" ? "—" : text;
+}
+
+function selectedRuntimeJob() {
+  return (state.operationsRuntime?.jobs || []).find((job) => job.job_id === state.selectedRuntimeJobId) || null;
+}
+
+function renderOperationsRuntimeInspector() {
+  const job = selectedRuntimeJob();
+  $("#operationsRuntimeSelectedJob").textContent = job?.job_id || "—";
+  $("#operationsRuntimeAttemptsEmpty").hidden = Boolean(job);
+  $("#operationsRuntimeAttemptsWrap").hidden = !job;
+  if (!job) {
+    $("#operationsRuntimeAttemptsBody").innerHTML = "";
+    $("#operationsRuntimeEvents").innerHTML = '<div class="feed-empty">Select a job to inspect scheduler events.</div>';
+    return;
+  }
+
+  const attempts = job.attempts || [];
+  $("#operationsRuntimeAttemptsBody").innerHTML = attempts.length ? attempts.map((attempt) =>
+    "<tr>" +
+      '<td><code>' + esc(attempt.attempt_id) + '</code><strong>#' + esc(attempt.attempt_number) + "</strong></td>" +
+      '<td><code>' + esc(attempt.worker_id) + "</code></td>" +
+      '<td><strong>' + esc(attempt.status) + '</strong><small>run ' + esc(attempt.run_status || "—") + "</small></td>" +
+      '<td><code>' + esc(attempt.run_id || "—") + "</code></td>" +
+      '<td><span>' + esc(formatHomeTime(attempt.heartbeat_at)) + '</span><small>lease expires</small><span>' +
+      esc(formatHomeTime(attempt.lease_expires_at)) + "</span></td>" +
+      '<td><span>' + esc(formatHomeTime(attempt.finished_at)) + '</span><code>' + esc(attempt.error_code || "—") + "</code></td>" +
+    "</tr>"
+  ).join("") : homeEmpty("No attempts have been created for this job.", 6);
+
+  const events = job.scheduler_events || [];
+  $("#operationsRuntimeEvents").innerHTML = events.length ? events.map((event) =>
+    '<div class="feed-item"><div><strong>' + esc(event.event_type) + '</strong><span>' +
+    esc(event.worker_id || "No worker") + '</span></div><p>' +
+    esc(runtimeCompactJson(event.metadata)) + '</p><code>' + esc(event.event_id) +
+    '</code><time>' + esc(formatHomeTime(event.created_at)) + "</time></div>"
+  ).join("") : '<div class="feed-empty">No scheduler events are persisted for this job.</div>';
+}
+
+function renderOperationsRuntimeRows() {
+  const all = state.operationsRuntime?.jobs || [];
+  const jobs = filteredOperationsRuntimeJobs();
+  $("#operationsRuntimeVisibleCount").textContent = jobs.length;
+  if (state.selectedRuntimeJobId && !all.some((job) => job.job_id === state.selectedRuntimeJobId)) {
+    state.selectedRuntimeJobId = null;
+  }
+  if (!all.length) {
+    $("#operationsRuntimeJobsBody").innerHTML = homeEmpty("No distributed jobs exist in the current authorized scope.", 8);
+    renderOperationsRuntimeInspector();
+    return;
+  }
+  if (!jobs.length) {
+    $("#operationsRuntimeJobsBody").innerHTML = homeEmpty("No distributed jobs match the current page filters.", 8);
+    renderOperationsRuntimeInspector();
+    return;
+  }
+
+  $("#operationsRuntimeJobsBody").innerHTML = jobs.map((job) => {
+    const scope = job.scope || {};
+    const lease = job.lease || {};
+    return "<tr>" +
+      '<td><button type="button" class="runtime-job-select' +
+      (job.job_id === state.selectedRuntimeJobId ? " active" : "") +
+      '" data-runtime-job-id="' + esc(job.job_id) + '"><code>' + esc(job.job_id) +
+      '</code><small>' + esc(formatHomeTime(job.created_at)) + "</small></button></td>" +
+      '<td><strong>' + esc(job.project_name) + '</strong><code>' + esc(job.project_id) +
+      '</code><small>' + esc((scope.tenant_name || "Tenant") + " / " + (scope.workspace_name || "Workspace")) +
+      '</small><code>' + esc((scope.tenant_id || "—") + " · " + (scope.workspace_id || "—")) + "</code></td>" +
+      '<td><strong>' + esc(job.workunit_type || "—") + '</strong><code>' + esc(job.workunit_id) +
+      '</code><small>' + esc(job.workunit_status || "—") + "</small></td>" +
+      '<td><strong>' + esc(job.status) + '</strong><small>priority ' + esc(job.priority) +
+      '</small><small>updated ' + esc(formatHomeTime(job.updated_at)) + "</small></td>" +
+      '<td><code>' + esc(lease.worker_id || "—") + '</code><small>token ' +
+      esc(lease.has_token ? "present · redacted" : "absent") + '</small><small>' +
+      esc(formatHomeTime(lease.expires_at)) + "</small></td>" +
+      '<td><strong>' + esc(job.attempt_count) + " / " + esc(job.max_attempts) +
+      '</strong><small>' + esc(job.last_error || "No last error") + "</small></td>" +
+      '<td><span>resources</span><code>' + esc(runtimeCompactJson(job.required_resources)) +
+      '</code><span>capabilities</span><code>' + esc(runtimeCompactJson(job.required_capabilities)) + "</code></td>" +
+      '<td>' + operationsIdentityDetails(job.resource_conflict_keys) + "</td>" +
+    "</tr>";
+  }).join("");
+  renderOperationsRuntimeInspector();
+}
+
+function renderOperationsRuntimeWorkers() {
+  const workers = state.operationsRuntime?.workers || [];
+  $("#operationsRuntimeWorkerCount").textContent = workers.length;
+  $("#operationsRuntimeWorkersBody").innerHTML = workers.length ? workers.map((worker) =>
+    "<tr>" +
+      '<td><code>' + esc(worker.worker_id) + '</code><small>actor</small><code>' + esc(worker.actor_id) + "</code></td>" +
+      '<td><strong>' + esc(worker.status) + "</strong></td>" +
+      '<td><code>' + esc(runtimeCompactJson(worker.capabilities)) + "</code></td>" +
+      '<td><code>' + esc(runtimeCompactJson(worker.resources_total)) + "</code></td>" +
+      '<td><span>' + esc(formatHomeTime(worker.last_heartbeat_at)) + '</span><small>TTL ' +
+      esc(worker.heartbeat_ttl_seconds) + "s</small></td>" +
+      '<td><span>' + esc(formatHomeTime(worker.registered_at)) + "</span></td>" +
+    "</tr>"
+  ).join("") : homeEmpty("No workers are referenced by visible current or historical job attempts.", 6);
+}
+
+function renderOperationsRuntime() {
+  const summary = state.operationsRuntime;
+  if (!summary) {
+    $("#operationsRuntimeStateBanner").hidden = false;
+    $("#operationsRuntimeStateBanner").className = "home-state-banner error";
+    $("#operationsRuntimeStateBanner").textContent = "Runtime data unavailable — " +
+      (state.operationsRuntimeError || "No authoritative projection returned.");
+    $("#operationsRuntimeJobsBody").innerHTML = homeEmpty("Distributed runtime unavailable.", 8);
+    $("#operationsRuntimeWorkersBody").innerHTML = homeEmpty("Worker references unavailable.", 6);
+    $("#operationsRuntimeVisibleCount").textContent = "—";
+    $("#operationsRuntimeWorkerCount").textContent = "—";
+    $("#operationsRuntimeScope").textContent = "Authorized scope unavailable";
+    $("#operationsRuntimeGeneratedAt").textContent = "—";
+    $("#operationsRuntimeBuildSha").textContent = "—";
+    state.selectedRuntimeJobId = null;
+    renderOperationsRuntimeInspector();
+    for (const [selector, label] of [
+      ["#operationsRuntimeTenantFilter", "All tenants"],
+      ["#operationsRuntimeWorkspaceFilter", "All workspaces"],
+      ["#operationsRuntimeProjectFilter", "All projects"],
+      ["#operationsRuntimeStatusFilter", "All statuses"],
+      ["#operationsRuntimeWorkerFilter", "All workers"],
+    ]) $(selector).innerHTML = '<option value="">' + esc(label) + "</option>";
+    return;
+  }
+  const complete = summary.query_status === "COMPLETE";
+  $("#operationsRuntimeStateBanner").hidden = complete;
+  if (!complete) {
+    $("#operationsRuntimeStateBanner").className = "home-state-banner warn";
+    $("#operationsRuntimeStateBanner").textContent = "Runtime projection is partial. Missing referenced identities are not inferred.";
+  }
+  $("#operationsRuntimeScope").textContent = summary.scope?.label || "Authorized scope";
+  $("#operationsRuntimeGeneratedAt").textContent = formatHomeTime(summary.generated_at);
+  $("#operationsRuntimeBuildSha").textContent = summary.build_sha || "unknown";
+  populateOperationsRuntimeFilters();
+  renderOperationsRuntimeRows();
+  renderOperationsRuntimeWorkers();
+}
+
+async function refreshOperationsRuntime(render = true) {
+  if (state.operationsRuntimeLoading) return;
+  state.operationsRuntimeLoading = true;
+  state.operationsRuntimeError = null;
+  if (render) {
+    $("#operationsRuntimeStateBanner").hidden = false;
+    $("#operationsRuntimeStateBanner").className = "home-state-banner loading";
+    $("#operationsRuntimeStateBanner").textContent = "Loading authorized distributed runtime…";
+  }
+  try {
+    state.operationsRuntime = await api("/browser/operations/runtime");
+  } catch (error) {
+    state.operationsRuntime = null;
+    state.operationsRuntimeError = error.message;
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+  } finally {
+    state.operationsRuntimeLoading = false;
+  }
+  if (render && !$("#operationsRuntimeView").hidden) renderOperationsRuntime();
+}
+
 function setOperationsSubnavActive(path) {
   document.querySelectorAll("[data-operations-route]").forEach((button) => {
     button.classList.toggle("active", normalizedRoute(button.dataset.operationsRoute) === normalizedRoute(path));
@@ -1323,6 +1541,7 @@ function renderOperationsLocked(path) {
   $("#operationsRunsView").hidden = true;
   $("#operationsApprovalsView").hidden = true;
   $("#operationsAuditView").hidden = true;
+  $("#operationsRuntimeView").hidden = true;
   $("#operationsLockedView").hidden = false;
   $("#operationsLockedIcon").innerHTML = iconSvg("operations", "icon");
   $("#operationsLockedShield").innerHTML = iconSvg("shield", "icon");
@@ -1349,6 +1568,7 @@ function renderOperationsRoute(item) {
     $("#operationsLockedView").hidden = true;
     $("#operationsApprovalsView").hidden = true;
     $("#operationsAuditView").hidden = true;
+    $("#operationsRuntimeView").hidden = true;
     $("#operationsRunsView").hidden = false;
     document.title = "GWF — Operations / Runs";
     if (state.operationsRuns) renderOperationsRuns();
@@ -1360,6 +1580,7 @@ function renderOperationsRoute(item) {
     $("#operationsLockedView").hidden = true;
     $("#operationsRunsView").hidden = true;
     $("#operationsAuditView").hidden = true;
+    $("#operationsRuntimeView").hidden = true;
     $("#operationsApprovalsView").hidden = false;
     document.title = "GWF — Operations / Approvals";
     if (state.operationsApprovals) renderOperationsApprovals();
@@ -1370,14 +1591,27 @@ function renderOperationsRoute(item) {
     $("#operationsLockedView").hidden = true;
     $("#operationsRunsView").hidden = true;
     $("#operationsApprovalsView").hidden = true;
+    $("#operationsRuntimeView").hidden = true;
     $("#operationsAuditView").hidden = false;
     document.title = "GWF — Operations / Audit";
     if (state.operationsAudit) renderOperationsAudit();
     else void refreshOperationsAudit(true);
     return;
   }
+  if (path === "/app/operations/runtime") {
+    $("#operationsLockedView").hidden = true;
+    $("#operationsRunsView").hidden = true;
+    $("#operationsApprovalsView").hidden = true;
+    $("#operationsAuditView").hidden = true;
+    $("#operationsRuntimeView").hidden = false;
+    document.title = "GWF — Operations / Runtime";
+    if (state.operationsRuntime) renderOperationsRuntime();
+    else void refreshOperationsRuntime(true);
+    return;
+  }
   $("#operationsApprovalsView").hidden = true;
   $("#operationsAuditView").hidden = true;
+  $("#operationsRuntimeView").hidden = true;
   document.title = "GWF — Operations / " + (path.split("/").pop() || "");
   renderOperationsLocked(path);
 }
@@ -1541,6 +1775,9 @@ function showLogin() {
   state.selectedApprovalId = null;
   state.operationsAudit = null;
   state.operationsAuditError = null;
+  state.operationsRuntime = null;
+  state.operationsRuntimeError = null;
+  state.selectedRuntimeJobId = null;
   setActorMenu(false);
   $("#appView").hidden = true;
   $("#loginView").hidden = false;
@@ -1654,6 +1891,42 @@ $("#operationsApprovalsRefreshButton").addEventListener("click", async () => {
 
 $("#operationsAuditRefreshButton").addEventListener("click", async () => {
   await refreshOperationsAudit(true);
+});
+
+$("#operationsRuntimeRefreshButton").addEventListener("click", async () => {
+  await refreshOperationsRuntime(true);
+});
+
+$("#operationsRuntimeTextFilter").addEventListener("input", (event) => {
+  state.operationsRuntimeFilters.text = event.target.value;
+  renderOperationsRuntimeRows();
+});
+
+for (const [selector, key] of [
+  ["#operationsRuntimeTenantFilter", "tenant"],
+  ["#operationsRuntimeWorkspaceFilter", "workspace"],
+  ["#operationsRuntimeProjectFilter", "project"],
+  ["#operationsRuntimeStatusFilter", "status"],
+  ["#operationsRuntimeWorkerFilter", "worker"],
+]) {
+  $(selector).addEventListener("change", (event) => {
+    state.operationsRuntimeFilters[key] = event.target.value;
+    renderOperationsRuntimeRows();
+  });
+}
+
+$("#operationsRuntimeResetFiltersButton").addEventListener("click", () => {
+  state.operationsRuntimeFilters = { text: "", tenant: "", workspace: "", project: "", status: "", worker: "" };
+  $("#operationsRuntimeTextFilter").value = "";
+  populateOperationsRuntimeFilters();
+  renderOperationsRuntimeRows();
+});
+
+$("#operationsRuntimeJobsBody").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-runtime-job-id]");
+  if (!button) return;
+  state.selectedRuntimeJobId = button.dataset.runtimeJobId;
+  renderOperationsRuntimeRows();
 });
 
 $("#operationsAuditTextFilter").addEventListener("input", (event) => {

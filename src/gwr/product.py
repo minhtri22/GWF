@@ -706,6 +706,132 @@ class ProjectDashboardService:
             "runs": rows,
         }
 
+    def operations_runtime(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
+        """Authorized cross-project distributed-runtime projection."""
+        projects = self.runtime.tenancy.list_accessible_projects(actor_id)
+        jobs: list[dict[str, Any]] = []
+        referenced_worker_ids: set[str] = set()
+        complete = True
+
+        for project in projects:
+            project_id = project["id"]
+            tenant = self.db.one(
+                "SELECT name FROM tenants WHERE tenant_id=?",
+                (project["tenant_id"],),
+            )
+            workspace = self.db.one(
+                "SELECT name FROM workspaces WHERE workspace_id=?",
+                (project["workspace_id"],),
+            )
+            if tenant is None or workspace is None:
+                complete = False
+            scope = {
+                "tenant_id": project["tenant_id"],
+                "tenant_name": tenant["name"] if tenant else None,
+                "workspace_id": project["workspace_id"],
+                "workspace_name": workspace["name"] if workspace else None,
+            }
+
+            for job_row in self.db.all(
+                "SELECT j.*,w.workunit_type,w.status AS workunit_status,"
+                "w.resource_conflict_keys FROM distributed_jobs j "
+                "JOIN workunits w ON w.workunit_id=j.workunit_id "
+                "WHERE j.project_id=? ORDER BY j.created_at DESC,j.job_id DESC",
+                (project_id,),
+            ):
+                job = dict(job_row)
+                attempts: list[dict[str, Any]] = []
+                for attempt_row in self.db.all(
+                    "SELECT attempt_id,job_id,attempt_number,worker_id,run_id,status,"
+                    "started_at,heartbeat_at,lease_expires_at,finished_at,error_code,metadata "
+                    "FROM job_attempts WHERE job_id=? "
+                    "ORDER BY attempt_number,attempt_id",
+                    (job["job_id"],),
+                ):
+                    attempt = _parsed(attempt_row, ("metadata",))
+                    referenced_worker_ids.add(attempt["worker_id"])
+                    run_status = None
+                    if attempt.get("run_id"):
+                        run = self.db.one(
+                            "SELECT runtime_status FROM runs WHERE run_id=?",
+                            (attempt["run_id"],),
+                        )
+                        run_status = run["runtime_status"] if run else None
+                    attempt["run_status"] = run_status
+                    attempts.append(attempt)
+
+                lease_worker_id = job.get("lease_worker_id")
+                if lease_worker_id:
+                    referenced_worker_ids.add(lease_worker_id)
+
+                events = [
+                    _parsed(row, ("metadata",))
+                    for row in self.db.all(
+                        "SELECT event_id,project_id,job_id,worker_id,event_type,metadata,created_at "
+                        "FROM scheduler_events WHERE job_id=? "
+                        "ORDER BY created_at,event_id",
+                        (job["job_id"],),
+                    )
+                ]
+
+                jobs.append({
+                    "job_id": job["job_id"],
+                    "project_id": project_id,
+                    "project_name": project["name"],
+                    "scope": scope,
+                    "workunit_id": job["workunit_id"],
+                    "workunit_type": job["workunit_type"],
+                    "workunit_status": job["workunit_status"],
+                    "resource_conflict_keys": parse_json(job["resource_conflict_keys"], []) or [],
+                    "status": job["status"],
+                    "priority": job["priority"],
+                    "required_resources": parse_json(job["required_resources"], {}) or {},
+                    "required_capabilities": parse_json(job["required_capabilities"], []) or [],
+                    "available_at": job["available_at"],
+                    "attempt_count": job["attempt_count"],
+                    "max_attempts": job["max_attempts"],
+                    "last_error": job["last_error"],
+                    "created_at": job["created_at"],
+                    "updated_at": job["updated_at"],
+                    "lease": {
+                        "worker_id": lease_worker_id,
+                        "has_token": bool(job.get("lease_token")),
+                        "expires_at": job.get("lease_expires_at"),
+                    },
+                    "attempts": attempts,
+                    "scheduler_events": events,
+                })
+
+        jobs.sort(key=lambda row: (row["created_at"], row["job_id"]), reverse=True)
+
+        workers: list[dict[str, Any]] = []
+        for worker_id in sorted(referenced_worker_ids):
+            row = self.db.one(
+                "SELECT worker_id,actor_id,status,capabilities,resources_total,"
+                "heartbeat_ttl_seconds,last_heartbeat_at,registered_at "
+                "FROM worker_nodes WHERE worker_id=?",
+                (worker_id,),
+            )
+            if not row:
+                complete = False
+                continue
+            item = _parsed(row, ("capabilities", "resources_total"))
+            workers.append(item)
+        workers.sort(key=lambda row: (row["registered_at"], row["worker_id"]))
+
+        return {
+            "generated_at": utcnow(),
+            "build_sha": build_sha,
+            "query_status": "COMPLETE" if complete else "PARTIAL",
+            "scope": {
+                "mode": "ALL_AUTHORIZED",
+                "label": "All authorized projects",
+                "project_count": len(projects),
+            },
+            "jobs": jobs,
+            "workers": workers,
+        }
+
     def access_summary(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
         """Authorized read projection for System -> Access."""
         actor = self.db.one(

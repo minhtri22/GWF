@@ -104,3 +104,12 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .audit-filter-grid{display:grid;grid-template-columns:minmax(220px,1.5fr) repeat(6,minmax(120px,1fr)) minmax(150px,1fr) minmax(150px,1fr) auto;gap:8px;align-items:end}.operations-audit-table{min-width:1450px}.operations-audit-table td:nth-child(1){min-width:150px}.operations-audit-table td:nth-child(2){min-width:220px}.operations-audit-table td:nth-child(5){min-width:190px}.audit-links span,.audit-links code{display:block}.audit-links span{margin-top:3px;color:var(--text-muted);font-size:7px;text-transform:uppercase}.audit-boundary-note{margin:0;padding:9px 11px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--surface-2);color:var(--text-muted);font-size:8px}
 @media(max-width:1250px){.audit-filter-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.audit-search-filter{grid-column:span 2}}
 @media(max-width:760px){.audit-filter-grid{grid-template-columns:1fr 1fr}.audit-search-filter{grid-column:1/-1}}
+
+
+/* BPS-M03 Operations Runtime */
+.runtime-filter-grid{display:grid;grid-template-columns:minmax(220px,1.6fr) repeat(5,minmax(120px,1fr)) auto;gap:8px;align-items:end}
+.runtime-search-filter{min-width:0}.runtime-jobs-table{min-width:1320px}.runtime-jobs-table td:nth-child(1){min-width:180px}.runtime-jobs-table td:nth-child(2){min-width:210px}.runtime-jobs-table td:nth-child(7){min-width:210px}
+.runtime-job-select{display:grid;gap:2px;width:100%;padding:5px;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--text-primary);text-align:left}.runtime-job-select:hover,.runtime-job-select.active{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent-primary) 18%,transparent)}.runtime-job-select code,.runtime-job-select small{display:block}
+.runtime-detail-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);gap:12px}.runtime-attempts-table{min-width:920px}.runtime-event-feed{max-height:360px}.runtime-workers-table{min-width:980px}
+@media(max-width:1180px){.runtime-filter-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.runtime-search-filter{grid-column:span 2}.runtime-detail-grid{grid-template-columns:1fr}}
+@media(max-width:760px){.runtime-filter-grid{grid-template-columns:1fr 1fr}.runtime-search-filter{grid-column:1/-1}.runtime-detail-grid{grid-template-columns:1fr}}

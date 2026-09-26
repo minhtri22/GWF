@@ -287,7 +287,7 @@
             <button type="button" data-operations-route="/app/operations/runs"><span>Runs</span><small>Live</small></button>
             <button type="button" data-operations-route="/app/operations/approvals"><span>Approvals</span><small>Live</small></button>
             <button type="button" data-operations-route="/app/operations/audit"><span>Audit</span><small>Live</small></button>
-            <button type="button" data-operations-route="/app/operations/runtime"><span>Runtime</span><small>Locked</small></button>
+            <button type="button" data-operations-route="/app/operations/runtime"><span>Runtime</span><small>Live</small></button>
           </nav>
 
           <section id="operationsRunsView" class="operations-screen">
@@ -428,6 +428,75 @@
             <div class="home-footnote">
               <span>Projection</span><code id="operationsAuditGeneratedAt">—</code>
               <span>Build</span><code id="operationsAuditBuildSha">—</code>
+            </div>
+          </section>
+
+          <section id="operationsRuntimeView" class="operations-screen" hidden>
+            <div class="operations-screen-head">
+              <div><p class="eyebrow">Distributed scheduler state</p><h2>Runtime</h2></div>
+              <div class="operations-head-actions">
+                <span id="operationsRuntimeScope" class="scope-badge">All authorized projects</span>
+                <button id="operationsRuntimeRefreshButton" class="text-button" type="button">Refresh</button>
+              </div>
+            </div>
+            <div id="operationsRuntimeStateBanner" class="home-state-banner" hidden></div>
+
+            <section class="panel operations-filter-panel" aria-label="Runtime filters">
+              <div class="runtime-filter-grid">
+                <label class="projects-filter runtime-search-filter"><span>Page filter</span><input id="operationsRuntimeTextFilter" type="search" placeholder="Job, project, WorkUnit or worker ID" autocomplete="off"></label>
+                <label class="projects-filter"><span>Tenant</span><select id="operationsRuntimeTenantFilter"><option value="">All tenants</option></select></label>
+                <label class="projects-filter"><span>Workspace</span><select id="operationsRuntimeWorkspaceFilter"><option value="">All workspaces</option></select></label>
+                <label class="projects-filter"><span>Project</span><select id="operationsRuntimeProjectFilter"><option value="">All projects</option></select></label>
+                <label class="projects-filter"><span>Job status</span><select id="operationsRuntimeStatusFilter"><option value="">All statuses</option></select></label>
+                <label class="projects-filter"><span>Worker</span><select id="operationsRuntimeWorkerFilter"><option value="">All workers</option></select></label>
+                <button id="operationsRuntimeResetFiltersButton" class="ghost projects-reset" type="button">Reset</button>
+              </div>
+            </section>
+
+            <section class="panel operations-table-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Authorized queue</p><h2>Distributed jobs</h2></div>
+                <div class="projects-result-count"><strong id="operationsRuntimeVisibleCount">0</strong><span>visible</span></div>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table runtime-jobs-table">
+                  <thead><tr><th>Job</th><th>Project / scope</th><th>WorkUnit</th><th>Status</th><th>Lease</th><th>Attempts</th><th>Requirements</th><th>Conflict keys</th></tr></thead>
+                  <tbody id="operationsRuntimeJobsBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="runtime-detail-grid">
+              <article class="panel operations-table-panel">
+                <div class="panel-head"><div><p class="eyebrow">Selected job</p><h2>Attempts</h2></div><code id="operationsRuntimeSelectedJob">—</code></div>
+                <div id="operationsRuntimeAttemptsEmpty" class="feed-empty">Select a job to inspect attempt/run history.</div>
+                <div id="operationsRuntimeAttemptsWrap" class="table-scroll" hidden>
+                  <table class="data-table runtime-attempts-table">
+                    <thead><tr><th>Attempt</th><th>Worker</th><th>Status</th><th>Run</th><th>Heartbeat / lease</th><th>Finished / error</th></tr></thead>
+                    <tbody id="operationsRuntimeAttemptsBody"></tbody>
+                  </table>
+                </div>
+              </article>
+              <article class="panel operations-table-panel">
+                <div class="panel-head"><div><p class="eyebrow">Scheduler provenance</p><h2>Recovery / requeue events</h2></div></div>
+                <div id="operationsRuntimeEvents" class="home-feed runtime-event-feed"><div class="feed-empty">Select a job to inspect scheduler events.</div></div>
+              </article>
+            </section>
+
+            <section class="panel operations-table-panel">
+              <div class="panel-head"><div><p class="eyebrow">Referenced capacity</p><h2>Workers</h2></div><span id="operationsRuntimeWorkerCount" class="panel-count">0</span></div>
+              <div class="table-scroll">
+                <table class="data-table runtime-workers-table">
+                  <thead><tr><th>Worker / actor</th><th>Status</th><th>Capabilities</th><th>Capacity</th><th>Heartbeat</th><th>Registered</th></tr></thead>
+                  <tbody id="operationsRuntimeWorkersBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <p class="audit-boundary-note">Runtime is read-only in the browser. Worker registration/status/heartbeat, lease protocol and effect commits remain worker/runtime protocol operations.</p>
+            <div class="home-footnote">
+              <span>Projection</span><code id="operationsRuntimeGeneratedAt">—</code>
+              <span>Build</span><code id="operationsRuntimeBuildSha">—</code>
             </div>
           </section>
 

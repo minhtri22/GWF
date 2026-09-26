@@ -616,6 +616,14 @@ def create_app(
             build_sha=resolved_product_info["build_sha"],
         )
 
+    @app.get('/browser/operations/runtime')
+    def browser_operations_runtime(request: Request):
+        _, principal = browser_principal(request)
+        return product.operations_runtime(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
     @app.get('/browser/access-summary')
     def browser_access_summary(request: Request):
         _, principal = browser_principal(request)
