@@ -453,6 +453,23 @@
     </div>
   </div>
 
+  <dialog id="governedActionDialog" class="governed-dialog">
+    <form method="dialog" class="governed-dialog-card">
+      <p class="eyebrow">Governed action confirmation</p>
+      <h2 id="governedActionTitle">Confirm action</h2>
+      <dl class="governed-dialog-facts">
+        <div><dt>Action</dt><dd id="governedActionName">—</dd></div>
+        <div><dt>Target</dt><dd><code id="governedActionTarget">—</code></dd></div>
+        <div><dt>Scope</dt><dd><code id="governedActionScope">—</code></dd></div>
+      </dl>
+      <p id="governedActionConsequence" class="governed-dialog-consequence"></p>
+      <div class="governed-dialog-actions">
+        <button value="cancel" class="ghost" type="submit">Cancel</button>
+        <button id="governedActionConfirmButton" value="confirm" class="primary" type="submit">Confirm exact action</button>
+      </div>
+    </form>
+  </dialog>
+
   <script src="/assets/app.js"></script>
 </body>
 </html>
