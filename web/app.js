@@ -1092,8 +1092,19 @@ function renderOperationsAudit() {
       (state.operationsAuditError || "No authoritative projection returned.");
     $("#operationsAuditBody").innerHTML = homeEmpty("Audit timeline unavailable.", 8);
     $("#operationsAuditVisibleCount").textContent = "—";
+    $("#operationsAuditScope").textContent = "Authorized scope unavailable";
     $("#operationsAuditGeneratedAt").textContent = "—";
     $("#operationsAuditBuildSha").textContent = "—";
+    for (const [selector, label] of [
+      ["#operationsAuditTenantFilter", "All tenants"],
+      ["#operationsAuditWorkspaceFilter", "All workspaces"],
+      ["#operationsAuditProjectFilter", "All projects"],
+      ["#operationsAuditActorFilter", "All actors"],
+      ["#operationsAuditActionFilter", "All actions"],
+      ["#operationsAuditResourceFilter", "All resource types"],
+    ]) {
+      $(selector).innerHTML = '<option value="">' + esc(label) + "</option>";
+    }
     return;
   }
   const complete = summary.query_status === "COMPLETE";

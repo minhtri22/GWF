@@ -122,3 +122,10 @@ def test_operations_audit_ui_does_not_invent_outcome():
     assert 'api("/browser/operations/audit")' in js
     assert "event.reason_code" in js
     assert "event.outcome" not in js
+
+
+def test_operations_audit_error_state_clears_stale_scope_and_filters():
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+    assert '$("#operationsAuditScope").textContent = "Authorized scope unavailable";' in js
+    assert '["#operationsAuditTenantFilter", "All tenants"]' in js
+    assert '["#operationsAuditResourceFilter", "All resource types"]' in js
