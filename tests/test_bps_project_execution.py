@@ -550,6 +550,33 @@ def test_browser_phase_events_and_sse_resume_use_session_authority(tmp_path, mon
     rt.close()
 
 
+def test_project_execution_final_report_is_exact_project_derived_view(tmp_path, monkeypatch):
+    rt, owner, _, executor, project, hidden_project = _fixture(tmp_path, monkeypatch)
+    _seed_phase(rt, owner, executor, project)
+    client = TestClient(_app(rt))
+    _login(client)
+
+    response = client.get(
+        f"/browser/projects/{project}/execution/orchestrations/orch_execution/report"
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["authority"] == "DERIVED_VIEW"
+    assert body["project_id"] == project
+    assert body["orchestration_id"] == "orch_execution"
+    assert "# Research Orchestration Report" in body["markdown"]
+    assert "orch_execution" in body["markdown"]
+    assert project in body["markdown"]
+
+    assert client.get(
+        f"/browser/projects/{hidden_project}/execution/orchestrations/orch_execution/report"
+    ).status_code == 404
+    assert client.get(
+        f"/browser/projects/{project}/execution/orchestrations/missing_orch/report"
+    ).status_code == 404
+    rt.close()
+
+
 def test_existing_bearer_process_phase_and_event_reads_remain_valid(tmp_path, monkeypatch):
     rt, owner, _, executor, project, _ = _fixture(tmp_path, monkeypatch)
     phase_id = _seed_phase(rt, owner, executor, project)
@@ -573,6 +600,12 @@ def test_existing_bearer_process_phase_and_event_reads_remain_valid(tmp_path, mo
     )
     assert stream.status_code == 200
     assert "id: phaseevt_execution_2\n" in stream.text
+    report = client.get(
+        "/research/orchestrations/orch_execution/report",
+        headers=headers,
+    )
+    assert report.status_code == 200
+    assert "# Research Orchestration Report" in report.json()["markdown"]
     rt.close()
 
 def test_project_execution_browser_surface_is_live_read_only_and_fallback_capable():
@@ -583,6 +616,8 @@ def test_project_execution_browser_surface_is_live_read_only_and_fallback_capabl
     assert 'id="projectExecutionLiveView"' in html
     assert 'id="projectExecutionPhaseInspector"' in html
     assert 'id="projectExecutionLiveStatus"' in html
+    assert 'id="projectExecutionReportButton"' in html
+    assert 'id="projectExecutionReport"' in html
     assert '"/execution/phases/"' in js
     assert 'new EventSource(url)' in js
     assert "Reconnecting · Last-Event-ID" in js
@@ -591,6 +626,8 @@ def test_project_execution_browser_surface_is_live_read_only_and_fallback_capabl
     assert "active.section !== \"execution\"" in js
     assert "state.me.actor_id !== requestActorId" in js
     assert "Hidden model chain-of-thought is not stored or displayed." in js
+    assert '"/execution/orchestrations/"' in js
+    assert 'result.markdown || "Derived report is empty."' in js
 
     for forbidden in (
         "Apply recovery",
