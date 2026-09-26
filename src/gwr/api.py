@@ -63,6 +63,12 @@ class ProjectCreateBody(BaseModel):
     domain_revision_id: str | None = None
 
 
+class BrowserProjectCreateBody(BaseModel):
+    workspace_id: str
+    name: str
+    domain_revision_id: str | None = None
+
+
 class MembershipBody(BaseModel):
     actor_id: str
     role: str
@@ -539,6 +545,69 @@ def create_app(
             principal.actor_id,
             build_sha=resolved_product_info["build_sha"],
         )
+
+    @app.get('/browser/projects/create-options')
+    def browser_project_create_options(request: Request):
+        _, principal = browser_principal(request)
+        return product.project_create_options(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    @app.post('/browser/projects')
+    def browser_create_project(body: BrowserProjectCreateBody, request: Request):
+        _, principal = browser_principal(request)
+        workspace = runtime.db.one(
+            "SELECT workspace_id,tenant_id FROM workspaces "
+            "WHERE workspace_id=? AND status='ACTIVE'",
+            (body.workspace_id,),
+        )
+        if not workspace:
+            raise HTTPException(status_code=404, detail="workspace not found")
+        try:
+            runtime.tenancy.require_workspace_access(
+                principal.actor_id, body.workspace_id, "MANAGE_PROJECT"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="workspace not found") from exc
+
+        name = (body.name or "").strip()
+        if not name:
+            raise HTTPException(status_code=422, detail="project name is required")
+
+        if body.domain_revision_id:
+            eligible = runtime.db.one(
+                "SELECT r.revision_id FROM domain_package_revisions r "
+                "JOIN domain_packages p ON p.package_id=r.package_id "
+                "WHERE r.revision_id=? AND r.status='PUBLISHED' "
+                "AND p.status='ACTIVE' AND p.tenant_id=?",
+                (body.domain_revision_id, workspace["tenant_id"]),
+            )
+            if not eligible:
+                raise HTTPException(
+                    status_code=422,
+                    detail="domain revision is not eligible for selected workspace",
+                )
+
+        project_id = runtime.create_scoped_project(
+            name,
+            workspace["tenant_id"],
+            body.workspace_id,
+            principal.actor_id,
+            domain_revision_id=body.domain_revision_id,
+        )
+        project_row = next(
+            row for row in product.projects_index(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            )["projects"]
+            if row["project_id"] == project_id
+        )
+        return {
+            "ok": True,
+            "project": project_row,
+            "destination": f"/app/projects/{project_id}/overview",
+        }
 
     @app.get('/projects/{project_id}/audit')
     def audit(project_id: str, authorization: str | None = Header(default=None)):
