@@ -25,11 +25,11 @@ def _fixture(tmp_path, monkeypatch):
     )
     approver = rt.governance.create_actor("HUMAN", "approver-user", ["approver"], [])
     proposer = rt.governance.create_actor("HUMAN", "proposer-user", ["operator"], [])
-    viewer = rt.governance.create_actor("HUMAN", "viewer-user", [], [])
+    reviewer = rt.governance.create_actor("HUMAN", "reviewer-user", [], [])
     outsider = rt.governance.create_actor("HUMAN", "outsider-user", ["approver"], [])
     for actor, username in (
         (approver, "approver-user"), (proposer, "proposer-user"),
-        (viewer, "viewer-user"), (outsider, "outsider-user"),
+        (reviewer, "reviewer-user"), (outsider, "outsider-user"),
     ):
         rt.auth.register_human(actor, username, PASSWORD)
 
@@ -37,7 +37,7 @@ def _fixture(tmp_path, monkeypatch):
     workspace = rt.tenancy.create_workspace(tenant, "Approval Workspace", approver, workspace_id="workspace_approval")
     project = rt.create_scoped_project("Approval Project", tenant, workspace, approver, project_id="project_approval")
     rt.tenancy.add_project_member(project, proposer, "RESEARCHER", approver)
-    rt.tenancy.add_project_member(project, viewer, "VIEWER", approver)
+    rt.tenancy.add_project_member(project, reviewer, "REVIEWER", approver)
 
     hidden_tenant = rt.tenancy.create_tenant("Hidden Approval Tenant", outsider, tenant_id="tenant_approval_hidden")
     hidden_workspace = rt.tenancy.create_workspace(hidden_tenant, "Hidden Approval Workspace", outsider, workspace_id="workspace_approval_hidden")
@@ -54,8 +54,9 @@ def _fixture(tmp_path, monkeypatch):
 
     pending = proposal(project, proposer, "pending")
     rejectable = proposal(project, proposer, "rejectable")
+    self_pending = proposal(project, approver, "self")
     hidden = proposal(hidden_project, outsider, "hidden")
-    return rt, approver, viewer, project, pending, rejectable, hidden
+    return rt, approver, reviewer, project, pending, rejectable, self_pending, hidden
 
 
 def _app(rt):
@@ -79,18 +80,18 @@ def _login(client, username):
 
 
 def test_approvals_projection_authority_hash_and_decision_history(tmp_path, monkeypatch):
-    rt, approver, viewer, project, pending, rejectable, hidden = _fixture(tmp_path, monkeypatch)
+    rt, approver, reviewer, project, pending, rejectable, self_pending, hidden = _fixture(tmp_path, monkeypatch)
 
-    viewer_client = TestClient(_app(rt))
-    _login(viewer_client, "viewer-user")
-    viewer_body = viewer_client.get("/browser/operations/approvals").json()
-    ids = {x["proposal_id"] for x in viewer_body["pending"]}
+    reviewer_client = TestClient(_app(rt))
+    _login(reviewer_client, "reviewer-user")
+    reviewer_body = reviewer_client.get("/browser/operations/approvals").json()
+    ids = {x["proposal_id"] for x in reviewer_body["pending"]}
     assert pending in ids and rejectable in ids
     assert hidden not in ids
-    assert all(x["can_approve"] is False for x in viewer_body["pending"])
-    assert viewer_client.post(
+    assert all(x["can_approve"] is False for x in reviewer_body["pending"])
+    assert reviewer_client.post(
         f"/browser/operations/approvals/{pending}/approve",
-        json={"expected_hash": next(x["payload_hash"] for x in viewer_body["pending"] if x["proposal_id"] == pending)},
+        json={"expected_hash": next(x["payload_hash"] for x in reviewer_body["pending"] if x["proposal_id"] == pending)},
     ).status_code == 404
 
     client = TestClient(_app(rt))
@@ -107,6 +108,14 @@ def test_approvals_projection_authority_hash_and_decision_history(tmp_path, monk
     )
     assert mismatch.status_code == 400
     assert rt.db.one("SELECT status FROM proposals WHERE proposal_id=?", (pending,))["status"] == "PENDING_APPROVAL"
+
+    self_row = next(x for x in body["pending"] if x["proposal_id"] == self_pending)
+    self_denied = client.post(
+        f"/browser/operations/approvals/{self_pending}/approve",
+        json={"expected_hash": self_row["payload_hash"]},
+    )
+    assert self_denied.status_code == 403
+    assert rt.db.one("SELECT status FROM proposals WHERE proposal_id=?", (self_pending,))["status"] == "PENDING_APPROVAL"
 
     approved = client.post(
         f"/browser/operations/approvals/{pending}/approve",
@@ -134,6 +143,9 @@ def test_approvals_projection_authority_hash_and_decision_history(tmp_path, monk
     )
     assert rejected.status_code == 200
     assert rejected.json()["reason"] == "insufficient evidence"
+    after_reject = client.get("/browser/operations/approvals").json()
+    rejected_decision = next(x for x in after_reject["decisions"] if x["proposal_id"] == rejectable)
+    assert rejected_decision["conditions"]["reason"] == "insufficient evidence"
 
     actions = [
         row["action"] for row in rt.db.all(
@@ -149,7 +161,7 @@ def test_approvals_projection_authority_hash_and_decision_history(tmp_path, monk
 
 
 def test_existing_bearer_approval_api_remains_valid(tmp_path, monkeypatch):
-    rt, _, _, _, pending, _, _ = _fixture(tmp_path, monkeypatch)
+    rt, _, _, _, pending, _, _, _ = _fixture(tmp_path, monkeypatch)
     client = TestClient(_app(rt))
     token = client.post(
         "/auth/login",

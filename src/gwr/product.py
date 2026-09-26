@@ -500,13 +500,21 @@ class ProjectDashboardService:
 
         for project in projects:
             project_id = project["id"]
-            tenant = self.db.one("SELECT name FROM tenants WHERE tenant_id=?", (project["tenant_id"],))
-            workspace = self.db.one("SELECT name FROM workspaces WHERE workspace_id=?", (project["workspace_id"],))
+            can_review = True
+            try:
+                self.runtime.tenancy.require_project_access(actor_id, project_id, "REVIEW")
+            except (AuthorityDenied, NotFound):
+                can_review = False
             can_approve = True
             try:
                 self.runtime.tenancy.require_project_access(actor_id, project_id, "APPROVE")
             except (AuthorityDenied, NotFound):
                 can_approve = False
+            if not can_review and not can_approve:
+                continue
+
+            tenant = self.db.one("SELECT name FROM tenants WHERE tenant_id=?", (project["tenant_id"],))
+            workspace = self.db.one("SELECT name FROM workspaces WHERE workspace_id=?", (project["workspace_id"],))
             scope = {
                 "tenant_id": project["tenant_id"],
                 "tenant_name": tenant["name"] if tenant else None,

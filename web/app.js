@@ -1025,8 +1025,15 @@ function renderOperationsApprovals() {
     $("#operationsApprovalsStateBanner").className = "home-state-banner error";
     $("#operationsApprovalsStateBanner").textContent = "Approvals data unavailable — " +
       (state.operationsApprovalsError || "No authoritative projection returned.");
+    state.selectedApprovalId = null;
+    $("#operationsApprovalsPendingCount").textContent = "—";
+    $("#operationsApprovalDecisionCount").textContent = "—";
     $("#operationsApprovalsPendingList").innerHTML = '<div class="feed-empty">Pending approvals unavailable.</div>';
-    $("#operationsApprovalDecisionBody").innerHTML = homeEmpty("Decision history unavailable.", 6);
+    $("#operationsApprovalDecisionBody").innerHTML = homeEmpty("Decision history unavailable.", 7);
+    $("#operationsApprovalInspectorEmpty").hidden = false;
+    $("#operationsApprovalInspector").hidden = true;
+    $("#operationsApprovalsGeneratedAt").textContent = "—";
+    $("#operationsApprovalsBuildSha").textContent = "—";
     return;
   }
 
@@ -1059,9 +1066,10 @@ function renderOperationsApprovals() {
       '<td><strong>' + esc(item.project_name || "Project") + '</strong><code>' + esc(item.project_id) + "</code></td>" +
       '<td><code>' + esc(item.approver_actor_id) + "</code></td>" +
       '<td><code>' + esc(item.proposal_hash) + "</code></td>" +
+      '<td><span>' + esc(item.conditions?.reason || "—") + "</span></td>" +
       '<td><span>' + esc(formatHomeTime(item.created_at)) + "</span></td>" +
     "</tr>"
-  ).join("") : homeEmpty("No approval decisions in the current authorized scope.", 6);
+  ).join("") : homeEmpty("No approval decisions in the current authorized scope.", 7);
 
   renderApprovalInspector();
 }
