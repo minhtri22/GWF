@@ -101,18 +101,26 @@ class GovernedWorkflowRuntime:
         self.observe("runtime_initialized", backend=getattr(self.db,"backend_name","unknown"), domain_id=self.domain.domain_id)
     def observe(self,event,**attrs):
         return self.observer.emit(event,**attrs)
-    def create_project(self,name,project_id=None):
+    def create_project(self,name,project_id=None,*,commit=True,observe=True):
         pid=project_id or uid("project")
         self.db.conn.execute("INSERT INTO projects VALUES(?,?,?,?)",(pid,name,self.domain.domain_id,utcnow()))
         self.db.conn.execute("INSERT INTO project_lifecycle VALUES(?,?,?,?,?,?,?)",(pid,"ACTIVE",None,None,None,None,utcnow()))
-        self.db.conn.commit()
-        self.observe("project_created",project_id=pid,domain_id=self.domain.domain_id)
+        if commit:
+            self.db.conn.commit()
+        if observe:
+            self.observe("project_created",project_id=pid,domain_id=self.domain.domain_id)
         return pid
     def create_scoped_project(self,name,tenant_id,workspace_id,actor_id,project_id=None,domain_revision_id=None):
-        pid=self.create_project(name,project_id=project_id)
-        self.tenancy.bind_project(pid,tenant_id,workspace_id,actor_id)
-        if domain_revision_id:
-            self.domains.pin_project(pid,domain_revision_id,actor_id)
+        # Scoped creation is one authoritative mutation. Keep project row, scope,
+        # owner membership, legacy-scope compatibility and optional immutable
+        # Domain pin in one database transaction so a late validation failure
+        # cannot leave a partially-created project behind.
+        with self.db.tx():
+            pid=self.create_project(name,project_id=project_id,commit=False,observe=False)
+            self.tenancy.bind_project(pid,tenant_id,workspace_id,actor_id,commit=False)
+            if domain_revision_id:
+                self.domains.pin_project(pid,domain_revision_id,actor_id,commit=False)
+        self.observe("project_created",project_id=pid,domain_id=self.domain.domain_id)
         self.observe("scoped_project_created",project_id=pid,tenant_id=tenant_id,workspace_id=workspace_id,actor_id=actor_id,domain_revision_id=domain_revision_id)
         return pid
     def attach_blob(self,project_id,owner_kind,owner_id,data,content_type="application/octet-stream"):
