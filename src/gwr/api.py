@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from .runtime import GovernedWorkflowRuntime
 from .errors import GWRException, AuthorityDenied, NotFound, ValidationError
 from .domain_sdk import DomainSDK
-from .utils import parse_json
+from .utils import parse_json, utcnow
 from .product import ProjectDashboardService
 import asyncio
 import json
