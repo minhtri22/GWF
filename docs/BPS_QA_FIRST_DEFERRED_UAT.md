@@ -229,3 +229,30 @@ QA_COUNT                = 0
 INTEGRATION_COUNT       = 0
 FINAL_USER_UAT          = READY
 ```
+
+
+## 11. External QA-runner capacity rule
+
+An external runner that has not started because it is `queued` / capacity-blocked is **not PASS** and must never be reported as PASS.
+
+It is also not an implementation finding because no product/test result exists yet.
+
+When all assistant-owned review, deterministic static checks, test definitions and finding repairs are complete, but the exact-head external runner remains capacity-blocked, the unit may advance with:
+
+```text
+IMPLEMENTATION_FINDINGS_FAIL = 0
+IMPLEMENTATION_FINDINGS_OPEN = 0
+IMPLEMENTATION_FINDINGS_COUNT = 0
+CI_EXECUTION = PENDING_EXTERNAL_CAPACITY
+UNIT_STATE = QA_FINDINGS_CLOSED / CI_PENDING / FINAL_UAT_PENDING
+```
+
+Constraints:
+
+1. the pending CI identity/run is recorded;
+2. no queued test is called PASS;
+3. a later CI failure immediately reopens the affected unit;
+4. all deferred automated executions must PASS, and any failure must be repaired/retested, before integrated QA can reach `COUNT=0`;
+5. final user UAT is forbidden while any mandatory CI execution remains pending.
+
+This rule prevents external infrastructure capacity from serially blocking implementation while preserving QA authority.
