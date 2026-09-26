@@ -562,6 +562,158 @@ def create_app(
             build_sha=resolved_product_info["build_sha"],
         )
 
+    def browser_project_phase(
+        project_id: str,
+        phase_execution_id: str,
+        actor_id: str,
+    ):
+        try:
+            runtime.tenancy.require_project_access(actor_id, project_id, "VIEW")
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        row = runtime.db.one(
+            "SELECT o.project_id FROM phase_executions p "
+            "JOIN orchestrations o ON o.orchestration_id=p.orchestration_id "
+            "WHERE p.phase_execution_id=?",
+            (phase_execution_id,),
+        )
+        if not row or row["project_id"] != project_id:
+            raise HTTPException(status_code=404, detail="phase execution not found")
+        return row
+
+    @app.get('/browser/projects/{project_id}/execution')
+    def browser_project_execution(project_id: str, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_project_access(
+                principal.actor_id, project_id, "VIEW"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        return product.project_execution(
+            principal.actor_id,
+            project_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    @app.get('/browser/projects/{project_id}/execution/phases/{phase_execution_id}')
+    def browser_project_phase_execution(
+        project_id: str,
+        phase_execution_id: str,
+        request: Request,
+    ):
+        _, principal = browser_principal(request)
+        browser_project_phase(project_id, phase_execution_id, principal.actor_id)
+        return product.project_phase_execution(
+            principal.actor_id,
+            project_id,
+            phase_execution_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    @app.get('/browser/projects/{project_id}/execution/phases/{phase_execution_id}/events')
+    def browser_project_phase_events(
+        project_id: str,
+        phase_execution_id: str,
+        request: Request,
+    ):
+        _, principal = browser_principal(request)
+        browser_project_phase(project_id, phase_execution_id, principal.actor_id)
+        rows = runtime.db.all(
+            "SELECT event_id,phase_execution_id,stage,event_type,actor_id,message,"
+            "metadata,created_at FROM phase_stage_events "
+            "WHERE phase_execution_id=? ORDER BY created_at,event_id",
+            (phase_execution_id,),
+        )
+        return {
+            "phase_execution_id": phase_execution_id,
+            "events": [
+                {
+                    "event_id": row["event_id"],
+                    "phase_execution_id": row["phase_execution_id"],
+                    "stage": row["stage"],
+                    "event_type": row["event_type"],
+                    "actor_id": row["actor_id"],
+                    "message": row["message"],
+                    "metadata": parse_json(row["metadata"], {}),
+                    "created_at": row["created_at"],
+                }
+                for row in rows
+            ],
+        }
+
+    @app.get('/browser/projects/{project_id}/execution/phases/{phase_execution_id}/events/stream')
+    async def browser_project_phase_event_stream(
+        project_id: str,
+        phase_execution_id: str,
+        request: Request,
+        last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
+        follow: bool = Query(default=True),
+        poll_interval_ms: int = Query(default=500, ge=100, le=5000),
+    ):
+        _, principal = browser_principal(request)
+        browser_project_phase(project_id, phase_execution_id, principal.actor_id)
+
+        async def stream():
+            seen: set[str] = set()
+            if last_event_id:
+                prior = runtime.db.all(
+                    "SELECT event_id FROM phase_stage_events "
+                    "WHERE phase_execution_id=? ORDER BY created_at,event_id",
+                    (phase_execution_id,),
+                )
+                found = False
+                for item in prior:
+                    seen.add(item["event_id"])
+                    if item["event_id"] == last_event_id:
+                        found = True
+                        break
+                if not found:
+                    seen.clear()
+            while True:
+                emitted = False
+                rows = runtime.db.all(
+                    "SELECT event_id,phase_execution_id,stage,event_type,actor_id,"
+                    "message,metadata,created_at FROM phase_stage_events "
+                    "WHERE phase_execution_id=? ORDER BY created_at,event_id",
+                    (phase_execution_id,),
+                )
+                for item in rows:
+                    if item["event_id"] in seen:
+                        continue
+                    payload = {
+                        "event_id": item["event_id"],
+                        "phase_execution_id": item["phase_execution_id"],
+                        "stage": item["stage"],
+                        "event_type": item["event_type"],
+                        "actor_id": item["actor_id"],
+                        "message": item["message"],
+                        "metadata": parse_json(item["metadata"], {}),
+                        "created_at": item["created_at"],
+                    }
+                    yield (
+                        f"id: {item['event_id']}\n"
+                        f"event: {item['event_type']}\n"
+                        f"data: {json.dumps(payload, separators=(',', ':'))}\n\n"
+                    )
+                    seen.add(item["event_id"])
+                    emitted = True
+                if not follow:
+                    break
+                phase = runtime.db.one(
+                    "SELECT status FROM phase_executions WHERE phase_execution_id=?",
+                    (phase_execution_id,),
+                )
+                if phase and phase["status"] in {"SUCCEEDED", "FAILED", "SKIPPED"} and not emitted:
+                    break
+                await asyncio.sleep(poll_interval_ms / 1000.0)
+
+        return StreamingResponse(
+            stream(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
     @app.get('/browser/operations/audit')
     def browser_operations_audit(request: Request):
         _, principal = browser_principal(request)
