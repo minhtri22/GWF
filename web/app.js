@@ -638,11 +638,15 @@ function stopProjectExecutionStream() {
 
 function projectWorkspaceRoute(pathname = window.location.pathname) {
   const path = normalizedRoute(pathname);
-  const match = path.match(/^\/app\/projects\/([^/]+)(?:\/([^/]+))?(?:\/.*)?$/);
+  const match = path.match(/^\/app\/projects\/([^/]+)(?:\/([^/]+))?(\/.*)?$/);
   if (!match) return null;
   let projectId = match[1];
   try { projectId = decodeURIComponent(projectId); } catch {}
-  return { projectId, section: (match[2] || "").toLowerCase() };
+  const extra = match[3] || "";
+  return {
+    projectId,
+    section: extra ? "__invalid__" : (match[2] || "").toLowerCase(),
+  };
 }
 
 function projectWorkspacePath(projectId, section = "overview") {

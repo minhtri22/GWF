@@ -113,7 +113,34 @@ def _seed_phase(rt, owner, executor, project):
             "phase_exact", 4, "PIVOT", 2,
             "2026-09-26T01:58:00+00:00",
             "2026-09-26T02:05:00+00:00",
-            None, canonical_json({"persisted": True}),
+            None, canonical_json({
+                "persisted": True,
+                "history": [
+                    {
+                        "event": "PIVOT",
+                        "target": "REPORT",
+                        "checkpoint_id": "checkpoint_pivot_history",
+                        "generation": 3,
+                    },
+                    {
+                        "event": "RECOVERY",
+                        "failure_id": "failure_execution",
+                        "resume_phase": "phase_exact",
+                        "checkpoint_id": "checkpoint_execution",
+                    },
+                ],
+            }),
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO phase_executions VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "phase_execution_previous", "orch_execution", "phase_previous", 6, 3,
+            None, None, "SUCCEEDED", "CONTINUE",
+            None, None,
+            "2026-09-26T01:57:00+00:00",
+            "2026-09-26T01:58:00+00:00",
+            canonical_json({"attempt": "previous"}),
         ),
     )
     rt.db.conn.execute(
@@ -306,6 +333,16 @@ def _seed_phase(rt, owner, executor, project):
     rt.db.conn.execute(
         "INSERT INTO phase_handoffs VALUES(?,?,?,?,?,?,?)",
         (
+            "handoff_previous", "phase_execution_previous",
+            canonical_json({"summary": "previous persisted handoff"}),
+            "handoff-previous-hash", executor,
+            "2026-09-26T01:58:00+00:00",
+            "Previous persisted handoff markdown.",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO phase_handoffs VALUES(?,?,?,?,?,?,?)",
+        (
             "handoff_execution", "phase_execution_exact",
             canonical_json({"summary": "persisted handoff"}),
             "handoff-execution-hash", executor,
@@ -316,7 +353,8 @@ def _seed_phase(rt, owner, executor, project):
     rt.db.conn.execute(
         "INSERT INTO phase_handoff_links VALUES(?,?,?,?,?)",
         (
-            "phase_execution_exact", None, None, None,
+            "phase_execution_exact", "phase_execution_previous",
+            "handoff_previous", "handoff-previous-hash",
             "2026-09-26T01:59:15+00:00",
         ),
     )
@@ -359,7 +397,24 @@ def test_project_execution_index_and_phase_detail_are_exact(tmp_path, monkeypatc
     assert orch["research_outcome"] == "PIVOT"
     assert orch["pivot_count"] == 2
     assert orch["current_phase_execution_id"] == phase_id
-    assert [p["phase_execution_id"] for p in orch["phases"]] == [phase_id]
+    assert [p["phase_execution_id"] for p in orch["phases"]] == [
+        "phase_execution_previous", phase_id
+    ]
+    assert orch["history"] == [
+        {
+            "event": "PIVOT",
+            "target": "REPORT",
+            "checkpoint_id": "checkpoint_pivot_history",
+            "generation": 3,
+        },
+        {
+            "event": "RECOVERY",
+            "failure_id": "failure_execution",
+            "resume_phase": "phase_exact",
+            "checkpoint_id": "checkpoint_execution",
+        },
+    ]
+    assert "metadata" not in orch
 
     detail = client.get(
         f"/browser/projects/{project}/execution/phases/{phase_id}"
@@ -405,6 +460,13 @@ def test_project_execution_index_and_phase_detail_are_exact(tmp_path, monkeypatc
     assert protocol["protocol"]["skill_hash"] == "skillhash_execution"
     assert protocol["protocol"]["recovery_mode"] == "HUMAN_APPROVE"
     assert protocol["protocol"]["current_stage"] == "EXECUTE"
+    assert protocol["previous_handoff"]["previous_phase_execution_id"] == "phase_execution_previous"
+    assert protocol["previous_handoff"]["previous_handoff_id"] == "handoff_previous"
+    assert protocol["previous_handoff"]["handoff_hash"] == "handoff-previous-hash"
+    assert protocol["previous_handoff"]["handoff"]["payload_hash"] == "handoff-previous-hash"
+    assert protocol["previous_handoff"]["handoff"]["structured_payload"] == {
+        "summary": "previous persisted handoff"
+    }
     assert protocol["preflights"][0]["checks"][0]["pass"] is True
     assert protocol["plans"][0]["plan_hash"] == "plan-hash"
     assert protocol["plans"][0]["checklist"][0]["status"] == "PASS"
@@ -628,6 +690,8 @@ def test_project_execution_browser_surface_is_live_read_only_and_fallback_capabl
     assert "Hidden model chain-of-thought is not stored or displayed." in js
     assert '"/execution/orchestrations/"' in js
     assert 'result.markdown || "Derived report is empty."' in js
+    assert 'const extra = match[3] || "";' in js
+    assert 'section: extra ? "__invalid__"' in js
 
     for forbidden in (
         "Apply recovery",
