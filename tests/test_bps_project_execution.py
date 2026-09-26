@@ -1,0 +1,507 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from fastapi.testclient import TestClient
+
+from gwr.api import create_app
+from gwr.auth import HumanAuthService
+from gwr.runtime import GovernedWorkflowRuntime
+from gwr.utils import canonical_json
+
+
+ROOT = Path(__file__).parents[1]
+WEB = ROOT / "web"
+PASSWORD = "execution-test-password"
+
+
+def _fixture(tmp_path, monkeypatch):
+    monkeypatch.setattr(HumanAuthService, "PASSWORD_ITERATIONS", 1_000)
+    rt = GovernedWorkflowRuntime(
+        str(ROOT / "domains" / "example.workflow.yaml"),
+        str(tmp_path / "project-execution.db"),
+        auth_secret="e" * 64,
+        object_store_root=tmp_path / "objects",
+        observability_path=tmp_path / "events.jsonl",
+    )
+    owner = rt.governance.create_actor("HUMAN", "execution-owner", [], [])
+    outsider = rt.governance.create_actor("HUMAN", "execution-outsider", [], [])
+    executor = rt.governance.create_actor("AGENT", "execution-agent", ["operator"], ["project_execution"])
+    rt.auth.register_human(owner, "execution-owner", PASSWORD)
+    rt.auth.register_human(outsider, "execution-outsider", PASSWORD)
+
+    tenant = rt.tenancy.create_tenant("Execution Tenant", owner, tenant_id="tenant_execution")
+    workspace = rt.tenancy.create_workspace(
+        tenant, "Execution Workspace", owner, workspace_id="workspace_execution"
+    )
+    project = rt.create_scoped_project(
+        "Execution Project", tenant, workspace, owner, project_id="project_execution"
+    )
+
+    hidden_tenant = rt.tenancy.create_tenant(
+        "Hidden Execution Tenant", outsider, tenant_id="tenant_execution_hidden"
+    )
+    hidden_workspace = rt.tenancy.create_workspace(
+        hidden_tenant, "Hidden Execution Workspace", outsider,
+        workspace_id="workspace_execution_hidden",
+    )
+    hidden_project = rt.create_scoped_project(
+        "Hidden Execution Project", hidden_tenant, hidden_workspace, outsider,
+        project_id="project_execution_hidden",
+    )
+    return rt, owner, outsider, executor, project, hidden_project
+
+
+def _app(rt):
+    return create_app(
+        rt,
+        product_info={
+            "product": "Governed Workflow Runtime",
+            "version": "test-version",
+            "build_sha": "execution-build-sha",
+            "domain_id": rt.domain.domain_id,
+            "backend": getattr(rt.db, "backend_name", "unknown"),
+            "server_mode": "canonical",
+        },
+        web_root=WEB,
+    )
+
+
+def _login(client, username="execution-owner"):
+    response = client.post(
+        "/browser/auth/login",
+        json={"username": username, "password": PASSWORD},
+    )
+    assert response.status_code == 200
+
+
+def _seed_phase(rt, owner, executor, project):
+    rt.db.conn.execute(
+        "INSERT INTO workunits VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "wu_execution", project, "phase_exact",
+            canonical_json(["rev_input"]),
+            canonical_json([{"artifact_type": "REPORT"}]),
+            canonical_json([{"kind": "VALID_INPUT"}]),
+            canonical_json(["QUALITY_GATE"]),
+            canonical_json(["EXECUTE"]),
+            canonical_json({"role": "operator"}),
+            canonical_json({"resources": {"cpu": 1}, "required_capabilities": ["python"]}),
+            canonical_json({"max_attempts": 2}),
+            canonical_json({"mode": "HUMAN_APPROVE"}),
+            canonical_json(["dataset:execution"]),
+            "RUNNING", 3,
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO runs VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "run_execution", "wu_execution", 2, executor,
+            canonical_json(["rev_input"]),
+            "2026-09-26T02:00:00+00:00", None, "RUNNING",
+            canonical_json({"worker_exit": "pending"}),
+            canonical_json(["rev_pivot_trigger"]),
+            canonical_json(["evidence_execution"]),
+            "checkpoint_execution", "corr-execution",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO orchestrations VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "orch_execution", project, rt.domain.domain_id, "RUNNING",
+            "phase_exact", 4, "PIVOT", 2,
+            "2026-09-26T01:58:00+00:00",
+            "2026-09-26T02:05:00+00:00",
+            None, canonical_json({"persisted": True}),
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO phase_executions VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "phase_execution_exact", "orch_execution", "phase_exact", 7, 4,
+            "wu_execution", "run_execution", "RUNNING", "REPLAN",
+            "failure_execution", "checkpoint_execution",
+            "2026-09-26T01:59:00+00:00", None,
+            canonical_json({"attempt": "exact"}),
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO gates VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "gate_execution", project, "QUALITY_GATE",
+            canonical_json({"workunit_id": "wu_execution"}),
+            canonical_json(["rev_input"]),
+            canonical_json(["evidence_execution"]),
+            "gate-policy-v3", "BLOCKED",
+            canonical_json(["QUALITY_THRESHOLD"]),
+            canonical_json(["run_execution"]),
+            "2026-09-26T02:01:00+00:00",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO decisions VALUES(?,?,?,?,?,?,?,?,?,?)",
+        (
+            "decision_execution", project,
+            canonical_json({"workunit_id": "wu_execution"}),
+            canonical_json(["gate_execution"]),
+            "failure_execution", "REPLAN", "REPORT",
+            canonical_json(["RECOVERY_PLAN_CREATED"]),
+            "2026-09-26T02:02:00+00:00", owner,
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO failures VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "failure_execution", project, "wu_execution",
+            "execution_failure", "VERIFY", "run_execution",
+            "rev_input", "gate_execution",
+            canonical_json(["evidence_execution"]),
+            "rev_input", "rev_input", "CONFIRMED",
+            "phase_exact", "HIGH", "signature_execution",
+            "RECOVERY_PLANNED", "2026-09-26T02:02:30+00:00", None,
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO recoveries VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "recovery_execution", project, "failure_execution",
+            "rev_input", "phase_exact",
+            canonical_json(["rev_keep"]),
+            canonical_json(["rev_invalidate"]),
+            canonical_json(["rev_stale"]),
+            canonical_json([{"revision_id": "rev_input", "action": "REVISE"}]),
+            canonical_json(["wu_repair"]),
+            canonical_json(["gate_retest"]),
+            canonical_json(["approval_required"]),
+            "AFTER_INVALIDATION", "PLANNED",
+            "2026-09-26T02:03:00+00:00",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO loopguards VALUES(?,?,?,?,?,?,?,?,?,?)",
+        (
+            "loop_execution", project, "wu_execution", "signature_execution",
+            2, 1, 1, "runtime",
+            canonical_json({"same_signature_limit": 2}), "ESCALATE",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO checkpoints VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "checkpoint_execution", project, "failure_execution",
+            "2026-09-26T02:03:30+00:00", "phaseevt_execution_1",
+            canonical_json(["wu_execution"]),
+            canonical_json(["wu_done"]),
+            canonical_json(["VERIFY"]),
+            canonical_json(["rev_keep"]),
+            canonical_json(["rev_input"]),
+            canonical_json(["rev_stale"]),
+            canonical_json(["failure_execution"]),
+            canonical_json(["decision_execution"]),
+            canonical_json(["approval_required"]),
+            canonical_json(["phase_exact"]),
+            canonical_json({"recovery_id": "recovery_execution"}),
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO impacts VALUES(?,?,?,?,?,?,?,?,?)",
+        (
+            "impact_execution_failure", project, "OPERATIONAL_FAILURE",
+            "failure_execution", "rev_input",
+            canonical_json([{"revision_id": "rev_stale", "action": "MARK_STALE"}]),
+            canonical_json(["OPERATIONAL_FAILURE"]),
+            "2026-09-26T02:03:10+00:00", "core-0.1",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO impacts VALUES(?,?,?,?,?,?,?,?,?)",
+        (
+            "impact_execution_pivot", project, "PIVOT",
+            "rev_pivot_trigger", "rev_input",
+            canonical_json([{"revision_id": "rev_input", "action": "MARK_DIRTY"}]),
+            canonical_json(["PIVOT"]),
+            "2026-09-26T02:03:20+00:00", "core-0.1",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO impacts VALUES(?,?,?,?,?,?,?,?,?)",
+        (
+            "impact_unrelated", project, "PIVOT",
+            "some_other_revision", "rev_other",
+            canonical_json([]), canonical_json(["PIVOT"]),
+            "2026-09-26T02:03:25+00:00", "core-0.1",
+        ),
+    )
+
+    rt.db.conn.execute(
+        "INSERT INTO phase_execution_protocols VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "protocol_execution", "phase_execution_exact", project,
+            "skillrev_execution", "skillhash_execution",
+            "HUMAN_APPROVE", "EXECUTE", "WAITING_HUMAN",
+            3, 1, "2026-09-26T01:59:10+00:00",
+            "2026-09-26T02:04:00+00:00",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO project_agent_protocol_settings VALUES(?,?,?,?,?)",
+        (
+            project, "HUMAN_APPROVE", 4, owner,
+            "2026-09-26T01:50:00+00:00",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO phase_preflights VALUES(?,?,?,?,?,?,?)",
+        (
+            "preflight_execution", "phase_execution_exact", "PASS",
+            canonical_json([{"name": "inputs", "pass": True, "detail": "exact"}]),
+            "preflight-hash", executor, "2026-09-26T01:59:20+00:00",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO phase_plans VALUES(?,?,?,?,?,?,?,?,?)",
+        (
+            "plan_execution", "phase_execution_exact", 1,
+            "Execute exact phase",
+            canonical_json([{"step_index": 1, "title": "Do work"}]),
+            "plan-hash", "INITIAL_PLAN", executor,
+            "2026-09-26T01:59:30+00:00",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO phase_checklist_items VALUES(?,?,?,?,?,?,?)",
+        (
+            "check_execution", "plan_execution", "phase_execution_exact",
+            1, "Do work", "PASS", "done",
+            "2026-09-26T02:00:30+00:00",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO phase_problem_records VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "problem_execution", "phase_execution_exact", 1,
+            "EXECUTION_PROBLEM", "Need operator decision", "persisted detail",
+            "HIGH", "OPEN", executor, "2026-09-26T02:01:30+00:00",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO phase_recovery_proposals VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "protocol_recovery_execution", "problem_execution",
+            "phase_execution_exact", "RETRY", 1,
+            canonical_json([{"op": "replace", "step": 1}]),
+            "persisted rationale", "HIGH", 0,
+            "WAITING_HUMAN", "2026-09-26T02:01:40+00:00",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO phase_recovery_decisions VALUES(?,?,?,?,?,?)",
+        (
+            "protocol_decision_execution", "protocol_recovery_execution",
+            owner, "APPROVED", "operator decision",
+            "2026-09-26T02:01:50+00:00",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO phase_handoffs VALUES(?,?,?,?,?,?,?)",
+        (
+            "handoff_execution", "phase_execution_exact",
+            canonical_json({"summary": "persisted handoff"}),
+            "handoff-execution-hash", executor,
+            "2026-09-26T02:04:30+00:00",
+            "Persisted handoff markdown.",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO phase_handoff_links VALUES(?,?,?,?,?)",
+        (
+            "phase_execution_exact", None, None, None,
+            "2026-09-26T01:59:15+00:00",
+        ),
+    )
+    for event_id, stage, event_type, created_at in (
+        ("phaseevt_execution_1", "LOAD", "SKILL_LOADED", "2026-09-26T01:59:11+00:00"),
+        ("phaseevt_execution_2", "EXECUTE", "STEP_PROGRESS", "2026-09-26T02:00:40+00:00"),
+        ("phaseevt_execution_3", "VERIFY", "QA_BLOCKED", "2026-09-26T02:01:20+00:00"),
+    ):
+        rt.db.conn.execute(
+            "INSERT INTO phase_stage_events VALUES(?,?,?,?,?,?,?,?)",
+            (
+                event_id, "phase_execution_exact", stage, event_type,
+                executor, event_type, canonical_json({"source": "test"}), created_at,
+            ),
+        )
+    rt.db.conn.commit()
+    return "phase_execution_exact"
+
+
+def test_project_execution_index_and_phase_detail_are_exact(tmp_path, monkeypatch):
+    rt, owner, _, executor, project, hidden_project = _fixture(tmp_path, monkeypatch)
+    phase_id = _seed_phase(rt, owner, executor, project)
+    client = TestClient(_app(rt))
+
+    assert client.get(f"/browser/projects/{project}/execution").status_code == 401
+    _login(client)
+
+    index = client.get(f"/browser/projects/{project}/execution")
+    assert index.status_code == 200
+    body = index.json()
+    assert body["build_sha"] == "execution-build-sha"
+    assert body["query_status"] == "COMPLETE"
+    assert body["project"]["project_id"] == project
+    assert body["execution_activity"] == "EXECUTING"
+    assert len(body["orchestrations"]) == 1
+    orch = body["orchestrations"][0]
+    assert orch["orchestration_id"] == "orch_execution"
+    assert orch["status"] == "RUNNING"
+    assert orch["generation"] == 4
+    assert orch["research_outcome"] == "PIVOT"
+    assert orch["pivot_count"] == 2
+    assert orch["current_phase_execution_id"] == phase_id
+    assert [p["phase_execution_id"] for p in orch["phases"]] == [phase_id]
+
+    detail = client.get(
+        f"/browser/projects/{project}/execution/phases/{phase_id}"
+    )
+    assert detail.status_code == 200
+    d = detail.json()
+    assert d["phase"]["phase_execution_id"] == phase_id
+    assert d["phase"]["generation"] == 4
+    assert d["workunit"]["workunit_id"] == "wu_execution"
+    assert d["workunit"]["version"] == 3
+    assert d["workunit"]["required_gates"] == ["QUALITY_GATE"]
+    assert d["workunit"]["resource_conflict_keys"] == ["dataset:execution"]
+    assert d["run"]["run_id"] == "run_execution"
+    assert d["run"]["attempt_number"] == 2
+    assert d["run"]["executor_actor_id"] == executor
+    assert d["run"]["runtime_status"] == "RUNNING"
+    assert d["run"]["produced_revision_ids"] == ["rev_pivot_trigger"]
+    assert d["run"]["evidence_ids"] == ["evidence_execution"]
+
+    assert d["gates"][0]["gate_id"] == "gate_execution"
+    assert d["gates"][0]["result"] == "BLOCKED"
+    assert d["gates"][0]["violation_codes"] == ["QUALITY_THRESHOLD"]
+    assert d["decisions"][0]["decision_id"] == "decision_execution"
+    assert d["decisions"][0]["decision_type"] == "REPLAN"
+    assert d["failure"]["failure_id"] == "failure_execution"
+    assert d["failure"]["root_status"] == "CONFIRMED"
+    assert d["recoveries"][0]["recovery_id"] == "recovery_execution"
+    assert d["recoveries"][0]["mark_stale_refs"] == ["rev_stale"]
+    assert d["loopguard"]["loopguard_id"] == "loop_execution"
+    assert d["loopguard"]["status"] == "ESCALATE"
+    assert d["loopguard"]["budget"]["same_signature_limit"] == 2
+    assert d["checkpoint"]["checkpoint_id"] == "checkpoint_execution"
+    assert d["checkpoint"]["blocking_failure_ids"] == ["failure_execution"]
+    assert d["checkpoint"]["runtime_metadata"]["recovery_id"] == "recovery_execution"
+
+    assert {item["impact_id"] for item in d["impacts"]} == {
+        "impact_execution_failure", "impact_execution_pivot"
+    }
+    assert "impact_unrelated" not in {item["impact_id"] for item in d["impacts"]}
+
+    protocol = d["agent_protocol"]
+    assert protocol["protocol"]["protocol_id"] == "protocol_execution"
+    assert protocol["protocol"]["skill_hash"] == "skillhash_execution"
+    assert protocol["protocol"]["recovery_mode"] == "HUMAN_APPROVE"
+    assert protocol["protocol"]["current_stage"] == "EXECUTE"
+    assert protocol["preflights"][0]["checks"][0]["pass"] is True
+    assert protocol["plans"][0]["plan_hash"] == "plan-hash"
+    assert protocol["plans"][0]["checklist"][0]["status"] == "PASS"
+    assert protocol["problems"][0]["problem_id"] == "problem_execution"
+    assert protocol["problems"][0]["recoveries"][0]["status"] == "WAITING_HUMAN"
+    assert protocol["handoffs"][0]["payload_hash"] == "handoff-execution-hash"
+    assert protocol["handoffs"][0]["structured_payload"] == {"summary": "persisted handoff"}
+    assert protocol["handoffs"][0]["markdown"] == "Persisted handoff markdown."
+    assert [event["event_id"] for event in protocol["events"]] == [
+        "phaseevt_execution_1", "phaseevt_execution_2", "phaseevt_execution_3"
+    ]
+
+    assert "inputs" not in d
+    assert "outputs" not in d
+    assert "evidence" not in d
+    assert "lease_token" not in str(d)
+    assert client.get(
+        f"/browser/projects/{hidden_project}/execution"
+    ).status_code == 404
+    assert client.get(
+        f"/browser/projects/{hidden_project}/execution/phases/{phase_id}"
+    ).status_code == 404
+    rt.close()
+
+
+def test_project_execution_empty_and_cross_project_phase_are_truthful(tmp_path, monkeypatch):
+    rt, owner, outsider, executor, project, hidden_project = _fixture(tmp_path, monkeypatch)
+    hidden_phase = _seed_phase(rt, outsider, executor, hidden_project)
+    client = TestClient(_app(rt))
+    _login(client)
+
+    body = client.get(f"/browser/projects/{project}/execution").json()
+    assert body["query_status"] == "COMPLETE"
+    assert body["orchestrations"] == []
+
+    assert client.get(
+        f"/browser/projects/{project}/execution/phases/{hidden_phase}"
+    ).status_code == 404
+    assert client.get(
+        f"/browser/projects/{project}/execution/phases/missing_phase"
+    ).status_code == 404
+    rt.close()
+
+
+def test_browser_phase_events_and_sse_resume_use_session_authority(tmp_path, monkeypatch):
+    rt, owner, _, executor, project, hidden_project = _fixture(tmp_path, monkeypatch)
+    phase_id = _seed_phase(rt, owner, executor, project)
+    client = TestClient(_app(rt))
+    _login(client)
+
+    events = client.get(
+        f"/browser/projects/{project}/execution/phases/{phase_id}/events"
+    )
+    assert events.status_code == 200
+    assert [e["event_id"] for e in events.json()["events"]] == [
+        "phaseevt_execution_1", "phaseevt_execution_2", "phaseevt_execution_3"
+    ]
+
+    stream = client.get(
+        f"/browser/projects/{project}/execution/phases/{phase_id}/events/stream?follow=false",
+        headers={"Last-Event-ID": "phaseevt_execution_1"},
+    )
+    assert stream.status_code == 200
+    assert stream.headers["content-type"].startswith("text/event-stream")
+    assert "id: phaseevt_execution_1\n" not in stream.text
+    assert "id: phaseevt_execution_2\n" in stream.text
+    assert "id: phaseevt_execution_3\n" in stream.text
+
+    assert client.get(
+        f"/browser/projects/{hidden_project}/execution/phases/{phase_id}/events"
+    ).status_code == 404
+    assert client.get(
+        f"/browser/projects/{hidden_project}/execution/phases/{phase_id}/events/stream?follow=false"
+    ).status_code == 404
+    rt.close()
+
+
+def test_existing_bearer_process_phase_and_event_reads_remain_valid(tmp_path, monkeypatch):
+    rt, owner, _, executor, project, _ = _fixture(tmp_path, monkeypatch)
+    phase_id = _seed_phase(rt, owner, executor, project)
+    client = TestClient(_app(rt))
+
+    token = client.post(
+        "/auth/login",
+        json={"username": "execution-owner", "password": PASSWORD},
+    ).json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    process = client.get(f"/product/projects/{project}/process", headers=headers)
+    assert process.status_code == 200
+    phase = client.get(f"/product/phases/{phase_id}", headers=headers)
+    assert phase.status_code == 200
+    events = client.get(f"/product/phases/{phase_id}/events", headers=headers)
+    assert events.status_code == 200
+    stream = client.get(
+        f"/product/phases/{phase_id}/events/stream?follow=false",
+        headers={**headers, "Last-Event-ID": "phaseevt_execution_1"},
+    )
+    assert stream.status_code == 200
+    assert "id: phaseevt_execution_2\n" in stream.text
+    rt.close()
