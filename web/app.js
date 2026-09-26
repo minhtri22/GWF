@@ -28,8 +28,8 @@ const state = {
 };
 const DEFAULT_ROUTE = "/app/system/diagnostics";
 const ROUTE_COPY = {
-  home: "Home unlocks in BPS-M01 after its own QA and local UAT. No KPI, run, project or activity data is fabricated in the foundation shell.",
-  projects: "Projects and access management unlock in BPS-M02. No project entities or lifecycle actions are fabricated here.",
+  home: "Home is owned by BPS-M01. No KPI, run, project or activity data is fabricated outside its authoritative projection.",
+  projects: "Projects and access management are owned by BPS-M02. No project entities or lifecycle actions are fabricated here.",
   access: "Tenant, workspace, project membership and session access administration is owned by BPS-M02.",
   operations: "Global Runs, Approvals, Audit and Runtime unlock in BPS-M03. This foundation route contains no synthetic operational data.",
   packages: "Research package registry and usage unlock in BPS-M06. No package or project-usage records are fabricated here.",
