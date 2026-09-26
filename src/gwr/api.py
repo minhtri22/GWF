@@ -693,7 +693,6 @@ def create_app(
                     }
                     yield (
                         f"id: {item['event_id']}\n"
-                        f"event: {item['event_type']}\n"
                         f"data: {json.dumps(payload, separators=(',', ':'))}\n\n"
                     )
                     seen.add(item["event_id"])
