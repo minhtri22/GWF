@@ -16,6 +16,19 @@ const state = {
   projectOverviewProjectId: null,
   projectOverviewError: null,
   projectOverviewLoading: false,
+  projectExecution: null,
+  projectExecutionProjectId: null,
+  projectExecutionError: null,
+  projectExecutionLoading: false,
+  selectedExecutionOrchestrationId: null,
+  selectedExecutionPhaseId: null,
+  projectPhaseDetail: null,
+  projectPhaseDetailKey: null,
+  projectPhaseDetailError: null,
+  projectPhaseDetailLoading: false,
+  projectExecutionStream: null,
+  projectExecutionStreamPhaseId: null,
+  projectExecutionLiveEvents: [],
   access: null,
   accessError: null,
   accessLoading: false,
@@ -608,6 +621,14 @@ async function refreshProjectsIndex(render = true) {
     if (state.projects) renderProjectsIndex();
     else renderProjectsError(state.projectsError || "Unknown error");
   }
+}
+
+function stopProjectExecutionStream() {
+  if (state.projectExecutionStream) {
+    state.projectExecutionStream.close();
+    state.projectExecutionStream = null;
+  }
+  state.projectExecutionStreamPhaseId = null;
 }
 
 function projectWorkspaceRoute(pathname = window.location.pathname) {
@@ -2040,6 +2061,16 @@ function showLogin() {
   state.projectOverview = null;
   state.projectOverviewProjectId = null;
   state.projectOverviewError = null;
+  state.projectExecution = null;
+  state.projectExecutionProjectId = null;
+  state.projectExecutionError = null;
+  state.selectedExecutionOrchestrationId = null;
+  state.selectedExecutionPhaseId = null;
+  state.projectPhaseDetail = null;
+  state.projectPhaseDetailKey = null;
+  state.projectPhaseDetailError = null;
+  state.projectExecutionLiveEvents = [];
+  stopProjectExecutionStream();
   state.access = null;
   state.accessError = null;
   state.operationsRuns = null;
