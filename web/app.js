@@ -1249,6 +1249,37 @@ async function refreshProjectPhaseDetail(route, phaseId, render = true) {
   }
 }
 
+async function loadProjectExecutionReport() {
+  const route = projectWorkspaceRoute();
+  const orchestrationId = state.selectedExecutionOrchestrationId;
+  if (!route || route.section !== "execution" || !orchestrationId) {
+    $("#projectExecutionReport").textContent =
+      "Select an orchestration before loading its derived report.";
+    return;
+  }
+  const requestActorId = state.me?.actor_id || null;
+  $("#projectExecutionReport").textContent = "Loading derived orchestration report…";
+  try {
+    const result = await api(
+      "/browser/projects/" + encodeURIComponent(route.projectId) +
+      "/execution/orchestrations/" + encodeURIComponent(orchestrationId) + "/report"
+    );
+    if (!state.me || state.me.actor_id !== requestActorId) return;
+    const active = projectWorkspaceRoute();
+    if (!active || active.projectId !== route.projectId ||
+        active.section !== "execution" ||
+        state.selectedExecutionOrchestrationId !== orchestrationId) return;
+    $("#projectExecutionReport").textContent = result.markdown || "Derived report is empty.";
+  } catch (error) {
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+    $("#projectExecutionReport").textContent =
+      "Derived report unavailable — " + error.message;
+  }
+}
+
 function renderProjectExecution(summary, route) {
   renderProjectWorkspaceHeader(summary, route);
   setProjectLocalNav("execution");
@@ -2833,6 +2864,8 @@ $("#projectExecutionOrchestrations").addEventListener("click", (event) => {
   const button = event.target.closest("[data-execution-orchestration]");
   if (!button || !state.projectExecution) return;
   state.selectedExecutionOrchestrationId = button.dataset.executionOrchestration;
+  $("#projectExecutionReport").textContent =
+    "Selected orchestration changed. Load its derived report when needed.";
   const selected = (state.projectExecution.orchestrations || []).find(
     (item) => item.orchestration_id === state.selectedExecutionOrchestrationId
   );
@@ -2847,6 +2880,10 @@ $("#projectExecutionOrchestrations").addEventListener("click", (event) => {
   stopProjectExecutionStream();
   const route = projectWorkspaceRoute();
   if (route?.section === "execution") renderProjectExecution(state.projectExecution, route);
+});
+
+$("#projectExecutionReportButton").addEventListener("click", async () => {
+  await loadProjectExecutionReport();
 });
 
 $("#projectExecutionPhases").addEventListener("click", (event) => {
