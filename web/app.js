@@ -591,6 +591,23 @@ function renderProjectsRoute(item) {
   else void refreshProjectsIndex(true);
 }
 
+function confirmGovernedAction({ title, action, target, scope, consequence }) {
+  const dialog = $("#governedActionDialog");
+  $("#governedActionTitle").textContent = title;
+  $("#governedActionName").textContent = action;
+  $("#governedActionTarget").textContent = target;
+  $("#governedActionScope").textContent = scope;
+  $("#governedActionConsequence").textContent = consequence;
+  return new Promise((resolve) => {
+    const close = () => {
+      dialog.removeEventListener("close", close);
+      resolve(dialog.returnValue === "confirm");
+    };
+    dialog.addEventListener("close", close);
+    dialog.showModal();
+  });
+}
+
 function accessScopeRows(kind) {
   if (!state.access) return [];
   if (kind === "tenant") return state.access.tenants || [];
@@ -1104,7 +1121,19 @@ $("#accessMemberRevokeButton").addEventListener("click", async () => {
   const kind = $("#accessScopeKind").value;
   const scopeId = $("#accessScopeTarget").value;
   const actorId = $("#accessMemberActorId").value.trim();
-  if (!scopeId || !actorId) return;
+  const selected = accessSelectedScope();
+  if (!scopeId || !actorId || !selected) return;
+
+  const confirmed = await confirmGovernedAction({
+    title: "Revoke direct membership",
+    action: "REVOKE " + kind.toUpperCase() + " MEMBER",
+    target: actorId,
+    scope: accessScopeLabel(kind, selected),
+    consequence:
+      "This direct membership will be marked REVOKED. Access inherited from another tenant, workspace or project membership may still remain.",
+  });
+  if (!confirmed) return;
+
   const plural = kind === "tenant" ? "tenants" : (kind === "workspace" ? "workspaces" : "projects");
   await performAccessMutation(
     "/browser/access/" + plural + "/" + encodeURIComponent(scopeId) +
