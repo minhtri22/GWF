@@ -274,6 +274,103 @@
           </div>
         </section>
 
+        <section id="accessRouteView" class="access-page" hidden>
+          <section class="access-hero">
+            <div>
+              <p class="eyebrow">Identity and scope administration</p>
+              <h1>Access</h1>
+              <p>Inspect the current session and administer only the tenant, workspace and project scopes you are authorized to manage.</p>
+            </div>
+            <button id="accessRefreshButton" class="text-button" type="button">Refresh</button>
+          </section>
+
+          <div id="accessStateBanner" class="home-state-banner" hidden></div>
+
+          <section class="access-session-grid" aria-label="Current session">
+            <article class="panel access-session-card"><span>Principal</span><strong id="accessPrincipal">—</strong><code id="accessActorId">—</code></article>
+            <article class="panel access-session-card"><span>Authentication</span><strong id="accessAuthMethod">—</strong><small id="accessExpiry">—</small></article>
+            <article class="panel access-session-card"><span>Visible scopes</span><strong id="accessScopeCounts">—</strong><small>tenant · workspace · project</small></article>
+          </section>
+
+          <section class="access-action-grid">
+            <article class="panel access-form-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Authoritative mutation</p><h2>Create tenant</h2></div>
+              </div>
+              <form id="createTenantForm" class="access-form">
+                <label><span>Name</span><input id="createTenantName" required maxlength="120" autocomplete="off"></label>
+                <button class="primary" type="submit">Create tenant</button>
+              </form>
+            </article>
+
+            <article class="panel access-form-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Authorized tenant</p><h2>Create workspace</h2></div>
+              </div>
+              <form id="createWorkspaceForm" class="access-form">
+                <label><span>Tenant</span><select id="createWorkspaceTenant" required></select></label>
+                <label><span>Workspace name</span><input id="createWorkspaceName" required maxlength="120" autocomplete="off"></label>
+                <button class="primary" type="submit">Create workspace</button>
+              </form>
+            </article>
+          </section>
+
+          <section class="panel access-membership-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Exact actor ID only</p>
+                <h2>Membership administration</h2>
+              </div>
+              <span class="scope-badge">No global actor directory</span>
+            </div>
+            <form id="accessMemberForm" class="access-member-form">
+              <label><span>Scope kind</span>
+                <select id="accessScopeKind">
+                  <option value="tenant">Tenant</option>
+                  <option value="workspace">Workspace</option>
+                  <option value="project">Project</option>
+                </select>
+              </label>
+              <label class="access-scope-target"><span>Manageable scope</span><select id="accessScopeTarget" required></select></label>
+              <label><span>Actor ID</span><input id="accessMemberActorId" required autocomplete="off" placeholder="actor_…"></label>
+              <label><span>Role</span><select id="accessMemberRole" required></select></label>
+              <div class="access-member-actions">
+                <button class="primary" type="submit">Add / update</button>
+                <button id="accessMemberRevokeButton" class="ghost" type="button">Revoke</button>
+              </div>
+            </form>
+            <div id="accessCurrentMembers" class="access-current-members"></div>
+          </section>
+
+          <section class="access-resource-grid">
+            <article class="panel access-resource-panel">
+              <div class="panel-head"><div><p class="eyebrow">Organization</p><h2>Tenants</h2></div><span id="accessTenantCount" class="panel-count">0</span></div>
+              <div class="table-scroll">
+                <table class="data-table access-table"><thead><tr><th>Tenant</th><th>Your role</th><th>Authority</th><th>Created</th></tr></thead><tbody id="accessTenantBody"></tbody></table>
+              </div>
+            </article>
+
+            <article class="panel access-resource-panel">
+              <div class="panel-head"><div><p class="eyebrow">Organization</p><h2>Workspaces</h2></div><span id="accessWorkspaceCount" class="panel-count">0</span></div>
+              <div class="table-scroll">
+                <table class="data-table access-table"><thead><tr><th>Workspace</th><th>Tenant</th><th>Your role</th><th>Authority</th></tr></thead><tbody id="accessWorkspaceBody"></tbody></table>
+              </div>
+            </article>
+          </section>
+
+          <section class="panel access-resource-panel">
+            <div class="panel-head"><div><p class="eyebrow">Project membership</p><h2>Projects</h2></div><span id="accessProjectCount" class="panel-count">0</span></div>
+            <div class="table-scroll">
+              <table class="data-table access-table"><thead><tr><th>Project</th><th>Tenant / workspace</th><th>Your role</th><th>Authority</th></tr></thead><tbody id="accessProjectBody"></tbody></table>
+            </div>
+          </section>
+
+          <div class="home-footnote">
+            <span>Projection</span><code id="accessGeneratedAt">—</code>
+            <span>Build</span><code id="accessBuildSha">—</code>
+          </div>
+        </section>
+
         <section id="lockedRouteView" class="route-state-page" hidden>
           <article class="route-state-card">
             <div id="routeStateIcon" class="route-state-icon" aria-hidden="true"></div>
