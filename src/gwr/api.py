@@ -539,6 +539,29 @@ def create_app(
             core_health=str(readiness_payload.get("core_health") or "UNKNOWN"),
         )
 
+    @app.get('/browser/packages')
+    def browser_packages(request: Request):
+        _, principal = browser_principal(request)
+        return product.packages_summary(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
+    @app.get('/browser/projects/{project_id}/packages')
+    def browser_project_packages(project_id: str, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_project_access(
+                principal.actor_id, project_id, "VIEW"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        return product.project_packages(
+            principal.actor_id,
+            project_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
     @app.get('/browser/projects-index')
     def browser_projects_index(request: Request):
         _, principal = browser_principal(request)

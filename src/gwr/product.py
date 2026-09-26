@@ -2165,6 +2165,633 @@ class ProjectDashboardService:
             "markdown": "\n".join(lines),
         }
 
+    def packages_summary(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
+        """Authorized read projection for the global Domain/Skill package registry."""
+        actor = self.db.one(
+            "SELECT actor_id,status FROM actors WHERE actor_id=?",
+            (actor_id,),
+        )
+        if not actor or actor["status"] != "ACTIVE":
+            raise AuthorityDenied("Actor is not active")
+
+        complete = True
+        visible_tenants: dict[str, dict[str, Any]] = {}
+        for row in self.db.all(
+            "SELECT tenant_id,name,status FROM tenants WHERE status='ACTIVE' "
+            "ORDER BY name,tenant_id"
+        ):
+            try:
+                self.runtime.tenancy.require_tenant_access(
+                    actor_id, row["tenant_id"], "VIEW"
+                )
+            except (AuthorityDenied, NotFound):
+                continue
+            visible_tenants[row["tenant_id"]] = dict(row)
+
+        projects: dict[str, dict[str, Any]] = {}
+        for row in self.runtime.tenancy.list_accessible_projects(actor_id):
+            project_id = row["id"]
+            scope = self.runtime.tenancy.scope_for_project(project_id)
+            if not scope:
+                complete = False
+                continue
+            tenant = self.db.one(
+                "SELECT name FROM tenants WHERE tenant_id=?",
+                (scope.tenant_id,),
+            )
+            workspace = self.db.one(
+                "SELECT name FROM workspaces WHERE workspace_id=?",
+                (scope.workspace_id,),
+            )
+            if not tenant or not workspace:
+                complete = False
+            projects[project_id] = {
+                "project_id": project_id,
+                "project_name": row["name"],
+                "tenant_id": scope.tenant_id,
+                "tenant_name": tenant["name"] if tenant else None,
+                "workspace_id": scope.workspace_id,
+                "workspace_name": workspace["name"] if workspace else None,
+            }
+
+        project_domains: dict[str, dict[str, Any]] = {}
+        domain_usage_by_revision: dict[str, list[dict[str, Any]]] = {}
+        reachable_domain_ids: set[str] = set()
+        for project_id, context in projects.items():
+            binding = self.db.one(
+                "SELECT domain_revision_id,bound_by_actor_id,bound_at "
+                "FROM project_domain_bindings WHERE project_id=?",
+                (project_id,),
+            )
+            if not binding:
+                continue
+            revision = self.db.one(
+                "SELECT r.revision_id,r.package_id,r.revision_number,"
+                "r.semantic_version,r.payload_hash,r.status AS revision_status,"
+                "p.domain_id,p.name AS domain_name,p.tenant_id "
+                "FROM domain_package_revisions r "
+                "JOIN domain_packages p ON p.package_id=r.package_id "
+                "WHERE r.revision_id=?",
+                (binding["domain_revision_id"],),
+            )
+            if not revision:
+                complete = False
+                project_domains[project_id] = {
+                    **context,
+                    "domain_revision_id": binding["domain_revision_id"],
+                    "package_id": None,
+                    "domain_id": None,
+                    "revision_number": None,
+                    "semantic_version": None,
+                    "payload_hash": None,
+                    "revision_status": None,
+                    "bound_by_actor_id": binding["bound_by_actor_id"],
+                    "bound_at": binding["bound_at"],
+                }
+                continue
+            item = {
+                **context,
+                **dict(revision),
+                "domain_revision_id": revision["revision_id"],
+                "bound_by_actor_id": binding["bound_by_actor_id"],
+                "bound_at": binding["bound_at"],
+            }
+            project_domains[project_id] = item
+            reachable_domain_ids.add(revision["domain_id"])
+            domain_usage_by_revision.setdefault(revision["revision_id"], []).append({
+                "project_id": project_id,
+                "project_name": context["project_name"],
+                "tenant_id": context["tenant_id"],
+                "tenant_name": context["tenant_name"],
+                "workspace_id": context["workspace_id"],
+                "workspace_name": context["workspace_name"],
+                "basis": "PINNED",
+                "bound_by_actor_id": binding["bound_by_actor_id"],
+                "bound_at": binding["bound_at"],
+            })
+
+        domain_packages: list[dict[str, Any]] = []
+        for package_row in self.db.all(
+            "SELECT * FROM domain_packages ORDER BY tenant_id,name,package_id"
+        ):
+            if package_row["tenant_id"] not in visible_tenants:
+                continue
+            package = dict(package_row)
+            reachable_domain_ids.add(package["domain_id"])
+            revisions: list[dict[str, Any]] = []
+            for revision_row in self.db.all(
+                "SELECT revision_id,package_id,revision_number,semantic_version,"
+                "payload_hash,validation_report,status,created_by_actor_id,"
+                "created_at,published_at FROM domain_package_revisions "
+                "WHERE package_id=? ORDER BY revision_number,revision_id",
+                (package["package_id"],),
+            ):
+                revision = dict(revision_row)
+                revision["validation_report"] = parse_json(
+                    revision["validation_report"], {}
+                )
+                revision["projects"] = list(
+                    domain_usage_by_revision.get(revision["revision_id"], [])
+                )
+                revision["authorized_project_usage_count"] = len(
+                    {item["project_id"] for item in revision["projects"]}
+                )
+                revisions.append(revision)
+            latest = revisions[-1] if revisions else None
+            published = [
+                revision for revision in revisions
+                if revision["status"] == "PUBLISHED"
+            ]
+            latest_published = published[-1] if published else None
+            package_project_ids = {
+                item["project_id"]
+                for revision in revisions
+                for item in revision["projects"]
+            }
+            domain_packages.append({
+                "tenant_id": package["tenant_id"],
+                "tenant_name": visible_tenants[package["tenant_id"]]["name"],
+                "package_id": package["package_id"],
+                "domain_id": package["domain_id"],
+                "name": package["name"],
+                "description": package["description"],
+                "status": package["status"],
+                "created_by_actor_id": package["created_by_actor_id"],
+                "created_at": package["created_at"],
+                "revision_count": len(revisions),
+                "latest_revision": (
+                    {
+                        key: latest.get(key)
+                        for key in (
+                            "revision_id",
+                            "revision_number",
+                            "semantic_version",
+                            "payload_hash",
+                            "status",
+                            "created_at",
+                            "published_at",
+                        )
+                    } if latest else None
+                ),
+                "latest_published_revision": (
+                    {
+                        key: latest_published.get(key)
+                        for key in (
+                            "revision_id",
+                            "revision_number",
+                            "semantic_version",
+                            "payload_hash",
+                            "status",
+                            "published_at",
+                        )
+                    } if latest_published else None
+                ),
+                "authorized_project_usage_count": len(package_project_ids),
+                "revisions": revisions,
+            })
+
+        configured_bindings: list[dict[str, Any]] = []
+        for row in self.db.all(
+            "SELECT * FROM domain_skill_bindings ORDER BY domain_id,workunit_type,binding_id"
+        ):
+            if row["domain_id"] not in reachable_domain_ids:
+                continue
+            item = _parsed(row, ("required_tools", "qa_contract"))
+            configured_bindings.append(item)
+
+        observed_protocols: list[dict[str, Any]] = []
+        if projects:
+            placeholders = ",".join("?" for _ in projects)
+            for row in self.db.all(
+                "SELECT x.protocol_id,x.phase_execution_id,x.project_id,"
+                "x.skill_revision_id,x.skill_hash,x.created_at,"
+                "p.phase_id,p.orchestration_id "
+                "FROM phase_execution_protocols x "
+                "LEFT JOIN phase_executions p "
+                "ON p.phase_execution_id=x.phase_execution_id "
+                f"WHERE x.project_id IN ({placeholders}) "
+                "ORDER BY x.created_at,x.protocol_id",
+                tuple(projects),
+            ):
+                item = dict(row)
+                if item["phase_id"] is None:
+                    complete = False
+                observed_protocols.append(item)
+
+        candidate_skill_revision_ids = {
+            row["skill_revision_id"] for row in configured_bindings
+        } | {
+            row["skill_revision_id"] for row in observed_protocols
+        }
+
+        skill_revision_rows: dict[str, dict[str, Any]] = {}
+        visible_skill_package_ids: set[str] = set()
+        dangling_skill_revision_ids: list[str] = []
+        for revision_id in sorted(candidate_skill_revision_ids):
+            row = self.db.one(
+                "SELECT r.skill_revision_id,r.skill_package_id,r.revision_number,"
+                "r.version,r.content_hash,r.tool_requirements,r.qa_contract,"
+                "r.created_by_actor_id,r.created_at,"
+                "p.skill_id,p.name,p.description,p.created_by_actor_id AS package_created_by_actor_id,"
+                "p.created_at AS package_created_at "
+                "FROM skill_revisions r JOIN skill_packages p "
+                "ON p.skill_package_id=r.skill_package_id "
+                "WHERE r.skill_revision_id=?",
+                (revision_id,),
+            )
+            if not row:
+                complete = False
+                dangling_skill_revision_ids.append(revision_id)
+                continue
+            item = dict(row)
+            item["tool_requirements"] = parse_json(
+                item["tool_requirements"], []
+            )
+            item["qa_contract"] = parse_json(item["qa_contract"], {})
+            skill_revision_rows[revision_id] = item
+            visible_skill_package_ids.add(item["skill_package_id"])
+
+        configured_usage_by_revision: dict[str, list[dict[str, Any]]] = {}
+        for binding in configured_bindings:
+            revision_id = binding["skill_revision_id"]
+            for project_id, domain in project_domains.items():
+                if domain.get("domain_id") != binding["domain_id"]:
+                    continue
+                context = projects[project_id]
+                configured_usage_by_revision.setdefault(revision_id, []).append({
+                    "basis": "CONFIGURED",
+                    "project_id": project_id,
+                    "project_name": context["project_name"],
+                    "tenant_id": context["tenant_id"],
+                    "tenant_name": context["tenant_name"],
+                    "workspace_id": context["workspace_id"],
+                    "workspace_name": context["workspace_name"],
+                    "domain_revision_id": domain.get("domain_revision_id"),
+                    "domain_id": binding["domain_id"],
+                    "binding_id": binding["binding_id"],
+                    "workunit_type": binding["workunit_type"],
+                })
+
+        observed_usage_by_revision: dict[str, list[dict[str, Any]]] = {}
+        for observed in observed_protocols:
+            revision_id = observed["skill_revision_id"]
+            context = projects.get(observed["project_id"])
+            if not context:
+                continue
+            observed_usage_by_revision.setdefault(revision_id, []).append({
+                "basis": "OBSERVED",
+                "project_id": observed["project_id"],
+                "project_name": context["project_name"],
+                "tenant_id": context["tenant_id"],
+                "tenant_name": context["tenant_name"],
+                "workspace_id": context["workspace_id"],
+                "workspace_name": context["workspace_name"],
+                "protocol_id": observed["protocol_id"],
+                "phase_execution_id": observed["phase_execution_id"],
+                "orchestration_id": observed["orchestration_id"],
+                "workunit_type": observed["phase_id"],
+                "skill_hash": observed["skill_hash"],
+                "loaded_at": observed["created_at"],
+            })
+
+        skill_packages: list[dict[str, Any]] = []
+        for package_id in sorted(visible_skill_package_ids):
+            package_row = self.db.one(
+                "SELECT * FROM skill_packages WHERE skill_package_id=?",
+                (package_id,),
+            )
+            if not package_row:
+                complete = False
+                continue
+            visible_revisions = [
+                revision for revision in skill_revision_rows.values()
+                if revision["skill_package_id"] == package_id
+            ]
+            visible_revisions.sort(
+                key=lambda item: (
+                    int(item["revision_number"]),
+                    item["skill_revision_id"],
+                )
+            )
+            shaped_revisions = []
+            package_bases: set[str] = set()
+            for revision in visible_revisions:
+                revision_id = revision["skill_revision_id"]
+                bindings = [
+                    dict(binding)
+                    for binding in configured_bindings
+                    if binding["skill_revision_id"] == revision_id
+                ]
+                configured_usage = list(
+                    configured_usage_by_revision.get(revision_id, [])
+                )
+                observed_usage = list(
+                    observed_usage_by_revision.get(revision_id, [])
+                )
+                bases = []
+                if configured_usage or bindings:
+                    bases.append("CONFIGURED")
+                if observed_usage:
+                    bases.append("OBSERVED")
+                package_bases.update(bases)
+                shaped_revisions.append({
+                    "skill_revision_id": revision_id,
+                    "revision_number": revision["revision_number"],
+                    "version": revision["version"],
+                    "content_hash": revision["content_hash"],
+                    "tool_requirements": revision["tool_requirements"],
+                    "qa_contract": revision["qa_contract"],
+                    "created_by_actor_id": revision["created_by_actor_id"],
+                    "created_at": revision["created_at"],
+                    "visibility_bases": bases,
+                    "bindings": bindings,
+                    "usage": configured_usage + observed_usage,
+                })
+            skill_packages.append({
+                "skill_package_id": package_row["skill_package_id"],
+                "skill_id": package_row["skill_id"],
+                "name": package_row["name"],
+                "description": package_row["description"],
+                "created_by_actor_id": package_row["created_by_actor_id"],
+                "created_at": package_row["created_at"],
+                "visibility_scope": "AUTHORIZED_REACHABLE",
+                "visibility_bases": sorted(package_bases),
+                "revisions": shaped_revisions,
+            })
+
+        domain_usage = [
+            {
+                "package_kind": "DOMAIN",
+                "revision_id": revision["revision_id"],
+                "package_id": package["package_id"],
+                "domain_id": package["domain_id"],
+                **usage,
+            }
+            for package in domain_packages
+            for revision in package["revisions"]
+            for usage in revision["projects"]
+        ]
+        skill_usage = [
+            {
+                "package_kind": "SKILL",
+                "skill_package_id": package["skill_package_id"],
+                "skill_id": package["skill_id"],
+                "skill_revision_id": revision["skill_revision_id"],
+                **usage,
+            }
+            for package in skill_packages
+            for revision in package["revisions"]
+            for usage in revision["usage"]
+        ]
+
+        return {
+            "generated_at": utcnow(),
+            "build_sha": build_sha,
+            "query_status": "COMPLETE" if complete else "PARTIAL",
+            "scope": {
+                "mode": "AUTHORIZED",
+                "label": "Authorized packages and usage",
+                "visible_tenant_count": len(visible_tenants),
+                "accessible_project_count": len(projects),
+                "skill_visibility": "AUTHORIZED_REACHABLE",
+            },
+            "domains": domain_packages,
+            "skills": skill_packages,
+            "usage": {
+                "domains": domain_usage,
+                "skills": skill_usage,
+            },
+            "diagnostics": {
+                "dangling_skill_revision_ids": dangling_skill_revision_ids,
+            },
+        }
+
+    def project_packages(
+        self,
+        actor_id: str,
+        project_id: str,
+        *,
+        build_sha: str,
+    ) -> dict[str, Any]:
+        """Authorized Project -> Packages configured/observed projection."""
+        self.runtime.tenancy.require_project_access(actor_id, project_id, "VIEW")
+        project = self._project(project_id)
+        complete = True
+
+        scope = self.runtime.tenancy.scope_for_project(project_id)
+        tenant = (
+            self.db.one(
+                "SELECT name FROM tenants WHERE tenant_id=?",
+                (scope.tenant_id,),
+            )
+            if scope else None
+        )
+        workspace = (
+            self.db.one(
+                "SELECT name FROM workspaces WHERE workspace_id=?",
+                (scope.workspace_id,),
+            )
+            if scope else None
+        )
+        if not scope or not tenant or not workspace:
+            complete = False
+
+        domain = None
+        configured: list[dict[str, Any]] = []
+        binding = self.db.one(
+            "SELECT domain_revision_id,bound_by_actor_id,bound_at "
+            "FROM project_domain_bindings WHERE project_id=?",
+            (project_id,),
+        )
+        if binding:
+            revision = self.db.one(
+                "SELECT r.revision_id,r.package_id,r.revision_number,"
+                "r.semantic_version,r.payload_hash,r.status AS revision_status,"
+                "p.domain_id,p.name AS domain_name,p.tenant_id "
+                "FROM domain_package_revisions r "
+                "JOIN domain_packages p ON p.package_id=r.package_id "
+                "WHERE r.revision_id=?",
+                (binding["domain_revision_id"],),
+            )
+            if not revision:
+                complete = False
+                domain = {
+                    "domain_revision_id": binding["domain_revision_id"],
+                    "package_id": None,
+                    "domain_id": project.get("domain_id"),
+                    "domain_name": None,
+                    "revision_number": None,
+                    "semantic_version": None,
+                    "payload_hash": None,
+                    "revision_status": None,
+                    "bound_by_actor_id": binding["bound_by_actor_id"],
+                    "bound_at": binding["bound_at"],
+                    "latest_published_revision": None,
+                    "revisions_behind_latest": None,
+                }
+            else:
+                latest = self.db.one(
+                    "SELECT revision_id,revision_number,semantic_version,payload_hash,"
+                    "status,published_at FROM domain_package_revisions "
+                    "WHERE package_id=? AND status='PUBLISHED' "
+                    "ORDER BY revision_number DESC,revision_id DESC LIMIT 1",
+                    (revision["package_id"],),
+                )
+                behind = (
+                    max(
+                        0,
+                        int(latest["revision_number"])
+                        - int(revision["revision_number"]),
+                    )
+                    if latest else 0
+                )
+                domain = {
+                    **dict(revision),
+                    "domain_revision_id": revision["revision_id"],
+                    "bound_by_actor_id": binding["bound_by_actor_id"],
+                    "bound_at": binding["bound_at"],
+                    "latest_published_revision": dict(latest) if latest else None,
+                    "revisions_behind_latest": behind,
+                }
+                for row in self.db.all(
+                    "SELECT * FROM domain_skill_bindings "
+                    "WHERE domain_id=? ORDER BY workunit_type,binding_id",
+                    (revision["domain_id"],),
+                ):
+                    skill = self.db.one(
+                        "SELECT r.skill_revision_id,r.skill_package_id,"
+                        "r.revision_number,r.version,r.content_hash,"
+                        "r.tool_requirements,r.qa_contract,"
+                        "p.skill_id,p.name AS skill_name "
+                        "FROM skill_revisions r JOIN skill_packages p "
+                        "ON p.skill_package_id=r.skill_package_id "
+                        "WHERE r.skill_revision_id=?",
+                        (row["skill_revision_id"],),
+                    )
+                    if not skill:
+                        complete = False
+                        configured.append({
+                            "basis": "CONFIGURED",
+                            "binding_id": row["binding_id"],
+                            "domain_id": row["domain_id"],
+                            "workunit_type": row["workunit_type"],
+                            "skill_revision_id": row["skill_revision_id"],
+                            "skill_hash": row["skill_hash"],
+                            "skill_package_id": None,
+                            "skill_id": None,
+                            "skill_name": None,
+                            "revision_number": None,
+                            "version": None,
+                            "content_hash": None,
+                            "required_tools": parse_json(
+                                row["required_tools"], []
+                            ),
+                            "qa_contract": parse_json(
+                                row["qa_contract"], {}
+                            ),
+                        })
+                        continue
+                    configured.append({
+                        "basis": "CONFIGURED",
+                        "binding_id": row["binding_id"],
+                        "domain_id": row["domain_id"],
+                        "workunit_type": row["workunit_type"],
+                        "skill_revision_id": skill["skill_revision_id"],
+                        "skill_hash": row["skill_hash"],
+                        "skill_package_id": skill["skill_package_id"],
+                        "skill_id": skill["skill_id"],
+                        "skill_name": skill["skill_name"],
+                        "revision_number": skill["revision_number"],
+                        "version": skill["version"],
+                        "content_hash": skill["content_hash"],
+                        "required_tools": parse_json(
+                            row["required_tools"], []
+                        ),
+                        "qa_contract": parse_json(row["qa_contract"], {}),
+                    })
+
+        observed: list[dict[str, Any]] = []
+        for row in self.db.all(
+            "SELECT x.protocol_id,x.phase_execution_id,x.skill_revision_id,"
+            "x.skill_hash,x.created_at,p.orchestration_id,p.phase_id "
+            "FROM phase_execution_protocols x "
+            "LEFT JOIN phase_executions p "
+            "ON p.phase_execution_id=x.phase_execution_id "
+            "WHERE x.project_id=? ORDER BY x.created_at,x.protocol_id",
+            (project_id,),
+        ):
+            skill = self.db.one(
+                "SELECT r.skill_revision_id,r.skill_package_id,r.revision_number,"
+                "r.version,r.content_hash,r.tool_requirements,r.qa_contract,"
+                "p.skill_id,p.name AS skill_name "
+                "FROM skill_revisions r JOIN skill_packages p "
+                "ON p.skill_package_id=r.skill_package_id "
+                "WHERE r.skill_revision_id=?",
+                (row["skill_revision_id"],),
+            )
+            if not skill:
+                complete = False
+                observed.append({
+                    "basis": "OBSERVED",
+                    "protocol_id": row["protocol_id"],
+                    "phase_execution_id": row["phase_execution_id"],
+                    "orchestration_id": row["orchestration_id"],
+                    "workunit_type": row["phase_id"],
+                    "skill_revision_id": row["skill_revision_id"],
+                    "skill_hash": row["skill_hash"],
+                    "skill_package_id": None,
+                    "skill_id": None,
+                    "skill_name": None,
+                    "revision_number": None,
+                    "version": None,
+                    "content_hash": None,
+                    "tool_requirements": [],
+                    "qa_contract": {},
+                    "loaded_at": row["created_at"],
+                })
+                continue
+            observed.append({
+                "basis": "OBSERVED",
+                "protocol_id": row["protocol_id"],
+                "phase_execution_id": row["phase_execution_id"],
+                "orchestration_id": row["orchestration_id"],
+                "workunit_type": row["phase_id"],
+                "skill_revision_id": skill["skill_revision_id"],
+                "skill_hash": row["skill_hash"],
+                "skill_package_id": skill["skill_package_id"],
+                "skill_id": skill["skill_id"],
+                "skill_name": skill["skill_name"],
+                "revision_number": skill["revision_number"],
+                "version": skill["version"],
+                "content_hash": skill["content_hash"],
+                "tool_requirements": parse_json(
+                    skill["tool_requirements"], []
+                ),
+                "qa_contract": parse_json(skill["qa_contract"], {}),
+                "loaded_at": row["created_at"],
+            })
+            if row["phase_id"] is None:
+                complete = False
+
+        return {
+            "generated_at": utcnow(),
+            "build_sha": build_sha,
+            "query_status": "COMPLETE" if complete else "PARTIAL",
+            "project": {
+                "project_id": project_id,
+                "project_name": project["name"],
+                "tenant_id": scope.tenant_id if scope else None,
+                "tenant_name": tenant["name"] if tenant else None,
+                "workspace_id": scope.workspace_id if scope else None,
+                "workspace_name": workspace["name"] if workspace else None,
+            },
+            "domain": domain,
+            "skills": {
+                "configured": configured,
+                "observed": observed,
+            },
+        }
+
     def project_create_options(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
         """Authorized choices for the bounded Create Project workflow."""
         # Validate actor status through the public tenancy read contract.
