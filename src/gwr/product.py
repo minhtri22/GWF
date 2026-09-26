@@ -1347,6 +1347,518 @@ class ProjectDashboardService:
             },
         }
 
+    def project_execution(self, actor_id: str, project_id: str, *, build_sha: str) -> dict[str, Any]:
+        """Authorized project execution index without browser-local execution truth."""
+        self.runtime.tenancy.require_project_access(actor_id, project_id, "VIEW")
+        overview = self.project_overview(actor_id, project_id, build_sha=build_sha)
+
+        orchestrations: list[dict[str, Any]] = []
+        for row in self.db.all(
+            "SELECT orchestration_id,project_id,domain_id,status,current_phase_id,generation,"
+            "research_outcome,pivot_count,started_at,updated_at,terminal_checkpoint_id "
+            "FROM orchestrations WHERE project_id=? "
+            "ORDER BY started_at DESC,orchestration_id DESC",
+            (project_id,),
+        ):
+            item = dict(row)
+            phases = [
+                dict(phase)
+                for phase in self.db.all(
+                    "SELECT phase_execution_id,orchestration_id,phase_id,phase_index,generation,"
+                    "workunit_id,run_id,status,decision_outcome,failure_id,checkpoint_id,"
+                    "started_at,finished_at "
+                    "FROM phase_executions WHERE orchestration_id=? "
+                    "ORDER BY started_at,phase_index,phase_execution_id",
+                    (row["orchestration_id"],),
+                )
+            ]
+            current = next(
+                (phase for phase in reversed(phases) if phase["status"] in {"RUNNING", "PAUSED"}),
+                phases[-1] if phases else None,
+            )
+            item["current_phase_execution_id"] = (
+                current["phase_execution_id"] if current else None
+            )
+            item["phases"] = phases
+            orchestrations.append(item)
+
+        return {
+            "generated_at": utcnow(),
+            "build_sha": build_sha,
+            "query_status": overview["query_status"],
+            "project": overview["project"],
+            "lifecycle": overview["lifecycle"],
+            "execution_activity": overview["execution_activity"],
+            "domain": overview["domain"],
+            "orchestrations": orchestrations,
+        }
+
+    @staticmethod
+    def _execution_scope_contains(value: Any, identities: set[str]) -> bool:
+        if isinstance(value, dict):
+            return any(
+                ProjectDashboardService._execution_scope_contains(child, identities)
+                for child in value.values()
+            )
+        if isinstance(value, list):
+            return any(
+                ProjectDashboardService._execution_scope_contains(child, identities)
+                for child in value
+            )
+        return isinstance(value, str) and value in identities
+
+    def project_phase_execution(
+        self,
+        actor_id: str,
+        project_id: str,
+        phase_execution_id: str,
+        *,
+        build_sha: str,
+    ) -> dict[str, Any]:
+        """Authorized minimal browser projection for one persisted phase execution."""
+        self.runtime.tenancy.require_project_access(actor_id, project_id, "VIEW")
+        owner = self.db.one(
+            "SELECT o.project_id FROM phase_executions p "
+            "JOIN orchestrations o ON o.orchestration_id=p.orchestration_id "
+            "WHERE p.phase_execution_id=?",
+            (phase_execution_id,),
+        )
+        if not owner or owner["project_id"] != project_id:
+            raise NotFound("Phase execution not found")
+
+        source = self.runtime.process.phase_detail(phase_execution_id)
+        phase = source["phase"] or {}
+        workunit = source["workunit"] or None
+        run = source["run"] or None
+
+        shaped_workunit = None
+        if workunit:
+            shaped_workunit = {
+                key: workunit.get(key)
+                for key in (
+                    "workunit_id",
+                    "project_id",
+                    "workunit_type",
+                    "input_revision_ids",
+                    "output_contracts",
+                    "preconditions",
+                    "required_gates",
+                    "required_authorities",
+                    "executor_selector",
+                    "execution_policy",
+                    "retry_policy",
+                    "recovery_policy",
+                    "resource_conflict_keys",
+                    "status",
+                    "version",
+                )
+            }
+
+        shaped_run = None
+        if run:
+            shaped_run = {
+                key: run.get(key)
+                for key in (
+                    "run_id",
+                    "workunit_id",
+                    "attempt_number",
+                    "executor_actor_id",
+                    "input_revision_ids",
+                    "started_at",
+                    "finished_at",
+                    "runtime_status",
+                    "exit_metadata",
+                    "produced_revision_ids",
+                    "evidence_ids",
+                    "checkpoint_id",
+                    "correlation_id",
+                )
+            }
+
+        gates = []
+        for gate in source.get("gates") or []:
+            gates.append({
+                key: gate.get(key)
+                for key in (
+                    "gate_id",
+                    "project_id",
+                    "gate_type",
+                    "scope",
+                    "required_inputs",
+                    "required_evidence",
+                    "policy_version",
+                    "result",
+                    "violation_codes",
+                    "evaluated_refs",
+                    "evaluated_at",
+                )
+            })
+        gate_ids = {gate["gate_id"] for gate in gates if gate.get("gate_id")}
+
+        identities = {
+            str(value)
+            for value in (
+                phase_execution_id,
+                phase.get("orchestration_id"),
+                phase.get("workunit_id"),
+                phase.get("run_id"),
+                phase.get("failure_id"),
+                phase.get("checkpoint_id"),
+            )
+            if value
+        }
+        identities.update(gate_ids)
+
+        decisions = []
+        for row in self.db.all(
+            "SELECT * FROM decisions WHERE project_id=? ORDER BY created_at,decision_id",
+            (project_id,),
+        ):
+            item = _parsed(row, ("scope", "source_gate_ids", "reason_codes"))
+            source_failure_id = item.get("source_failure_id")
+            source_gate_ids = set(item.get("source_gate_ids") or [])
+            related = bool(
+                (source_failure_id and source_failure_id in identities)
+                or source_gate_ids.intersection(gate_ids)
+                or self._execution_scope_contains(item.get("scope"), identities)
+            )
+            if related:
+                decisions.append({
+                    key: item.get(key)
+                    for key in (
+                        "decision_id",
+                        "project_id",
+                        "scope",
+                        "source_gate_ids",
+                        "source_failure_id",
+                        "decision_type",
+                        "target_ref",
+                        "reason_codes",
+                        "created_at",
+                        "created_by",
+                    )
+                })
+
+        failure = source.get("failure")
+        shaped_failure = None
+        recoveries: list[dict[str, Any]] = []
+        loopguard = None
+        if failure:
+            shaped_failure = {
+                key: failure.get(key)
+                for key in (
+                    "failure_id",
+                    "project_id",
+                    "scope_id",
+                    "failure_class",
+                    "detected_stage",
+                    "detected_ref",
+                    "detected_revision_id",
+                    "failed_gate_id",
+                    "evidence_ids",
+                    "root_ref",
+                    "root_revision_id",
+                    "root_status",
+                    "resume_candidate",
+                    "severity",
+                    "signature",
+                    "status",
+                    "created_at",
+                    "resolved_at",
+                )
+            }
+            for row in self.db.all(
+                "SELECT * FROM recoveries WHERE failure_id=? ORDER BY created_at,recovery_id",
+                (failure["failure_id"],),
+            ):
+                recoveries.append(_parsed(
+                    row,
+                    (
+                        "keep_valid_refs",
+                        "invalidate_refs",
+                        "mark_stale_refs",
+                        "required_revision_actions",
+                        "required_workunits",
+                        "required_retests",
+                        "required_approvals",
+                    ),
+                ))
+            row = self.db.one(
+                "SELECT * FROM loopguards "
+                "WHERE project_id=? AND scope=? AND failure_signature=?",
+                (project_id, failure["scope_id"], failure["signature"]),
+            )
+            loopguard = _parsed(row, ("budget",)) if row else None
+
+        checkpoint = source.get("checkpoint")
+        if checkpoint:
+            checkpoint = {
+                key: checkpoint.get(key)
+                for key in (
+                    "checkpoint_id",
+                    "project_id",
+                    "scope_id",
+                    "created_at",
+                    "last_event_id",
+                    "active_workunit_ids",
+                    "completed_workunit_ids",
+                    "current_stage_labels",
+                    "valid_revision_ids",
+                    "dirty_revision_ids",
+                    "stale_revision_ids",
+                    "blocking_failure_ids",
+                    "pending_decision_ids",
+                    "pending_approval_ids",
+                    "resume_candidates",
+                    "runtime_metadata",
+                )
+            }
+
+        output_revision_ids = set((run or {}).get("produced_revision_ids") or [])
+        impacts = []
+        for row in self.db.all(
+            "SELECT * FROM impacts WHERE project_id=? ORDER BY calculated_at,impact_id",
+            (project_id,),
+        ):
+            trigger_type = row["trigger_type"]
+            trigger_id = row["trigger_id"]
+            attributable = bool(
+                (
+                    failure
+                    and trigger_type == "OPERATIONAL_FAILURE"
+                    and trigger_id == failure["failure_id"]
+                )
+                or (
+                    trigger_type == "PIVOT"
+                    and trigger_id in output_revision_ids
+                )
+            )
+            if attributable:
+                impacts.append(_parsed(row, ("affected_nodes", "reason_codes")))
+
+        protocol = None
+        if source.get("agent_protocol"):
+            inspected = source["agent_protocol"]
+            raw_protocol = inspected.get("protocol") or {}
+            previous = inspected.get("previous_handoff")
+            shaped_previous = None
+            if previous:
+                shaped_previous = {
+                    key: previous.get(key)
+                    for key in (
+                        "phase_execution_id",
+                        "previous_phase_execution_id",
+                        "previous_handoff_id",
+                        "handoff_hash",
+                        "verified_at",
+                    )
+                }
+                previous_handoff = previous.get("handoff")
+                if previous_handoff:
+                    shaped_previous["handoff"] = {
+                        key: previous_handoff.get(key)
+                        for key in (
+                            "handoff_id",
+                            "phase_execution_id",
+                            "structured_payload",
+                            "payload_hash",
+                            "actor_id",
+                            "created_at",
+                            "markdown",
+                        )
+                    }
+
+            plans = []
+            for plan in inspected.get("plans") or []:
+                plans.append({
+                    "plan_id": plan.get("plan_id"),
+                    "phase_execution_id": plan.get("phase_execution_id"),
+                    "revision_number": plan.get("revision_number"),
+                    "objective": plan.get("objective"),
+                    "steps": plan.get("steps") or [],
+                    "plan_hash": plan.get("plan_hash"),
+                    "reason": plan.get("reason"),
+                    "actor_id": plan.get("actor_id"),
+                    "created_at": plan.get("created_at"),
+                    "checklist": [
+                        {
+                            key: item.get(key)
+                            for key in (
+                                "checklist_item_id",
+                                "plan_id",
+                                "phase_execution_id",
+                                "step_index",
+                                "title",
+                                "status",
+                                "note",
+                                "updated_at",
+                            )
+                        }
+                        for item in (plan.get("checklist") or [])
+                    ],
+                })
+
+            problems = []
+            for problem in inspected.get("problems") or []:
+                problems.append({
+                    **{
+                        key: problem.get(key)
+                        for key in (
+                            "problem_id",
+                            "phase_execution_id",
+                            "affected_step",
+                            "code",
+                            "summary",
+                            "detail",
+                            "severity",
+                            "status",
+                            "actor_id",
+                            "created_at",
+                        )
+                    },
+                    "recoveries": [
+                        {
+                            **{
+                                key: proposal.get(key)
+                                for key in (
+                                    "proposal_id",
+                                    "problem_id",
+                                    "phase_execution_id",
+                                    "action",
+                                    "target_step",
+                                    "plan_patch",
+                                    "rationale",
+                                    "risk_class",
+                                    "normative_change",
+                                    "status",
+                                    "created_at",
+                                )
+                            },
+                            "decisions": [
+                                {
+                                    key: decision.get(key)
+                                    for key in (
+                                        "decision_id",
+                                        "proposal_id",
+                                        "actor_id",
+                                        "decision",
+                                        "reason",
+                                        "created_at",
+                                    )
+                                }
+                                for decision in (proposal.get("decisions") or [])
+                            ],
+                        }
+                        for proposal in (problem.get("recoveries") or [])
+                    ],
+                })
+
+            protocol = {
+                "protocol": {
+                    key: raw_protocol.get(key)
+                    for key in (
+                        "protocol_id",
+                        "phase_execution_id",
+                        "project_id",
+                        "skill_revision_id",
+                        "skill_hash",
+                        "recovery_mode",
+                        "current_stage",
+                        "status",
+                        "retry_budget",
+                        "retry_count",
+                        "created_at",
+                        "updated_at",
+                    )
+                },
+                "previous_handoff": shaped_previous,
+                "project_defaults": inspected.get("project_defaults"),
+                "attention": inspected.get("attention"),
+                "stage_progress": inspected.get("stage_progress"),
+                "plan_progress": inspected.get("plan_progress"),
+                "preflights": [
+                    {
+                        "preflight_id": item.get("preflight_id"),
+                        "phase_execution_id": item.get("phase_execution_id"),
+                        "status": item.get("status"),
+                        "checks": item.get("checks") or [],
+                        "checks_hash": item.get("checks_hash"),
+                        "actor_id": item.get("actor_id"),
+                        "created_at": item.get("created_at"),
+                    }
+                    for item in (inspected.get("preflights") or [])
+                ],
+                "plans": plans,
+                "problems": problems,
+                "handoffs": [
+                    {
+                        key: item.get(key)
+                        for key in (
+                            "handoff_id",
+                            "phase_execution_id",
+                            "structured_payload",
+                            "payload_hash",
+                            "actor_id",
+                            "created_at",
+                            "markdown",
+                        )
+                    }
+                    for item in (inspected.get("handoffs") or [])
+                ],
+                "events": [
+                    {
+                        key: item.get(key)
+                        for key in (
+                            "event_id",
+                            "phase_execution_id",
+                            "stage",
+                            "event_type",
+                            "actor_id",
+                            "message",
+                            "metadata",
+                            "created_at",
+                        )
+                    }
+                    for item in (inspected.get("events") or [])
+                ],
+            }
+
+        return {
+            "generated_at": utcnow(),
+            "build_sha": build_sha,
+            "query_status": "COMPLETE",
+            "project_id": project_id,
+            "phase": {
+                key: phase.get(key)
+                for key in (
+                    "phase_execution_id",
+                    "orchestration_id",
+                    "phase_id",
+                    "phase_index",
+                    "generation",
+                    "workunit_id",
+                    "run_id",
+                    "status",
+                    "decision_outcome",
+                    "failure_id",
+                    "checkpoint_id",
+                    "started_at",
+                    "finished_at",
+                )
+            },
+            "workunit": shaped_workunit,
+            "run": shaped_run,
+            "gates": gates,
+            "decisions": decisions,
+            "failure": shaped_failure,
+            "recoveries": recoveries,
+            "loopguard": loopguard,
+            "checkpoint": checkpoint,
+            "impacts": impacts,
+            "events": source.get("events") or [],
+            "agent_protocol": protocol,
+        }
+
     def project_create_options(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
         """Authorized choices for the bounded Create Project workflow."""
         # Validate actor status through the public tenancy read contract.
