@@ -205,6 +205,10 @@ def test_access_ui_contract():
     assert "/browser/access/tenants" in js
     assert "/browser/access/workspaces/" in js
     assert "/browser/access/projects/" in js
+    assert 'id="governedActionDialog"' in html
+    assert "Revoke direct membership" in js
+    assert "This direct membership will be marked REVOKED." in js
+    assert 'dialog.showModal()' in js
 
 
 def test_existing_bearer_membership_api_remains_valid(tmp_path, monkeypatch):
