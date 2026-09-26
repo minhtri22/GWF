@@ -4,47 +4,53 @@
 
 ```text
 PROTOCOL_ID = BPS-SCREEN-FAST-LANE-v1
-APPROVED    = USER_APPROVED
+APPROVED    = USER_APPROVED / UAT-CADENCE SUPERSEDED
 DATE        = 2026-09-23
+SUPERSEDED  = 2026-09-26 by BPS-QA-FIRST-DEFERRED-UAT-v1
 APPLIES_TO  = Browser Product Surface screen implementation
 ```
 
-This protocol supersedes per-module heavy formal-close/UAT ceremony for ordinary browser product work. It does not weaken backend, authority, security, evidence, or scientific semantics.
+This protocol superseded per-module heavy formal-close/UAT ceremony for ordinary browser product work. Its **per-screen user-UAT cadence is now superseded** by `docs/BPS_QA_FIRST_DEFERRED_UAT.md`.
 
-## One-screen loop
+The retained parts are: screen-bounded implementation, assistant-owned QA/finding repair, strict-governance triggers, shared-component regression discipline, backend authority, and no-fake-state/action rules.
 
-Every screen executes exactly:
+Current execution does **not** stop for user UAT after every screen.
+
+## Current screen/workflow loop
+
+Every ordinary implementation unit now executes:
 
 ```text
 READ RELEVANT DOCUMENTS
         ↓
-WRITE SCREEN CHECKLIST
+WRITE SCREEN / WORKFLOW CHECKLIST
         ↓
 IMPLEMENT
         ↓
 SELF-QA AGAINST CHECKLIST
         ↓
+RECORD FINDINGS
+        ↓
+FIX + RE-QA
+        ↓
 CHECKLIST COUNT = 0
         ↓
-USER FINAL UAT
-explicit P / F answers
+QA_CLOSED / FINAL_UAT_PENDING
         ↓
-SCREEN_PASS
-        ↓
-NEXT SCREEN
+NEXT SCREEN / WORKFLOW
 ```
 
 Rules:
 
-1. Before touching screen code, reread the documents relevant to that screen.
-2. Produce a bounded checklist derived from those documents before implementation.
-3. Do not silently add requirements that are unsupported by the governing documents.
-4. Implement only the current screen plus minimal shared UI plumbing needed by that screen.
-5. The assistant owns ordinary defect discovery and correction.
-6. Before user handoff, every checklist item must be PASS and `COUNT=0`.
-7. User UAT is final visual/operator acceptance for that screen and is answered with explicit `P` or `F`.
-8. A screen with any `F` remains open; repair only the affected scope, self-QA again, then repeat UAT.
-9. After all requested UAT items are `P`, mark `SCREEN_PASS` and move immediately to the next screen.
+1. Before touching code, reread the documents relevant to the exact surface/workflow.
+2. Produce a bounded checklist before implementation.
+3. Do not silently add requirements unsupported by governing documents.
+4. Implement only qualified/documented behavior plus minimal shared plumbing.
+5. The assistant owns ordinary defect discovery, finding capture, repair, and re-QA.
+6. A unit advances only with `FAIL=0`, `OPEN=0`, `COUNT=0`.
+7. No ordinary per-screen user UAT is required.
+8. User UAT is deferred until the currently authorized browser product is implemented and integration QA also reaches `COUNT=0`.
+9. Historical screen UAT evidence already collected remains valid and is not rewritten.
 10. No separate PRE_LOCAL/formal-close commit is required per ordinary screen.
 
 ## What remains strict
@@ -68,19 +74,14 @@ A later screen may improve a shared browser component used by an earlier passed 
 
 ## UAT rule
 
-UAT questions must be concrete observable statements and use:
+Final user UAT is governed by `docs/BPS_QA_FIRST_DEFERRED_UAT.md`.
 
-```text
-P = PASS
-F = FAIL
-```
-
-The user is not asked to run developer diagnostics unless a real local-environment issue prevents browser UAT.
+The assistant must first finish implementation, close every per-unit QA/finding checklist, close integration QA, and report global `COUNT=0`. The user is not used as a per-screen defect-discovery loop.
 
 ## Completion model
 
-`SCREEN_PASS` is the browser delivery unit.
+`QA_CLOSED / FINAL_UAT_PENDING` is the implementation delivery state before final user acceptance.
 
-Modules such as BPS-M01…M10 remain useful for architecture and ownership, but they are no longer mandatory formal-close boundaries for ordinary screen work.
+Modules such as BPS-M01…M10 remain useful for architecture and ownership. Cross-screen/end-to-end integration is mandatory before the one final user UAT.
 
-Cross-screen/end-to-end integration is still checked after the relevant screens exist.
+After final integrated UAT passes, the delivered browser product may be marked accepted at the integrated boundary.
