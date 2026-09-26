@@ -28,6 +28,7 @@ const state = {
   projectPhaseDetailLoading: false,
   projectExecutionStream: null,
   projectExecutionStreamPhaseId: null,
+  projectExecutionStreamFallbackTimer: null,
   projectExecutionLiveEvents: [],
   access: null,
   accessError: null,
@@ -624,6 +625,10 @@ async function refreshProjectsIndex(render = true) {
 }
 
 function stopProjectExecutionStream() {
+  if (state.projectExecutionStreamFallbackTimer) {
+    clearTimeout(state.projectExecutionStreamFallbackTimer);
+    state.projectExecutionStreamFallbackTimer = null;
+  }
   if (state.projectExecutionStream) {
     state.projectExecutionStream.close();
     state.projectExecutionStream = null;
@@ -1144,6 +1149,10 @@ function startProjectExecutionStream(projectId, phaseId) {
 
   source.onopen = () => {
     if (state.projectExecutionStream !== source) return;
+    if (state.projectExecutionStreamFallbackTimer) {
+      clearTimeout(state.projectExecutionStreamFallbackTimer);
+      state.projectExecutionStreamFallbackTimer = null;
+    }
     $("#projectExecutionLiveStatus").textContent = "Live";
   };
   source.onmessage = (event) => {
@@ -1160,13 +1169,21 @@ function startProjectExecutionStream(projectId, phaseId) {
   };
   source.onerror = () => {
     if (state.projectExecutionStream !== source) return;
-    source.close();
-    state.projectExecutionStream = null;
-    state.projectExecutionStreamPhaseId = null;
-    $("#projectExecutionLiveStatus").textContent = "Live stream unavailable";
-    void loadProjectExecutionPersistedEvents(
-      projectId, phaseId, "Live stream unavailable · persisted events"
-    );
+    $("#projectExecutionLiveStatus").textContent = "Reconnecting · Last-Event-ID";
+    if (state.projectExecutionStreamFallbackTimer) return;
+    state.projectExecutionStreamFallbackTimer = setTimeout(() => {
+      state.projectExecutionStreamFallbackTimer = null;
+      if (state.projectExecutionStream !== source ||
+          state.selectedExecutionPhaseId !== phaseId ||
+          source.readyState === EventSource.OPEN) return;
+      source.close();
+      state.projectExecutionStream = null;
+      state.projectExecutionStreamPhaseId = null;
+      $("#projectExecutionLiveStatus").textContent = "Live stream unavailable";
+      void loadProjectExecutionPersistedEvents(
+        projectId, phaseId, "Live stream unavailable · persisted events"
+      );
+    }, 5000);
   };
 }
 
