@@ -106,7 +106,7 @@ class TenantService:
         self.db.conn.commit()
         return wid
 
-    def bind_project(self, project_id: str, tenant_id: str, workspace_id: str, actor_id: str, *, owner_role: str = "OWNER") -> None:
+    def bind_project(self, project_id: str, tenant_id: str, workspace_id: str, actor_id: str, *, owner_role: str = "OWNER", commit: bool = True) -> None:
         project = self.db.one("SELECT id FROM projects WHERE id=?", (project_id,))
         if not project:
             raise NotFound("Project not found")
@@ -128,7 +128,8 @@ class TenantService:
         )
         self._grant_legacy_project_scope(actor_id, project_id)
         self._security_event(actor_id, "BIND_PROJECT", "Project", project_id, tenant_id=tenant_id, metadata={"workspace_id": workspace_id})
-        self.db.conn.commit()
+        if commit:
+            self.db.conn.commit()
 
     def scope_for_project(self, project_id: str) -> ProjectScope | None:
         row = self.db.one("SELECT * FROM project_scopes WHERE project_id=?", (project_id,))
