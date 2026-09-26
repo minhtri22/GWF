@@ -137,7 +137,16 @@ $Args = @(
 
 & python @Args
 
-if ($LASTEXITCODE -ne 0) {
+$SmokeExit = $LASTEXITCODE
+
+if ($SmokeExit -eq 3) {
+    Write-Host ""
+    Write-Host "G2E_PRODUCT_SMOKE_BLOCKED_EXTERNAL_CAPACITY" -ForegroundColor Yellow
+    Write-Host "Pipeline reached ChatGPT Web, but available Web models were capacity-blocked."
+    return
+}
+
+if ($SmokeExit -ne 0) {
     throw "G2E_PRODUCT_SMOKE_FAIL"
 }
 
