@@ -269,7 +269,7 @@ def _seed_phase(rt, owner, executor, project):
         ),
     )
     rt.db.conn.execute(
-        "INSERT INTO phase_checklist_items VALUES(?,?,?,?,?,?,?)",
+        "INSERT INTO phase_checklist_items VALUES(?,?,?,?,?,?,?,?)",
         (
             "check_execution", "plan_execution", "phase_execution_exact",
             1, "Do work", "PASS", "done",
@@ -505,3 +505,29 @@ def test_existing_bearer_process_phase_and_event_reads_remain_valid(tmp_path, mo
     assert stream.status_code == 200
     assert "id: phaseevt_execution_2\n" in stream.text
     rt.close()
+
+def test_project_execution_browser_surface_is_live_read_only_and_fallback_capable():
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+
+    assert 'data-project-section="execution"><span>Execution</span><small>Live</small>' in html
+    assert 'id="projectExecutionLiveView"' in html
+    assert 'id="projectExecutionPhaseInspector"' in html
+    assert 'id="projectExecutionLiveStatus"' in html
+    assert '"/execution/phases/"' in js
+    assert 'new EventSource(url)' in js
+    assert "Live stream unavailable · persisted events" in js
+    assert "active.section !== \"execution\"" in js
+    assert "state.me.actor_id !== requestActorId" in js
+    assert "Hidden model chain-of-thought is not stored or displayed." in js
+
+    for forbidden in (
+        "Apply recovery",
+        "Approve recovery",
+        "Reject recovery",
+        "Start protocol",
+        "Complete protocol",
+        "Retry phase",
+    ):
+        assert forbidden not in html
+
