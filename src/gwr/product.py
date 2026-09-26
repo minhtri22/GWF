@@ -821,6 +821,9 @@ class ProjectDashboardService:
                 "actor_role": direct["role"] if direct else (
                     tenant_membership["role"] if inherited else None
                 ),
+                "actor_membership_status": direct["status"] if direct else (
+                    tenant_membership["status"] if inherited else None
+                ),
                 "role_source": "WORKSPACE" if direct else (
                     "TENANT_INHERITED" if inherited else None
                 ),
@@ -859,15 +862,19 @@ class ProjectDashboardService:
             )
             if direct and direct["status"] == "ACTIVE":
                 actor_role = direct["role"]
+                actor_membership_status = direct["status"]
                 role_source = "PROJECT"
             elif workspace_membership and workspace_membership["status"] == "ACTIVE":
                 actor_role = workspace_membership["role"]
+                actor_membership_status = workspace_membership["status"]
                 role_source = "WORKSPACE_INHERITED"
             elif tenant_membership and tenant_membership["status"] == "ACTIVE":
                 actor_role = tenant_membership["role"]
+                actor_membership_status = tenant_membership["status"]
                 role_source = "TENANT_INHERITED"
             else:
                 actor_role = None
+                actor_membership_status = None
                 role_source = None
             manageable = can(
                 lambda project_id=project_id: self.runtime.tenancy.require_project_access(
@@ -900,6 +907,7 @@ class ProjectDashboardService:
                 "workspace_id": scope.workspace_id,
                 "workspace_name": workspace["name"] if workspace else None,
                 "actor_role": actor_role,
+                "actor_membership_status": actor_membership_status,
                 "role_source": role_source,
                 "can_manage_members": manageable,
                 "members": members,

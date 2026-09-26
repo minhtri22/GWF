@@ -744,7 +744,8 @@ function renderAccessSummary() {
     "<tr>" +
       '<td><strong>' + esc(row.workspace_name) + '</strong><code>' + esc(row.workspace_id) + "</code></td>" +
       '<td><span>' + esc(row.tenant_name || "Tenant") + '</span><code>' + esc(row.tenant_id) + "</code></td>" +
-      '<td><strong>' + esc(row.actor_role || "—") + '</strong><small>' + esc(row.role_source || "—") + "</small></td>" +
+      '<td><strong>' + esc(row.actor_role || "—") + '</strong><small>' +
+      esc([row.role_source, row.actor_membership_status].filter(Boolean).join(" · ") || "—") + "</small></td>" +
       '<td><span>' + esc(row.can_manage_members ? "Manage members" : "View") + '</span><small>' +
       esc(row.can_manage_projects ? "Create projects" : "No project mutation") + "</small></td>" +
     "</tr>"
@@ -757,7 +758,8 @@ function renderAccessSummary() {
       '<td><strong>' + esc(row.project_name) + '</strong><code>' + esc(row.project_id) + "</code></td>" +
       '<td><span>' + esc(row.tenant_name || "Tenant") + '</span><small>' + esc(row.workspace_name || "Workspace") +
       '</small><code>' + esc(row.tenant_id + " · " + row.workspace_id) + "</code></td>" +
-      '<td><strong>' + esc(row.actor_role || "—") + '</strong><small>' + esc(row.role_source || "—") + "</small></td>" +
+      '<td><strong>' + esc(row.actor_role || "—") + '</strong><small>' +
+      esc([row.role_source, row.actor_membership_status].filter(Boolean).join(" · ") || "—") + "</small></td>" +
       '<td><span>' + esc(row.can_manage_members ? "Manage members" : "View") + "</span></td>" +
     "</tr>"
   ).join("") : homeEmpty("No projects are visible.", 4);

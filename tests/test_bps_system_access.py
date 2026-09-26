@@ -106,8 +106,14 @@ def test_access_projection_hides_other_scopes_and_member_directory(tmp_path, mon
     member_body = member_client.get("/browser/access-summary").json()
     assert member_body["tenants"] == []
     assert member_body["workspaces"] == []
+    assert member_body["projects"][0]["actor_membership_status"] == "ACTIVE"
     assert member_body["projects"][0]["can_manage_members"] is False
     assert member_body["projects"][0]["members"] == []
+    assert outsider not in {
+        m["actor_id"]
+        for scope in body["tenants"] + body["workspaces"] + body["projects"]
+        for m in scope["members"]
+    }
     rt.close()
 
 
@@ -164,6 +170,16 @@ def test_access_browser_mutations_and_negative_paths(tmp_path, monkeypatch):
     )
     assert unknown_actor.status_code == 422
     assert unknown_actor.json()["detail"] == "actor is not eligible"
+
+    inactive = rt.governance.create_actor("HUMAN", "inactive", [], [])
+    rt.db.conn.execute("UPDATE actors SET status='INACTIVE' WHERE actor_id=?", (inactive,))
+    rt.db.conn.commit()
+    inactive_actor = client.post(
+        f"/browser/access/projects/{project}/members",
+        json={"actor_id": inactive, "role": "VIEWER"},
+    )
+    assert inactive_actor.status_code == 422
+    assert inactive_actor.json()["detail"] == "actor is not eligible"
 
     outsider_client = _client(rt)
     _login(outsider_client, "outsider")

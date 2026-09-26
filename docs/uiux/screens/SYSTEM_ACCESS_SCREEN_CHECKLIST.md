@@ -133,3 +133,23 @@ CI_EXAMPLE_DG_P10_RUN           = 36214785995
 FINAL_UAT                       = DEFERRED
 UNIT_STATE                      = QA_FINDINGS_CLOSED / CI_PENDING / FINAL_UAT_PENDING
 ```
+
+
+## QA finding ledger
+
+| Finding | Class | Observation | Correction | State |
+| --- | --- | --- | --- | --- |
+| AC-F01 | QA harness | compact actor-menu regression assertion referenced CSS without loading CSS in that test | load `styles.css` in the test before assertions | PASS |
+| AC-F02 | UI regression | actor/session chip was fully hidden at viewport <=1080px, making the actor menu unreachable | retain avatar/button; hide only actor text on compact viewport | PASS |
+| AC-F03 | mutation semantics | browser revoke accepted a non-member/already-revoked Actor ID as a successful no-op | browser revoke endpoints now require an ACTIVE exact membership before mutation | PASS |
+| AC-F04 | projection completeness | workspace/project access rows exposed role/source but not authoritative membership status | add `actor_membership_status` to workspace/project projections and render it | PASS |
+| AC-F05 | negative-path coverage | inactive target actor and hidden-member leakage were not explicitly locked by tests | add inactive-actor rejection and hidden-member absence assertions | PASS |
+
+Current executable regression is pending on the exact implementation HEAD. The checklist does not become `QA_CLOSED` until those tests execute successfully.
+
+```text
+FINDINGS_OPEN = 0
+FAIL          = 0
+OPEN          = 1   # executable regression evidence only
+COUNT         = 1
+```
