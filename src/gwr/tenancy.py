@@ -168,6 +168,46 @@ class TenantService:
         self._security_event(granted_by_actor_id, "ADD_WORKSPACE_MEMBER", "Actor", actor_id, tenant_id=ws["tenant_id"], metadata={"workspace_id": workspace_id, "role": role})
         self.db.conn.commit()
 
+    def revoke_tenant_member(self, tenant_id: str, actor_id: str, revoked_by_actor_id: str) -> None:
+        self.require_tenant_access(revoked_by_actor_id, tenant_id, "MANAGE_MEMBERS")
+        tenant = self.db.one("SELECT tenant_id FROM tenants WHERE tenant_id=?", (tenant_id,))
+        if not tenant:
+            raise NotFound("Tenant not found")
+        self.db.conn.execute(
+            "UPDATE tenant_memberships SET status='REVOKED' WHERE tenant_id=? AND actor_id=?",
+            (tenant_id, actor_id),
+        )
+        self._security_event(
+            revoked_by_actor_id,
+            "REVOKE_TENANT_MEMBER",
+            "Actor",
+            actor_id,
+            tenant_id=tenant_id,
+        )
+        self.db.conn.commit()
+
+    def revoke_workspace_member(self, workspace_id: str, actor_id: str, revoked_by_actor_id: str) -> None:
+        self.require_workspace_access(revoked_by_actor_id, workspace_id, "MANAGE_MEMBERS")
+        workspace = self.db.one(
+            "SELECT tenant_id FROM workspaces WHERE workspace_id=?",
+            (workspace_id,),
+        )
+        if not workspace:
+            raise NotFound("Workspace not found")
+        self.db.conn.execute(
+            "UPDATE workspace_memberships SET status='REVOKED' WHERE workspace_id=? AND actor_id=?",
+            (workspace_id, actor_id),
+        )
+        self._security_event(
+            revoked_by_actor_id,
+            "REVOKE_WORKSPACE_MEMBER",
+            "Actor",
+            actor_id,
+            tenant_id=workspace["tenant_id"],
+            metadata={"workspace_id": workspace_id},
+        )
+        self.db.conn.commit()
+
     def add_project_member(self, project_id: str, actor_id: str, role: str, granted_by_actor_id: str) -> None:
         role = role.upper()
         if role not in PROJECT_ROLE_PERMISSIONS:
