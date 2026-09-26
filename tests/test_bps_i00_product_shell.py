@@ -256,6 +256,7 @@ def test_i00_topbar_has_no_dead_shortcut_and_exposes_live_actor_attention_afford
     html = (WEB / "index.html").read_text(encoding="utf-8")
     js = (WEB / "app.js").read_text(encoding="utf-8")
     css = (WEB / "styles.css").read_text(encoding="utf-8")
+    css = (WEB / "styles.css").read_text(encoding="utf-8")
 
     # Do not advertise a browser shortcut until the command/search palette is live.
     assert "Ctrl K" not in html
