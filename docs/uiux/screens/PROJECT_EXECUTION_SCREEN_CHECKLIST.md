@@ -114,13 +114,19 @@ The browser must not expose hidden model chain-of-thought. Persisted plans, chec
 - [ ] PE-61 Existing Bearer `/product/*` process/phase/event APIs remain valid.
 - [ ] PE-62 No schema, role, authority, scientific/evidence or runtime-protocol semantic change.
 - [ ] PE-63 Findings are recorded/fixed/rechecked until implementation `FAIL=0 OPEN=0 COUNT=0`.
+- [ ] PE-64 Expose the derived final orchestration report for the exact selected project/orchestration; label it derived and never treat Markdown as source of truth.
 
 ## Initial count
 
 ```text
-TOTAL = 63
+TOTAL = 64
 PASS  = 0
 FAIL  = 0
-OPEN  = 63
-COUNT = 63
+OPEN  = 64
+COUNT = 64
 ```
+
+
+## Freeze correction
+
+PE-64 was added after a source-to-checklist re-audit found that `docs/BROWSER_PRODUCT_SURFACE_SPEC.md` §10 explicitly requires the final report. This is a correction of checklist coverage, not scope expansion. The report remains a derived read view; authoritative execution state stays in persisted runtime records.
