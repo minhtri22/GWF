@@ -50,3 +50,9 @@ def test_powershell_wrapper_autostarts_custom_runtime_when_down():
     assert "CODEX_CHATGPT_WEB_HOME" in ps1
     assert "CUSTOM_CGW_RUNTIME_START_TIMEOUT" in ps1
     assert "Start-Process -FilePath $Launcher -PassThru" in ps1
+
+
+def test_rpc_queue_timeout_is_normalized():
+    src = SCRIPT.read_text(encoding="utf-8")
+    assert 'except queue.Empty as exc:' in src
+    assert 'raise TimeoutError("APP_SERVER_READ_TIMEOUT") from exc' in src
