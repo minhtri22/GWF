@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .errors import NotFound
+from .errors import AuthorityDenied, NotFound
 from .utils import parse_json, utcnow
 
 
@@ -489,6 +489,62 @@ class ProjectDashboardService:
                 "project_count": len(rows),
             },
             "projects": rows,
+        }
+
+    def project_create_options(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
+        """Authorized choices for the bounded Create Project workflow."""
+        # Validate actor status through the public tenancy read contract.
+        self.runtime.tenancy.memberships_for_actor(actor_id)
+
+        scopes: list[dict[str, Any]] = []
+        tenant_ids: set[str] = set()
+        for row in self.db.all(
+            "SELECT w.workspace_id,w.name AS workspace_name,w.tenant_id,"
+            "t.name AS tenant_name FROM workspaces w "
+            "JOIN tenants t ON t.tenant_id=w.tenant_id "
+            "WHERE w.status='ACTIVE' AND t.status='ACTIVE' "
+            "ORDER BY t.name,t.tenant_id,w.name,w.workspace_id"
+        ):
+            try:
+                self.runtime.tenancy.require_workspace_access(
+                    actor_id, row["workspace_id"], "MANAGE_PROJECT"
+                )
+            except (AuthorityDenied, NotFound):
+                continue
+            scopes.append({
+                "tenant_id": row["tenant_id"],
+                "tenant_name": row["tenant_name"],
+                "workspace_id": row["workspace_id"],
+                "workspace_name": row["workspace_name"],
+            })
+            tenant_ids.add(row["tenant_id"])
+
+        domains: list[dict[str, Any]] = []
+        if tenant_ids:
+            placeholders = ",".join("?" for _ in tenant_ids)
+            for row in self.db.all(
+                "SELECT p.tenant_id,p.package_id,p.domain_id,p.name AS domain_name,"
+                "r.revision_id,r.revision_number,r.semantic_version,r.payload_hash,"
+                "r.published_at FROM domain_package_revisions r "
+                "JOIN domain_packages p ON p.package_id=r.package_id "
+                f"WHERE p.tenant_id IN ({placeholders}) AND p.status='ACTIVE' "
+                "AND r.status='PUBLISHED' "
+                "ORDER BY p.tenant_id,p.name,p.package_id,r.revision_number,r.revision_id",
+                tuple(sorted(tenant_ids)),
+            ):
+                domains.append(dict(row))
+
+        return {
+            "generated_at": utcnow(),
+            "build_sha": build_sha,
+            "query_status": "COMPLETE",
+            "scopes": scopes,
+            "published_domain_revisions": domains,
+            "contract": {
+                "project_id": "SERVER_GENERATED",
+                "domain_binding": "OPTIONAL_PUBLISHED_IMMUTABLE",
+                "success_destination": "/app/projects/:projectId/overview",
+            },
         }
 
     def summary(self, project_id: str) -> dict[str, Any]:
