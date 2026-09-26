@@ -1082,6 +1082,11 @@ class ProjectDashboardService:
         if lifecycle is None or lifecycle.get("status") not in {"ACTIVE", "ARCHIVING", "ARCHIVED"}:
             complete = False
 
+        domain_binding = self.db.one(
+            "SELECT domain_revision_id,bound_by_actor_id,bound_at "
+            "FROM project_domain_bindings WHERE project_id=?",
+            (project_id,),
+        )
         domain_row = self.db.one(
             "SELECT b.domain_revision_id,b.bound_by_actor_id,b.bound_at,"
             "r.revision_number,r.semantic_version,r.payload_hash,r.status AS revision_status,"
@@ -1092,10 +1097,12 @@ class ProjectDashboardService:
             "WHERE b.project_id=?",
             (project_id,),
         )
+        if domain_binding and not domain_row:
+            complete = False
         domain = dict(domain_row) if domain_row else {
-            "domain_revision_id": None,
-            "bound_by_actor_id": None,
-            "bound_at": None,
+            "domain_revision_id": domain_binding["domain_revision_id"] if domain_binding else None,
+            "bound_by_actor_id": domain_binding["bound_by_actor_id"] if domain_binding else None,
+            "bound_at": domain_binding["bound_at"] if domain_binding else None,
             "revision_number": None,
             "semantic_version": None,
             "payload_hash": None,
@@ -1242,11 +1249,13 @@ class ProjectDashboardService:
             "b.write_policy,b.allowed_branches,b.created_by_actor_id,b.created_at,"
             "c.status AS connection_status,c.capabilities "
             "FROM github_repository_bindings b "
-            "JOIN plugin_connections c ON c.connection_id=b.connection_id "
+            "LEFT JOIN plugin_connections c ON c.connection_id=b.connection_id "
             "WHERE b.project_id=? ORDER BY b.created_at,b.binding_id",
             (project_id,),
         ):
             item = dict(row)
+            if item["connection_status"] is None:
+                complete = False
             item["allowed_branches"] = parse_json(item["allowed_branches"], []) or []
             item["capabilities"] = parse_json(item["capabilities"], []) or []
             github_bindings.append(item)
