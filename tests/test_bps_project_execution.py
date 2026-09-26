@@ -696,6 +696,9 @@ def test_project_execution_browser_surface_is_live_read_only_and_fallback_capabl
     assert 'result.markdown || "Derived report is empty."' in js
     assert 'const extra = match[3] || "";' in js
     assert 'section: extra ? "__invalid__"' in js
+    assert "function renderProjectWorkspaceLoading(route, message)" in js
+    assert '$("#projectOverviewLiveView").hidden = true;' in js
+    assert '$("#projectExecutionLiveView").hidden = true;' in js
 
     for forbidden in (
         "Apply recovery",

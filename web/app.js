@@ -1443,6 +1443,27 @@ function renderProjectWorkspace(summary, route) {
   document.title = "GWF — " + (summary.project?.name || route.projectId) + " / " + projectSectionLabel(route.section);
 }
 
+function renderProjectWorkspaceLoading(route, message) {
+  setProjectLocalNav(route.section);
+  stopProjectExecutionStream();
+  $("#projectWorkspaceName").textContent = "Loading project…";
+  $("#projectWorkspaceId").textContent = route.projectId;
+  $("#projectWorkspaceBreadcrumb").textContent =
+    "Projects / " + route.projectId + " / " + projectSectionLabel(route.section);
+  $("#projectWorkspaceLifecycle").textContent = "Lifecycle loading";
+  $("#projectWorkspaceActivity").textContent = "Activity loading";
+  $("#projectWorkspaceScopeName").textContent = "Authorized scope loading";
+  $("#projectWorkspaceScopeIds").textContent = "—";
+  $("#projectWorkspaceDomainName").textContent = "Domain loading";
+  $("#projectWorkspaceDomainId").textContent = "—";
+  $("#projectOverviewStateBanner").hidden = false;
+  $("#projectOverviewStateBanner").className = "home-state-banner loading";
+  $("#projectOverviewStateBanner").textContent = message;
+  $("#projectOverviewLiveView").hidden = true;
+  $("#projectExecutionLiveView").hidden = true;
+  $("#projectLocalLockedView").hidden = true;
+}
+
 function renderProjectWorkspaceError(route, message) {
   setProjectLocalNav(route.section);
   $("#projectWorkspaceName").textContent = "Project unavailable";
@@ -1519,6 +1540,9 @@ function renderProjectWorkspaceRoute(route) {
     } else if (state.projectExecutionError && state.projectExecutionProjectId === route.projectId) {
       renderProjectWorkspaceError(route, state.projectExecutionError);
     } else {
+      renderProjectWorkspaceLoading(
+        route, "Loading authoritative project Execution…"
+      );
       void refreshProjectExecution(route, true);
     }
     return;
@@ -1529,6 +1553,9 @@ function renderProjectWorkspaceRoute(route) {
   } else if (state.projectOverviewError && state.projectOverviewProjectId === route.projectId) {
     renderProjectWorkspaceError(route, state.projectOverviewError);
   } else {
+    renderProjectWorkspaceLoading(
+      route, "Loading authoritative project context…"
+    );
     void refreshProjectOverview(route, true);
   }
 }
