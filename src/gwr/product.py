@@ -1730,8 +1730,67 @@ class ProjectDashboardService:
                     ],
                 })
 
+            can_approve_recovery = False
+            actor_row = self.db.one(
+                "SELECT actor_type FROM actors WHERE actor_id=?",
+                (actor_id,),
+            )
+            if actor_row and actor_row["actor_type"] == "HUMAN":
+                try:
+                    self.runtime.governance.authorize(
+                        actor_id, "APPROVE", {"project_id": project_id}
+                    )
+                    can_approve_recovery = True
+                except (AuthorityDenied, NotFound):
+                    can_approve_recovery = False
+
             problems = []
             for problem in inspected.get("problems") or []:
+                recovery_items = []
+                for proposal in problem.get("recoveries") or []:
+                    eligible = bool(
+                        proposal.get("status") == "WAITING_HUMAN"
+                        and can_approve_recovery
+                    )
+                    recovery_items.append({
+                        **{
+                            key: proposal.get(key)
+                            for key in (
+                                "proposal_id",
+                                "problem_id",
+                                "phase_execution_id",
+                                "action",
+                                "target_step",
+                                "plan_patch",
+                                "rationale",
+                                "risk_class",
+                                "normative_change",
+                                "status",
+                                "created_at",
+                            )
+                        },
+                        "decision_capability": {
+                            "authority": "HUMAN+APPROVE",
+                            "can_decide": eligible,
+                            "allowed_decisions": (
+                                ["APPROVED", "REJECTED"] if eligible else []
+                            ),
+                        },
+                        "decisions": [
+                            {
+                                key: decision.get(key)
+                                for key in (
+                                    "decision_id",
+                                    "proposal_id",
+                                    "actor_id",
+                                    "decision",
+                                    "reason",
+                                    "created_at",
+                                )
+                            }
+                            for decision in (proposal.get("decisions") or [])
+                        ],
+                    })
                 problems.append({
                     **{
                         key: problem.get(key)
@@ -1748,41 +1807,7 @@ class ProjectDashboardService:
                             "created_at",
                         )
                     },
-                    "recoveries": [
-                        {
-                            **{
-                                key: proposal.get(key)
-                                for key in (
-                                    "proposal_id",
-                                    "problem_id",
-                                    "phase_execution_id",
-                                    "action",
-                                    "target_step",
-                                    "plan_patch",
-                                    "rationale",
-                                    "risk_class",
-                                    "normative_change",
-                                    "status",
-                                    "created_at",
-                                )
-                            },
-                            "decisions": [
-                                {
-                                    key: decision.get(key)
-                                    for key in (
-                                        "decision_id",
-                                        "proposal_id",
-                                        "actor_id",
-                                        "decision",
-                                        "reason",
-                                        "created_at",
-                                    )
-                                }
-                                for decision in (proposal.get("decisions") or [])
-                            ],
-                        }
-                        for proposal in (problem.get("recoveries") or [])
-                    ],
+                    "recoveries": recovery_items,
                 })
 
             protocol = {

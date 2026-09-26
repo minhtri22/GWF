@@ -636,6 +636,60 @@ def create_app(
             build_sha=resolved_product_info["build_sha"],
         )
 
+    @app.post('/browser/projects/{project_id}/execution/phases/{phase_execution_id}/recovery-proposals/{proposal_id}/decision')
+    def browser_project_recovery_decision(
+        project_id: str,
+        phase_execution_id: str,
+        proposal_id: str,
+        body: RecoveryDecisionBody,
+        request: Request,
+    ):
+        _, principal = browser_principal(request)
+        browser_project_phase(
+            project_id, phase_execution_id, principal.actor_id
+        )
+        proposal = runtime.db.one(
+            "SELECT r.proposal_id,r.status,p.phase_execution_id,x.project_id "
+            "FROM phase_recovery_proposals r "
+            "JOIN phase_problem_records p ON p.problem_id=r.problem_id "
+            "JOIN phase_execution_protocols x "
+            "ON x.phase_execution_id=p.phase_execution_id "
+            "WHERE r.proposal_id=?",
+            (proposal_id,),
+        )
+        if (
+            not proposal
+            or proposal["project_id"] != project_id
+            or proposal["phase_execution_id"] != phase_execution_id
+        ):
+            raise HTTPException(
+                status_code=404, detail="recovery proposal not found"
+            )
+        decision_id = runtime.agent_protocol.decide_recovery(
+            proposal_id,
+            principal.actor_id,
+            body.decision,
+            reason=body.reason,
+        )
+        updated = runtime.db.one(
+            "SELECT r.status,x.status AS protocol_status "
+            "FROM phase_recovery_proposals r "
+            "JOIN phase_problem_records p ON p.problem_id=r.problem_id "
+            "JOIN phase_execution_protocols x "
+            "ON x.phase_execution_id=p.phase_execution_id "
+            "WHERE r.proposal_id=?",
+            (proposal_id,),
+        )
+        return {
+            "project_id": project_id,
+            "phase_execution_id": phase_execution_id,
+            "proposal_id": proposal_id,
+            "decision_id": decision_id,
+            "decision": body.decision,
+            "proposal_status": updated["status"],
+            "protocol_status": updated["protocol_status"],
+        }
+
     @app.get('/browser/projects/{project_id}/execution/phases/{phase_execution_id}/events')
     def browser_project_phase_events(
         project_id: str,
