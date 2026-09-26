@@ -1054,6 +1054,290 @@ class ProjectDashboardService:
             "projects": projects,
         }
 
+    def project_overview(self, actor_id: str, project_id: str, *, build_sha: str) -> dict[str, Any]:
+        """Authorized minimal read projection for one project Overview."""
+        self.runtime.tenancy.require_project_access(actor_id, project_id, "VIEW")
+        project = self._project(project_id)
+        scope = self.runtime.tenancy.scope_for_project(project_id)
+        if not scope:
+            raise NotFound("Project not found")
+
+        complete = True
+        tenant = self.db.one(
+            "SELECT name FROM tenants WHERE tenant_id=? AND status='ACTIVE'",
+            (scope.tenant_id,),
+        )
+        workspace = self.db.one(
+            "SELECT name FROM workspaces WHERE workspace_id=? AND status='ACTIVE'",
+            (scope.workspace_id,),
+        )
+        if tenant is None or workspace is None:
+            complete = False
+
+        lifecycle_row = self.db.one(
+            "SELECT * FROM project_lifecycle WHERE project_id=?",
+            (project_id,),
+        )
+        lifecycle = dict(lifecycle_row) if lifecycle_row else None
+        if lifecycle is None or lifecycle.get("status") not in {"ACTIVE", "ARCHIVING", "ARCHIVED"}:
+            complete = False
+
+        domain_row = self.db.one(
+            "SELECT b.domain_revision_id,b.bound_by_actor_id,b.bound_at,"
+            "r.revision_number,r.semantic_version,r.payload_hash,r.status AS revision_status,"
+            "p.package_id,p.domain_id,p.name AS domain_name "
+            "FROM project_domain_bindings b "
+            "JOIN domain_package_revisions r ON r.revision_id=b.domain_revision_id "
+            "JOIN domain_packages p ON p.package_id=r.package_id "
+            "WHERE b.project_id=?",
+            (project_id,),
+        )
+        domain = dict(domain_row) if domain_row else {
+            "domain_revision_id": None,
+            "bound_by_actor_id": None,
+            "bound_at": None,
+            "revision_number": None,
+            "semantic_version": None,
+            "payload_hash": None,
+            "revision_status": None,
+            "package_id": None,
+            "domain_id": project.get("domain_id"),
+            "domain_name": None,
+        }
+
+        orchestration_row = self.db.one(
+            "SELECT orchestration_id,domain_id,status,current_phase_id,generation,"
+            "research_outcome,pivot_count,started_at,updated_at,terminal_checkpoint_id "
+            "FROM orchestrations WHERE project_id=? "
+            "ORDER BY started_at DESC,orchestration_id DESC LIMIT 1",
+            (project_id,),
+        )
+        orchestration = dict(orchestration_row) if orchestration_row else None
+
+        phase = None
+        if orchestration:
+            phase_row = self.db.one(
+                "SELECT phase_execution_id,orchestration_id,phase_id,phase_index,generation,"
+                "workunit_id,run_id,status,decision_outcome,failure_id,checkpoint_id,"
+                "started_at,finished_at "
+                "FROM phase_executions WHERE orchestration_id=? "
+                "ORDER BY CASE WHEN status IN ('RUNNING','PAUSED') THEN 0 ELSE 1 END,"
+                "phase_index DESC,started_at DESC,phase_execution_id DESC LIMIT 1",
+                (orchestration["orchestration_id"],),
+            )
+            phase = dict(phase_row) if phase_row else None
+
+        running_run_row = self.db.one(
+            "SELECT r.run_id,r.workunit_id,r.attempt_number,r.executor_actor_id,"
+            "r.started_at,r.finished_at,r.runtime_status,w.workunit_type,w.status AS workunit_status "
+            "FROM runs r JOIN workunits w ON w.workunit_id=r.workunit_id "
+            "WHERE w.project_id=? AND r.runtime_status='RUNNING' "
+            "ORDER BY r.started_at DESC,r.run_id DESC LIMIT 1",
+            (project_id,),
+        )
+        active_run = dict(running_run_row) if running_run_row else None
+
+        executing_jobs = int(self.db.one(
+            "SELECT COUNT(*) n FROM distributed_jobs "
+            "WHERE project_id=? AND status IN ('LEASED','RUNNING')",
+            (project_id,),
+        )["n"])
+        ready_jobs = int(self.db.one(
+            "SELECT COUNT(*) n FROM distributed_jobs "
+            "WHERE project_id=? AND status='READY'",
+            (project_id,),
+        )["n"])
+        if active_run or (orchestration and orchestration["status"] == "RUNNING") or executing_jobs:
+            execution_activity = "EXECUTING"
+        elif orchestration and orchestration["status"] == "PAUSED":
+            execution_activity = "PAUSED"
+        elif ready_jobs:
+            execution_activity = "QUEUED"
+        else:
+            execution_activity = "IDLE"
+
+        current_actor = None
+        current_actor_source = None
+        if phase:
+            actor_event = self.db.one(
+                "SELECT actor_id,event_type,stage,created_at FROM phase_stage_events "
+                "WHERE phase_execution_id=? "
+                "ORDER BY created_at DESC,event_id DESC LIMIT 1",
+                (phase["phase_execution_id"],),
+            )
+            if actor_event:
+                current_actor = actor_event["actor_id"]
+                current_actor_source = {
+                    "kind": "PHASE_EVENT",
+                    "event_type": actor_event["event_type"],
+                    "stage": actor_event["stage"],
+                    "at": actor_event["created_at"],
+                }
+        if current_actor is None and active_run:
+            current_actor = active_run["executor_actor_id"]
+            current_actor_source = {
+                "kind": "RUN_EXECUTOR",
+                "run_id": active_run["run_id"],
+                "at": active_run["started_at"],
+            }
+        if current_actor is None:
+            current_actor = "SYSTEM"
+            current_actor_source = {"kind": "FALLBACK"}
+
+        approvals = [
+            dict(row)
+            for row in self.db.all(
+                "SELECT proposal_id,action,proposer_actor_id,payload_hash,"
+                "required_approval_policy,created_at FROM proposals "
+                "WHERE project_id=? AND status='PENDING_APPROVAL' "
+                "ORDER BY created_at,proposal_id",
+                (project_id,),
+            )
+        ]
+
+        failures = []
+        for failure_row in self.db.all(
+            "SELECT failure_id,failure_class,detected_stage,detected_ref,root_ref,"
+            "resume_candidate,severity,status,created_at FROM failures "
+            "WHERE project_id=? AND status!='RESOLVED' "
+            "ORDER BY created_at,failure_id",
+            (project_id,),
+        ):
+            item = dict(failure_row)
+            item["recoveries"] = [
+                dict(row)
+                for row in self.db.all(
+                    "SELECT recovery_id,resume_target,status,created_at "
+                    "FROM recoveries WHERE failure_id=? "
+                    "ORDER BY created_at,recovery_id",
+                    (failure_row["failure_id"],),
+                )
+            ]
+            failures.append(item)
+
+        handoff_row = self.db.one(
+            "SELECT h.handoff_id,h.phase_execution_id,h.payload_hash,h.actor_id,h.created_at,"
+            "p.phase_id,o.orchestration_id "
+            "FROM phase_handoffs h "
+            "JOIN phase_executions p ON p.phase_execution_id=h.phase_execution_id "
+            "JOIN orchestrations o ON o.orchestration_id=p.orchestration_id "
+            "WHERE o.project_id=? ORDER BY h.created_at DESC,h.handoff_id DESC LIMIT 1",
+            (project_id,),
+        )
+        latest_handoff = dict(handoff_row) if handoff_row else None
+
+        recent_activity = [
+            dict(row)
+            for row in self.db.all(
+                "SELECT event_id,actor_id,action,resource_type,resource_id,reason_code,timestamp "
+                "FROM audit_events WHERE project_id=? "
+                "ORDER BY timestamp DESC,event_id DESC LIMIT 12",
+                (project_id,),
+            )
+        ]
+
+        github_bindings = []
+        for row in self.db.all(
+            "SELECT b.binding_id,b.connection_id,b.repository_full_name,b.default_branch,"
+            "b.write_policy,b.allowed_branches,b.created_by_actor_id,b.created_at,"
+            "c.status AS connection_status,c.capabilities "
+            "FROM github_repository_bindings b "
+            "JOIN plugin_connections c ON c.connection_id=b.connection_id "
+            "WHERE b.project_id=? ORDER BY b.created_at,b.binding_id",
+            (project_id,),
+        ):
+            item = dict(row)
+            item["allowed_branches"] = parse_json(item["allowed_branches"], []) or []
+            item["capabilities"] = parse_json(item["capabilities"], []) or []
+            github_bindings.append(item)
+
+        frontier = self.runtime.knowledge.get_validity_frontier(project_id)
+        validity_frontier = {
+            "valid_count": len(frontier.get("valid") or []),
+            "non_valid_count": len(frontier.get("non_valid") or []),
+            "valid_revision_ids": list(frontier.get("valid") or []),
+            "non_valid": list(frontier.get("non_valid") or []),
+        }
+
+        status_counts = {
+            row["status"]: int(row["n"])
+            for row in self.db.all(
+                "SELECT status,COUNT(*) n FROM distributed_jobs "
+                "WHERE project_id=? GROUP BY status ORDER BY status",
+                (project_id,),
+            )
+        }
+        recent_jobs = [
+            {
+                "job_id": row["job_id"],
+                "workunit_id": row["workunit_id"],
+                "status": row["status"],
+                "lease_worker_id": row["lease_worker_id"],
+                "lease_expires_at": row["lease_expires_at"],
+                "attempt_count": row["attempt_count"],
+                "max_attempts": row["max_attempts"],
+                "last_error": row["last_error"],
+                "updated_at": row["updated_at"],
+            }
+            for row in self.db.all(
+                "SELECT job_id,workunit_id,status,lease_worker_id,lease_expires_at,"
+                "attempt_count,max_attempts,last_error,updated_at "
+                "FROM distributed_jobs WHERE project_id=? "
+                "ORDER BY updated_at DESC,job_id DESC LIMIT 6",
+                (project_id,),
+            )
+        ]
+
+        return {
+            "generated_at": utcnow(),
+            "build_sha": build_sha,
+            "query_status": "COMPLETE" if complete else "PARTIAL",
+            "project": {
+                "project_id": project_id,
+                "name": project["name"],
+                "created_at": project["created_at"],
+                "scope": {
+                    "tenant_id": scope.tenant_id,
+                    "tenant_name": tenant["name"] if tenant else None,
+                    "workspace_id": scope.workspace_id,
+                    "workspace_name": workspace["name"] if workspace else None,
+                },
+            },
+            "lifecycle": lifecycle,
+            "execution_activity": execution_activity,
+            "domain": domain,
+            "current_orchestration": orchestration,
+            "current_phase": phase,
+            "active_run": active_run,
+            "current_actor": current_actor,
+            "current_actor_source": current_actor_source,
+            "approvals": {
+                "pending_count": len(approvals),
+                "pending": approvals,
+            },
+            "failures": {
+                "open_count": len(failures),
+                "open": failures,
+            },
+            "latest_handoff": latest_handoff,
+            "recent_activity": recent_activity,
+            "github": {
+                "binding_count": len(github_bindings),
+                "bindings": github_bindings,
+            },
+            "validity_frontier": validity_frontier,
+            "distributed": {
+                "active_jobs": sum(status_counts.get(x, 0) for x in ("READY", "LEASED", "RUNNING")),
+                "status_counts": status_counts,
+                "recent_jobs": recent_jobs,
+            },
+            "document_governance": {
+                "status": "UNAVAILABLE",
+                "maturity": "BPS-M09_PENDING",
+                "reason": "Document browser governance is not LIVE yet; no health is inferred.",
+            },
+        }
+
     def project_create_options(self, actor_id: str, *, build_sha: str) -> dict[str, Any]:
         """Authorized choices for the bounded Create Project workflow."""
         # Validate actor status through the public tenancy read contract.

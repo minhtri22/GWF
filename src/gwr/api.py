@@ -547,6 +547,21 @@ def create_app(
             build_sha=resolved_product_info["build_sha"],
         )
 
+    @app.get('/browser/projects/{project_id}/overview')
+    def browser_project_overview(project_id: str, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_project_access(
+                principal.actor_id, project_id, "VIEW"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        return product.project_overview(
+            principal.actor_id,
+            project_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+
     @app.get('/browser/operations/audit')
     def browser_operations_audit(request: Request):
         _, principal = browser_principal(request)
