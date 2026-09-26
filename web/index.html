@@ -449,6 +449,76 @@
           </section>
         </section>
 
+        <section id="packagesRouteView" class="packages-page" hidden>
+          <section class="packages-hero">
+            <div>
+              <p class="eyebrow">Research registry</p>
+              <h1>Packages</h1>
+              <p>Inspect authorized Domain packages, reachable Skill revisions, and exact configured/observed usage.</p>
+            </div>
+            <div class="packages-head-actions">
+              <span id="packagesScopeBadge" class="scope-badge">Authorized packages</span>
+              <button id="packagesRefreshButton" class="text-button" type="button">Refresh</button>
+            </div>
+          </section>
+
+          <nav class="packages-subnav" aria-label="Package registry views">
+            <button type="button" data-packages-tab="domains" class="active"><span>Domains</span><small id="packagesDomainCount">0</small></button>
+            <button type="button" data-packages-tab="skills"><span>Skills</span><small id="packagesSkillCount">0</small></button>
+            <button type="button" data-packages-tab="usage"><span>Usage</span><small id="packagesUsageCount">0</small></button>
+          </nav>
+
+          <div id="packagesStateBanner" class="home-state-banner" hidden></div>
+
+          <section id="packagesDomainsView" class="packages-tab-view">
+            <section class="packages-master-detail">
+              <article class="panel packages-list-panel">
+                <div class="panel-head"><div><p class="eyebrow">Tenant-scoped registry</p><h2>Domain Packages</h2></div></div>
+                <div id="packagesDomainList" class="packages-select-list"></div>
+              </article>
+              <article class="panel packages-detail-panel">
+                <div class="panel-head"><div><p class="eyebrow">Exact package</p><h2 id="packagesDomainDetailTitle">Select a Domain package</h2></div></div>
+                <div id="packagesDomainDetail"><div class="feed-empty">Select an authorized Domain package to inspect its revision history.</div></div>
+              </article>
+            </section>
+          </section>
+
+          <section id="packagesSkillsView" class="packages-tab-view" hidden>
+            <section class="packages-master-detail">
+              <article class="panel packages-list-panel">
+                <div class="panel-head"><div><p class="eyebrow">Authorized reachable registry</p><h2>Skill Packages</h2></div></div>
+                <p class="audit-boundary-note">Skills have no tenant owner in the current schema. This view exposes only revisions reachable through authorized configured bindings or observed project executions.</p>
+                <div id="packagesSkillList" class="packages-select-list"></div>
+              </article>
+              <article class="panel packages-detail-panel">
+                <div class="panel-head"><div><p class="eyebrow">Immutable revisions</p><h2 id="packagesSkillDetailTitle">Select a Skill package</h2></div></div>
+                <div id="packagesSkillDetail"><div class="feed-empty">Select an authorized-reachable Skill package to inspect exact revisions and bindings.</div></div>
+              </article>
+            </section>
+          </section>
+
+          <section id="packagesUsageView" class="packages-tab-view" hidden>
+            <article class="panel packages-usage-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Derived reverse lookup</p><h2>Package → Projects</h2></div>
+                <span class="scope-badge">Read projection only</span>
+              </div>
+              <p class="audit-boundary-note">Domain usage is exact PINNED revision usage. Skill usage preserves CONFIGURED and OBSERVED as separate authoritative bases; no duplicate usage table exists.</p>
+              <div class="table-scroll">
+                <table class="data-table packages-usage-table">
+                  <thead><tr><th>Kind</th><th>Package / revision</th><th>Basis</th><th>Project</th><th>Context</th><th>Integrity</th></tr></thead>
+                  <tbody id="packagesUsageBody"></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+
+          <div class="home-footnote">
+            <span>Projection</span><code id="packagesGeneratedAt">—</code>
+            <span>Build</span><code id="packagesBuildSha">—</code>
+          </div>
+        </section>
+
         <section id="operationsRouteView" class="operations-page" hidden>
           <section class="operations-hero">
             <div>
