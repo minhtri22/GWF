@@ -1220,8 +1220,13 @@ async function refreshProjectPhaseDetail(route, phaseId, render = true) {
   }
 
   const active = projectWorkspaceRoute();
-  if (!render || !active || active.projectId !== route.projectId ||
-      active.section !== "execution" || state.selectedExecutionPhaseId !== phaseId) return;
+  if (!render || !active || active.section !== "execution") return;
+  if (active.projectId !== route.projectId || state.selectedExecutionPhaseId !== phaseId) {
+    if (state.selectedExecutionPhaseId) {
+      void refreshProjectPhaseDetail(active, state.selectedExecutionPhaseId, true);
+    }
+    return;
+  }
 
   if (state.projectPhaseDetail) {
     const complete = state.projectPhaseDetail.query_status === "COMPLETE";
@@ -1359,7 +1364,11 @@ async function refreshProjectExecution(route, render = true) {
   }
 
   const active = projectWorkspaceRoute();
-  if (!render || !active || active.projectId !== route.projectId || active.section !== "execution") return;
+  if (!render || !active || active.section !== "execution") return;
+  if (active.projectId !== route.projectId) {
+    void refreshProjectExecution(active, true);
+    return;
+  }
   if (state.projectExecution) renderProjectExecution(state.projectExecution, active);
   else renderProjectWorkspaceError(active, state.projectExecutionError || "Unknown error");
 }
