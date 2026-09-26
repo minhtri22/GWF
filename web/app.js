@@ -781,6 +781,309 @@ function renderProjectOverviewLive(summary) {
   $("#projectOverviewBuildSha").textContent = summary.build_sha || "unknown";
 }
 
+function executionJson(value) {
+  return JSON.stringify(value ?? null, null, 2);
+}
+
+function executionRecord(title, identity, detail, meta = "") {
+  return '<div class="execution-record"><div><strong>' + esc(title) + '</strong><code>' +
+    esc(identity || "—") + '</code></div><p>' + esc(detail || "—") +
+    '</p><small>' + esc(meta || "") + "</small></div>";
+}
+
+function renderProjectExecutionNavigation() {
+  const summary = state.projectExecution;
+  const orchestrations = summary?.orchestrations || [];
+  $("#projectExecutionCount").textContent = orchestrations.length + " orchestration" + (orchestrations.length === 1 ? "" : "s");
+
+  $("#projectExecutionOrchestrations").innerHTML = orchestrations.length ? orchestrations.map((orch) =>
+    '<button type="button" class="execution-nav-item' +
+      (orch.orchestration_id === state.selectedExecutionOrchestrationId ? " active" : "") +
+      '" data-execution-orchestration="' + esc(orch.orchestration_id) + '">' +
+      '<strong>' + esc(orch.status) + '</strong><code>' + esc(orch.orchestration_id) +
+      '</code><small>generation ' + esc(orch.generation) + ' · pivot ' + esc(orch.pivot_count) +
+      ' · outcome ' + esc(orch.research_outcome || "—") + "</small></button>"
+  ).join("") : '<div class="feed-empty">No orchestration exists for this project.</div>';
+
+  const selected = orchestrations.find(
+    (orch) => orch.orchestration_id === state.selectedExecutionOrchestrationId
+  ) || null;
+  $("#projectExecutionSelectedOrchestration").textContent = selected?.orchestration_id || "—";
+
+  const phases = selected?.phases || [];
+  $("#projectExecutionPhases").innerHTML = phases.length ? phases.map((phase) =>
+    '<button type="button" class="execution-phase-item' +
+      (phase.phase_execution_id === state.selectedExecutionPhaseId ? " active" : "") +
+      '" data-execution-phase="' + esc(phase.phase_execution_id) + '">' +
+      '<span class="execution-phase-index">' + esc(phase.phase_index) + '</span><span><strong>' +
+      esc(phase.phase_id) + '</strong><small>' + esc(phase.status + " · generation " + phase.generation) +
+      '</small><code>' + esc(phase.phase_execution_id) + "</code></span></button>"
+  ).join("") : '<div class="feed-empty">No phase execution exists in this orchestration.</div>';
+}
+
+function renderExecutionWorkunit(workunit) {
+  if (!workunit) return '<div class="feed-empty">No authoritative WorkUnit is linked.</div>';
+  return '<dl class="execution-facts">' +
+    '<div><dt>Identity</dt><dd><code>' + esc(workunit.workunit_id) + '</code><span>' +
+    esc(workunit.workunit_type) + " · " + esc(workunit.status) + " · v" + esc(workunit.version) + '</span></dd></div>' +
+    '<div><dt>Inputs</dt><dd><pre>' + esc(executionJson(workunit.input_revision_ids)) + '</pre></dd></div>' +
+    '<div><dt>Output contracts</dt><dd><pre>' + esc(executionJson(workunit.output_contracts)) + '</pre></dd></div>' +
+    '<div><dt>Preconditions</dt><dd><pre>' + esc(executionJson(workunit.preconditions)) + '</pre></dd></div>' +
+    '<div><dt>Required gates</dt><dd><pre>' + esc(executionJson(workunit.required_gates)) + '</pre></dd></div>' +
+    '<div><dt>Authorities</dt><dd><pre>' + esc(executionJson(workunit.required_authorities)) + '</pre></dd></div>' +
+    '<div><dt>Executor</dt><dd><pre>' + esc(executionJson(workunit.executor_selector)) + '</pre></dd></div>' +
+    '<div><dt>Execution policy</dt><dd><pre>' + esc(executionJson(workunit.execution_policy)) + '</pre></dd></div>' +
+    '<div><dt>Retry / recovery</dt><dd><pre>' + esc(executionJson({
+      retry: workunit.retry_policy, recovery: workunit.recovery_policy
+    })) + '</pre></dd></div>' +
+    '<div><dt>Conflict keys</dt><dd><pre>' + esc(executionJson(workunit.resource_conflict_keys)) + '</pre></dd></div>' +
+    "</dl>";
+}
+
+function renderExecutionRun(run) {
+  if (!run) return '<div class="feed-empty">No authoritative Run is linked.</div>';
+  return '<dl class="execution-facts">' +
+    '<div><dt>Run</dt><dd><code>' + esc(run.run_id) + '</code><span>attempt ' +
+    esc(run.attempt_number) + " · " + esc(run.runtime_status) + '</span></dd></div>' +
+    '<div><dt>Executor</dt><dd><code>' + esc(run.executor_actor_id) + '</code></dd></div>' +
+    '<div><dt>Time</dt><dd><span>' + esc(formatHomeTime(run.started_at)) + ' → ' +
+    esc(formatHomeTime(run.finished_at)) + '</span></dd></div>' +
+    '<div><dt>Correlation</dt><dd><code>' + esc(run.correlation_id || "—") + '</code></dd></div>' +
+    '<div><dt>Checkpoint</dt><dd><code>' + esc(run.checkpoint_id || "—") + '</code></dd></div>' +
+    '<div><dt>Inputs</dt><dd><pre>' + esc(executionJson(run.input_revision_ids)) + '</pre></dd></div>' +
+    '<div><dt>Produced revisions</dt><dd><pre>' + esc(executionJson(run.produced_revision_ids)) + '</pre></dd></div>' +
+    '<div><dt>Evidence IDs</dt><dd><pre>' + esc(executionJson(run.evidence_ids)) + '</pre></dd></div>' +
+    '<div><dt>Exit metadata</dt><dd><pre>' + esc(executionJson(run.exit_metadata)) + '</pre></dd></div>' +
+    "</dl>";
+}
+
+function renderExecutionGovernance(detail) {
+  const gates = detail.gates || [];
+  const decisions = detail.decisions || [];
+  const gateHtml = gates.length ? gates.map((gate) =>
+    executionRecord(
+      gate.gate_type + " · " + gate.result,
+      gate.gate_id,
+      "policy " + (gate.policy_version || "—"),
+      formatHomeTime(gate.evaluated_at)
+    ) +
+    '<pre class="execution-json">' + esc(executionJson({
+      scope: gate.scope,
+      required_inputs: gate.required_inputs,
+      required_evidence: gate.required_evidence,
+      violation_codes: gate.violation_codes,
+      evaluated_refs: gate.evaluated_refs,
+    })) + "</pre>"
+  ).join("") : '<div class="feed-empty">No Gate is attributable to this phase/run.</div>';
+
+  const decisionHtml = decisions.length ? decisions.map((decision) =>
+    executionRecord(
+      "Decision · " + decision.decision_type,
+      decision.decision_id,
+      "target " + (decision.target_ref || "—") + " · by " + (decision.created_by || "SYSTEM"),
+      formatHomeTime(decision.created_at)
+    ) +
+    '<pre class="execution-json">' + esc(executionJson({
+      scope: decision.scope,
+      source_gate_ids: decision.source_gate_ids,
+      source_failure_id: decision.source_failure_id,
+      reason_codes: decision.reason_codes,
+    })) + "</pre>"
+  ).join("") : '<div class="feed-empty">No Decision is exactly attributable to this phase.</div>';
+
+  return '<section class="execution-subsection"><h3>Gates</h3>' + gateHtml +
+    '</section><section class="execution-subsection"><h3>Decisions</h3>' + decisionHtml + "</section>";
+}
+
+function renderExecutionRecovery(detail) {
+  const failure = detail.failure;
+  let html = failure ?
+    executionRecord(
+      failure.failure_class + " · " + failure.status,
+      failure.failure_id,
+      failure.detected_stage + " · " + failure.severity,
+      formatHomeTime(failure.created_at)
+    ) +
+    '<pre class="execution-json">' + esc(executionJson({
+      detected_ref: failure.detected_ref,
+      detected_revision_id: failure.detected_revision_id,
+      failed_gate_id: failure.failed_gate_id,
+      evidence_ids: failure.evidence_ids,
+      root_ref: failure.root_ref,
+      root_revision_id: failure.root_revision_id,
+      root_status: failure.root_status,
+      resume_candidate: failure.resume_candidate,
+      signature: failure.signature,
+    })) + "</pre>" :
+    '<div class="feed-empty">No FailureRecord is linked to this phase.</div>';
+
+  const recoveries = detail.recoveries || [];
+  if (recoveries.length) {
+    html += '<section class="execution-subsection"><h3>Recovery plans</h3>' + recoveries.map((recovery) =>
+      executionRecord(
+        "Recovery · " + recovery.status,
+        recovery.recovery_id,
+        "resume " + recovery.resume_target,
+        formatHomeTime(recovery.created_at)
+      ) + '<pre class="execution-json">' + esc(executionJson({
+        keep_valid_refs: recovery.keep_valid_refs,
+        invalidate_refs: recovery.invalidate_refs,
+        mark_stale_refs: recovery.mark_stale_refs,
+        required_revision_actions: recovery.required_revision_actions,
+        required_workunits: recovery.required_workunits,
+        required_retests: recovery.required_retests,
+        required_approvals: recovery.required_approvals,
+        checkpoint_strategy: recovery.checkpoint_strategy,
+      })) + "</pre>"
+    ).join("") + "</section>";
+  }
+
+  if (detail.loopguard) {
+    html += '<section class="execution-subsection"><h3>Loop guard</h3><pre class="execution-json">' +
+      esc(executionJson(detail.loopguard)) + "</pre></section>";
+  }
+
+  const impacts = detail.impacts || [];
+  html += '<section class="execution-subsection"><h3>Attributable ImpactSets</h3>' +
+    (impacts.length ? impacts.map((impact) =>
+      executionRecord(
+        impact.trigger_type,
+        impact.impact_id,
+        "trigger " + impact.trigger_id + " · root " + impact.root_revision_id,
+        formatHomeTime(impact.calculated_at)
+      ) + '<pre class="execution-json">' + esc(executionJson({
+        affected_nodes: impact.affected_nodes,
+        reason_codes: impact.reason_codes,
+        calculation_policy_version: impact.calculation_policy_version,
+      })) + "</pre>"
+    ).join("") :
+      '<div class="feed-empty">No ImpactSet has an exact persisted attribution to this failure or produced PIVOT revision.</div>') +
+    "</section>";
+  return html;
+}
+
+function renderExecutionCheckpoint(checkpoint) {
+  if (!checkpoint) return '<div class="feed-empty">No Checkpoint is linked to this phase/run.</div>';
+  return executionRecord(
+    "Checkpoint",
+    checkpoint.checkpoint_id,
+    "scope " + checkpoint.scope_id,
+    formatHomeTime(checkpoint.created_at)
+  ) + '<pre class="execution-json">' + esc(executionJson({
+    last_event_id: checkpoint.last_event_id,
+    active_workunit_ids: checkpoint.active_workunit_ids,
+    completed_workunit_ids: checkpoint.completed_workunit_ids,
+    current_stage_labels: checkpoint.current_stage_labels,
+    valid_revision_ids: checkpoint.valid_revision_ids,
+    dirty_revision_ids: checkpoint.dirty_revision_ids,
+    stale_revision_ids: checkpoint.stale_revision_ids,
+    blocking_failure_ids: checkpoint.blocking_failure_ids,
+    pending_decision_ids: checkpoint.pending_decision_ids,
+    pending_approval_ids: checkpoint.pending_approval_ids,
+    resume_candidates: checkpoint.resume_candidates,
+    runtime_metadata: checkpoint.runtime_metadata,
+  })) + "</pre>";
+}
+
+function renderExecutionProtocol(protocol) {
+  if (!protocol) return '<div class="feed-empty">No Agent Execution Protocol is persisted for this phase.</div>';
+  const p = protocol.protocol || {};
+  let html = '<div class="execution-protocol-status">' +
+    projectOverviewMetric("Stage", p.current_stage || "—", p.status || "—") +
+    projectOverviewMetric("Skill revision", p.skill_revision_id || "—", p.skill_hash || "—") +
+    projectOverviewMetric("Recovery mode", p.recovery_mode || "—", "retry " + (p.retry_count ?? 0) + " / " + (p.retry_budget ?? "—")) +
+    '</div><p class="audit-boundary-note">Persisted operational protocol records only. Hidden model chain-of-thought is not stored or displayed.</p>';
+
+  const preflights = protocol.preflights || [];
+  html += '<section class="execution-subsection"><h3>Preflight</h3>' +
+    (preflights.length ? preflights.map((item) =>
+      executionRecord(item.status, item.preflight_id, "checks hash " + item.checks_hash, formatHomeTime(item.created_at)) +
+      '<pre class="execution-json">' + esc(executionJson(item.checks)) + "</pre>"
+    ).join("") : '<div class="feed-empty">No preflight record.</div>') + "</section>";
+
+  const plans = protocol.plans || [];
+  html += '<section class="execution-subsection"><h3>Frozen plans & checklist</h3>' +
+    (plans.length ? plans.map((plan) =>
+      executionRecord(
+        "Plan r" + plan.revision_number,
+        plan.plan_id,
+        plan.objective + " · " + plan.reason,
+        formatHomeTime(plan.created_at)
+      ) + '<pre class="execution-json">' + esc(executionJson({
+        plan_hash: plan.plan_hash,
+        actor_id: plan.actor_id,
+        steps: plan.steps,
+        checklist: plan.checklist,
+      })) + "</pre>"
+    ).join("") : '<div class="feed-empty">No frozen plan record.</div>') + "</section>";
+
+  const problems = protocol.problems || [];
+  html += '<section class="execution-subsection"><h3>Problems & recovery proposals</h3>' +
+    (problems.length ? problems.map((problem) =>
+      executionRecord(
+        problem.code + " · " + problem.status,
+        problem.problem_id,
+        problem.summary + " · " + problem.severity,
+        formatHomeTime(problem.created_at)
+      ) + '<pre class="execution-json">' + esc(executionJson({
+        affected_step: problem.affected_step,
+        detail: problem.detail,
+        recoveries: problem.recoveries,
+      })) + "</pre>"
+    ).join("") : '<div class="feed-empty">No persisted protocol problem.</div>') + "</section>";
+
+  const prior = protocol.previous_handoff;
+  const handoffs = protocol.handoffs || [];
+  html += '<section class="execution-subsection"><h3>Handoff chain</h3>' +
+    (prior ? '<pre class="execution-json">' + esc(executionJson(prior)) + "</pre>" :
+      '<div class="feed-empty">No previous handoff is linked.</div>') +
+    (handoffs.length ? handoffs.map((handoff) =>
+      executionRecord(
+        "Produced handoff",
+        handoff.handoff_id,
+        "hash " + handoff.payload_hash + " · actor " + handoff.actor_id,
+        formatHomeTime(handoff.created_at)
+      ) + '<pre class="execution-json">' + esc(executionJson({
+        structured_payload: handoff.structured_payload,
+        markdown: handoff.markdown,
+      })) + "</pre>"
+    ).join("") : '<div class="feed-empty">No produced handoff record.</div>') +
+    "</section>";
+  return html;
+}
+
+function renderProjectPhaseDetail(detail) {
+  $("#projectExecutionPhaseEmpty").hidden = true;
+  $("#projectExecutionPhaseInspector").hidden = false;
+  const phase = detail.phase || {};
+  const run = detail.run;
+  const workunit = detail.workunit;
+  $("#projectExecutionPhaseSummary").innerHTML =
+    projectOverviewMetric("Phase", phase.phase_id || "—", phase.phase_execution_id || "—") +
+    projectOverviewMetric("Status", phase.status || "—", "generation " + (phase.generation ?? "—")) +
+    projectOverviewMetric("WorkUnit", workunit?.workunit_id || "—", workunit?.status || "—") +
+    projectOverviewMetric("Run", run?.run_id || "—", run?.runtime_status || "—") +
+    projectOverviewMetric("Decision outcome", phase.decision_outcome || "—", "persisted phase outcome") +
+    projectOverviewMetric("Failure / checkpoint", phase.failure_id || "—", phase.checkpoint_id || run?.checkpoint_id || "—");
+
+  $("#projectExecutionWorkunit").innerHTML = renderExecutionWorkunit(workunit);
+  $("#projectExecutionRun").innerHTML = renderExecutionRun(run);
+  $("#projectExecutionGovernance").innerHTML = renderExecutionGovernance(detail);
+  $("#projectExecutionRecovery").innerHTML = renderExecutionRecovery(detail);
+  $("#projectExecutionCheckpoint").innerHTML = renderExecutionCheckpoint(detail.checkpoint);
+  $("#projectExecutionProtocol").innerHTML = renderExecutionProtocol(detail.agent_protocol);
+
+  const events = detail.events || [];
+  $("#projectExecutionEventCount").textContent = events.length;
+  $("#projectExecutionEvents").innerHTML = events.length ? events.map((event) =>
+    '<div class="feed-item"><div><strong>' + esc(event.event) + '</strong><span>' +
+    esc(event.source || "runtime") + '</span></div><p>' +
+    esc([event.stage, event.message, event.reason].filter(Boolean).join(" · ") || "Persisted event") +
+    '</p><code>' + esc(event.ref || "—") + '</code><time>' +
+    esc(formatHomeTime(event.timestamp)) + "</time></div>"
+  ).join("") : '<div class="feed-empty">No persisted phase events.</div>';
+}
+
 function renderProjectWorkspace(summary, route) {
   renderProjectWorkspaceHeader(summary, route);
   setProjectLocalNav(route.section);
