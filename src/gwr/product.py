@@ -1355,7 +1355,7 @@ class ProjectDashboardService:
         orchestrations: list[dict[str, Any]] = []
         for row in self.db.all(
             "SELECT orchestration_id,project_id,domain_id,status,current_phase_id,generation,"
-            "research_outcome,pivot_count,started_at,updated_at,terminal_checkpoint_id "
+            "research_outcome,pivot_count,started_at,updated_at,terminal_checkpoint_id,metadata "
             "FROM orchestrations WHERE project_id=? "
             "ORDER BY started_at DESC,orchestration_id DESC",
             (project_id,),
