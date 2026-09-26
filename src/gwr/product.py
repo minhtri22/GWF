@@ -1430,6 +1430,13 @@ class ProjectDashboardService:
         phase = source["phase"] or {}
         workunit = source["workunit"] or None
         run = source["run"] or None
+        complete = True
+        if phase.get("workunit_id") and not workunit:
+            complete = False
+        if phase.get("run_id") and not run:
+            complete = False
+        if phase.get("failure_id") and not source.get("failure"):
+            complete = False
 
         shaped_workunit = None
         if workunit:
@@ -1591,6 +1598,29 @@ class ProjectDashboardService:
             loopguard = _parsed(row, ("budget",)) if row else None
 
         checkpoint = source.get("checkpoint")
+        checkpoint_id = phase.get("checkpoint_id") or ((run or {}).get("checkpoint_id"))
+        if checkpoint is None and checkpoint_id:
+            checkpoint = _parsed(
+                self.db.one(
+                    "SELECT * FROM checkpoints WHERE checkpoint_id=? AND project_id=?",
+                    (checkpoint_id, project_id),
+                ),
+                (
+                    "active_workunit_ids",
+                    "completed_workunit_ids",
+                    "current_stage_labels",
+                    "valid_revision_ids",
+                    "dirty_revision_ids",
+                    "stale_revision_ids",
+                    "blocking_failure_ids",
+                    "pending_decision_ids",
+                    "pending_approval_ids",
+                    "resume_candidates",
+                    "runtime_metadata",
+                ),
+            )
+        if checkpoint_id and checkpoint is None:
+            complete = False
         if checkpoint:
             checkpoint = {
                 key: checkpoint.get(key)
@@ -1826,7 +1856,7 @@ class ProjectDashboardService:
         return {
             "generated_at": utcnow(),
             "build_sha": build_sha,
-            "query_status": "COMPLETE",
+            "query_status": "COMPLETE" if complete else "PARTIAL",
             "project_id": project_id,
             "phase": {
                 key: phase.get(key)

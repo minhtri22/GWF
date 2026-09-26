@@ -186,7 +186,7 @@ def _seed_phase(rt, owner, executor, project):
         ),
     )
     rt.db.conn.execute(
-        "INSERT INTO checkpoints VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO checkpoints VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (
             "checkpoint_execution", project, "failure_execution",
             "2026-09-26T02:03:30+00:00", "phaseevt_execution_1",
@@ -277,7 +277,7 @@ def _seed_phase(rt, owner, executor, project):
         ),
     )
     rt.db.conn.execute(
-        "INSERT INTO phase_problem_records VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO phase_problem_records VALUES(?,?,?,?,?,?,?,?,?,?)",
         (
             "problem_execution", "phase_execution_exact", 1,
             "EXECUTION_PROBLEM", "Need operator decision", "persisted detail",
