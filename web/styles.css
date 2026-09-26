@@ -140,3 +140,5 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .execution-protocol-status{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.execution-protocol-status .project-overview-stat{box-shadow:none;background:var(--surface-2)}.execution-event-feed{max-height:430px}
 @media(max-width:1100px){.project-execution-browser,.project-execution-two-column{grid-template-columns:1fr}.execution-protocol-status{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){.project-execution-head{align-items:flex-start;flex-direction:column}.execution-protocol-status{grid-template-columns:1fr}.project-execution-nav-panel,.project-execution-panel{padding:11px}}
+
+.execution-report-panel{min-width:0}.execution-report{max-height:420px;margin:10px 0 0;padding:12px;border:1px solid var(--border-subtle);border-radius:7px;background:var(--surface-2);color:var(--text-secondary);font:9px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;overflow:auto}
