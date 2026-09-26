@@ -58,10 +58,19 @@ def test_rpc_queue_timeout_is_normalized():
     assert 'raise TimeoutError("APP_SERVER_READ_TIMEOUT") from exc' in src
 
 
-def test_product_smoke_retries_only_server_overload():
+def test_product_smoke_falls_back_high_to_instant_on_capacity():
+    mod = load_module()
+    assert mod.MODEL_ATTEMPTS == (
+        ("chatgpt-web/high", "High"),
+        ("chatgpt-web/light", "Instant"),
+    )
     src = SCRIPT.read_text(encoding="utf-8")
-    assert "MAX_TRANSIENT_TURN_ATTEMPTS = 3" in src
-    assert 'error_info == "serverOverloaded"' in src
-    assert 'if error_info != "serverOverloaded":' in src
-    assert "SERVER_OVERLOADED_AFTER_" in src
-    assert '"protocol"]["attempts"]' in src
+    assert '"model": model_slug' in src
+    assert 'ExternalCapacityBlocked("CHATGPT_WEB_MODELS_AT_CAPACITY")' in src
+    assert '"external_capacity_block": capacity' in src
+
+
+def test_wrapper_does_not_report_external_capacity_as_product_failure():
+    ps1 = (ROOT / "scripts" / "g2e" / "g2e_product_smoke.ps1").read_text(encoding="utf-8")
+    assert '$SmokeExit -eq 3' in ps1
+    assert "G2E_PRODUCT_SMOKE_BLOCKED_EXTERNAL_CAPACITY" in ps1
