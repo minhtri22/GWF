@@ -30,6 +30,7 @@ const state = {
   projectExecutionStreamPhaseId: null,
   projectExecutionStreamFallbackTimer: null,
   projectExecutionLiveEvents: [],
+  projectRecoveryMutation: false,
   access: null,
   accessError: null,
   accessLoading: false,
@@ -996,6 +997,140 @@ function renderExecutionCheckpoint(checkpoint) {
   })) + "</pre>";
 }
 
+function findProtocolRecoveryProposal(proposalId) {
+  const problems = state.projectPhaseDetail?.agent_protocol?.problems || [];
+  for (const problem of problems) {
+    for (const proposal of problem.recoveries || []) {
+      if (proposal.proposal_id === proposalId) {
+        return { problem, proposal };
+      }
+    }
+  }
+  return null;
+}
+
+function renderProtocolRecoveryProposal(problem, proposal) {
+  const capability = proposal.decision_capability || {};
+  const decisions = proposal.decisions || [];
+  let decisionControl = "";
+  if (proposal.status === "WAITING_HUMAN") {
+    if (capability.can_decide) {
+      decisionControl =
+        '<div class="recovery-human-decision">' +
+          '<label>Optional decision reason<textarea data-recovery-reason rows="2" ' +
+          'placeholder="Leave blank unless a human reason should be persisted."></textarea></label>' +
+          '<div class="recovery-human-actions">' +
+            '<button type="button" class="primary" data-recovery-decision="APPROVED" ' +
+              'data-recovery-proposal-id="' + esc(proposal.proposal_id) + '">Approve</button>' +
+            '<button type="button" class="ghost danger" data-recovery-decision="REJECTED" ' +
+              'data-recovery-proposal-id="' + esc(proposal.proposal_id) + '">Reject</button>' +
+          '</div>' +
+          '<small>Authority: HUMAN + APPROVE. Decision only; recovery is not applied here.</small>' +
+        '</div>';
+    } else {
+      decisionControl =
+        '<div class="recovery-decision-unavailable">' +
+          '<strong>Human decision required</strong>' +
+          '<span>Current session does not have qualified HUMAN + APPROVE authority.</span>' +
+        '</div>';
+    }
+  }
+
+  const decisionHistory = decisions.length ?
+    '<div class="recovery-decision-history">' + decisions.map((decision) =>
+      '<div><strong>' + esc(decision.decision) + '</strong><code>' +
+      esc(decision.decision_id) + '</code><span>' +
+      esc(decision.reason || "No reason recorded") + '</span><small>' +
+      esc((decision.actor_id || "—") + " · " + formatHomeTime(decision.created_at)) +
+      '</small></div>'
+    ).join("") + "</div>" :
+    '<div class="feed-empty">No human recovery decision is persisted.</div>';
+
+  return '<article class="recovery-proposal-card" data-recovery-proposal="' +
+    esc(proposal.proposal_id) + '">' +
+    '<div class="recovery-proposal-head"><div><strong>' + esc(proposal.action) +
+    '</strong><code>' + esc(proposal.proposal_id) + '</code></div><span>' +
+    esc(proposal.status) + '</span></div>' +
+    '<dl class="execution-facts recovery-proposal-facts">' +
+      '<div><dt>Target step</dt><dd><span>' + esc(proposal.target_step ?? "—") + '</span></dd></div>' +
+      '<div><dt>Risk</dt><dd><span>' + esc(proposal.risk_class || "—") + '</span></dd></div>' +
+      '<div><dt>Normative change</dt><dd><span>' + esc(proposal.normative_change ? "YES" : "NO") + '</span></dd></div>' +
+      '<div><dt>Rationale</dt><dd><span>' + esc(proposal.rationale || "—") + '</span></dd></div>' +
+      '<div><dt>Plan patch</dt><dd><pre>' + esc(executionJson(proposal.plan_patch || [])) + '</pre></dd></div>' +
+    '</dl>' +
+    decisionControl +
+    '<section class="execution-subsection"><h3>Decision history</h3>' +
+      decisionHistory + '</section>' +
+  '</article>';
+}
+
+async function performProjectRecoveryDecision(proposalId, decision, reason) {
+  if (state.projectRecoveryMutation) return;
+  if (!["APPROVED", "REJECTED"].includes(decision)) return;
+  const route = projectWorkspaceRoute();
+  const phaseId = state.selectedExecutionPhaseId;
+  const current = findProtocolRecoveryProposal(proposalId);
+  if (!route || route.section !== "execution" || !phaseId || !current) return;
+  if (!current.proposal.decision_capability?.can_decide ||
+      current.proposal.status !== "WAITING_HUMAN") return;
+
+  const approving = decision === "APPROVED";
+  const confirmed = await confirmGovernedAction({
+    title: approving ? "Approve recovery proposal" : "Reject recovery proposal",
+    action: decision,
+    target: proposalId,
+    scope: route.projectId + " / " + phaseId,
+    consequence: approving ?
+      "Records HUMAN_APPROVED and returns the protocol to RUNNING. This does not apply the recovery proposal." :
+      "Records REJECTED and sets the protocol to BLOCKED. This does not apply or retry recovery.",
+  });
+  if (!confirmed) return;
+
+  state.projectRecoveryMutation = true;
+  document.querySelectorAll("[data-recovery-decision]").forEach(
+    (button) => { button.disabled = true; }
+  );
+  $("#projectExecutionPhaseState").hidden = false;
+  $("#projectExecutionPhaseState").className = "home-state-banner loading";
+  $("#projectExecutionPhaseState").textContent =
+    "Persisting exact human recovery decision…";
+  try {
+    await api(
+      "/browser/projects/" + encodeURIComponent(route.projectId) +
+      "/execution/phases/" + encodeURIComponent(phaseId) +
+      "/recovery-proposals/" + encodeURIComponent(proposalId) + "/decision",
+      {
+        method: "POST",
+        body: { decision, reason },
+      }
+    );
+    state.projectPhaseDetail = null;
+    state.projectPhaseDetailKey = null;
+    state.projectPhaseDetailError = null;
+    state.projectOverview = null;
+    state.projectOverviewError = null;
+    state.home = null;
+    state.homeError = null;
+    stopProjectExecutionStream();
+    await refreshProjectPhaseDetail(route, phaseId, true);
+    await refreshHomeSummary(false);
+  } catch (error) {
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+    $("#projectExecutionPhaseState").hidden = false;
+    $("#projectExecutionPhaseState").className = "home-state-banner error";
+    $("#projectExecutionPhaseState").textContent =
+      "Recovery decision failed — " + error.message;
+  } finally {
+    state.projectRecoveryMutation = false;
+    document.querySelectorAll("[data-recovery-decision]").forEach(
+      (button) => { button.disabled = false; }
+    );
+  }
+}
+
 function renderExecutionProtocol(protocol) {
   if (!protocol) return '<div class="feed-empty">No Agent Execution Protocol is persisted for this phase.</div>';
   const p = protocol.protocol || {};
@@ -1036,11 +1171,18 @@ function renderExecutionProtocol(protocol) {
         problem.problem_id,
         problem.summary + " · " + problem.severity,
         formatHomeTime(problem.created_at)
-      ) + '<pre class="execution-json">' + esc(executionJson({
+      ) +
+      '<pre class="execution-json">' + esc(executionJson({
         affected_step: problem.affected_step,
         detail: problem.detail,
-        recoveries: problem.recoveries,
-      })) + "</pre>"
+      })) + "</pre>" +
+      ((problem.recoveries || []).length ?
+        '<div class="recovery-proposal-list">' +
+          problem.recoveries.map((proposal) =>
+            renderProtocolRecoveryProposal(problem, proposal)
+          ).join("") +
+        "</div>" :
+        '<div class="feed-empty">No persisted recovery proposal.</div>')
     ).join("") : '<div class="feed-empty">No persisted protocol problem.</div>') + "</section>";
 
   const prior = protocol.previous_handoff;
@@ -2921,6 +3063,18 @@ $("#projectExecutionOrchestrations").addEventListener("click", (event) => {
 
 $("#projectExecutionReportButton").addEventListener("click", async () => {
   await loadProjectExecutionReport();
+});
+
+$("#projectExecutionProtocol").addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-recovery-decision]");
+  if (!button) return;
+  const card = button.closest("[data-recovery-proposal]");
+  const reason = card?.querySelector("[data-recovery-reason]")?.value ?? "";
+  await performProjectRecoveryDecision(
+    button.dataset.recoveryProposalId,
+    button.dataset.recoveryDecision,
+    reason
+  );
 });
 
 $("#projectExecutionPhases").addEventListener("click", (event) => {

@@ -702,11 +702,11 @@ def test_project_execution_browser_surface_is_live_read_only_and_fallback_capabl
 
     for forbidden in (
         "Apply recovery",
-        "Approve recovery",
-        "Reject recovery",
         "Start protocol",
         "Complete protocol",
         "Retry phase",
+        "Verify phase",
+        "Write handoff",
     ):
         assert forbidden not in html
 
