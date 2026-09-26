@@ -4,7 +4,7 @@ from typing import Any
 
 from .errors import AuthorityDenied, NotFound
 from .tenancy import PROJECT_ROLE_PERMISSIONS, TENANT_ROLE_PERMISSIONS, WORKSPACE_ROLE_PERMISSIONS
-from .utils import parse_json, utcnow
+from .utils import canonical_json, parse_json, utcnow
 
 
 def _parsed(row, fields: tuple[str, ...]):
@@ -1362,7 +1362,7 @@ class ProjectDashboardService:
         ):
             item = dict(row)
             metadata = parse_json(item.pop("metadata"), {}) or {}
-            item["history"] = list(metadata.get("history") or [])
+            item["history"] = metadata.get("history") if "history" in metadata else []
             phases = [
                 dict(phase)
                 for phase in self.db.all(
@@ -1912,7 +1912,7 @@ class ProjectDashboardService:
             raise NotFound("Orchestration not found")
         orchestration = _parsed(row, ("metadata",))
         metadata = orchestration.get("metadata") or {}
-        history = list(metadata.get("history") or [])
+        history = metadata.get("history") if "history" in metadata else []
 
         phases = [
             dict(item)
@@ -1924,7 +1924,8 @@ class ProjectDashboardService:
                 (orchestration_id,),
             )
         ]
-        phase_identity = {
+        phase_identity = {orchestration_id}
+        phase_identity.update({
             str(value)
             for phase in phases
             for value in (
@@ -1935,7 +1936,7 @@ class ProjectDashboardService:
                 phase.get("checkpoint_id"),
             )
             if value
-        }
+        })
         failure_ids = {
             phase["failure_id"] for phase in phases if phase.get("failure_id")
         }
@@ -2066,12 +2067,16 @@ class ProjectDashboardService:
             lines.append("| - | - | No persisted phase executions | - | - | - | - |")
 
         lines += ["", "## Persisted orchestration history", ""]
-        if history:
+        if isinstance(history, list) and history:
             for item in history:
                 event = item.get("event") if isinstance(item, dict) else None
                 lines.append(
                     f"- **{event or 'EVENT'}** — `{canonical_json(item)}`"
                 )
+        elif history:
+            lines.append(
+                f"- Persisted history payload: `{canonical_json(history)}`"
+            )
         else:
             lines.append("- No persisted orchestration history entries.")
 
