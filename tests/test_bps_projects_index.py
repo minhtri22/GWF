@@ -269,5 +269,7 @@ def test_projects_index_capability_and_browser_surface(tmp_path, monkeypatch):
     assert "Rename Project" not in html
     assert "Archive Project" not in html
     assert "Restore Project" not in html
-    assert "/app/projects/" not in js
+    assert "/app/projects/" in js
+    assert 'data-project-open="' in js
+    assert 'projectWorkspacePath(button.dataset.projectOpen, "overview")' in js
     rt.close()
