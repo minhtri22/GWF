@@ -365,6 +365,51 @@ def test_browser_recovery_decision_rejects_cross_phase_and_cross_project_binding
     rt.close()
 
 
+def test_browser_recovery_decision_hides_unauthorized_project(
+    tmp_path, monkeypatch
+):
+    rt, human, viewer, agent, project, _ = _runtime(tmp_path, monkeypatch)
+    phase, _, proposal = _waiting_proposal(rt, human, agent, project)
+
+    hidden_tenant = rt.tenancy.create_tenant(
+        "Hidden Recovery Tenant",
+        viewer,
+        tenant_id="tenant_recovery_hidden",
+    )
+    hidden_workspace = rt.tenancy.create_workspace(
+        hidden_tenant,
+        "Hidden Recovery Workspace",
+        viewer,
+        workspace_id="workspace_recovery_hidden",
+    )
+    hidden_project = rt.create_scoped_project(
+        "Hidden Recovery Project",
+        hidden_tenant,
+        hidden_workspace,
+        viewer,
+        project_id="project_recovery_hidden",
+    )
+    hidden_phase = _phase(rt, hidden_project, suffix="hidden")
+
+    client = TestClient(_app(rt))
+    _browser_login(client)
+
+    response = client.post(
+        _decision_path(hidden_project, hidden_phase, proposal),
+        json={"decision": "APPROVED", "reason": ""},
+    )
+    assert response.status_code == 404
+    assert rt.db.one(
+        "SELECT COUNT(*) n FROM phase_recovery_decisions WHERE proposal_id=?",
+        (proposal,),
+    )["n"] == 0
+    assert rt.db.one(
+        "SELECT status FROM phase_recovery_proposals WHERE proposal_id=?",
+        (proposal,),
+    )["status"] == "WAITING_HUMAN"
+    rt.close()
+
+
 def test_browser_recovery_decision_replay_and_invalid_value_do_not_duplicate(
     tmp_path, monkeypatch
 ):
@@ -426,3 +471,42 @@ def test_existing_bearer_recovery_decision_route_remains_compatible(
         (proposal,),
     )["status"] == "HUMAN_APPROVED"
     rt.close()
+
+def test_browser_recovery_ui_is_capability_gated_confirmed_and_decision_only():
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+
+    assert 'data-recovery-decision="APPROVED"' in js
+    assert 'data-recovery-decision="REJECTED"' in js
+    assert "decision_capability?.can_decide" in js
+    assert 'proposal.status !== "WAITING_HUMAN"' in js
+    assert 'data-recovery-reason' in js
+    assert 'placeholder="Leave blank unless a human reason should be persisted."' in js
+    assert "await confirmGovernedAction" in js
+    assert "if (!confirmed) return;" in js
+    assert "if (state.projectRecoveryMutation) return;" in js
+    assert "state.projectRecoveryMutation = true;" in js
+    assert "body: { decision, reason }" in js
+    assert '"/recovery-proposals/"' in js
+    assert '"/decision"' in js
+    assert "await refreshProjectPhaseDetail(route, phaseId, true);" in js
+    assert "await refreshHomeSummary(false);" in js
+    assert "This does not apply the recovery proposal." in js
+    assert "This does not apply or retry recovery." in js
+
+    start = js.index("async function performProjectRecoveryDecision")
+    end = js.index("function renderExecutionProtocol", start)
+    mutation = js[start:end]
+    assert "/apply" not in mutation
+    assert "/verify" not in mutation
+    assert "/handoff" not in mutation
+    assert "/complete" not in mutation
+    assert mutation.index("await confirmGovernedAction") < mutation.index(
+        '"/recovery-proposals/"'
+    )
+
+    assert "Apply recovery" not in html
+    assert "Retry phase" not in html
+    assert "Verify phase" not in html
+    assert "Write handoff" not in html
+
