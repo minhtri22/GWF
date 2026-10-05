@@ -199,7 +199,7 @@ FINDINGS_COUNT = 0
 - WQA-75..82: cross-screen exact-identity routing is locked by the master re-audit suite and relevant Home/Runs/Packages tests.
 - WQA-83..88: static DOM wiring, JavaScript parsing, targeted negative/non-disclosure coverage and integrated BPS regression are locked by the master suite and exact-head GitHub Actions.
 
-Pre-close exact-head evidence:
+Qualified implementation-head evidence:
 
 ```text
 HEAD                  = 4e95d406e346eba42567835b5a1bd44366618baf
@@ -212,7 +212,7 @@ SKIPPED               = 2 intentional/environment-gated tests
 TEST_FAILURES         = 0
 ```
 
-The final closure commit must itself receive the same `bps-uiux` exact-head PASS. If that run fails, WQA-87/WQA-88 and this closure reopen automatically; queued/not-started is never PASS.
+`4e95d406e346eba42567835b5a1bd44366618baf` is the frozen qualified implementation/test head. A repository compare through the closure candidate confirmed that every later change is limited to `docs/uiux/**` current-state reconciliation; no runtime, browser, API, workflow harness or test source changed after the passing run. Documentation-only closure commits therefore preserve this implementation evidence rather than creating a circular 'commit PASS -> rerun -> commit PASS' gate. Any subsequent change outside the closure documentation set reopens WQA-87/WQA-88 and requires a fresh exact implementation-head BPS run. A queued/not-started implementation run is never PASS.
 
 ## Final count
 
