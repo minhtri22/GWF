@@ -361,10 +361,18 @@ function renderDiagnosticsSummary() {
 
   const store = summary.object_store || {};
   const obs = summary.observability || {};
+  const server = summary.server || {};
+  const uptimeSeconds = Number(server.uptime_seconds);
+  const uptimeText = Number.isFinite(uptimeSeconds) ?
+    (uptimeSeconds < 60 ? (uptimeSeconds + "s") :
+      (Math.floor(uptimeSeconds / 3600) + "h " +
+        Math.floor((uptimeSeconds % 3600) / 60) + "m")) :
+    "UNKNOWN";
   const latest = obs.latest_event ?
     [obs.latest_event.event, formatHomeTime(obs.latest_event.timestamp)].filter(Boolean).join(" · ") :
     "No persisted event observed";
   $("#diagnosticsFoundationServices").innerHTML =
+    diagnosticsValue("Server uptime", uptimeText, "Started " + formatHomeTime(server.started_at)) +
     diagnosticsValue("Database", summary.database?.probe || "UNKNOWN", summary.database?.backend || "unknown") +
     diagnosticsValue("Object store", store.probe || (store.configured ? "UNKNOWN" : "NOT_CONFIGURED"), store.type || "—") +
     diagnosticsValue("Observability", obs.probe || "UNKNOWN", (obs.type || "—") + " · " + (obs.sink || "—")) +
