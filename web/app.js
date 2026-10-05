@@ -26,6 +26,10 @@ const state = {
   projectExecutionProjectId: null,
   projectExecutionError: null,
   projectExecutionLoading: false,
+  projectRunDetail: null,
+  projectRunDetailKey: null,
+  projectRunDetailError: null,
+  projectRunDetailLoading: false,
   selectedExecutionOrchestrationId: null,
   selectedExecutionPhaseId: null,
   projectPhaseDetail: null,
@@ -537,7 +541,7 @@ function renderHomeSummary() {
     "<tr>" +
       '<td><code>' + esc(run.run_id) + '</code><small class="run-status">' + esc(run.status) + "</small></td>" +
       '<td><button type="button" class="project-open-button compact-link" data-home-project-execution="' +
-      esc(run.project_id) + '"><strong>' + esc(run.project_name) + '</strong><code>' +
+      esc(run.project_id) + '" data-home-run-id="' + esc(run.run_id) + '"><strong>' + esc(run.project_name) + '</strong><code>' +
       esc(run.project_id) + "</code></button></td>" +
       '<td><span>' + esc(run.workunit_type || "—") + '</span><small>' + esc(run.phase_label || "—") + "</small></td>" +
       '<td><span>' + esc(formatHomeTime(run.started_at)) + '</span><small>' + esc(formatDuration(run.started_at)) + "</small></td>" +
@@ -809,6 +813,14 @@ function stopProjectExecutionStream() {
 
 function projectWorkspaceRoute(pathname = window.location.pathname) {
   const path = normalizedRoute(pathname);
+  const runMatch = path.match(/^\/app\/projects\/([^/]+)\/execution\/runs\/([^/]+)$/);
+  if (runMatch) {
+    let projectId = runMatch[1];
+    let runId = runMatch[2];
+    try { projectId = decodeURIComponent(projectId); } catch {}
+    try { runId = decodeURIComponent(runId); } catch {}
+    return { projectId, section: "execution", runId };
+  }
   const match = path.match(/^\/app\/projects\/([^/]+)(?:\/([^/]+))?(\/.*)?$/);
   if (!match) return null;
   let projectId = match[1];
@@ -817,11 +829,17 @@ function projectWorkspaceRoute(pathname = window.location.pathname) {
   return {
     projectId,
     section: extra ? "__invalid__" : (match[2] || "").toLowerCase(),
+    runId: null,
   };
 }
 
 function projectWorkspacePath(projectId, section = "overview") {
   return "/app/projects/" + encodeURIComponent(projectId) + "/" + section;
+}
+
+function projectRunPath(projectId, runId) {
+  return projectWorkspacePath(projectId, "execution") +
+    "/runs/" + encodeURIComponent(runId);
 }
 
 function projectSectionLabel(section) {
@@ -850,7 +868,9 @@ function renderProjectWorkspaceHeader(summary, route) {
   $("#projectWorkspaceName").textContent = project.name || "Project";
   $("#projectWorkspaceId").textContent = project.project_id || route.projectId;
   $("#projectWorkspaceBreadcrumb").textContent =
-    "Projects / " + (project.name || route.projectId) + " / " + projectSectionLabel(route.section);
+    "Projects / " + (project.name || route.projectId) + " / " +
+    projectSectionLabel(route.section) +
+    (route.runId ? (" / Run " + route.runId) : "");
   $("#projectWorkspaceLifecycle").textContent =
     "Lifecycle " + (summary.lifecycle?.status || "Unavailable");
   $("#projectWorkspaceActivity").textContent =
@@ -1599,6 +1619,121 @@ async function loadProjectExecutionReport() {
   }
 }
 
+function renderProjectRunFocus(route) {
+  const panel = $("#projectExecutionRunFocus");
+  if (!route.runId) {
+    panel.hidden = true;
+    $("#projectExecutionRunFocusState").hidden = true;
+    $("#projectExecutionRunFocusBody").innerHTML = "";
+    return;
+  }
+
+  panel.hidden = false;
+  const key = route.projectId + ":" + route.runId;
+  if (state.projectRunDetail && state.projectRunDetailKey === key) {
+    const detail = state.projectRunDetail;
+    $("#projectExecutionRunFocusState").hidden = detail.query_status === "COMPLETE";
+    if (detail.query_status !== "COMPLETE") {
+      $("#projectExecutionRunFocusState").className = "home-state-banner warn";
+      $("#projectExecutionRunFocusState").textContent =
+        "Run projection is partial. Missing identities are not inferred.";
+    }
+    const phase = detail.linked_phase;
+    $("#projectExecutionRunFocusBody").innerHTML =
+      '<section class="project-overview-summary">' +
+        projectOverviewMetric("Run", detail.run?.run_id || route.runId,
+          "attempt " + (detail.run?.attempt_number ?? "—")) +
+        projectOverviewMetric("Runtime", detail.run?.runtime_status || "—",
+          detail.run?.executor_actor_id || "SYSTEM") +
+        projectOverviewMetric("WorkUnit", detail.workunit?.workunit_id || "—",
+          (detail.workunit?.workunit_type || "—") + " · " + (detail.workunit?.status || "—")) +
+        projectOverviewMetric("Linked phase", phase?.phase_execution_id || "UNLINKED",
+          phase ? (phase.phase_id + " · " + phase.status) : "Run has no persisted phase link") +
+      '</section>' +
+      '<section class="project-execution-two-column">' +
+        '<article class="panel project-execution-panel"><div class="panel-head"><div>' +
+          '<p class="eyebrow">Reload-safe exact identity</p><h2>Run</h2></div></div>' +
+          renderExecutionRun(detail.run) + '</article>' +
+        '<article class="panel project-execution-panel"><div class="panel-head"><div>' +
+          '<p class="eyebrow">Owning WorkUnit</p><h2>Context</h2></div></div>' +
+          '<dl class="execution-facts">' +
+            '<div><dt>WorkUnit</dt><dd><code>' + esc(detail.workunit?.workunit_id || "—") + '</code></dd></div>' +
+            '<div><dt>Type</dt><dd><span>' + esc(detail.workunit?.workunit_type || "—") + '</span></dd></div>' +
+            '<div><dt>Status / version</dt><dd><span>' + esc(detail.workunit?.status || "—") +
+              ' · v' + esc(detail.workunit?.version ?? "—") + '</span></dd></div>' +
+            '<div><dt>Phase</dt><dd><code>' + esc(phase?.phase_execution_id || "UNLINKED") + '</code></dd></div>' +
+          '</dl></article>' +
+      '</section>';
+    return;
+  }
+
+  if (state.projectRunDetailError && state.projectRunDetailKey === key) {
+    $("#projectExecutionRunFocusState").hidden = false;
+    $("#projectExecutionRunFocusState").className = "home-state-banner error";
+    $("#projectExecutionRunFocusState").textContent =
+      "Exact Run unavailable — " + state.projectRunDetailError;
+    $("#projectExecutionRunFocusBody").innerHTML = "";
+    return;
+  }
+
+  $("#projectExecutionRunFocusState").hidden = false;
+  $("#projectExecutionRunFocusState").className = "home-state-banner loading";
+  $("#projectExecutionRunFocusState").textContent =
+    "Loading exact Run " + route.runId + "…";
+  $("#projectExecutionRunFocusBody").innerHTML = "";
+  void refreshProjectRunDetail(route, true);
+}
+
+async function refreshProjectRunDetail(route, render = true) {
+  if (!route.runId || state.projectRunDetailLoading) return;
+  const requestActorId = state.me?.actor_id || null;
+  const key = route.projectId + ":" + route.runId;
+  state.projectRunDetailLoading = true;
+  state.projectRunDetailError = null;
+  state.projectRunDetailKey = key;
+  try {
+    const result = await api(
+      "/browser/projects/" + encodeURIComponent(route.projectId) +
+      "/execution/runs/" + encodeURIComponent(route.runId)
+    );
+    if (!state.me || state.me.actor_id !== requestActorId) return;
+    state.projectRunDetail = result;
+    state.projectRunDetailKey = key;
+    const phaseId = result.linked_phase?.phase_execution_id || null;
+    const orchestrationId = result.linked_phase?.orchestration_id || null;
+    if (phaseId && orchestrationId) {
+      state.selectedExecutionOrchestrationId = orchestrationId;
+      state.selectedExecutionPhaseId = phaseId;
+      state.projectPhaseDetail = null;
+      state.projectPhaseDetailKey = null;
+      state.projectPhaseDetailError = null;
+    }
+  } catch (error) {
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+    state.projectRunDetail = null;
+    state.projectRunDetailKey = key;
+    state.projectRunDetailError = error.status === 404 ?
+      "Run not found in this authorized project." : error.message;
+  } finally {
+    state.projectRunDetailLoading = false;
+  }
+  const active = projectWorkspaceRoute();
+  if (!render || !active || active.section !== "execution" ||
+      active.projectId !== route.projectId || active.runId !== route.runId) return;
+  renderProjectRunFocus(active);
+  if (state.projectRunDetail?.linked_phase && state.projectExecution) {
+    renderProjectExecutionNavigation();
+    void refreshProjectPhaseDetail(
+      active,
+      state.projectRunDetail.linked_phase.phase_execution_id,
+      true
+    );
+  }
+}
+
 function renderProjectExecution(summary, route) {
   renderProjectWorkspaceHeader(summary, route);
   setProjectLocalNav("execution");
@@ -1615,6 +1750,23 @@ function renderProjectExecution(summary, route) {
   }
 
   const orchestrations = summary.orchestrations || [];
+  if (route.runId) {
+    let runMatch = null;
+    for (const orchestration of orchestrations) {
+      const phase = (orchestration.phases || []).find(
+        (item) => item.run_id === route.runId
+      );
+      if (phase) {
+        runMatch = { orchestration, phase };
+        break;
+      }
+    }
+    if (runMatch) {
+      state.selectedExecutionOrchestrationId =
+        runMatch.orchestration.orchestration_id;
+      state.selectedExecutionPhaseId = runMatch.phase.phase_execution_id;
+    }
+  }
   if (!orchestrations.some((item) => item.orchestration_id === state.selectedExecutionOrchestrationId)) {
     state.selectedExecutionOrchestrationId = orchestrations[0]?.orchestration_id || null;
   }
@@ -1635,7 +1787,9 @@ function renderProjectExecution(summary, route) {
   renderProjectExecutionNavigation();
   $("#projectExecutionGeneratedAt").textContent = formatHomeTime(summary.generated_at);
   $("#projectExecutionBuildSha").textContent = summary.build_sha || "unknown";
-  document.title = "GWF — " + (summary.project?.name || route.projectId) + " / Execution";
+  document.title = "GWF — " + (summary.project?.name || route.projectId) +
+    " / Execution" + (route.runId ? (" / " + route.runId) : "");
+  renderProjectRunFocus(route);
 
   const phaseId = state.selectedExecutionPhaseId;
   if (!phaseId) {
@@ -1695,6 +1849,9 @@ async function refreshProjectExecution(route, render = true) {
         "Project changed. Select an orchestration, then load its derived report.";
       state.selectedExecutionOrchestrationId = null;
       state.selectedExecutionPhaseId = null;
+      state.projectRunDetail = null;
+      state.projectRunDetailKey = null;
+      state.projectRunDetailError = null;
       state.projectPhaseDetail = null;
       state.projectPhaseDetailKey = null;
       state.projectPhaseDetailError = null;
@@ -2695,7 +2852,7 @@ function renderOperationsRunsRows() {
     return "<tr>" +
       '<td><code>' + esc(run.run_id) + '</code><small>attempt ' + esc(run.attempt_number) + "</small></td>" +
       '<td><button type="button" class="project-open-button compact-link" data-run-project-execution="' +
-      esc(run.project_id) + '"><strong>' + esc(run.project_name) + '</strong><code>' +
+      esc(run.project_id) + '" data-run-id="' + esc(run.run_id) + '"><strong>' + esc(run.project_name) + '</strong><code>' +
       esc(run.project_id) + '</code></button><small>' +
       esc((scope.tenant_name || "Tenant") + " / " + (scope.workspace_name || "Workspace")) +
       '</small><code>' + esc((scope.tenant_id || "—") + " · " + (scope.workspace_id || "—")) + "</code></td>" +
@@ -3850,6 +4007,10 @@ function showLogin() {
   state.projectOverviewProjectId = null;
   state.projectOverviewError = null;
   state.projectExecution = null;
+  state.projectRunDetail = null;
+  state.projectRunDetailKey = null;
+  state.projectRunDetailError = null;
+  state.projectRunDetailLoading = false;
   state.projectExecutionProjectId = null;
   state.projectExecutionError = null;
   state.selectedExecutionOrchestrationId = null;
@@ -3971,7 +4132,10 @@ $("#executingProjectsBody").addEventListener("click", (event) => {
 $("#liveRunsBody").addEventListener("click", (event) => {
   const button = event.target.closest("[data-home-project-execution]");
   if (!button) return;
-  navigateTo(projectWorkspacePath(button.dataset.homeProjectExecution, "execution"));
+  navigateTo(projectRunPath(
+    button.dataset.homeProjectExecution,
+    button.dataset.homeRunId
+  ));
 });
 $("#homeAttentionList").addEventListener("click", (event) => {
   const button = event.target.closest("[data-home-attention-kind]");
@@ -4136,6 +4300,12 @@ $("#projectExecutionOrchestrations").addEventListener("click", (event) => {
   if (route?.section === "execution") renderProjectExecution(state.projectExecution, route);
 });
 
+$("#projectExecutionRunFocusClear").addEventListener("click", () => {
+  const route = projectWorkspaceRoute();
+  if (!route) return;
+  navigateTo(projectWorkspacePath(route.projectId, "execution"));
+});
+
 $("#projectExecutionReportButton").addEventListener("click", async () => {
   await loadProjectExecutionReport();
 });
@@ -4177,7 +4347,10 @@ $("#accessRefreshButton").addEventListener("click", async () => {
 $("#operationsRunsBody").addEventListener("click", (event) => {
   const button = event.target.closest("[data-run-project-execution]");
   if (!button) return;
-  navigateTo(projectWorkspacePath(button.dataset.runProjectExecution, "execution"));
+  navigateTo(projectRunPath(
+    button.dataset.runProjectExecution,
+    button.dataset.runId
+  ));
 });
 
 $("#operationsRunsRefreshButton").addEventListener("click", async () => {
