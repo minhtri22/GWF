@@ -1436,6 +1436,85 @@ class ProjectDashboardService:
             "orchestrations": orchestrations,
         }
 
+    def project_run_execution(
+        self,
+        actor_id: str,
+        project_id: str,
+        run_id: str,
+        *,
+        build_sha: str,
+    ) -> dict[str, Any]:
+        """Authorized exact Run read projection for reload-safe browser inspection."""
+        self.runtime.tenancy.require_project_access(actor_id, project_id, "VIEW")
+        row = self.db.one(
+            "SELECT r.run_id,r.workunit_id,r.attempt_number,r.executor_actor_id,"
+            "r.input_revision_ids,r.started_at,r.finished_at,r.runtime_status,"
+            "r.exit_metadata,r.produced_revision_ids,r.evidence_ids,r.checkpoint_id,"
+            "r.correlation_id,w.workunit_type,w.status AS workunit_status,w.version "
+            "FROM runs r JOIN workunits w ON w.workunit_id=r.workunit_id "
+            "WHERE r.run_id=? AND w.project_id=?",
+            (run_id, project_id),
+        )
+        if not row:
+            raise NotFound("Run not found")
+        item = dict(row)
+        for key in (
+            "input_revision_ids",
+            "exit_metadata",
+            "produced_revision_ids",
+            "evidence_ids",
+        ):
+            item[key] = parse_json(item.get(key), [] if key != "exit_metadata" else {}) or (
+                [] if key != "exit_metadata" else {}
+            )
+
+        phase_row = self.db.one(
+            "SELECT p.phase_execution_id,p.orchestration_id,p.phase_id,p.phase_index,"
+            "p.generation,p.status,p.decision_outcome,p.failure_id,p.checkpoint_id,"
+            "p.started_at,p.finished_at "
+            "FROM phase_executions p "
+            "JOIN orchestrations o ON o.orchestration_id=p.orchestration_id "
+            "WHERE p.run_id=? AND o.project_id=? "
+            "ORDER BY p.started_at DESC,p.phase_execution_id DESC LIMIT 1",
+            (run_id, project_id),
+        )
+        phase = dict(phase_row) if phase_row else None
+        project = self._project(project_id)
+        return {
+            "generated_at": utcnow(),
+            "build_sha": build_sha,
+            "query_status": "COMPLETE",
+            "project": {
+                "project_id": project_id,
+                "name": project["name"],
+            },
+            "run": {
+                key: item.get(key)
+                for key in (
+                    "run_id",
+                    "workunit_id",
+                    "attempt_number",
+                    "executor_actor_id",
+                    "input_revision_ids",
+                    "started_at",
+                    "finished_at",
+                    "runtime_status",
+                    "exit_metadata",
+                    "produced_revision_ids",
+                    "evidence_ids",
+                    "checkpoint_id",
+                    "correlation_id",
+                )
+            },
+            "workunit": {
+                "workunit_id": item["workunit_id"],
+                "workunit_type": item["workunit_type"],
+                "status": item["workunit_status"],
+                "version": item["version"],
+            },
+            "linked_phase": phase,
+        }
+
     @staticmethod
     def _execution_scope_contains(value: Any, identities: set[str]) -> bool:
         if isinstance(value, dict):
