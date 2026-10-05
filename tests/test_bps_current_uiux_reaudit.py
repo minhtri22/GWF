@@ -201,12 +201,13 @@ def test_current_uiux_topbar_session_keyboard_and_attention_are_live():
     assert '$("#homeAttentionPanel")?.scrollIntoView' in js
     assert 'if (event.key === "Escape") setActorMenu(false);' in js
     assert 'aria-expanded' in js
-    assert 'window.addEventListener("popstate", renderRoute);' in js
+    assert 'window.addEventListener("popstate", () => {' in js
+    assert "if (state.bootstrap?.authenticated) renderRoute();" in js
 
     assert "/browser/auth/logout" in js
     assert "showLogin();" in js
     assert "gwr_browser_session" in api
-    assert "httponly=True" in api.lower()
+    assert "httponly=true" in api.lower()
     assert "Authorization: Bearer" not in js
 
 
