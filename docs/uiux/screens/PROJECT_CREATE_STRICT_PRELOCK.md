@@ -8,7 +8,7 @@ OWNER              = BPS-M02
 ENTRY_SURFACE      = Projects index
 DESTINATION        = /app/projects/:projectId/overview
 PROTOCOL           = STRICT_GOVERNANCE (BPS-SCREEN-FAST-LANE-v1 exit)
-STATUS             = PRELOCK / PRODUCT_MUTATION_NOT_STARTED
+STATUS             = IMPLEMENTED / STRICT_CONTRACT_SATISFIED / MASTER_REAUDIT_PENDING
 BASE_HEAD          = b0d628e3b3d160f4007ba77e215c17f6fae8fac5
 PREDECESSOR        = PROJECTS_INDEX = SCREEN_PASS
 ```
@@ -26,7 +26,7 @@ Authorization: Bearer ...
 
 The browser shell deliberately does not expose/reuse the bearer token in JavaScript. Therefore a live Create Project browser flow cannot be implemented truthfully by wiring the current frontend directly to that endpoint. A browser-authoritative mutation contract is required and must preserve the existing authority rules.
 
-No product code is authorized by this prelock document.
+This paragraph records the historical prelock state. Product implementation was subsequently authorized and delivered under the exact frozen semantics below; see the closure addendum at the end of this document.
 
 ## Governing sources
 
@@ -147,8 +147,44 @@ PC-G13  browser UAT mutation verification plan frozen
 
 ```text
 PROJECTS_INDEX                 = SCREEN_PASS
-PROJECT_CREATE_FLOW            = STRICT_PRELOCK
-PRODUCT_MUTATION_IMPLEMENTED   = NO
-FAST_LANE                      = STOPPED_FOR_THIS_FLOW
-NEXT_LEGAL_ACTION              = PROJECT_CREATE_MUTATION_CONTRACT_AND_ATOMICITY_REVIEW
+PROJECT_CREATE_FLOW            = IMPLEMENTED_UNDER_STRICT_CONTRACT
+PRODUCT_MUTATION_IMPLEMENTED   = YES
+FAST_LANE                      = NOT_APPLICABLE_TO_THIS_MUTATION
+NEXT_LEGAL_ACTION              = CURRENT_UI_UX_MASTER_REAUDIT
+```
+
+
+## Closure addendum — implemented strict contract
+
+The prelock findings were resolved without weakening the original service boundaries.
+
+- PC-G01/P2: browser mutations use the HttpOnly browser-session principal and delegate to the existing tenancy/project-governance services.
+- PC-G03/P4: `GET /browser/projects/create-options` returns only actor-manageable ACTIVE workspaces and same-tenant PUBLISHED Domain revisions.
+- PC-G05: hidden/unauthorized workspace and project identities remain non-disclosing.
+- PC-G06: `GovernedWorkflowRuntime.create_scoped_project` is transactionally qualified; forced late Domain-pin failure leaves no project/scope/member/domain/security-event residue.
+- PC-G07: browser Project ID is server-generated; browser does not expose custom project-ID injection.
+- PC-G08/P9: success returns exact authoritative project projection and destination; failure does not synthesize success.
+- PC-G10: existing security/audit evidence remains service-owned.
+- PC-G11: Project Overview is now LIVE and remains the success destination.
+- PC-G12: targeted browser-create/lifecycle tests plus affected BPS regression are part of the current master re-audit.
+- PC-G13: final browser UAT remains deferred under `BPS-QA-FIRST-DEFERRED-UAT-v1`.
+
+Lifecycle workflow added under the same native authority boundary:
+
+```text
+RENAME   -> ProjectGovernanceService.rename()
+ARCHIVE  -> ProjectGovernanceService.archive(drain, reason)
+RESTORE  -> ProjectGovernanceService.restore()
+```
+
+Browser controls are capability-scoped by the same project `MANAGE_MEMBERS` authority used by the native lifecycle service. Governed confirmation exposes exact target/scope/consequence. Domain binding remains immutable; no upgrade/rebind action was introduced.
+
+Current closure:
+
+```text
+STRICT_PRELOCK_FINDINGS = RESOLVED
+IMPLEMENTATION          = PRESENT
+TARGETED_QA             = PRESENT
+MASTER_REAUDIT          = IN_PROGRESS
+FINAL_USER_UAT          = DEFERRED
 ```
