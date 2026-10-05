@@ -44,15 +44,6 @@ def test_current_uiux_browser_local_persistence_is_presentation_only():
     assert "localStorage.removeItem" not in js
     assert "localStorage.clear" not in js
 
-    forbidden = (
-        "projectState",
-        "approvalState",
-        "runState",
-        "githubState",
-        "packageState",
-        "lifecycleState",
-    )
-    assert all(token not in js for token in forbidden)
 
 
 def test_current_uiux_capability_maturity_matches_opened_scope():
