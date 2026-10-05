@@ -265,10 +265,19 @@ def test_projects_index_capability_and_browser_surface(tmp_path, monkeypatch):
 
     assert 'api("/browser/projects-index")' in js
     assert 'item.id === "projects"' in js
-    assert "Create Project" not in html
-    assert "Rename Project" not in html
-    assert "Archive Project" not in html
-    assert "Restore Project" not in html
+    assert 'id="projectsCreateButton"' in html
+    assert 'id="projectCreateDialog"' in html
+    assert 'id="projectCreateWorkspace"' in html
+    assert 'id="projectCreateDomain"' in html
+    assert 'api("/browser/projects/create-options")' in js
+    assert 'api("/browser/projects", {' in js
+    assert 'id="projectLifecycleControls"' in html
+    assert 'id="projectRenameButton"' in html
+    assert 'id="projectArchiveButton"' in html
+    assert 'id="projectRestoreButton"' in html
+    assert 'performProjectLifecycleAction("RENAME")' in js
+    assert 'performProjectLifecycleAction("ARCHIVE")' in js
+    assert 'performProjectLifecycleAction("RESTORE")' in js
     assert "/app/projects/" in js
     assert 'data-project-open="' in js
     assert 'projectWorkspacePath(button.dataset.projectOpen, "overview")' in js
