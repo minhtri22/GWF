@@ -409,7 +409,9 @@ function renderHomeSummary() {
     const phase = p.phase_label || "—";
     const phaseIds = [p.orchestration_id, p.phase_execution_id].filter(Boolean).join(" · ");
     return "<tr>" +
-      '<td><strong>' + esc(p.project_name) + '</strong><code>' + esc(p.project_id) + "</code></td>" +
+      '<td><button type="button" class="project-open-button compact-link" data-home-project-overview="' +
+      esc(p.project_id) + '"><strong>' + esc(p.project_name) + '</strong><code>' +
+      esc(p.project_id) + "</code></button></td>" +
       '<td><span class="data-state">' + esc(p.lifecycle) + '</span><small>' + esc(p.execution_activity) + "</small></td>" +
       '<td><span>' + esc(domainText) + "</span></td>" +
       '<td><span>' + esc(phase) + '</span><code>' + esc(phaseIds || "—") + "</code></td>" +
@@ -425,7 +427,9 @@ function renderHomeSummary() {
   $("#liveRunsBody").innerHTML = runs.length ? runs.map((run) =>
     "<tr>" +
       '<td><code>' + esc(run.run_id) + '</code><small class="run-status">' + esc(run.status) + "</small></td>" +
-      '<td><strong>' + esc(run.project_name) + '</strong><code>' + esc(run.project_id) + "</code></td>" +
+      '<td><button type="button" class="project-open-button compact-link" data-home-project-execution="' +
+      esc(run.project_id) + '"><strong>' + esc(run.project_name) + '</strong><code>' +
+      esc(run.project_id) + "</code></button></td>" +
       '<td><span>' + esc(run.workunit_type || "—") + '</span><small>' + esc(run.phase_label || "—") + "</small></td>" +
       '<td><span>' + esc(formatHomeTime(run.started_at)) + '</span><small>' + esc(formatDuration(run.started_at)) + "</small></td>" +
       '<td><code>' + esc(run.actor || "SYSTEM") + "</code></td>" +
@@ -436,9 +440,12 @@ function renderHomeSummary() {
   const attention = summary.attention || [];
   $("#homeAttentionCount").textContent = attention.length;
   $("#homeAttentionList").innerHTML = attention.length ? attention.map((item) =>
-    '<div class="feed-item attention-item"><div><strong>' + esc(item.kind) + '</strong><span>' +
-    esc(item.project_name || "System") + '</span></div><p>' + esc(item.label || item.record_id) +
-    '</p><code>' + esc(item.record_id) + '</code><time>' + esc(formatHomeTime(item.created_at)) + "</time></div>"
+    '<button type="button" class="feed-item attention-item feed-action" data-home-attention-kind="' +
+    esc(item.kind) + '" data-home-attention-record="' + esc(item.record_id) +
+    '" data-home-attention-project="' + esc(item.project_id || "") + '"><div><strong>' +
+    esc(item.kind) + '</strong><span>' + esc(item.project_name || "System") +
+    '</span></div><p>' + esc(item.label || item.record_id) + '</p><code>' +
+    esc(item.record_id) + '</code><time>' + esc(formatHomeTime(item.created_at)) + "</time></button>"
   ).join("") : '<div class="feed-empty">No authoritative attention items.</div>';
 
   const activity = summary.recent_activity || [];
@@ -2126,8 +2133,9 @@ function renderPackagesDomainDetail() {
         '</dl>' +
         '<div class="package-revision-usage"><span>Projects pinned to this exact revision</span>' +
           (projects.length ? projects.map((usage) =>
-            '<div><strong>' + esc(usage.project_name) + '</strong><code>' +
-            esc(usage.project_id) + '</code><small>' +
+            '<div><button type="button" class="project-open-button compact-link" data-package-project="' +
+            esc(usage.project_id) + '"><strong>' + esc(usage.project_name) + '</strong><code>' +
+            esc(usage.project_id) + '</code></button><small>' +
             esc((usage.tenant_name || "Tenant") + " / " + (usage.workspace_name || "Workspace") +
               " · " + formatHomeTime(usage.bound_at)) + '</small></div>'
           ).join("") : '<div class="feed-empty">No authorized project is pinned to this revision.</div>') +
@@ -2224,8 +2232,9 @@ function renderPackagesUsage() {
       '<td><span>' + esc(packageIdentity) + '</span><code>' +
       esc(item.package_id || item.skill_package_id || "—") + "</code></td>" +
       '<td>' + packageUsageBasisPill(item.basis) + "</td>" +
-      '<td><strong>' + esc(item.project_name) + '</strong><code>' +
-      esc(item.project_id) + "</code></td>" +
+      '<td><button type="button" class="project-open-button compact-link" data-package-project="' +
+      esc(item.project_id) + '"><strong>' + esc(item.project_name) + '</strong><code>' +
+      esc(item.project_id) + "</code></button></td>" +
       '<td><span>' + esc(context || "—") + '</span><small>' +
       esc((item.tenant_name || "Tenant") + " / " + (item.workspace_name || "Workspace")) +
       "</small></td>" +
@@ -2576,8 +2585,10 @@ function renderOperationsRunsRows() {
     const latest = run.latest_event || null;
     return "<tr>" +
       '<td><code>' + esc(run.run_id) + '</code><small>attempt ' + esc(run.attempt_number) + "</small></td>" +
-      '<td><strong>' + esc(run.project_name) + '</strong><code>' + esc(run.project_id) +
-      '</code><small>' + esc((scope.tenant_name || "Tenant") + " / " + (scope.workspace_name || "Workspace")) +
+      '<td><button type="button" class="project-open-button compact-link" data-run-project-execution="' +
+      esc(run.project_id) + '"><strong>' + esc(run.project_name) + '</strong><code>' +
+      esc(run.project_id) + '</code></button><small>' +
+      esc((scope.tenant_name || "Tenant") + " / " + (scope.workspace_name || "Workspace")) +
       '</small><code>' + esc((scope.tenant_id || "—") + " · " + (scope.workspace_id || "—")) + "</code></td>" +
       '<td><strong>' + esc(run.workunit_type || "—") + '</strong><code>' + esc(run.workunit_id) +
       '</code><small>' + esc(phase.phase_id || "No linked phase") + '</small><code>' +
@@ -3792,6 +3803,37 @@ $("#commandPaletteDialog").addEventListener("click", (event) => {
   if (event.target === $("#commandPaletteDialog")) setCommandPalette(false);
 });
 
+$("#executingProjectsBody").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-home-project-overview]");
+  if (!button) return;
+  navigateTo(projectWorkspacePath(button.dataset.homeProjectOverview, "overview"));
+});
+$("#liveRunsBody").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-home-project-execution]");
+  if (!button) return;
+  navigateTo(projectWorkspacePath(button.dataset.homeProjectExecution, "execution"));
+});
+$("#homeAttentionList").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-home-attention-kind]");
+  if (!button) return;
+  const kind = button.dataset.homeAttentionKind;
+  const projectId = button.dataset.homeAttentionProject || "";
+  const recordId = button.dataset.homeAttentionRecord || "";
+  if (kind === "PENDING_APPROVAL") {
+    state.selectedApprovalId = recordId;
+    navigateTo("/app/operations/approvals");
+  } else if ((kind === "FAILURE" || kind === "WAITING_HUMAN") && projectId) {
+    navigateTo(projectWorkspacePath(projectId, "execution"));
+  } else if (kind === "GITHUB_CHANGESET" && projectId) {
+    state.selectedGithubProjectId = projectId;
+    navigateTo("/app/system/github");
+  } else if (kind === "SYSTEM_HEALTH") {
+    navigateTo("/app/system/diagnostics");
+  } else if (projectId) {
+    navigateTo(projectWorkspacePath(projectId, "overview"));
+  }
+});
+
 $("#homeRefreshButton").addEventListener("click", async () => {
   await refreshHomeSummary(true);
 });
@@ -3838,6 +3880,11 @@ $("#packagesRefreshButton").addEventListener("click", async () => {
 });
 
 $("#packagesRouteView").addEventListener("click", (event) => {
+  const project = event.target.closest("[data-package-project]");
+  if (project) {
+    navigateTo(projectWorkspacePath(project.dataset.packageProject, "overview"));
+    return;
+  }
   const tab = event.target.closest("[data-packages-tab]");
   if (tab) {
     state.selectedPackagesTab = tab.dataset.packagesTab;
@@ -3965,6 +4012,12 @@ $("#projectExecutionPhases").addEventListener("click", (event) => {
 
 $("#accessRefreshButton").addEventListener("click", async () => {
   await refreshAccessSummary(true);
+});
+
+$("#operationsRunsBody").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-run-project-execution]");
+  if (!button) return;
+  navigateTo(projectWorkspacePath(button.dataset.runProjectExecution, "execution"));
 });
 
 $("#operationsRunsRefreshButton").addEventListener("click", async () => {
