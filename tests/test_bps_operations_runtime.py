@@ -94,6 +94,16 @@ def _login(client, username):
 
 def _worker(rt, project_id: str, name: str, *, labels=None):
     actor = rt.governance.create_actor("AGENT", name, ["operator"], [project_id])
+    owner = rt.db.one(
+        "SELECT actor_id FROM project_memberships "
+        "WHERE project_id=? AND role='OWNER' AND status='ACTIVE' "
+        "ORDER BY created_at,actor_id LIMIT 1",
+        (project_id,),
+    )
+    assert owner is not None
+    rt.tenancy.add_project_member(
+        project_id, actor, "RESEARCHER", owner["actor_id"]
+    )
     worker = rt.distributed.register_worker(
         actor,
         capabilities={"labels": labels or ["python"], "workunit_types": ["execute_plan"]},
