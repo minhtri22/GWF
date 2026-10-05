@@ -192,8 +192,10 @@ def test_current_uiux_topbar_session_keyboard_and_attention_are_live():
     assert 'id="logoutButton"' in html
 
     assert '"All authorized · "' in js
-    assert 'product.domain_id || "runtime"' in js
-    assert 'product.backend || "backend"' in js
+    assert 'product.server_mode || "unknown-mode"' in js
+    assert 'product.backend || "unknown-backend"' in js
+    assert 'product.domain_id || "unknown-domain"' in js
+    assert '"server_mode": "canonical"' in (ROOT / "src" / "gwr" / "server.py").read_text(encoding="utf-8")
     assert 'Attention required: ' in js
     assert '$("#homeAttentionPanel")?.scrollIntoView' in js
     assert 'if (event.key === "Escape") setActorMenu(false);' in js
