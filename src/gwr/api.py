@@ -14,6 +14,7 @@ import asyncio
 import json
 import os
 import tempfile
+import time
 import yaml
 from pathlib import Path
 
@@ -199,6 +200,8 @@ def create_app(
     }
     resolved_product_info.update(product_info or {})
     browser_cookie_name = "gwr_browser_session"
+    server_started_at = utcnow()
+    server_started_monotonic = time.monotonic()
     browser_capabilities = [
         {"id": "home", "label": "Home", "state": "LIVE_MODULE", "slice": "BPS-M01", "route": "/app/home"},
         {"id": "projects", "label": "Projects", "state": "LIVE_MODULE", "slice": "BPS-M02", "route": "/app/projects"},
@@ -715,6 +718,12 @@ def create_app(
             "generated_at": utcnow(),
             "build_sha": resolved_product_info["build_sha"],
             "query_status": query_status,
+            "server": {
+                "started_at": server_started_at,
+                "uptime_seconds": max(
+                    0, int(time.monotonic() - server_started_monotonic)
+                ),
+            },
             "product": {
                 "product": resolved_product_info.get("product"),
                 "version": resolved_product_info.get("version"),
