@@ -3897,7 +3897,8 @@ function renderIdentity() {
     "All authorized · " + (memberships.tenants?.length || 0) + " tenant · " +
     (memberships.workspaces?.length || 0) + " workspace";
   $("#topbarRuntimeContext").textContent =
-    (product.domain_id || "runtime") + " · " + (product.backend || "backend");
+    (product.server_mode || "unknown-mode") + " · " + (product.backend || "unknown-backend") +
+    " · " + (product.domain_id || "unknown-domain");
   $("#foundationBuild").textContent = product.version + " · " + String(product.build_sha || "unknown").slice(0, 8);
   $("#exactBuild").textContent = product.version + " · " + product.build_sha;
   $("#exactDomain").textContent = product.domain_id;
