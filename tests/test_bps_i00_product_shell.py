@@ -261,7 +261,6 @@ def test_i00_topbar_has_no_dead_shortcut_and_exposes_live_actor_attention_afford
     html = (WEB / "index.html").read_text(encoding="utf-8")
     js = (WEB / "app.js").read_text(encoding="utf-8")
     css = (WEB / "styles.css").read_text(encoding="utf-8")
-    css = (WEB / "styles.css").read_text(encoding="utf-8")
 
     # Bounded command/navigation palette is live; it does not advertise future GAC search.
     assert "Ctrl K" not in html
@@ -277,7 +276,9 @@ def test_i00_topbar_has_no_dead_shortcut_and_exposes_live_actor_attention_afford
     assert 'id="topbarRuntimeContext"' in html
     assert 'id="actorMenuBuild"' in html
     assert '"All authorized · "' in js
-    assert 'product.domain_id || "runtime"' in js
+    assert 'product.server_mode || "unknown-mode"' in js
+    assert 'product.backend || "unknown-backend"' in js
+    assert 'product.domain_id || "unknown-domain"' in js
 
     # Attention count is actionable through the already-authoritative Home queue.
     assert 'id="notificationButton"' in html
