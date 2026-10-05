@@ -235,7 +235,9 @@ function renderNav() {
 
 function commandPaletteRows() {
   const needle = $("#commandPaletteFilter")?.value.trim().toLowerCase() || "";
-  return (state.bootstrap?.capabilities || []).filter((item) => {
+  return (state.bootstrap?.capabilities || []).filter((item) =>
+    item.state === "LIVE_FOUNDATION" || item.state === "LIVE_MODULE"
+  ).filter((item) => {
     const meta = stateMeta(item);
     return !needle || [
       displayLabel(item), displaySubtitle(item), item.route, meta.label,
