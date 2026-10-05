@@ -710,3 +710,137 @@ def test_project_execution_browser_surface_is_live_read_only_and_fallback_capabl
     ):
         assert forbidden not in html
 
+
+
+def test_browser_exact_run_projection_and_reload_safe_route(tmp_path, monkeypatch):
+    rt, owner, outsider, executor, project, hidden_project = _fixture(
+        tmp_path, monkeypatch
+    )
+    _seed_phase(rt, owner, executor, project)
+
+    rt.db.conn.execute(
+        "INSERT INTO workunits VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "wu_execution_unlinked",
+            project,
+            "UNLINKED_CHECK",
+            "[]",
+            "[]",
+            "[]",
+            "[]",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            "[]",
+            "SUCCEEDED",
+            1,
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO runs VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "run_execution_unlinked",
+            "wu_execution_unlinked",
+            1,
+            executor,
+            "[]",
+            "2026-09-26T04:00:00+00:00",
+            "2026-09-26T04:01:00+00:00",
+            "SUCCEEDED",
+            "{}",
+            "[]",
+            "[]",
+            None,
+            "corr-unlinked",
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO workunits VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "wu_execution_hidden",
+            hidden_project,
+            "HIDDEN_CHECK",
+            "[]",
+            "[]",
+            "[]",
+            "[]",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            "[]",
+            "SUCCEEDED",
+            1,
+        ),
+    )
+    rt.db.conn.execute(
+        "INSERT INTO runs VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "run_execution_hidden",
+            "wu_execution_hidden",
+            1,
+            outsider,
+            "[]",
+            "2026-09-26T04:00:00+00:00",
+            "2026-09-26T04:01:00+00:00",
+            "SUCCEEDED",
+            "{}",
+            "[]",
+            "[]",
+            None,
+            "corr-hidden",
+        ),
+    )
+    rt.db.conn.commit()
+
+    client = TestClient(_app(rt))
+    _login(client)
+
+    linked = client.get(
+        f"/browser/projects/{project}/execution/runs/run_execution"
+    )
+    assert linked.status_code == 200
+    body = linked.json()
+    assert body["query_status"] == "COMPLETE"
+    assert body["project"]["project_id"] == project
+    assert body["run"]["run_id"] == "run_execution"
+    assert body["run"]["runtime_status"] == "RUNNING"
+    assert body["workunit"]["workunit_id"] == "wu_execution"
+    assert body["linked_phase"]["phase_execution_id"] == "phase_execution_exact"
+    assert body["linked_phase"]["orchestration_id"] == "orch_execution"
+
+    unlinked = client.get(
+        f"/browser/projects/{project}/execution/runs/run_execution_unlinked"
+    )
+    assert unlinked.status_code == 200
+    unlinked_body = unlinked.json()
+    assert unlinked_body["run"]["run_id"] == "run_execution_unlinked"
+    assert unlinked_body["linked_phase"] is None
+
+    assert client.get(
+        f"/browser/projects/{project}/execution/runs/run_execution_hidden"
+    ).status_code == 404
+    assert client.get(
+        f"/browser/projects/{hidden_project}/execution/runs/run_execution_hidden"
+    ).status_code == 404
+    assert client.get(
+        f"/browser/projects/{project}/execution/runs/missing-run"
+    ).status_code == 404
+
+    deep = client.get(
+        f"/app/projects/{project}/execution/runs/run_execution"
+    )
+    assert deep.status_code == 200
+    assert 'id="appView"' in deep.text
+
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    assert "/execution\\/runs\\/" in js
+    assert "function projectRunPath" in js
+    assert 'id="projectExecutionRunFocus"' in html
+    assert 'api(\n      "/browser/projects/" + encodeURIComponent(route.projectId) +\n      "/execution/runs/" + encodeURIComponent(route.runId)' in js
+    assert "Run has no persisted phase link" in js
+    rt.close()
