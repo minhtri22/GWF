@@ -240,3 +240,17 @@ SHELL_RERUN_PASS    = 3
 PROJECTS_INDEX      = SCREEN_PASS
 NEXT_SCREEN_ALLOWED = true
 ```
+
+## Current UI/UX re-audit addendum
+
+PI-29/PI-30 are historical safeguards from the phase where Project Overview and governed Project creation/lifecycle workflows were not yet qualified. The current state is:
+
+- Project rows open the exact authorized Project Overview.
+- The Projects index exposes the now-qualified **Create Project** action.
+- Create Project uses the bounded cookie-authenticated create-options + mutation contract and governed confirmation.
+- Rename / Archive / Restore are exposed inside the exact Project workspace only when the authoritative lifecycle-management projection permits them.
+- Member administration remains under System → Access.
+- Domain binding remains immutable under the current contract; no rebind/upgrade action is exposed.
+- No fake or UI-only lifecycle action is authorized.
+
+Therefore PI-29/PI-30 should be read as “do not expose an unqualified/fake action or destination,” not as a permanent prohibition on the workflows that were subsequently implemented and qualified.
