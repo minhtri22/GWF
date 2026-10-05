@@ -991,6 +991,47 @@
           </article>
         </section>
 
+        <div id="diagnosticsStateBanner" class="home-state-banner" hidden></div>
+
+        <section class="home-grid diagnostics-detail-grid">
+          <article class="panel compact-panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">Schema integrity</p><h2>Migrations</h2></div>
+              <span id="diagnosticsMigrationCount" class="panel-count">—</span>
+            </div>
+            <div id="diagnosticsMigrationList" class="status-list"></div>
+          </article>
+
+          <article class="panel compact-panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">Storage and telemetry</p><h2>Foundation services</h2></div>
+            </div>
+            <div id="diagnosticsFoundationServices" class="status-list"></div>
+          </article>
+        </section>
+
+        <section class="home-grid diagnostics-detail-grid">
+          <article class="panel compact-panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">External boundary</p><h2>GitHub adapter</h2></div>
+            </div>
+            <div id="diagnosticsGithubStatus" class="status-list"></div>
+          </article>
+
+          <article class="panel compact-panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">Failover provenance</p><h2>Recent provider attempts</h2></div>
+              <span id="diagnosticsProviderCount" class="panel-count">0</span>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table compact">
+                <thead><tr><th>Provider / operation</th><th>Outcome</th><th>Project</th><th>Time</th></tr></thead>
+                <tbody id="diagnosticsProviderBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
         <section class="identity-strip">
           <div>
             <span>Exact build</span>
