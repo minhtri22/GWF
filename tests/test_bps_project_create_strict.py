@@ -304,3 +304,78 @@ def test_browser_project_lifecycle_mutation_is_non_disclosing_for_viewer(tmp_pat
     assert client.post(f"/browser/projects/{project_id}/archive", json={"drain": False, "reason": "Denied"}).status_code == 404
     assert client.post(f"/browser/projects/{project_id}/restore").status_code == 404
     rt.close()
+
+
+def test_browser_project_archive_requires_explicit_drain_for_active_execution(
+    tmp_path, monkeypatch
+):
+    rt, actor, tenant_id, workspace_id = make_runtime(tmp_path, monkeypatch)
+    project_id = rt.create_scoped_project(
+        "Active Archive Project",
+        tenant_id,
+        workspace_id,
+        actor,
+        project_id="project_active_archive",
+    )
+    rt.db.conn.execute(
+        "INSERT INTO orchestrations VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "orch_active_archive",
+            project_id,
+            rt.domain.domain_id,
+            "RUNNING",
+            "phase-alpha",
+            0,
+            None,
+            0,
+            "2026-10-05T03:00:00+00:00",
+            "2026-10-05T03:00:00+00:00",
+            None,
+            "{}",
+        ),
+    )
+    rt.db.conn.commit()
+
+    client = TestClient(app_for(rt))
+    assert client.post(
+        "/browser/auth/login",
+        json={"username": "creator", "password": "creator-password-long"},
+    ).status_code == 200
+
+    overview = client.get(
+        f"/browser/projects/{project_id}/overview"
+    ).json()
+    assert overview["lifecycle_management"]["archive_requires_drain"] is True
+    assert overview["lifecycle_management"]["archive_activity"][
+        "active_orchestrations"
+    ] == 1
+
+    blocked = client.post(
+        f"/browser/projects/{project_id}/archive",
+        json={"drain": False, "reason": "must drain"},
+    )
+    assert blocked.status_code == 400
+    assert rt.project_governance.status(project_id)["status"] == "ACTIVE"
+
+    draining = client.post(
+        f"/browser/projects/{project_id}/archive",
+        json={"drain": True, "reason": "operator drain"},
+    )
+    assert draining.status_code == 200
+    payload = draining.json()
+    assert payload["result"]["status"] == "ARCHIVING"
+    assert payload["overview"]["lifecycle"]["status"] == "ARCHIVING"
+    assert payload["overview"]["lifecycle_management"]["allowed_actions"] == [
+        "RESTORE"
+    ]
+
+    audit = rt.db.one(
+        "SELECT action,reason_code FROM audit_events "
+        "WHERE project_id=? ORDER BY timestamp DESC,event_id DESC LIMIT 1",
+        (project_id,),
+    )
+    assert dict(audit) == {
+        "action": "PROJECT_ARCHIVE_REQUESTED",
+        "reason_code": "operator drain",
+    }
+    rt.close()
