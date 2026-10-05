@@ -6,6 +6,9 @@ const state = {
   bootstrap: null,
   me: null,
   health: null,
+  diagnostics: null,
+  diagnosticsError: null,
+  diagnosticsLoading: false,
   home: null,
   homeError: null,
   homeLoading: false,
@@ -310,6 +313,109 @@ function renderLockedRoute(item) {
   $("#routeStateBadge").textContent = meta.label;
 }
 
+function diagnosticsValue(label, value, detail = "") {
+  return '<div class="status-row"><span>' + esc(label) + '</span><strong>' +
+    esc(value ?? "—") + '</strong>' + (detail ? '<small>' + esc(detail) + '</small>' : "") + "</div>";
+}
+
+function renderDiagnosticsError(message) {
+  $("#diagnosticsStateBanner").hidden = false;
+  $("#diagnosticsStateBanner").className = "home-state-banner error";
+  $("#diagnosticsStateBanner").textContent = "Diagnostics unavailable — " + message;
+  $("#diagnosticsMigrationList").innerHTML = '<div class="feed-empty">Migration status unavailable.</div>';
+  $("#diagnosticsFoundationServices").innerHTML = '<div class="feed-empty">Foundation service status unavailable.</div>';
+  $("#diagnosticsGithubStatus").innerHTML = '<div class="feed-empty">GitHub adapter status unavailable.</div>';
+  $("#diagnosticsProviderBody").innerHTML = homeEmpty("Provider provenance unavailable.", 4);
+  $("#diagnosticsMigrationCount").textContent = "—";
+  $("#diagnosticsProviderCount").textContent = "—";
+}
+
+function renderDiagnosticsSummary() {
+  const summary = state.diagnostics;
+  if (!summary) {
+    renderDiagnosticsError(state.diagnosticsError || "No authoritative diagnostics projection returned.");
+    return;
+  }
+  const complete = summary.query_status === "COMPLETE";
+  $("#diagnosticsStateBanner").hidden = complete;
+  if (!complete) {
+    $("#diagnosticsStateBanner").className = "home-state-banner warn";
+    const components = (summary.errors || []).map((item) => item.component).filter(Boolean);
+    $("#diagnosticsStateBanner").textContent =
+      "Diagnostics projection is partial" + (components.length ? " — " + components.join(", ") : "") + ".";
+  }
+
+  const migrations = summary.migrations?.revisions || [];
+  $("#diagnosticsMigrationCount").textContent = migrations.length;
+  $("#diagnosticsMigrationList").innerHTML = migrations.length ? migrations.map((item) => {
+    const status = !item.applied ? "PENDING" : (item.checksum_matches === false ? "CHECKSUM_MISMATCH" : "APPLIED");
+    const detail = item.applied ?
+      ("stored " + (item.stored_checksum || "—")) :
+      ("expected " + (item.expected_checksum || "—"));
+    return diagnosticsValue(item.migration_id, status, detail);
+  }).join("") : '<div class="feed-empty">No migration revisions are reported.</div>';
+
+  const store = summary.object_store || {};
+  const obs = summary.observability || {};
+  const latest = obs.latest_event ?
+    [obs.latest_event.event, formatHomeTime(obs.latest_event.timestamp)].filter(Boolean).join(" · ") :
+    "No persisted event observed";
+  $("#diagnosticsFoundationServices").innerHTML =
+    diagnosticsValue("Database", summary.database?.probe || "UNKNOWN", summary.database?.backend || "unknown") +
+    diagnosticsValue("Object store", store.probe || (store.configured ? "UNKNOWN" : "NOT_CONFIGURED"), store.type || "—") +
+    diagnosticsValue("Observability", obs.probe || "UNKNOWN", (obs.type || "—") + " · " + (obs.sink || "—")) +
+    diagnosticsValue("Telemetry events", obs.event_count ?? "—", latest) +
+    diagnosticsValue("Metric keys", (obs.metric_keys || []).join(", ") || "—", (obs.event_types || []).join(", ") || "No event types");
+
+  const github = summary.github || {};
+  $("#diagnosticsGithubStatus").innerHTML =
+    diagnosticsValue("Projection", github.query_status || "UNKNOWN", "System / GitHub is separate from core health") +
+    diagnosticsValue("Connections", github.connections ?? 0, "ACTIVE " + (github.active ?? 0) + " · DISABLED " + (github.disabled ?? 0)) +
+    diagnosticsValue("Repository bindings", github.bindings ?? 0, "Persisted bindings") +
+    diagnosticsValue("Adapters attached", github.attached ?? 0, "Runtime observation only");
+
+  const providerEvents = summary.provider_events || [];
+  $("#diagnosticsProviderCount").textContent = providerEvents.length;
+  $("#diagnosticsProviderBody").innerHTML = providerEvents.length ? providerEvents.map((item) =>
+    "<tr>" +
+      '<td><strong>' + esc(item.provider_name) + '</strong><small>' + esc(item.operation) + '</small><code>' +
+      esc(item.provider_event_id) + "</code></td>" +
+      '<td><span class="' + (item.outcome === "SUCCESS" ? "status-good" : "attention-text") + '">' +
+      esc(item.outcome) + '</span><small>' + esc(item.error_code || "—") + "</small></td>" +
+      '<td><code>' + esc(item.project_id || "—") + "</code></td>" +
+      '<td><span>' + esc(formatHomeTime(item.created_at)) + '</span><small>' +
+      esc(item.latency_ms == null ? "—" : (item.latency_ms + " ms")) + "</small></td>" +
+    "</tr>"
+  ).join("") : homeEmpty("No provider attempts are recorded in the current authorized scope.", 4);
+}
+
+async function refreshDiagnostics(render = true) {
+  if (state.diagnosticsLoading) return;
+  state.diagnosticsLoading = true;
+  state.diagnosticsError = null;
+  if (render) {
+    $("#diagnosticsStateBanner").hidden = false;
+    $("#diagnosticsStateBanner").className = "home-state-banner loading";
+    $("#diagnosticsStateBanner").textContent = "Loading authoritative production diagnostics…";
+  }
+  try {
+    state.diagnostics = await api("/browser/diagnostics");
+  } catch (error) {
+    state.diagnostics = null;
+    state.diagnosticsError = error.message;
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+  } finally {
+    state.diagnosticsLoading = false;
+  }
+  if (render && !$("#diagnosticsRouteView").hidden) {
+    if (state.diagnostics) renderDiagnosticsSummary();
+    else renderDiagnosticsError(state.diagnosticsError || "Unknown error");
+  }
+}
+
 function renderDiagnosticsRoute(item) {
   $("#packagesRouteView").hidden = true;
   $("#projectWorkspaceView").hidden = true;
@@ -320,6 +426,9 @@ function renderDiagnosticsRoute(item) {
   $("#lockedRouteView").hidden = true;
   $("#diagnosticsRouteView").hidden = false;
   document.title = "GWF — System Diagnostics";
+  if (state.diagnostics) renderDiagnosticsSummary();
+  else if (state.diagnosticsError) renderDiagnosticsError(state.diagnosticsError);
+  else void refreshDiagnostics(true);
 }
 
 
@@ -3720,11 +3829,17 @@ async function loadAuthenticatedShell() {
   $("#loginView").hidden = true;
   $("#appView").hidden = false;
   await refreshHealth();
-  await refreshHomeSummary(false);
+  await Promise.all([
+    refreshHomeSummary(false),
+    refreshDiagnostics(false),
+  ]);
   renderRoute();
 }
 
 function showLogin() {
+  state.diagnostics = null;
+  state.diagnosticsError = null;
+  state.diagnosticsLoading = false;
   state.home = null;
   state.homeError = null;
   state.projects = null;
@@ -4300,10 +4415,11 @@ $("#projectsResetFiltersButton").addEventListener("click", () => {
 $("#refreshButton").addEventListener("click", async () => {
   state.bootstrap = await api("/browser/bootstrap");
   renderNav();
+  renderCommandPalette();
   renderFoundationCards();
   renderCapabilities();
   renderIdentity();
-  await refreshHealth();
+  await Promise.all([refreshHealth(), refreshDiagnostics(false)]);
   renderRoute();
 });
 
