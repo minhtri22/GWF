@@ -291,3 +291,14 @@ NEXT_SCREEN_ALLOWED = true
 ```
 
 Per `BPS-SCREEN-FAST-LANE-v1`, Home is closed and the next screen is the Projects index.
+
+## Current UI/UX re-audit addendum
+
+HOME-19 is historical wording from the phase where Project Overview/Execution were not yet LIVE. The current qualified behavior is now:
+
+- Executing Project rows may open the exact authorized Project Overview.
+- Live Run rows may open the exact owning Project Execution run context.
+- Attention entries may route only to destinations that are currently LIVE and authoritative: Operations Approvals, Project Execution recovery/failure inspection, System GitHub, System Diagnostics, or exact Project Overview fallback.
+- These links do not create new state and must preserve the exact persisted project/run/record identity.
+
+The original HOME-19 requirement remains valid as a general rule against fake destinations; it no longer means Home must suppress links to destinations that have subsequently become LIVE.
