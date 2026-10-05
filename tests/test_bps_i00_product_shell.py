@@ -300,7 +300,7 @@ def test_i00_spa_router_has_no_module_data_or_fake_actions():
     assert 'LIVE_FOUNDATION' in js
     assert '"/app/home"' not in js  # canonical paths come from authoritative bootstrap
     assert 'api("/browser/bootstrap")' in js
-    assert 'api("/ready")' in js
+    assert 'api("/browser/diagnostics")' in js
     assert "/documents" not in js
     assert "relation graph" not in js.lower()
     assert "full-screen reader" not in js.lower()
@@ -364,6 +364,21 @@ def test_i00_canonical_server_builds_real_runtime_with_bootstrap_login(tmp_path,
         )
         assert login.status_code == 200
         assert client.get("/ready").json()["ok"] is True
+        diagnostics = client.get("/browser/diagnostics")
+        assert diagnostics.status_code == 200
+        diagnostic_body = diagnostics.json()
+        assert diagnostic_body["core_health"] == "HEALTHY"
+        assert diagnostic_body["readiness"]["checks"] == {
+            "database": "PASS",
+            "migrations": "PASS",
+            "object_store": "PASS",
+            "observability": "PASS",
+        }
+        assert diagnostic_body["migrations"]["pending"] == []
+        assert diagnostic_body["object_store"]["configured"] is True
+        assert diagnostic_body["observability"]["configured"] is True
+        assert "attached_adapters" in diagnostic_body["github_adapter"]
+        assert diagnostic_body["build_sha"] == diagnostic_body["runtime"].get("build_sha", diagnostic_body["build_sha"])
         info = client.get("/product/meta").json()
         assert info["server_mode"] == "canonical"
         expected_backend = "postgresql" if os.environ.get("GWR_TEST_DATABASE_URL") else "sqlite"
@@ -503,3 +518,16 @@ def test_i00_windows_launcher_refuses_to_stop_or_restart_unrelated_process(tmp_p
         if unrelated.poll() is None:
             unrelated.terminate()
             unrelated.wait(timeout=10)
+
+
+def test_i00_diagnostics_surface_is_componentized_and_authoritative():
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+    assert 'id="diagnosticsDetail"' in html
+    assert 'api("/browser/diagnostics")' in js
+    assert '"Database", checks.database' in js
+    assert '"Migrations", checks.migrations' in js
+    assert '"Object store / CAS", checks.object_store' in js
+    assert '"Observability", checks.observability' in js
+    assert '"GitHub adapters"' in js
+    assert "Migration identities" in js
