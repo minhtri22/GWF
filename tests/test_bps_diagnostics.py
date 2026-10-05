@@ -223,6 +223,12 @@ def test_diagnostics_browser_ui_consumes_authoritative_projection():
     assert "renderDiagnosticsSummary" in js
     assert 'diagnosticsValue("Server uptime"' in js
     assert "server.uptime_seconds" in js
+    assert "readiness.core_health" in js
+    assert "health.github || {}" in js
+    assert "health.migrations?.status || {}" in js
+    assert "health.migrations?.revisions || []" in js
+    assert "health.github_adapter" not in js
+    assert "health.runtime?." not in js
     assert "refreshDiagnostics" in js
     assert "Migration status unavailable" in js
     assert "System / GitHub is separate from core health" in js
