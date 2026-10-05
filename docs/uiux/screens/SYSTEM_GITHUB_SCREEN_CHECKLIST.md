@@ -7,9 +7,9 @@ SCREEN_ID        = SYSTEM_GITHUB
 OWNER            = BPS-M07
 ROUTE            = /app/system/github
 PROTOCOL         = BPS-QA-FIRST-DEFERRED-UAT-v1
-STATUS           = ASSISTANT_QA_PASS / USER_UAT_PENDING
+STATUS           = ASSISTANT_QA_PASS / EXACT_HEAD_CI_PASS / USER_UAT_DEFERRED
 BASE_HEAD        = 5a1efd6342db49e832d779fd9a536db453cf230a
-FINAL_UAT        = PENDING_USER_PF
+FINAL_UAT        = DEFERRED
 ```
 
 ## Governing sources
@@ -148,7 +148,7 @@ OPEN  = 0
 COUNT = 0
 
 SYSTEM_GITHUB_ASSISTANT_QA = PASS
-USER_UAT                  = PENDING
+USER_UAT                  = DEFERRED
 NEXT_SCREEN_ALLOWED       = false
 ```
 
