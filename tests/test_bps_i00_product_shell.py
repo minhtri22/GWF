@@ -326,6 +326,15 @@ def test_i00_browser_javascript_parses_when_node_is_available():
     assert result.returncode == 0, result.stdout
 
 
+def test_i00_sidebar_defaults_collapsed_below_1024_without_overwriting_preference():
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+    assert 'window.matchMedia("(max-width: 1023px)").matches ? "collapsed" : "expanded"' in js
+    assert '["collapsed", "expanded"].includes(savedSidebar)' in js
+    assert "applySidebar(initialSidebar, Boolean(savedSidebar));" in js
+    assert "function applySidebar(value, persist = true)" in js
+    assert "if (persist)" in js
+
+
 def test_i00_theme_control_exposes_system_light_dark_without_fake_product_state():
     html = (WEB / "index.html").read_text(encoding="utf-8")
     js = (WEB / "app.js").read_text(encoding="utf-8")

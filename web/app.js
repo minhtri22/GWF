@@ -165,7 +165,7 @@ function applyTheme(value) {
   localStorage.setItem(THEME_KEY, theme);
 }
 
-function applySidebar(value) {
+function applySidebar(value, persist = true) {
   const collapsed = value === "collapsed";
   $("#sidebar").classList.toggle("collapsed", collapsed);
   $("#appView").classList.toggle("sidebar-collapsed", collapsed);
@@ -173,7 +173,9 @@ function applySidebar(value) {
   $("#sidebarToggle").classList.toggle("is-collapsed", collapsed);
   $("#sidebarToggle").setAttribute("aria-label", collapsed ? "Expand sidebar" : "Collapse sidebar");
   $("#sidebarToggle").setAttribute("title", collapsed ? "Expand sidebar" : "Collapse sidebar");
-  localStorage.setItem(SIDEBAR_KEY, collapsed ? "collapsed" : "expanded");
+  if (persist) {
+    localStorage.setItem(SIDEBAR_KEY, collapsed ? "collapsed" : "expanded");
+  }
 }
 
 function stateMeta(item) {
@@ -4095,7 +4097,11 @@ function wireStaticIcons() {
 async function initialize() {
   wireStaticIcons();
   applyTheme(storedTheme());
-  applySidebar(localStorage.getItem(SIDEBAR_KEY) || "expanded");
+  const savedSidebar = localStorage.getItem(SIDEBAR_KEY);
+  const initialSidebar = ["collapsed", "expanded"].includes(savedSidebar) ?
+    savedSidebar :
+    (window.matchMedia("(max-width: 1023px)").matches ? "collapsed" : "expanded");
+  applySidebar(initialSidebar, Boolean(savedSidebar));
   state.bootstrap = await api("/browser/bootstrap");
   await loadAuthenticatedShell();
 }
