@@ -737,7 +737,7 @@ def create_app(
             "errors": component_errors,
         }
 
-        @app.get('/browser/home-summary')
+    @app.get('/browser/home-summary')
     def browser_home_summary(request: Request):
         _, principal = browser_principal(request)
         readiness = ready()
