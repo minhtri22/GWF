@@ -262,3 +262,45 @@ def test_existing_bearer_project_create_contract_still_works(tmp_path, monkeypat
         (project_id, actor),
     )["role"] == "OWNER"
     rt.close()
+
+
+def test_browser_project_lifecycle_mutations_reuse_native_authority(tmp_path, monkeypatch):
+    rt, actor, tenant_id, workspace_id = make_runtime(tmp_path, monkeypatch)
+    client = TestClient(app_for(rt))
+    assert client.post("/browser/auth/login", json={"username": "creator", "password": "creator-password-long"}).status_code == 200
+    created = client.post("/browser/projects", json={"workspace_id": workspace_id, "name": "Lifecycle Browser Project"})
+    assert created.status_code == 200
+    project_id = created.json()["project"]["project_id"]
+    overview = client.get(f"/browser/projects/{project_id}/overview").json()
+    assert overview["lifecycle_management"]["can_manage"] is True
+    assert overview["lifecycle_management"]["allowed_actions"] == ["RENAME", "ARCHIVE"]
+    assert overview["lifecycle_management"]["archive_requires_drain"] is False
+    renamed = client.patch(f"/browser/projects/{project_id}", json={"name": "Lifecycle Renamed"})
+    assert renamed.status_code == 200
+    assert renamed.json()["overview"]["project"]["name"] == "Lifecycle Renamed"
+    assert rt.project_governance.name_history(project_id)[-1]["new_name"] == "Lifecycle Renamed"
+    archived = client.post(f"/browser/projects/{project_id}/archive", json={"drain": False, "reason": "UI QA"})
+    assert archived.status_code == 200
+    assert archived.json()["overview"]["lifecycle"]["status"] == "ARCHIVED"
+    assert archived.json()["overview"]["lifecycle_management"]["allowed_actions"] == ["RESTORE"]
+    restored = client.post(f"/browser/projects/{project_id}/restore")
+    assert restored.status_code == 200
+    assert restored.json()["overview"]["lifecycle"]["status"] == "ACTIVE"
+    rt.close()
+
+
+def test_browser_project_lifecycle_mutation_is_non_disclosing_for_viewer(tmp_path, monkeypatch):
+    rt, actor, tenant_id, workspace_id = make_runtime(tmp_path, monkeypatch)
+    project_id = rt.create_scoped_project("Viewer Hidden Mutation", tenant_id, workspace_id, actor, project_id="project_viewer_lifecycle")
+    viewer = rt.governance.create_actor("HUMAN", "viewer", [], [])
+    rt.auth.register_human(viewer, "viewer", "viewer-password-long")
+    rt.tenancy.add_project_member(project_id, viewer, "VIEWER", actor)
+    client = TestClient(app_for(rt))
+    assert client.post("/browser/auth/login", json={"username": "viewer", "password": "viewer-password-long"}).status_code == 200
+    overview = client.get(f"/browser/projects/{project_id}/overview").json()
+    assert overview["lifecycle_management"]["can_manage"] is False
+    assert overview["lifecycle_management"]["allowed_actions"] == []
+    assert client.patch(f"/browser/projects/{project_id}", json={"name": "Denied"}).status_code == 404
+    assert client.post(f"/browser/projects/{project_id}/archive", json={"drain": False, "reason": "Denied"}).status_code == 404
+    assert client.post(f"/browser/projects/{project_id}/restore").status_code == 404
+    rt.close()
