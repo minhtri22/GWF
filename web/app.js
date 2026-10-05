@@ -3633,23 +3633,68 @@ function statusRow(icon, label, value, stateClass = "") {
 
 function renderSystemStatus() {
   const product = state.bootstrap.product;
-  const health = state.health;
-  const healthValue = health?.core_health || "UNKNOWN";
+  const health = state.health || {};
+  const healthValue = health.core_health || "UNKNOWN";
+  const checks = health.readiness?.checks || {};
   const healthClass = healthValue === "HEALTHY" ? "status-good" : "status-warn";
   $("#systemStatus").innerHTML =
-    statusRow("diagnostics", "System", healthValue, healthClass) +
-    statusRow("system", "Server", product.server_mode) +
-    statusRow("packages", "Database", product.backend) +
-    statusRow("panel", "Version", product.version) +
-    statusRow("home", "Environment", product.domain_id);
+    statusRow("diagnostics", "Core health", healthValue, healthClass) +
+    statusRow("packages", "Database", checks.database || "UNKNOWN",
+      checks.database === "PASS" ? "status-good" : "status-warn") +
+    statusRow("panel", "Migrations", checks.migrations || "UNKNOWN",
+      checks.migrations === "PASS" ? "status-good" : "status-warn") +
+    statusRow("home", "Object store / CAS", checks.object_store || "UNKNOWN",
+      checks.object_store === "PASS" ? "status-good" : "status-warn") +
+    statusRow("system", "Observability", checks.observability || "UNKNOWN",
+      checks.observability === "PASS" ? "status-good" : "status-warn") +
+    statusRow("github", "GitHub adapters",
+      String(health.github_adapter?.attached_adapters ?? 0) + " attached / " +
+      String(health.github_adapter?.active_connections ?? 0) + " active",
+      health.github_adapter?.query_status === "PARTIAL" ? "status-warn" : "");
+
+  const migrations = health.migrations || {};
+  const objectStore = health.object_store || {};
+  const observability = health.observability || {};
+  $("#diagnosticsDetail").innerHTML =
+    '<div><span>Build / runtime</span><code>' +
+      esc((health.runtime?.version || product.version) + " · " +
+        (health.build_sha || product.build_sha) + " · " +
+        (health.runtime?.backend || product.backend) + " · " +
+        (health.runtime?.server_mode || product.server_mode)) + '</code></div>' +
+    '<div><span>Migrations</span><code>' +
+      esc((migrations.applied_count ?? 0) + "/" + (migrations.known_count ?? 0) +
+        " applied · pending " + JSON.stringify(migrations.pending || [])) + '</code></div>' +
+    '<div><span>Migration identities</span><code>' +
+      esc((migrations.rows || []).map((row) =>
+        row.migration_id + ":" + row.status + ":" + (row.checksum || "pending")
+      ).join(" | ") || "none") + '</code></div>' +
+    '<div><span>Object store</span><code>' +
+      esc((objectStore.type || "not configured") + " · " +
+        (objectStore.readiness || "UNKNOWN")) + '</code></div>' +
+    '<div><span>Observability</span><code>' +
+      esc((observability.type || "unknown") + " · " +
+        (observability.readiness || "UNKNOWN") + " · metrics " +
+        JSON.stringify(observability.metric_keys || [])) + '</code></div>' +
+    '<div><span>GitHub runtime observation</span><code>' +
+      esc(JSON.stringify(health.github_adapter || {})) + '</code></div>';
 }
 
 async function refreshHealth() {
   try {
-    state.health = await api("/ready");
-    $("#healthDot").className = "health-dot healthy";
+    state.health = await api("/browser/diagnostics");
+    $("#healthDot").className =
+      state.health.core_health === "HEALTHY" ? "health-dot healthy" : "health-dot unhealthy";
   } catch (error) {
-    state.health = { core_health: "UNHEALTHY" };
+    if (error.status === 401) {
+      showLogin();
+      return;
+    }
+    state.health = {
+      core_health: "UNHEALTHY",
+      readiness: { checks: {} },
+      github_adapter: {},
+      error: error.message,
+    };
     $("#healthDot").className = "health-dot unhealthy";
   }
   renderSystemStatus();
