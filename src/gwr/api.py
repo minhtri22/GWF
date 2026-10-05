@@ -9,6 +9,7 @@ from .errors import GWRException, AuthorityDenied, NotFound, ValidationError
 from .domain_sdk import DomainSDK
 from .utils import parse_json, utcnow
 from .product import ProjectDashboardService
+from .migrations import MIGRATIONS
 import asyncio
 import json
 import os
@@ -523,6 +524,217 @@ def create_app(
             "backend": getattr(runtime.db, "backend_name", "unknown"),
             "build_sha": resolved_product_info["build_sha"],
             "checks": checks,
+        }
+
+    @app.get('/browser/diagnostics')
+    def browser_diagnostics(request: Request):
+        _, principal = browser_principal(request)
+        query_status = "COMPLETE"
+        component_errors: list[dict[str, str]] = []
+
+        readiness = ready()
+        if isinstance(readiness, JSONResponse):
+            readiness_payload = json.loads(readiness.body.decode("utf-8"))
+        else:
+            readiness_payload = readiness
+
+        migrations_payload: dict[str, object]
+        try:
+            manager = getattr(runtime.db, "migrations", None)
+            applied = manager.applied() if manager is not None else {}
+            migrations_payload = {
+                "status": manager.status() if manager is not None else {
+                    "known": [],
+                    "applied": [],
+                    "pending": [],
+                },
+                "revisions": [
+                    {
+                        "migration_id": item.migration_id,
+                        "expected_checksum": item.checksum,
+                        "stored_checksum": applied.get(item.migration_id),
+                        "applied": item.migration_id in applied,
+                        "checksum_matches": (
+                            applied.get(item.migration_id) == item.checksum
+                            if item.migration_id in applied else None
+                        ),
+                    }
+                    for item in MIGRATIONS
+                ],
+            }
+        except Exception:
+            query_status = "PARTIAL"
+            component_errors.append({
+                "component": "migrations",
+                "message": "Migration status unavailable",
+            })
+            migrations_payload = {
+                "status": {"known": [], "applied": [], "pending": []},
+                "revisions": [],
+            }
+
+        object_store_payload = {
+            "configured": runtime.object_store is not None,
+            "type": (
+                type(runtime.object_store).__name__
+                if runtime.object_store is not None else None
+            ),
+            "probe": readiness_payload.get("checks", {}).get("object_store"),
+        }
+
+        observer_payload: dict[str, object]
+        try:
+            metrics = runtime.observer.metrics()
+            latest_event = None
+            observer_path = getattr(runtime.observer, "path", None)
+            if observer_path is not None and Path(observer_path).exists():
+                lines = [
+                    line for line in Path(observer_path).read_text(
+                        encoding="utf-8"
+                    ).splitlines() if line.strip()
+                ]
+                if lines:
+                    record = json.loads(lines[-1])
+                    latest_event = {
+                        "timestamp": record.get("timestamp"),
+                        "event": record.get("event"),
+                    }
+            observer_payload = {
+                "type": type(runtime.observer).__name__,
+                "sink": (
+                    "JSONL"
+                    if observer_path is not None else "NULL"
+                ),
+                "probe": readiness_payload.get("checks", {}).get(
+                    "observability"
+                ),
+                "latest_event": latest_event,
+                "metric_keys": sorted(metrics.keys()),
+                "event_count": int(metrics.get("events") or 0),
+                "event_types": sorted(
+                    (metrics.get("by_event") or {}).keys()
+                ),
+            }
+        except Exception:
+            query_status = "PARTIAL"
+            component_errors.append({
+                "component": "observability",
+                "message": "Observability detail unavailable",
+            })
+            observer_payload = {
+                "type": type(runtime.observer).__name__,
+                "sink": "UNKNOWN",
+                "probe": readiness_payload.get("checks", {}).get(
+                    "observability"
+                ),
+                "latest_event": None,
+                "metric_keys": [],
+                "event_count": None,
+                "event_types": [],
+            }
+
+        provider_events: list[dict] = []
+        try:
+            visible = runtime.tenancy.list_accessible_projects(
+                principal.actor_id
+            )
+            project_ids = [row["id"] for row in visible]
+            if project_ids:
+                placeholders = ",".join("?" for _ in project_ids)
+                provider_events = [
+                    {
+                        "provider_event_id": row["provider_event_id"],
+                        "project_id": row["project_id"],
+                        "provider_name": row["provider_name"],
+                        "operation": row["operation"],
+                        "outcome": row["outcome"],
+                        "latency_ms": row["latency_ms"],
+                        "error_code": row["error_code"],
+                        "created_at": row["created_at"],
+                    }
+                    for row in runtime.db.all(
+                        "SELECT provider_event_id,project_id,provider_name,"
+                        "operation,outcome,latency_ms,error_code,created_at "
+                        "FROM provider_events "
+                        f"WHERE project_id IN ({placeholders}) "
+                        "ORDER BY created_at DESC,provider_event_id DESC "
+                        "LIMIT 20",
+                        tuple(project_ids),
+                    )
+                ]
+        except Exception:
+            query_status = "PARTIAL"
+            component_errors.append({
+                "component": "provider_failover",
+                "message": "Provider provenance unavailable",
+            })
+
+        github_payload = {"connections": 0, "bindings": 0, "attached": 0}
+        try:
+            github = product.github_summary(
+                principal.actor_id,
+                build_sha=resolved_product_info["build_sha"],
+            )
+            connections = [
+                connection
+                for project in github.get("projects", [])
+                for connection in project.get("connections", [])
+            ]
+            bindings = [
+                binding
+                for project in github.get("projects", [])
+                for binding in project.get("bindings", [])
+            ]
+            github_payload = {
+                "connections": len(connections),
+                "bindings": len(bindings),
+                "attached": sum(
+                    1 for item in connections
+                    if item.get("adapter_attached")
+                ),
+                "active": sum(
+                    1 for item in connections
+                    if item.get("status") == "ACTIVE"
+                ),
+                "disabled": sum(
+                    1 for item in connections
+                    if item.get("status") == "DISABLED"
+                ),
+                "query_status": github.get("query_status"),
+            }
+            if github.get("query_status") != "COMPLETE":
+                query_status = "PARTIAL"
+        except Exception:
+            query_status = "PARTIAL"
+            component_errors.append({
+                "component": "github",
+                "message": "GitHub adapter status unavailable",
+            })
+
+        return {
+            "generated_at": utcnow(),
+            "build_sha": resolved_product_info["build_sha"],
+            "query_status": query_status,
+            "product": {
+                "product": resolved_product_info.get("product"),
+                "version": resolved_product_info.get("version"),
+                "build_sha": resolved_product_info.get("build_sha"),
+                "domain_id": resolved_product_info.get("domain_id"),
+                "backend": resolved_product_info.get("backend"),
+                "server_mode": resolved_product_info.get("server_mode"),
+            },
+            "readiness": readiness_payload,
+            "database": {
+                "backend": getattr(runtime.db, "backend_name", "unknown"),
+                "probe": readiness_payload.get("checks", {}).get("database"),
+            },
+            "migrations": migrations_payload,
+            "object_store": object_store_payload,
+            "observability": observer_payload,
+            "provider_events": provider_events,
+            "github": github_payload,
+            "capabilities": list(browser_capabilities),
+            "errors": component_errors,
         }
 
     @app.get('/browser/home-summary')
