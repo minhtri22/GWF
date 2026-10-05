@@ -381,3 +381,15 @@ def test_project_workspace_browser_contract_is_dynamic_and_truthful():
     for forbidden in ("Rename Project", "Archive Project", "Restore Project"):
         assert forbidden not in html
 
+
+
+def test_project_overview_exposes_source_backed_lifecycle_management_capability(tmp_path, monkeypatch):
+    rt, owner, _, _, _, _, project, _ = _fixture(tmp_path, monkeypatch)
+    client = TestClient(_app(rt))
+    _login(client, "overview-owner")
+    management = client.get(f"/browser/projects/{project}/overview").json()["lifecycle_management"]
+    assert management["authority"] == "MANAGE_MEMBERS"
+    assert management["can_manage"] is True
+    assert management["allowed_actions"] == ["RENAME", "ARCHIVE"]
+    assert set(management["archive_activity"]) == {"active_jobs", "active_runs", "active_orchestrations"}
+    rt.close()
