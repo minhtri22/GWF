@@ -217,7 +217,12 @@ def test_i00_visual_shell_matches_approved_foundation_contract():
 
     # Approved baseline direction, not the legacy dashboard shell.
     assert "Governed Knowledge Workflow" in html
-    assert "Search projects, documents, artifacts" in html
+    assert "Search projects, documents, artifacts" not in html
+    assert 'id="commandPaletteButton"' in html
+    assert 'id="commandPaletteDialog"' in html
+    assert 'id="commandPaletteFilter"' in html
+    assert "Go to a product area" in html
+    assert "It does not search documents, artifacts, or hidden resources." in html
     assert "Capability maturity" in html
     assert "System status" in html
     assert "Static UAT mode" not in html
@@ -367,18 +372,20 @@ def test_i00_canonical_server_builds_real_runtime_with_bootstrap_login(tmp_path,
         diagnostics = client.get("/browser/diagnostics")
         assert diagnostics.status_code == 200
         diagnostic_body = diagnostics.json()
-        assert diagnostic_body["core_health"] == "HEALTHY"
+        assert diagnostic_body["readiness"]["core_health"] == "HEALTHY"
         assert diagnostic_body["readiness"]["checks"] == {
             "database": "PASS",
             "migrations": "PASS",
             "object_store": "PASS",
             "observability": "PASS",
         }
-        assert diagnostic_body["migrations"]["pending"] == []
+        assert diagnostic_body["migrations"]["status"]["pending"] == []
         assert diagnostic_body["object_store"]["configured"] is True
-        assert diagnostic_body["observability"]["configured"] is True
-        assert "attached_adapters" in diagnostic_body["github_adapter"]
-        assert diagnostic_body["build_sha"] == diagnostic_body["runtime"].get("build_sha", diagnostic_body["build_sha"])
+        assert diagnostic_body["object_store"]["probe"] == "PASS"
+        assert diagnostic_body["observability"]["sink"] == "JSONL"
+        assert diagnostic_body["observability"]["probe"] == "PASS"
+        assert "attached" in diagnostic_body["github"]
+        assert diagnostic_body["build_sha"] == diagnostic_body["product"]["build_sha"]
         info = client.get("/product/meta").json()
         assert info["server_mode"] == "canonical"
         expected_backend = "postgresql" if os.environ.get("GWR_TEST_DATABASE_URL") else "sqlite"
