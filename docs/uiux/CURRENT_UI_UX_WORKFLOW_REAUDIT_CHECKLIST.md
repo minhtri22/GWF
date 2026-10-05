@@ -141,7 +141,7 @@ A deferred item is not counted as PASS. It is outside the current authorized COU
 
 ## I. Diagnostics
 
-- [ ] WQA-70 Diagnostics shows exact product/build/runtime/backend and core readiness.
+- [ ] WQA-70 Diagnostics shows exact product/build/runtime/backend, authoritative server started-at/uptime, and core readiness.
 - [ ] WQA-71 Diagnostics distinguishes DB/migrations, CAS/object-store, observability and GitHub adapter state where currently qualified.
 - [ ] WQA-72 Capability maturity matrix matches bootstrap capability state.
 - [ ] WQA-73 Diagnostic failures are distinct from healthy/zero and expose no secrets.
