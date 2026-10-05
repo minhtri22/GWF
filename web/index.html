@@ -192,6 +192,7 @@
             </div>
             <div class="projects-hero-actions">
               <span id="projectsScopeBadge" class="scope-badge">All authorized projects</span>
+              <button id="projectsCreateButton" class="primary" type="button">Create Project</button>
               <button id="projectsRefreshButton" class="text-button" type="button">Refresh</button>
             </div>
           </section>
@@ -302,6 +303,22 @@
               <div><span>Tenant / workspace</span><strong id="projectWorkspaceScopeName">—</strong><code id="projectWorkspaceScopeIds">—</code></div>
               <div><span>Pinned Domain</span><strong id="projectWorkspaceDomainName">—</strong><code id="projectWorkspaceDomainId">—</code></div>
             </div>
+            <section id="projectLifecycleControls" class="project-lifecycle-controls" hidden aria-label="Project lifecycle controls">
+              <div class="project-lifecycle-control">
+                <label for="projectRenameInput">Rename project</label>
+                <div class="inline-control"><input id="projectRenameInput" type="text" autocomplete="off"><button id="projectRenameButton" class="text-button" type="button">Rename</button></div>
+              </div>
+              <div id="projectArchiveControl" class="project-lifecycle-control">
+                <label for="projectArchiveReason">Archive project</label>
+                <div class="inline-control"><input id="projectArchiveReason" type="text" autocomplete="off" placeholder="Reason (optional)"><label class="inline-check"><input id="projectArchiveDrain" type="checkbox"> Drain active execution</label><button id="projectArchiveButton" class="danger-button" type="button">Archive</button></div>
+                <small id="projectArchiveHint"></small>
+              </div>
+              <div id="projectRestoreControl" class="project-lifecycle-control" hidden>
+                <span>Restore project to ACTIVE lifecycle.</span>
+                <button id="projectRestoreButton" class="text-button" type="button">Restore</button>
+              </div>
+              <div id="projectLifecycleMutationState" class="mutation-state" aria-live="polite"></div>
+            </section>
           </section>
 
           <nav class="project-local-nav" aria-label="Project workspace">
@@ -1001,6 +1018,34 @@
       </main>
     </div>
   </div>
+
+  <dialog id="projectCreateDialog" class="project-create-dialog" aria-labelledby="projectCreateTitle">
+    <form id="projectCreateForm" class="project-create-card">
+      <div class="command-dialog-head">
+        <div><p class="eyebrow">Governed project creation</p><h2 id="projectCreateTitle">Create Project</h2></div>
+        <button id="projectCreateCloseButton" class="icon-button" type="button" aria-label="Close Create Project">×</button>
+      </div>
+      <div id="projectCreateState" class="home-state-banner" hidden></div>
+      <label class="project-create-field"><span>Tenant / workspace</span><select id="projectCreateWorkspace" required></select></label>
+      <label class="project-create-field"><span>Project name</span><input id="projectCreateName" type="text" autocomplete="off" required></label>
+      <label class="project-create-field"><span>Optional published Domain revision</span><select id="projectCreateDomain"><option value="">No pinned Domain revision</option></select></label>
+      <section class="project-create-review" aria-label="Exact creation review">
+        <p class="eyebrow">Review exact scope</p>
+        <dl>
+          <div><dt>Tenant</dt><dd id="projectCreateReviewTenant">—</dd></div>
+          <div><dt>Workspace</dt><dd id="projectCreateReviewWorkspace">—</dd></div>
+          <div><dt>Project</dt><dd id="projectCreateReviewName">—</dd></div>
+          <div><dt>Domain</dt><dd id="projectCreateReviewDomain">No pinned Domain revision</dd></div>
+          <div><dt>Destination</dt><dd><code>/app/projects/:projectId/overview</code></dd></div>
+        </dl>
+      </section>
+      <p class="audit-boundary-note">Project ID is server-generated. A selected Domain revision is immutable under the current contract; no floating/latest binding is created.</p>
+      <div class="governed-dialog-actions">
+        <button id="projectCreateCancelButton" class="ghost" type="button">Cancel</button>
+        <button id="projectCreateSubmitButton" class="primary" type="submit">Review & create</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="commandPaletteDialog" class="command-dialog" aria-labelledby="commandPaletteTitle">
     <section class="command-dialog-card">
