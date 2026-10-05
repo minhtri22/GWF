@@ -222,3 +222,9 @@ def test_diagnostics_browser_ui_consumes_authoritative_projection():
     assert "Migration status unavailable" in js
     assert "System / GitHub is separate from core health" in js
     assert "No provider attempts are recorded in the current authorized scope." in js
+
+
+def test_diagnostics_route_is_registered_once():
+    api_source = (ROOT / "src" / "gwr" / "api.py").read_text(encoding="utf-8")
+    assert api_source.count("@app.get('/browser/diagnostics')") == 1
+    assert api_source.count("def browser_diagnostics") == 1
