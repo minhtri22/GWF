@@ -296,7 +296,7 @@ def test_current_uiux_opened_scope_does_not_expose_future_mutations():
     # M07-A is read-only. The browser may probe readiness, but it cannot
     # create/disable/bind/prepare/preflight/execute GitHub mutations yet.
     github_start = js.index("function renderGithub")
-    next_function = re.search(r"\\nfunction\\s+[A-Za-z0-9_]+\\s*\\(", js[github_start + 1 :])
+    next_function = re.search(r"\nfunction\s+[A-Za-z0-9_]+\s*\(", js[github_start + 1 :])
     github_end = (github_start + 1 + next_function.start()) if next_function else len(js)
     github_ui = js[github_start:github_end]
     for mutation_path in (
