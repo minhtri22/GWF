@@ -101,6 +101,12 @@ def test_current_uiux_global_navigation_and_live_cross_screen_paths_are_real():
     assert "Search projects, documents, artifacts" not in html
     assert "Ctrl K" not in html
 
+    palette_start = js.index("function commandPaletteRows")
+    palette_end = js.index("function renderCommandPalette", palette_start)
+    palette = js[palette_start:palette_end]
+    assert 'item.state === "LIVE_FOUNDATION"' in palette
+    assert 'item.state === "LIVE_MODULE"' in palette
+
     assert 'data-home-project-overview="' in js
     assert 'data-home-project-execution="' in js
     assert 'data-home-run-id="' in js
