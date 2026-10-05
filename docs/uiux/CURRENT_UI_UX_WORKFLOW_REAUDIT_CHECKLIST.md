@@ -207,7 +207,8 @@ WORKFLOW_RUN          = 37298438820
 JOB                   = bps-uiux / 111725163699
 JAVASCRIPT_SYNTAX     = PASS
 BPS_REGRESSION        = PASS
-TEST_COLLECTION       = 104 tests
+TEST_COLLECTION       = 105 tests
+PASSED                = 103
 SKIPPED               = 2 intentional/environment-gated tests
 TEST_FAILURES         = 0
 ```
