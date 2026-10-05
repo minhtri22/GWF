@@ -158,7 +158,9 @@ def test_operations_runs_zero_and_browser_contract(tmp_path, monkeypatch):
     assert '"/app/operations/runs"' in js
     assert "No runs exist in the current authorized scope." in js
     assert 'data-run-project-execution="' in js
-    assert 'navigateTo(projectWorkspacePath(button.dataset.runProjectExecution, "execution"))' in js
+    assert 'data-run-id="' in js
+    assert "projectRunPath(" in js
+    assert "button.dataset.runId" in js
     rt.close()
 
 
