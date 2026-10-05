@@ -169,3 +169,16 @@ def test_current_uiux_diagnostics_contract_is_single_and_authoritative():
     assert 'api("/browser/diagnostics")' in js
     assert "renderDiagnosticsSummary" in js
     assert "refreshDiagnostics" in js
+
+def test_current_uiux_mobile_keeps_governed_decision_actions_available():
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+    css = (WEB / "styles.css").read_text(encoding="utf-8")
+
+    assert ".ghost{display:none}" not in css
+    assert 'id="approvalApproveButton"' in html
+    assert 'id="approvalRejectButton" class="ghost"' in html
+    assert 'data-recovery-decision="APPROVED"' in js
+    assert 'data-recovery-decision="REJECTED"' in js
+    assert 'id="accessMemberRevokeButton" class="ghost"' in html
+
