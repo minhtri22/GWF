@@ -606,3 +606,10 @@ def test_packages_browser_surface_is_live_tabbed_and_read_only():
     ):
         assert forbidden not in html
 
+
+
+def test_packages_usage_can_open_only_the_live_project_overview_context():
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+    assert 'data-package-project="' in js
+    assert 'navigateTo(projectWorkspacePath(project.dataset.packageProject, "overview"))' in js
+    assert 'projectWorkspacePath(project.dataset.packageProject, "configuration")' not in js
