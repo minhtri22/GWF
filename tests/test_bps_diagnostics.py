@@ -153,6 +153,9 @@ def test_browser_diagnostics_is_authorized_exact_and_scoped(tmp_path, monkeypatc
 
     assert body["build_sha"] == "diagnostics-build-sha"
     assert body["query_status"] == "COMPLETE"
+    assert body["server"]["started_at"]
+    assert isinstance(body["server"]["uptime_seconds"], int)
+    assert body["server"]["uptime_seconds"] >= 0
     assert body["product"]["version"] == "diagnostics-test"
     assert body["product"]["server_mode"] == "canonical"
 
@@ -218,6 +221,8 @@ def test_diagnostics_browser_ui_consumes_authoritative_projection():
 
     assert 'api("/browser/diagnostics")' in js
     assert "renderDiagnosticsSummary" in js
+    assert 'diagnosticsValue("Server uptime"' in js
+    assert "server.uptime_seconds" in js
     assert "refreshDiagnostics" in js
     assert "Migration status unavailable" in js
     assert "System / GitHub is separate from core health" in js
