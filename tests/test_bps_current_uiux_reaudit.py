@@ -113,6 +113,9 @@ def test_current_uiux_global_navigation_and_live_cross_screen_paths_are_real():
 
     assert 'data-home-project-overview="' in js
     assert 'data-home-project-execution="' in js
+    assert 'data-home-run-id="' in js
+    assert 'data-run-id="' in js
+    assert "projectRunPath(" in js
     assert 'data-home-attention-kind="' in js
     assert 'data-package-project="' in js
     assert 'projectWorkspacePath(project.dataset.packageProject, "overview")' in js
