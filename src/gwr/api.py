@@ -592,6 +592,84 @@ def create_app(
             build_sha=resolved_product_info["build_sha"],
         )
 
+    def browser_project_manager(project_id: str, request: Request):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_project_access(
+                principal.actor_id, project_id, "MANAGE_MEMBERS"
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        return principal
+
+    @app.patch('/browser/projects/{project_id}')
+    def browser_rename_project(
+        project_id: str,
+        body: ProjectRenameBody,
+        request: Request,
+    ):
+        principal = browser_project_manager(project_id, request)
+        try:
+            result = runtime.project_governance.rename(
+                project_id, body.name, principal.actor_id
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        return {
+            "ok": True,
+            "result": result,
+            "overview": product.project_overview(
+                principal.actor_id,
+                project_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.post('/browser/projects/{project_id}/archive')
+    def browser_archive_project(
+        project_id: str,
+        body: ProjectArchiveBody,
+        request: Request,
+    ):
+        principal = browser_project_manager(project_id, request)
+        try:
+            result = runtime.project_governance.archive(
+                project_id,
+                principal.actor_id,
+                drain=body.drain,
+                reason=body.reason,
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        return {
+            "ok": True,
+            "result": result,
+            "overview": product.project_overview(
+                principal.actor_id,
+                project_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
+    @app.post('/browser/projects/{project_id}/restore')
+    def browser_restore_project(project_id: str, request: Request):
+        principal = browser_project_manager(project_id, request)
+        try:
+            result = runtime.project_governance.restore(
+                project_id, principal.actor_id
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="project not found") from exc
+        return {
+            "ok": True,
+            "result": result,
+            "overview": product.project_overview(
+                principal.actor_id,
+                project_id,
+                build_sha=resolved_product_info["build_sha"],
+            ),
+        }
+
     @app.get('/browser/projects/{project_id}/overview')
     def browser_project_overview(project_id: str, request: Request):
         _, principal = browser_principal(request)

@@ -1297,6 +1297,40 @@ class ProjectDashboardService:
             )
         ]
 
+        can_manage_lifecycle = False
+        try:
+            self.runtime.tenancy.require_project_access(
+                actor_id, project_id, "MANAGE_MEMBERS"
+            )
+            can_manage_lifecycle = True
+        except (AuthorityDenied, NotFound):
+            can_manage_lifecycle = False
+        archive_activity = {
+            "active_jobs": int(self.db.one(
+                "SELECT COUNT(*) n FROM distributed_jobs "
+                "WHERE project_id=? AND status IN ('READY','LEASED','RUNNING')",
+                (project_id,),
+            )["n"]),
+            "active_runs": int(self.db.one(
+                "SELECT COUNT(*) n FROM runs r "
+                "JOIN workunits w ON w.workunit_id=r.workunit_id "
+                "WHERE w.project_id=? AND r.runtime_status='RUNNING'",
+                (project_id,),
+            )["n"]),
+            "active_orchestrations": int(self.db.one(
+                "SELECT COUNT(*) n FROM orchestrations "
+                "WHERE project_id=? AND status IN ('RUNNING','PAUSED')",
+                (project_id,),
+            )["n"]),
+        }
+        lifecycle_status = lifecycle.get("status") if lifecycle else None
+        allowed_lifecycle_actions: list[str] = []
+        if can_manage_lifecycle:
+            if lifecycle_status == "ACTIVE":
+                allowed_lifecycle_actions = ["RENAME", "ARCHIVE"]
+            elif lifecycle_status in {"ARCHIVING", "ARCHIVED"}:
+                allowed_lifecycle_actions = ["RESTORE"]
+
         return {
             "generated_at": utcnow(),
             "build_sha": build_sha,
@@ -1344,6 +1378,13 @@ class ProjectDashboardService:
                 "status": "UNAVAILABLE",
                 "maturity": "BPS-M09_PENDING",
                 "reason": "Document browser governance is not LIVE yet; no health is inferred.",
+            },
+            "lifecycle_management": {
+                "authority": "MANAGE_MEMBERS",
+                "can_manage": can_manage_lifecycle,
+                "allowed_actions": allowed_lifecycle_actions,
+                "archive_activity": archive_activity,
+                "archive_requires_drain": sum(archive_activity.values()) > 0,
             },
         }
 
