@@ -182,7 +182,9 @@ def test_home_surface_links_only_to_current_live_authoritative_destinations():
     assert 'data-home-project-execution="' in js
     assert 'data-home-attention-kind="' in js
     assert 'navigateTo(projectWorkspacePath(button.dataset.homeProjectOverview, "overview"))' in js
-    assert 'navigateTo(projectWorkspacePath(button.dataset.homeProjectExecution, "execution"))' in js
+    assert 'data-home-run-id="' in js
+    assert "projectRunPath(" in js
+    assert "button.dataset.homeRunId" in js
     assert 'state.selectedApprovalId = recordId' in js
     assert 'navigateTo("/app/operations/approvals")' in js
     assert 'kind === "FAILURE" || kind === "WAITING_HUMAN"' in js
