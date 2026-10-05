@@ -737,6 +737,93 @@ def create_app(
             "errors": component_errors,
         }
 
+    @app.get('/browser/diagnostics')
+    def browser_diagnostics(request: Request):
+        _, principal = browser_principal(request)
+        readiness = ready()
+        if isinstance(readiness, JSONResponse):
+            readiness_payload = json.loads(readiness.body.decode("utf-8"))
+        else:
+            readiness_payload = readiness
+
+        migration_manager = getattr(runtime.db, "migrations", None)
+        migration_status = migration_manager.status() if migration_manager else {
+            "known": [], "applied": [], "pending": []
+        }
+        applied_checksums = migration_manager.applied() if migration_manager else {}
+        migration_rows = [
+            {
+                "migration_id": migration_id,
+                "checksum": applied_checksums.get(migration_id),
+                "status": "APPLIED" if migration_id in set(migration_status.get("applied") or []) else "PENDING",
+            }
+            for migration_id in migration_status.get("known") or []
+        ]
+
+        observer_metrics = {}
+        observer_error = None
+        try:
+            observer_metrics = runtime.observer.metrics()
+        except Exception as exc:
+            observer_error = type(exc).__name__
+
+        github = product.github_summary(
+            principal.actor_id,
+            build_sha=resolved_product_info["build_sha"],
+        )
+        github_connections = [
+            connection
+            for project_row in github.get("projects") or []
+            for connection in project_row.get("connections") or []
+        ]
+
+        return {
+            "generated_at": utcnow(),
+            "build_sha": resolved_product_info["build_sha"],
+            "query_status": "COMPLETE",
+            "core_health": readiness_payload.get("core_health", "UNKNOWN"),
+            "readiness": {
+                "ok": bool(readiness_payload.get("ok")),
+                "reason": readiness_payload.get("reason"),
+                "checks": dict(readiness_payload.get("checks") or {}),
+            },
+            "runtime": {
+                "product": resolved_product_info["product"],
+                "version": resolved_product_info["version"],
+                "server_mode": resolved_product_info["server_mode"],
+                "backend": getattr(runtime.db, "backend_name", "unknown"),
+                "domain_id": resolved_product_info["domain_id"],
+            },
+            "migrations": {
+                "known_count": len(migration_status.get("known") or []),
+                "applied_count": len(migration_status.get("applied") or []),
+                "pending": list(migration_status.get("pending") or []),
+                "rows": migration_rows,
+            },
+            "object_store": {
+                "configured": runtime.object_store is not None,
+                "type": type(runtime.object_store).__name__ if runtime.object_store is not None else None,
+                "readiness": (readiness_payload.get("checks") or {}).get("object_store", "UNKNOWN"),
+            },
+            "observability": {
+                "type": type(runtime.observer).__name__,
+                "configured": getattr(runtime.observer, "path", None) is not None,
+                "sink": str(getattr(runtime.observer, "path", "")) or None,
+                "readiness": (readiness_payload.get("checks") or {}).get("observability", "UNKNOWN"),
+                "metric_keys": sorted(observer_metrics.keys()),
+                "error_type": observer_error,
+            },
+            "github_adapter": {
+                "scope": github.get("scope"),
+                "query_status": github.get("query_status"),
+                "visible_connections": len(github_connections),
+                "active_connections": sum(1 for row in github_connections if row.get("status") == "ACTIVE"),
+                "disabled_connections": sum(1 for row in github_connections if row.get("status") == "DISABLED"),
+                "attached_adapters": sum(1 for row in github_connections if row.get("adapter_attached")),
+            },
+            "capabilities": list(browser_capabilities),
+        }
+
     @app.get('/browser/home-summary')
     def browser_home_summary(request: Request):
         _, principal = browser_principal(request)
