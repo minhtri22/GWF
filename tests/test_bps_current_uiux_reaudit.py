@@ -35,16 +35,15 @@ def test_current_uiux_shell_has_no_duplicate_ids_or_missing_static_targets():
 
 def test_current_uiux_browser_local_persistence_is_presentation_only():
     js = (WEB / "app.js").read_text(encoding="utf-8")
-    local_storage_lines = [
-        line.strip()
-        for line in js.splitlines()
-        if "localStorage." in line
-    ]
-    assert local_storage_lines
-    assert all(
-        "THEME_KEY" in line or "SIDEBAR_KEY" in line
-        for line in local_storage_lines
+    keys = re.findall(
+        r"localStorage\.(?:getItem|setItem)\(\s*([A-Z_]+)",
+        js,
     )
+    assert keys
+    assert set(keys) == {"THEME_KEY", "SIDEBAR_KEY"}
+    assert "localStorage.removeItem" not in js
+    assert "localStorage.clear" not in js
+
     forbidden = (
         "projectState",
         "approvalState",
