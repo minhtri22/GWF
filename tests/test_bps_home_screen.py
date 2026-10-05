@@ -174,3 +174,17 @@ def test_home_capability_is_live_module(tmp_path, monkeypatch):
     assert capabilities["home"]["slice"] == "BPS-M01"
     assert capabilities["home"]["route"] == "/app/home"
     rt.close()
+
+
+def test_home_surface_links_only_to_current_live_authoritative_destinations():
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+    assert 'data-home-project-overview="' in js
+    assert 'data-home-project-execution="' in js
+    assert 'data-home-attention-kind="' in js
+    assert 'navigateTo(projectWorkspacePath(button.dataset.homeProjectOverview, "overview"))' in js
+    assert 'navigateTo(projectWorkspacePath(button.dataset.homeProjectExecution, "execution"))' in js
+    assert 'state.selectedApprovalId = recordId' in js
+    assert 'navigateTo("/app/operations/approvals")' in js
+    assert 'kind === "FAILURE" || kind === "WAITING_HUMAN"' in js
+    assert 'navigateTo("/app/system/github")' in js
+    assert 'navigateTo("/app/system/diagnostics")' in js
