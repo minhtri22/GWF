@@ -64,10 +64,15 @@
       <header class="topbar">
         <button id="mobileMenu" class="icon-button mobile-only" type="button" aria-label="Open navigation"></button>
 
-        <button class="command-search" type="button" disabled aria-disabled="true" title="Global authoritative search is not enabled yet. Use the Projects page filter for the live project index.">
+        <button id="commandPaletteButton" class="command-search" type="button" aria-haspopup="dialog" aria-controls="commandPaletteDialog" title="Open navigation palette">
           <span id="searchIcon" class="toolbar-icon" aria-hidden="true"></span>
-          <span>Search projects, documents, artifacts…</span>
+          <span>Go to a product area…</span>
         </button>
+
+        <div class="topbar-context" aria-label="Current authorized scope and runtime">
+          <span id="topbarScopeContext" class="topbar-context-pill">Authorized scope</span>
+          <span id="topbarRuntimeContext" class="topbar-context-pill">Runtime</span>
+        </div>
 
         <div class="top-actions">
           <div class="theme-switch" role="group" aria-label="Theme">
@@ -89,6 +94,7 @@
                 <div><dt>Auth</dt><dd id="actorMenuAuth">—</dd></div>
                 <div><dt>Expires</dt><dd id="actorMenuExpires">—</dd></div>
                 <div><dt>Memberships</dt><dd id="actorMenuMemberships">—</dd></div>
+                <div><dt>Product</dt><dd><code id="actorMenuBuild">—</code></dd></div>
               </dl>
             </div>
           </div>
@@ -995,6 +1001,19 @@
       </main>
     </div>
   </div>
+
+  <dialog id="commandPaletteDialog" class="command-dialog" aria-labelledby="commandPaletteTitle">
+    <section class="command-dialog-card">
+      <div class="command-dialog-head">
+        <div><p class="eyebrow">Bounded navigation</p><h2 id="commandPaletteTitle">Go to a product area</h2></div>
+        <button id="commandPaletteCloseButton" class="icon-button" type="button" aria-label="Close navigation palette">×</button>
+      </div>
+      <label class="command-filter-label" for="commandPaletteFilter">Filter product routes</label>
+      <input id="commandPaletteFilter" class="command-filter" type="search" autocomplete="off" placeholder="Home, Projects, Runs, Packages, GitHub…">
+      <p class="audit-boundary-note">This palette navigates known product routes only. It does not search documents, artifacts, or hidden resources.</p>
+      <div id="commandPaletteList" class="command-palette-list" role="listbox" aria-label="Product routes"></div>
+    </section>
+  </dialog>
 
   <dialog id="governedActionDialog" class="governed-dialog">
     <form method="dialog" class="governed-dialog-card">

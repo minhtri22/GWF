@@ -258,8 +258,21 @@ def test_i00_topbar_has_no_dead_shortcut_and_exposes_live_actor_attention_afford
     css = (WEB / "styles.css").read_text(encoding="utf-8")
     css = (WEB / "styles.css").read_text(encoding="utf-8")
 
-    # Do not advertise a browser shortcut until the command/search palette is live.
+    # Bounded command/navigation palette is live; it does not advertise future GAC search.
     assert "Ctrl K" not in html
+    assert 'id="commandPaletteButton"' in html
+    assert 'id="commandPaletteDialog"' in html
+    assert 'id="commandPaletteFilter"' in html
+    assert "Search projects, documents, artifacts" not in html
+    assert "Go to a product area" in html
+    assert '$("#commandPaletteButton").addEventListener("click"' in js
+    assert 'data-command-route="' in js
+    assert "It does not search documents, artifacts, or hidden resources." in html
+    assert 'id="topbarScopeContext"' in html
+    assert 'id="topbarRuntimeContext"' in html
+    assert 'id="actorMenuBuild"' in html
+    assert '"All authorized · "' in js
+    assert 'product.domain_id || "runtime"' in js
 
     # Attention count is actionable through the already-authoritative Home queue.
     assert 'id="notificationButton"' in html

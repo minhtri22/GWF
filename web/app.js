@@ -221,6 +221,43 @@ function renderNav() {
   }).join("");
 }
 
+function commandPaletteRows() {
+  const needle = $("#commandPaletteFilter")?.value.trim().toLowerCase() || "";
+  return (state.bootstrap?.capabilities || []).filter((item) => {
+    const meta = stateMeta(item);
+    return !needle || [
+      displayLabel(item), displaySubtitle(item), item.route, meta.label,
+    ].some((value) => String(value || "").toLowerCase().includes(needle));
+  });
+}
+
+function renderCommandPalette() {
+  const list = $("#commandPaletteList");
+  if (!list || !state.bootstrap) return;
+  const rows = commandPaletteRows();
+  list.innerHTML = rows.length ? rows.map((item) => {
+    const meta = stateMeta(item);
+    return '<button type="button" class="command-route" role="option" data-command-route="' +
+      esc(item.route) + '"><span class="command-route-icon">' + iconSvg(item.id, "icon") +
+      '</span><span><strong>' + esc(displayLabel(item)) + '</strong><small>' +
+      esc(item.route + " · " + item.slice) + '</small></span><span class="state-pill ' +
+      esc(meta.cls) + '">' + esc(meta.label) + "</span></button>";
+  }).join("") : '<div class="feed-empty">No product route matches this filter.</div>';
+}
+
+function setCommandPalette(open) {
+  const dialog = $("#commandPaletteDialog");
+  if (!dialog) return;
+  if (open) {
+    $("#commandPaletteFilter").value = "";
+    renderCommandPalette();
+    if (!dialog.open) dialog.showModal();
+    requestAnimationFrame(() => $("#commandPaletteFilter").focus());
+  } else if (dialog.open) {
+    dialog.close();
+  }
+}
+
 function capabilityById(id) {
   return state.bootstrap.capabilities.find((item) => item.id === id);
 }
@@ -3359,6 +3396,13 @@ function renderIdentity() {
     (memberships.workspaces?.length || 0) + " workspace · " +
     (memberships.projects?.length || 0) + " project" +
     (membershipCount === 0 ? " (none)" : "");
+  $("#actorMenuBuild").textContent =
+    product.version + " · " + (product.build_sha || "unknown");
+  $("#topbarScopeContext").textContent =
+    "All authorized · " + (memberships.tenants?.length || 0) + " tenant · " +
+    (memberships.workspaces?.length || 0) + " workspace";
+  $("#topbarRuntimeContext").textContent =
+    (product.domain_id || "runtime") + " · " + (product.backend || "backend");
   $("#foundationBuild").textContent = product.version + " · " + String(product.build_sha || "unknown").slice(0, 8);
   $("#exactBuild").textContent = product.version + " · " + product.build_sha;
   $("#exactDomain").textContent = product.domain_id;
@@ -3415,6 +3459,7 @@ async function loadAuthenticatedShell() {
     return;
   }
   renderNav();
+  renderCommandPalette();
   renderFoundationCards();
   renderCapabilities();
   renderIdentity();
@@ -3532,6 +3577,19 @@ $("#mainNav").addEventListener("click", (event) => {
 
 window.addEventListener("popstate", () => {
   if (state.bootstrap?.authenticated) renderRoute();
+});
+
+$("#commandPaletteButton").addEventListener("click", () => setCommandPalette(true));
+$("#commandPaletteCloseButton").addEventListener("click", () => setCommandPalette(false));
+$("#commandPaletteFilter").addEventListener("input", renderCommandPalette);
+$("#commandPaletteList").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-command-route]");
+  if (!button) return;
+  setCommandPalette(false);
+  navigateTo(button.dataset.commandRoute);
+});
+$("#commandPaletteDialog").addEventListener("click", (event) => {
+  if (event.target === $("#commandPaletteDialog")) setCommandPalette(false);
 });
 
 $("#homeRefreshButton").addEventListener("click", async () => {
