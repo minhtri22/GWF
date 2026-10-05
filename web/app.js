@@ -1721,8 +1721,11 @@ async function refreshProjectRunDetail(route, render = true) {
     state.projectRunDetailLoading = false;
   }
   const active = projectWorkspaceRoute();
-  if (!render || !active || active.section !== "execution" ||
-      active.projectId !== route.projectId || active.runId !== route.runId) return;
+  if (!render || !active || active.section !== "execution") return;
+  if (active.projectId !== route.projectId || active.runId !== route.runId) {
+    if (active.runId) renderProjectRunFocus(active);
+    return;
+  }
   renderProjectRunFocus(active);
   if (state.projectRunDetail?.linked_phase && state.projectExecution) {
     renderProjectExecutionNavigation();
