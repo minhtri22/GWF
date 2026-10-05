@@ -1750,25 +1750,30 @@ function renderProjectExecution(summary, route) {
   }
 
   const orchestrations = summary.orchestrations || [];
+  let exactRunPhase = null;
   if (route.runId) {
-    let runMatch = null;
     for (const orchestration of orchestrations) {
       const phase = (orchestration.phases || []).find(
         (item) => item.run_id === route.runId
       );
       if (phase) {
-        runMatch = { orchestration, phase };
+        exactRunPhase = { orchestration, phase };
         break;
       }
     }
-    if (runMatch) {
+    if (exactRunPhase) {
       state.selectedExecutionOrchestrationId =
-        runMatch.orchestration.orchestration_id;
-      state.selectedExecutionPhaseId = runMatch.phase.phase_execution_id;
+        exactRunPhase.orchestration.orchestration_id;
+      state.selectedExecutionPhaseId = exactRunPhase.phase.phase_execution_id;
+    } else {
+      state.selectedExecutionOrchestrationId = null;
+      state.selectedExecutionPhaseId = null;
     }
-  }
-  if (!orchestrations.some((item) => item.orchestration_id === state.selectedExecutionOrchestrationId)) {
-    state.selectedExecutionOrchestrationId = orchestrations[0]?.orchestration_id || null;
+  } else if (!orchestrations.some(
+    (item) => item.orchestration_id === state.selectedExecutionOrchestrationId
+  )) {
+    state.selectedExecutionOrchestrationId =
+      orchestrations[0]?.orchestration_id || null;
   }
   const selected = orchestrations.find(
     (item) => item.orchestration_id === state.selectedExecutionOrchestrationId
