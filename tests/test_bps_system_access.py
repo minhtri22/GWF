@@ -74,7 +74,7 @@ def _login(client, username):
 
 
 def test_access_projection_hides_other_scopes_and_member_directory(tmp_path, monkeypatch):
-    rt, owner, member, _, tenant, workspace, project, hidden_tenant, hidden_workspace, hidden_project = _fixture(tmp_path, monkeypatch)
+    rt, owner, member, outsider, tenant, workspace, project, hidden_tenant, hidden_workspace, hidden_project = _fixture(tmp_path, monkeypatch)
     rt.tenancy.add_project_member(project, member, "VIEWER", owner)
 
     owner_client = _client(rt)
@@ -229,8 +229,9 @@ def test_access_ui_contract():
     assert 'api("/browser/access-summary")' in js
     assert 'item.id === "access"' in js
     assert "/browser/access/tenants" in js
-    assert "/browser/access/workspaces/" in js
-    assert "/browser/access/projects/" in js
+    assert 'kind === "workspace" ? "workspaces" : "projects"' in js
+    assert '"/browser/access/" + plural + "/"' in js
+    assert '"/members/" + encodeURIComponent(actorId)' in js
     assert 'id="governedActionDialog"' in html
     assert "Revoke direct membership" in js
     assert "This direct membership will be marked REVOKED." in js
