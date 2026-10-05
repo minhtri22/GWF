@@ -3914,11 +3914,14 @@ function statusRow(icon, label, value, stateClass = "") {
 }
 
 function renderSystemStatus() {
-  const product = state.bootstrap.product;
+  const fallbackProduct = state.bootstrap.product;
   const health = state.health || {};
-  const healthValue = health.core_health || "UNKNOWN";
-  const checks = health.readiness?.checks || {};
+  const product = health.product || fallbackProduct;
+  const readiness = health.readiness || {};
+  const checks = readiness.checks || {};
+  const healthValue = readiness.core_health || "UNKNOWN";
   const healthClass = healthValue === "HEALTHY" ? "status-good" : "status-warn";
+  const github = health.github || {};
   $("#systemStatus").innerHTML =
     statusRow("diagnostics", "Core health", healthValue, healthClass) +
     statusRow("packages", "Database", checks.database || "UNKNOWN",
@@ -3930,35 +3933,48 @@ function renderSystemStatus() {
     statusRow("system", "Observability", checks.observability || "UNKNOWN",
       checks.observability === "PASS" ? "status-good" : "status-warn") +
     statusRow("github", "GitHub adapters",
-      String(health.github_adapter?.attached_adapters ?? 0) + " attached / " +
-      String(health.github_adapter?.active_connections ?? 0) + " active",
-      health.github_adapter?.query_status === "PARTIAL" ? "status-warn" : "");
+      String(github.attached ?? 0) + " attached / " +
+      String(github.active ?? 0) + " active",
+      github.query_status === "PARTIAL" ? "status-warn" : "");
 
-  const migrations = health.migrations || {};
+  const server = health.server || {};
+  const uptimeSeconds = Number(server.uptime_seconds);
+  const uptimeText = Number.isFinite(uptimeSeconds) ?
+    (uptimeSeconds < 60 ? (uptimeSeconds + "s") :
+      (Math.floor(uptimeSeconds / 3600) + "h " +
+        Math.floor((uptimeSeconds % 3600) / 60) + "m")) :
+    "UNKNOWN";
+  const migrationStatus = health.migrations?.status || {};
+  const migrationRevisions = health.migrations?.revisions || [];
   const objectStore = health.object_store || {};
   const observability = health.observability || {};
   $("#diagnosticsDetail").innerHTML =
     '<div><span>Build / runtime</span><code>' +
-      esc((health.runtime?.version || product.version) + " · " +
-        (health.build_sha || product.build_sha) + " · " +
-        (health.runtime?.backend || product.backend) + " · " +
-        (health.runtime?.server_mode || product.server_mode)) + '</code></div>' +
+      esc((product.version || fallbackProduct.version) + " · " +
+        (health.build_sha || product.build_sha || fallbackProduct.build_sha) + " · " +
+        (product.backend || fallbackProduct.backend) + " · " +
+        (product.server_mode || fallbackProduct.server_mode)) + '</code></div>' +
+    '<div><span>Server uptime</span><code>' +
+      esc(uptimeText + " · started " + formatHomeTime(server.started_at)) + '</code></div>' +
     '<div><span>Migrations</span><code>' +
-      esc((migrations.applied_count ?? 0) + "/" + (migrations.known_count ?? 0) +
-        " applied · pending " + JSON.stringify(migrations.pending || [])) + '</code></div>' +
+      esc((migrationStatus.applied?.length ?? 0) + "/" +
+        (migrationStatus.known?.length ?? 0) + " applied · pending " +
+        JSON.stringify(migrationStatus.pending || [])) + '</code></div>' +
     '<div><span>Migration identities</span><code>' +
-      esc((migrations.rows || []).map((row) =>
-        row.migration_id + ":" + row.status + ":" + (row.checksum || "pending")
+      esc(migrationRevisions.map((row) =>
+        row.migration_id + ":" +
+        (row.applied ? "APPLIED" : "PENDING") + ":" +
+        (row.checksum_matches === false ? "CHECKSUM_MISMATCH" : "CHECKSUM_OK")
       ).join(" | ") || "none") + '</code></div>' +
     '<div><span>Object store</span><code>' +
       esc((objectStore.type || "not configured") + " · " +
-        (objectStore.readiness || "UNKNOWN")) + '</code></div>' +
+        (objectStore.probe || "UNKNOWN")) + '</code></div>' +
     '<div><span>Observability</span><code>' +
       esc((observability.type || "unknown") + " · " +
-        (observability.readiness || "UNKNOWN") + " · metrics " +
+        (observability.probe || "UNKNOWN") + " · metrics " +
         JSON.stringify(observability.metric_keys || [])) + '</code></div>' +
     '<div><span>GitHub runtime observation</span><code>' +
-      esc(JSON.stringify(health.github_adapter || {})) + '</code></div>';
+      esc(JSON.stringify(github)) + '</code></div>';
 }
 
 async function refreshHealth() {
