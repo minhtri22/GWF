@@ -12,6 +12,9 @@ const state = {
   projects: null,
   projectsError: null,
   projectsLoading: false,
+  projectCreateOptions: null,
+  projectCreateLoading: false,
+  projectMutation: false,
   projectOverview: null,
   projectOverviewProjectId: null,
   projectOverviewError: null,
@@ -747,6 +750,7 @@ function renderProjectWorkspaceHeader(summary, route) {
   $("#projectWorkspaceDomainId").textContent = domain.domain_revision_id ?
     [domain.package_id, domain.domain_revision_id].filter(Boolean).join(" · ") :
     (domain.domain_id || "—");
+  renderProjectLifecycleControls(summary);
 }
 
 function projectOverviewMetric(label, value, detail = "") {
@@ -1668,6 +1672,7 @@ function renderProjectWorkspaceError(route, message) {
   $("#projectWorkspaceScopeIds").textContent = "—";
   $("#projectWorkspaceDomainName").textContent = "Domain unavailable";
   $("#projectWorkspaceDomainId").textContent = "—";
+  $("#projectLifecycleControls").hidden = true;
   $("#projectOverviewStateBanner").hidden = false;
   $("#projectOverviewStateBanner").className = "home-state-banner error";
   $("#projectOverviewStateBanner").textContent = "Project unavailable — " + message;
@@ -1751,6 +1756,199 @@ function renderProjectWorkspaceRoute(route) {
       route, "Loading authoritative project context…"
     );
     void refreshProjectOverview(route, true);
+  }
+}
+
+function projectCreateSelectedScope() {
+  const workspaceId = $("#projectCreateWorkspace")?.value || "";
+  return (state.projectCreateOptions?.scopes || []).find((row) => row.workspace_id === workspaceId) || null;
+}
+
+function projectCreateEligibleDomains() {
+  const scope = projectCreateSelectedScope();
+  if (!scope) return [];
+  return (state.projectCreateOptions?.published_domain_revisions || []).filter((row) => row.tenant_id === scope.tenant_id);
+}
+
+function renderProjectCreateReview() {
+  const scope = projectCreateSelectedScope();
+  const name = $("#projectCreateName")?.value.trim() || "—";
+  const revisionId = $("#projectCreateDomain")?.value || "";
+  const revision = projectCreateEligibleDomains().find((row) => row.revision_id === revisionId) || null;
+  $("#projectCreateReviewTenant").textContent = scope ? (scope.tenant_name + " · " + scope.tenant_id) : "—";
+  $("#projectCreateReviewWorkspace").textContent = scope ? (scope.workspace_name + " · " + scope.workspace_id) : "—";
+  $("#projectCreateReviewName").textContent = name;
+  $("#projectCreateReviewDomain").textContent = revision ?
+    ((revision.domain_name || revision.domain_id) + " · " + (revision.semantic_version || ("r" + revision.revision_number)) + " · " + revision.revision_id) :
+    "No pinned Domain revision";
+}
+
+function renderProjectCreateDomainOptions() {
+  const prior = $("#projectCreateDomain")?.value || "";
+  const rows = projectCreateEligibleDomains();
+  $("#projectCreateDomain").innerHTML = '<option value="">No pinned Domain revision</option>' +
+    rows.map((row) => '<option value="' + esc(row.revision_id) + '">' +
+      esc((row.domain_name || row.domain_id) + " · " + (row.semantic_version || ("r" + row.revision_number)) + " · " + row.revision_id) + "</option>").join("");
+  if (rows.some((row) => row.revision_id === prior)) $("#projectCreateDomain").value = prior;
+  renderProjectCreateReview();
+}
+
+function renderProjectCreateOptions() {
+  const scopes = state.projectCreateOptions?.scopes || [];
+  $("#projectCreateWorkspace").innerHTML = scopes.length ?
+    scopes.map((row) => '<option value="' + esc(row.workspace_id) + '">' +
+      esc(row.tenant_name + " / " + row.workspace_name + " · " + row.workspace_id) + "</option>").join("") :
+    '<option value="">No manageable ACTIVE workspace</option>';
+  $("#projectCreateSubmitButton").disabled = !scopes.length;
+  $("#projectCreateState").hidden = scopes.length > 0;
+  if (!scopes.length) {
+    $("#projectCreateState").className = "home-state-banner warn";
+    $("#projectCreateState").textContent = "No ACTIVE workspace in your authorized scope grants MANAGE_PROJECT.";
+  }
+  renderProjectCreateDomainOptions();
+}
+
+async function openProjectCreateDialog() {
+  if (state.projectCreateLoading) return;
+  state.projectCreateLoading = true;
+  state.projectCreateOptions = null;
+  $("#projectCreateState").hidden = false;
+  $("#projectCreateState").className = "home-state-banner loading";
+  $("#projectCreateState").textContent = "Loading authoritative creation choices…";
+  $("#projectCreateName").value = "";
+  $("#projectCreateDialog").showModal();
+  try {
+    state.projectCreateOptions = await api("/browser/projects/create-options");
+    renderProjectCreateOptions();
+  } catch (error) {
+    if (error.status === 401) {
+      $("#projectCreateDialog").close();
+      showLogin();
+      return;
+    }
+    $("#projectCreateState").className = "home-state-banner error";
+    $("#projectCreateState").textContent = "Create Project choices unavailable — " + error.message;
+    $("#projectCreateSubmitButton").disabled = true;
+  } finally {
+    state.projectCreateLoading = false;
+  }
+}
+
+async function submitProjectCreate() {
+  if (state.projectMutation) return;
+  const scope = projectCreateSelectedScope();
+  const name = $("#projectCreateName").value.trim();
+  const domainRevisionId = $("#projectCreateDomain").value || null;
+  if (!scope || !name) return;
+  const domain = projectCreateEligibleDomains().find((row) => row.revision_id === domainRevisionId) || null;
+  const confirmed = await confirmGovernedAction({
+    title: "Create governed project",
+    action: "CREATE_PROJECT",
+    target: name,
+    scope: scope.tenant_id + " / " + scope.workspace_id,
+    consequence: domain ? ("Create the project and immutably pin Domain revision " + domain.revision_id + ".") :
+      "Create the project without a pinned Domain revision.",
+  });
+  if (!confirmed) return;
+  state.projectMutation = true;
+  $("#projectCreateSubmitButton").disabled = true;
+  $("#projectCreateState").hidden = false;
+  $("#projectCreateState").className = "home-state-banner loading";
+  $("#projectCreateState").textContent = "Creating project through authoritative backend…";
+  try {
+    const result = await api("/browser/projects", {method: "POST", body: {workspace_id: scope.workspace_id, name, domain_revision_id: domainRevisionId}});
+    state.projects = null;
+    state.projectOverview = null;
+    state.projectOverviewProjectId = null;
+    await Promise.all([refreshProjectsIndex(false), refreshHomeSummary(false)]);
+    $("#projectCreateDialog").close();
+    navigateTo(result.destination);
+  } catch (error) {
+    $("#projectCreateState").className = "home-state-banner error";
+    $("#projectCreateState").textContent = "Project creation failed — " + error.message;
+  } finally {
+    state.projectMutation = false;
+    $("#projectCreateSubmitButton").disabled = false;
+  }
+}
+
+function renderProjectLifecycleControls(summary) {
+  const management = summary.lifecycle_management || {};
+  const controls = $("#projectLifecycleControls");
+  const allowed = new Set(management.allowed_actions || []);
+  controls.hidden = !management.can_manage;
+  if (!management.can_manage) return;
+  $("#projectRenameInput").value = summary.project?.name || "";
+  $("#projectRenameButton").hidden = !allowed.has("RENAME");
+  $("#projectRenameInput").disabled = !allowed.has("RENAME");
+  $("#projectArchiveControl").hidden = !allowed.has("ARCHIVE");
+  $("#projectRestoreControl").hidden = !allowed.has("RESTORE");
+  const activity = management.archive_activity || {};
+  const active = (activity.active_jobs || 0) + (activity.active_runs || 0) + (activity.active_orchestrations || 0);
+  $("#projectArchiveDrain").checked = false;
+  $("#projectArchiveHint").textContent = active ?
+    ("Active execution exists (" + (activity.active_jobs || 0) + " jobs, " + (activity.active_runs || 0) + " runs, " +
+      (activity.active_orchestrations || 0) + " orchestrations). Archive requires explicit drain.") :
+    "No active execution blocks immediate archive.";
+  $("#projectLifecycleMutationState").textContent = "";
+}
+
+async function refreshProjectMutationSurfaces(projectId, overview) {
+  state.projectOverview = overview;
+  state.projectOverviewProjectId = projectId;
+  await Promise.all([refreshProjectsIndex(false), refreshHomeSummary(false)]);
+  const route = projectWorkspaceRoute();
+  if (route?.projectId === projectId && state.projectOverview) renderProjectWorkspace(state.projectOverview, route);
+}
+
+async function performProjectLifecycleAction(action) {
+  if (state.projectMutation) return;
+  const route = projectWorkspaceRoute();
+  const summary = state.projectOverview;
+  if (!route || !summary) return;
+  const management = summary.lifecycle_management || {};
+  if (!(management.allowed_actions || []).includes(action)) return;
+  let endpoint = "/browser/projects/" + encodeURIComponent(route.projectId);
+  let options = {};
+  let consequence = "";
+  let target = route.projectId;
+  if (action === "RENAME") {
+    const name = $("#projectRenameInput").value.trim();
+    if (!name) return;
+    options = {method: "PATCH", body: {name}};
+    consequence = "Persist a governed project rename and append authoritative name history/audit.";
+    target = name + " · " + route.projectId;
+  } else if (action === "ARCHIVE") {
+    endpoint += "/archive";
+    const drain = $("#projectArchiveDrain").checked;
+    const reason = $("#projectArchiveReason").value.trim();
+    options = {method: "POST", body: {drain, reason}};
+    consequence = drain ? "Request archive with drain=true. Active execution causes ARCHIVING until drained." :
+      "Archive immediately only if no active execution exists; otherwise fail closed.";
+  } else if (action === "RESTORE") {
+    endpoint += "/restore";
+    options = {method: "POST"};
+    consequence = "Restore project lifecycle to ACTIVE; no Domain binding or execution state is fabricated.";
+  } else return;
+  const confirmed = await confirmGovernedAction({
+    title: action[0] + action.slice(1).toLowerCase() + " governed project",
+    action, target,
+    scope: summary.project?.scope ? (summary.project.scope.tenant_id + " / " + summary.project.scope.workspace_id) : route.projectId,
+    consequence,
+  });
+  if (!confirmed) return;
+  state.projectMutation = true;
+  document.querySelectorAll("#projectLifecycleControls button, #projectLifecycleControls input").forEach((el) => {el.disabled = true;});
+  $("#projectLifecycleMutationState").textContent = "Applying " + action + " through authoritative project governance…";
+  try {
+    const result = await api(endpoint, options);
+    await refreshProjectMutationSurfaces(route.projectId, result.overview);
+  } catch (error) {
+    if (error.status === 401) {showLogin(); return;}
+    $("#projectLifecycleMutationState").textContent = action + " failed — " + error.message;
+  } finally {
+    state.projectMutation = false;
+    if (state.projectOverview) renderProjectLifecycleControls(state.projectOverview);
   }
 }
 
@@ -3475,6 +3673,8 @@ function showLogin() {
   state.homeError = null;
   state.projects = null;
   state.projectsError = null;
+  state.projectCreateOptions = null;
+  state.projectMutation = false;
   state.projectOverview = null;
   state.projectOverviewProjectId = null;
   state.projectOverviewError = null;
@@ -3656,6 +3856,17 @@ $("#packagesRouteView").addEventListener("click", (event) => {
     renderPackagesSummary();
   }
 });
+
+$("#projectsCreateButton").addEventListener("click", () => {void openProjectCreateDialog();});
+$("#projectCreateCloseButton").addEventListener("click", () => $("#projectCreateDialog").close());
+$("#projectCreateCancelButton").addEventListener("click", () => $("#projectCreateDialog").close());
+$("#projectCreateWorkspace").addEventListener("change", renderProjectCreateDomainOptions);
+$("#projectCreateDomain").addEventListener("change", renderProjectCreateReview);
+$("#projectCreateName").addEventListener("input", renderProjectCreateReview);
+$("#projectCreateForm").addEventListener("submit", (event) => {event.preventDefault(); void submitProjectCreate();});
+$("#projectRenameButton").addEventListener("click", () => {void performProjectLifecycleAction("RENAME");});
+$("#projectArchiveButton").addEventListener("click", () => {void performProjectLifecycleAction("ARCHIVE");});
+$("#projectRestoreButton").addEventListener("click", () => {void performProjectLifecycleAction("RESTORE");});
 
 $("#projectsRefreshButton").addEventListener("click", async () => {
   await refreshProjectsIndex(true);
