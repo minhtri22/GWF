@@ -182,3 +182,6 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 
 /* Current UI/UX re-audit: cross-screen authoritative navigation */
 .compact-link{padding:0;border:0;background:transparent;text-align:left;color:inherit}.compact-link:hover strong,.compact-link:focus-visible strong{color:var(--accent-primary)}.feed-action{width:100%;border:0;color:inherit;text-align:left;cursor:pointer}.feed-action:hover,.feed-action:focus-visible{outline:1px solid var(--accent-primary);outline-offset:-1px}
+
+/* Current UI/UX re-audit: componentized diagnostics */
+.diagnostics-detail{display:grid;gap:7px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-subtle)}.diagnostics-detail>div{display:grid;gap:3px}.diagnostics-detail span{color:var(--text-muted);font-size:8px;text-transform:uppercase;letter-spacing:.05em}.diagnostics-detail code{font:8px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere;color:var(--text-secondary)}
