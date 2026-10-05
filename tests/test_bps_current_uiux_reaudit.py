@@ -293,20 +293,16 @@ def test_current_uiux_opened_scope_does_not_expose_future_mutations():
     ):
         assert forbidden not in html
 
-    # M07-A is read-only. The browser may probe readiness, but it cannot
-    # create/disable/bind/prepare/preflight/execute GitHub mutations yet.
-    github_start = js.index("function renderGithub")
-    next_function = re.search(r"\nfunction\s+[A-Za-z0-9_]+\s*\(", js[github_start + 1 :])
-    github_end = (github_start + 1 + next_function.start()) if next_function else len(js)
-    github_ui = js[github_start:github_end]
-    for mutation_path in (
-        "/plugins",
-        "/repositories",
-        "/change-sets",
-        "/preflight",
-        "/execute",
-    ):
-        assert 'method: "POST"' not in github_ui or mutation_path not in github_ui
+    # M07-A is read-only. The only browser GitHub API calls are the
+    # authorized summary and the explicit read-only readiness probe.
+    github_api_lines = [
+        line.strip() for line in js.splitlines()
+        if 'api("/browser/github' in line
+    ]
+    assert len(github_api_lines) == 2
+    assert any('api("/browser/github")' in line for line in github_api_lines)
+    assert any('/readiness")' in line for line in github_api_lines)
+    assert all("method:" not in line for line in github_api_lines)
 
     # Recovery browser workflow opens only the qualified human decision.
     assert "Apply recovery" not in html
