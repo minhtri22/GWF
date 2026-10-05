@@ -931,6 +931,26 @@ def create_app(
             build_sha=resolved_product_info["build_sha"],
         )
 
+    @app.get('/browser/projects/{project_id}/execution/runs/{run_id}')
+    def browser_project_run_execution(
+        project_id: str,
+        run_id: str,
+        request: Request,
+    ):
+        _, principal = browser_principal(request)
+        try:
+            runtime.tenancy.require_project_access(
+                principal.actor_id, project_id, "VIEW"
+            )
+            return product.project_run_execution(
+                principal.actor_id,
+                project_id,
+                run_id,
+                build_sha=resolved_product_info["build_sha"],
+            )
+        except (AuthorityDenied, NotFound) as exc:
+            raise HTTPException(status_code=404, detail="run not found") from exc
+
     @app.get('/browser/projects/{project_id}/execution/orchestrations/{orchestration_id}/report')
     def browser_project_execution_report(
         project_id: str,
