@@ -35,7 +35,7 @@ def test_current_surface_uat_script_contract_is_current_and_bounded():
     assert QUALIFIED_HEAD in text
     assert 'feature/bps-i00-product-shell' in text
     assert 'no_product_drift_after_qualified_head' in text
-    assert 'git diff --name-only $QualifiedImplementationHead HEAD -- src web install.ps1 scripts/gwf_server.ps1' in text
+    assert 'git -C $RepoRoot diff --name-only $QualifiedImplementationHead HEAD -- src web install.ps1 scripts/gwf_server.ps1' in text
 
     for token in (
         'home=@("LIVE_MODULE","BPS-M01")',
