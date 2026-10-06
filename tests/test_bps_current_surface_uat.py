@@ -233,11 +233,11 @@ def test_current_surface_seed_supports_required_browser_mutations(
         assert options.status_code == 200
         option_body = options.json()
         assert seeded["workspace_id"] in {
-            row["workspace_id"] for row in option_body["workspaces"]
+            row["workspace_id"] for row in option_body["scopes"]
         }
         assert seeded["domain_revision_id"] in {
-            row["domain_revision_id"]
-            for row in option_body["domain_revisions"]
+            row["revision_id"]
+            for row in option_body["published_domain_revisions"]
         }
 
         created = client.post(
