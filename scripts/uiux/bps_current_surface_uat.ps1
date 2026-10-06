@@ -60,8 +60,17 @@ function Ask([string]$Id,[string]$Prompt){
 }
 function Run-Ps([string]$Path,[string]$Log){
  $exe=[System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
- & $exe -NoProfile -ExecutionPolicy Bypass -File $Path 2>&1 | Tee-Object -FilePath $Log -Append | Out-Host
- if($LASTEXITCODE -ne 0){throw "Command failed: $Path"}
+ $savedErrorActionPreference=$ErrorActionPreference
+ try{
+  # Windows PowerShell surfaces native stderr redirected with 2>&1 as ErrorRecord.
+  # Preserve stderr in the evidence log, but judge the child process by exit code.
+  $ErrorActionPreference="Continue"
+  & $exe -NoProfile -ExecutionPolicy Bypass -File $Path 2>&1 | Tee-Object -FilePath $Log -Append | Out-Host
+  $childExitCode=$LASTEXITCODE
+ }finally{
+  $ErrorActionPreference=$savedErrorActionPreference
+ }
+ if($childExitCode -ne 0){throw "Command failed ($childExitCode): $Path"}
 }
 function Server([string]$Action){
  & $ServerLauncher -Action $Action -RepoRoot $RepoRoot -Port $Port *>&1 | Tee-Object -FilePath $LauncherLog -Append | Out-Host
