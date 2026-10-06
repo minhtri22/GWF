@@ -250,8 +250,9 @@ def test_current_uiux_projects_create_lifecycle_and_domain_contract_are_live():
 
     assert (
         "IMPLEMENTED / STRICT_CONTRACT_SATISFIED / "
-        "MASTER_REAUDIT_PENDING"
+        "MASTER_REAUDIT_PASS"
     ) in create_doc
+    assert "MASTER_REAUDIT          = PASS" in create_doc
 
 
 def test_current_uiux_live_cross_screen_inspection_paths_are_exact():
