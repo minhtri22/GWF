@@ -95,6 +95,14 @@ def test_current_surface_uat_script_contract_is_current_and_bounded():
     assert '$ErrorActionPreference="Continue"' in text
     assert '$childExitCode=$LASTEXITCODE' in text
     assert 'if($childExitCode -ne 0)' in text
+    assert "Recover-StaleServerMetadata" in text
+    assert "stale_launcher_metadata_recovered" in text
+    assert "process_terminated=$false" in text
+    assert "metadata_only=$true" in text
+    assert "uat_port_isolated_from_unowned_listener" in text
+    assert "existing_listener_terminated=$false" in text
+    assert "Remove-Item $pidPath -Force" in text
+    assert "Stop-Process -Id $serverMeta.pid" not in text
 
 
 def test_current_surface_uat_scripts_are_windows_powershell_51_text_safe():
