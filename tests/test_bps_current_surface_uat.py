@@ -9,8 +9,11 @@ import sys
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 
+from gwr.api import create_app
 from gwr.auth import HumanAuthService
+from gwr.runtime import GovernedWorkflowRuntime
 
 ROOT = Path(__file__).parents[1]
 PS1 = ROOT / "scripts" / "uiux" / "bps_current_surface_uat.ps1"
@@ -175,3 +178,142 @@ def test_current_surface_seed_materializes_authoritative_states(
         ).fetchone()[0] >= 1
     finally:
         conn.close()
+
+
+
+def test_current_surface_seed_supports_required_browser_mutations(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(HumanAuthService, "PASSWORD_ITERATIONS", 1_000)
+    db_path = tmp_path / "uat-browser.db"
+    object_root = tmp_path / "objects-browser"
+    observer_path = tmp_path / "observability-browser.jsonl"
+    username = "browser-seed-user"
+    password = "browser-seed-password-long"
+    secret = "b" * 64
+    monkeypatch.setenv("GWR_UAT_USERNAME", username)
+    monkeypatch.setenv("GWR_UAT_PASSWORD", password)
+    monkeypatch.setenv("GWR_AUTH_SECRET", secret)
+    monkeypatch.setenv("GWR_DATABASE_URL", str(db_path))
+    monkeypatch.setenv("GWR_OBJECT_STORE_ROOT", str(object_root))
+    monkeypatch.setenv("GWR_OBSERVABILITY_PATH", str(observer_path))
+
+    seed_module = _load_seed_module()
+    seeded = seed_module.seed()
+
+    rt = GovernedWorkflowRuntime(
+        str(ROOT / "domains" / "research.workflow.yaml"),
+        str(db_path),
+        auth_secret=secret,
+        object_store_root=str(object_root),
+        observability_path=str(observer_path),
+    )
+    app = create_app(
+        rt,
+        product_info={
+            "product": "Governed Workflow Runtime",
+            "version": "uat-test",
+            "build_sha": "uat-seed-test-head",
+            "domain_id": rt.domain.domain_id,
+            "backend": getattr(rt.db, "backend_name", "unknown"),
+            "server_mode": "canonical",
+        },
+        web_root=ROOT / "web",
+        browser_cookie_secure=False,
+    )
+    client = TestClient(app)
+    try:
+        login = client.post(
+            "/browser/auth/login",
+            json={"username": username, "password": password},
+        )
+        assert login.status_code == 200
+
+        options = client.get("/browser/projects/create-options")
+        assert options.status_code == 200
+        option_body = options.json()
+        assert seeded["workspace_id"] in {
+            row["workspace_id"] for row in option_body["workspaces"]
+        }
+        assert seeded["domain_revision_id"] in {
+            row["domain_revision_id"]
+            for row in option_body["domain_revisions"]
+        }
+
+        created = client.post(
+            "/browser/projects",
+            json={
+                "workspace_id": seeded["workspace_id"],
+                "name": "UAT Created Project Test",
+                "domain_revision_id": seeded["domain_revision_id"],
+            },
+        )
+        assert created.status_code == 200
+        assert created.json()["project"]["name"] == "UAT Created Project Test"
+
+        lifecycle_id = seeded["lifecycle_project_id"]
+        before = client.get(
+            f"/browser/projects/{lifecycle_id}/overview"
+        ).json()
+        assert before["lifecycle_management"]["can_manage"] is True
+        assert before["lifecycle_management"]["allowed_actions"] == [
+            "RENAME",
+            "ARCHIVE",
+        ]
+        renamed = client.patch(
+            f"/browser/projects/{lifecycle_id}",
+            json={"name": "Lifecycle Project Renamed"},
+        )
+        assert renamed.status_code == 200
+        archived = client.post(
+            f"/browser/projects/{lifecycle_id}/archive",
+            json={"drain": False, "reason": "Current Surface UAT test"},
+        )
+        assert archived.status_code == 200
+        assert archived.json()["overview"]["lifecycle"]["status"] == "ARCHIVED"
+        restored = client.post(
+            f"/browser/projects/{lifecycle_id}/restore"
+        )
+        assert restored.status_code == 200
+        assert restored.json()["overview"]["lifecycle"]["status"] == "ACTIVE"
+
+        approvals = client.get("/browser/operations/approvals")
+        assert approvals.status_code == 200
+        proposal = next(
+            row for row in approvals.json()["pending"]
+            if row["proposal_id"] == seeded["approval_id"]
+        )
+        assert proposal["can_approve"] is True
+        approved = client.post(
+            f"/browser/operations/approvals/{seeded['approval_id']}/approve",
+            json={"expected_hash": proposal["payload_hash"]},
+        )
+        assert approved.status_code == 200
+        assert approved.json()["status"] == "APPROVED"
+
+        phase = client.get(
+            f"/browser/projects/{seeded['recovery_project_id']}"
+            f"/execution/phases/{seeded['recovery_phase_id']}"
+        )
+        assert phase.status_code == 200
+        recovery = next(
+            row
+            for problem in phase.json()["agent_protocol"]["problems"]
+            for row in problem["recoveries"]
+            if row["proposal_id"] == seeded["recovery_proposal_id"]
+        )
+        assert recovery["status"] == "WAITING_HUMAN"
+        assert recovery["decision_capability"]["can_decide"] is True
+        decided = client.post(
+            f"/browser/projects/{seeded['recovery_project_id']}"
+            f"/execution/phases/{seeded['recovery_phase_id']}"
+            f"/recovery-proposals/{seeded['recovery_proposal_id']}/decision",
+            json={
+                "decision": "APPROVED",
+                "reason": "Current Surface UAT browser regression",
+            },
+        )
+        assert decided.status_code == 200
+        assert decided.json()["proposal_status"] == "HUMAN_APPROVED"
+    finally:
+        rt.close()
