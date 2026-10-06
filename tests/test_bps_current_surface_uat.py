@@ -91,6 +91,10 @@ def test_current_surface_uat_script_contract_is_current_and_bounded():
     assert "M07-B/M08/M09/M10 remain closed" in text
     assert "M07-B/M08/M09/M10 are not simulated" in text
     assert "FINAL_LOCAL_VERDICT=$Verdict" in text
+    assert '$savedErrorActionPreference=$ErrorActionPreference' in text
+    assert '$ErrorActionPreference="Continue"' in text
+    assert '$childExitCode=$LASTEXITCODE' in text
+    assert 'if($childExitCode -ne 0)' in text
 
 
 def test_current_surface_uat_scripts_are_windows_powershell_51_text_safe():
