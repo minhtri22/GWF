@@ -125,6 +125,81 @@ function Write-Report{
  $json|Set-Content -Path $Report -Encoding UTF8
 }
 
+function Test-LocalPortAvailable([int]$CandidatePort){
+ $listener=$null
+ try{
+  $address=[System.Net.IPAddress]::Parse("127.0.0.1")
+  $listener=[System.Net.Sockets.TcpListener]::new($address,$CandidatePort)
+  $listener.Start()
+  return $true
+ }catch{
+  return $false
+ }finally{
+  if($null -ne $listener){try{$listener.Stop()}catch{}}
+ }
+}
+function Select-FreeUatPort([int]$StartPort){
+ for($candidate=$StartPort+1;$candidate -le $StartPort+100;$candidate++){
+  if(Test-LocalPortAvailable $candidate){return $candidate}
+ }
+ throw "No free loopback UAT port found after $StartPort."
+}
+function Recover-StaleServerMetadata{
+ $pidPath=Join-Path $RepoRoot ".gwr\server\server-process.json"
+ if(-not(Test-Path $pidPath)){return}
+
+ try{$serverMeta=Get-Content $pidPath -Raw|ConvertFrom-Json}
+ catch{throw "Invalid server process metadata: $pidPath"}
+
+ $owned=$false
+ $staleReason=$null
+ $proc=Get-Process -Id ([int]$serverMeta.pid) -ErrorAction SilentlyContinue
+ if($null -eq $proc){
+  $staleReason="recorded PID is not running"
+ }else{
+  $actualStart=$proc.StartTime.ToUniversalTime()
+  $expectedStart=[DateTime]::Parse($serverMeta.process_started_at).ToUniversalTime()
+  if([Math]::Abs(($actualStart-$expectedStart).TotalSeconds)-gt 3){
+   $staleReason="recorded PID has been reused by a different process start time"
+  }else{
+   $commandMismatch=$false
+   try{
+    $cim=Get-CimInstance Win32_Process -Filter ("ProcessId={0}" -f $serverMeta.pid) -ErrorAction Stop
+    if($cim.CommandLine -and $cim.CommandLine -notmatch "gwr\.server"){$commandMismatch=$true}
+   }catch{
+    # If command-line identity cannot be inspected, fail closed and let the canonical launcher decide.
+   }
+   if($commandMismatch){$staleReason="recorded PID command line is not gwr.server"}
+   else{$owned=$true}
+  }
+ }
+ if($owned){return}
+
+ $archive=Join-Path $RunRoot "stale-server-process.json"
+ Copy-Item $pidPath $archive -Force
+ Remove-Item $pidPath -Force
+ $Evidence.Add($archive)
+ Add-Check "stale_launcher_metadata_recovered" $true @{
+  pid=$serverMeta.pid
+  recorded_at=$serverMeta.recorded_at
+  reason=$staleReason
+  process_terminated=$false
+  metadata_only=$true
+ }
+
+ if(-not(Test-LocalPortAvailable $script:Port)){
+  $requestedPort=$script:Port
+  $script:Port=Select-FreeUatPort $requestedPort
+  $script:BaseUrl="http://127.0.0.1:$script:Port"
+  $script:AppUrl="http://localhost:$script:Port/app/home"
+  Add-Check "uat_port_isolated_from_unowned_listener" $true @{
+   requested_port=$requestedPort
+   selected_port=$script:Port
+   existing_listener_terminated=$false
+  }
+ }
+}
+
 try{
  $HeadStart=(& git -C $RepoRoot rev-parse HEAD).Trim()
  $Branch=(& git -C $RepoRoot rev-parse --abbrev-ref HEAD).Trim()
@@ -177,6 +252,7 @@ try{
  Add-Check "seed_recovery_project" ($Seed.recovery_project_id -eq "project_uat_recovery") $Seed.recovery_project_id
 
  Write-Host "Step 3/7 - canonical server + capability contract" -ForegroundColor Cyan
+ Recover-StaleServerMetadata
  $pre=& $ServerLauncher -Action status -RepoRoot $RepoRoot -Port $Port *>&1
  if(($pre-join [Environment]::NewLine) -notmatch "GWF_SERVER=STOPPED"){throw "A GWF server is already registered for this repo. UAT refuses to stop/reuse it."}
  Server "start";$Started=$true;$Evidence.Add($LauncherLog)
