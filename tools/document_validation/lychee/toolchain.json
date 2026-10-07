@@ -1,0 +1,11 @@
+{
+  "project": "lycheeverse/lychee",
+  "version": "0.24.2",
+  "release_tag": "lychee-v0.24.2",
+  "release_published_at": "2026-05-01T15:41:38Z",
+  "upstream_commit": "2bba271688c1abb1503097a064e6c3bc1d1b6a9b",
+  "linux_asset": "lychee-x86_64-unknown-linux-gnu.tar.gz",
+  "linux_asset_sha256": "sha256:1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a",
+  "config_file": "lychee.toml",
+  "config_sha256": "sha256:14ac358f3823a9798bc144a1f029460ceff88916e256285f254f7a5ff3ef1794"
+}

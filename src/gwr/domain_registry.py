@@ -128,7 +128,7 @@ class DomainRegistryService:
             out.append(item)
         return out
 
-    def pin_project(self, project_id: str, revision_id: str, actor_id: str) -> None:
+    def pin_project(self, project_id: str, revision_id: str, actor_id: str, *, commit: bool = True) -> None:
         rev = self.get_revision(revision_id)
         if rev["status"] != "PUBLISHED":
             raise InvalidTransition("Project may only pin a PUBLISHED domain revision")
@@ -146,7 +146,8 @@ class DomainRegistryService:
             (project_id, revision_id, actor_id, utcnow()),
         )
         self.db.conn.execute("UPDATE projects SET domain_id=? WHERE id=?", (rev["domain_id"], project_id))
-        self.db.conn.commit()
+        if commit:
+            self.db.conn.commit()
 
     def project_binding(self, project_id: str) -> dict[str, Any] | None:
         row = self.db.one(

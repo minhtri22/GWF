@@ -1,5 +1,7 @@
 # GWR v0.2 — Handoff
 
+> **Current handoff rule:** for any BPS/UI/UX work, this historical handoff is not sufficient by itself. The receiving agent MUST read root `AGENTS.md` before any modification, then resolve the current plan, UI/UX spec/QA, Browser Product Surface spec, and active slice authorization by exact identity.
+
 ## Delivered
 
 v0.2 contains a working Research Orchestrator on top of the governed runtime kernel.

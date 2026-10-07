@@ -299,15 +299,19 @@ def test_pilot_profiles_validate_and_preserve_feature_branch_boundary():
         assert "direct_main_write: false" in text
 
 
-def test_install_script_is_one_click_full_qualification_by_default():
+def test_install_script_separates_default_install_from_explicit_qualification():
     script = (ROOT / "install.ps1").read_text(encoding="utf-8")
-    assert '"pip", "install", "-e", ".[dev,postgres]"' in script
+    assert "[switch]$Qualification" in script
+    assert "$QualificationMode" in script
+    assert '$InstallTarget = if ($QualificationMode) { ".[dev,postgres]" } else { "." }' in script
     assert '"tools/gwr_domain.py", "validate", "domains/research.workflow.yaml"' in script
     assert '"tools/gwr_domain.py", "validate", "domains/software.workflow.yaml"' in script
     assert '"tools/gwr_pilot.py", "validate", "pilots/cqg.research.yaml"' in script
     assert '"tools/gwr_pilot.py", "validate", "pilots/gwf.self-upgrade.yaml"' in script
-    assert '"-m", "pytest", "-q"' in script
+    assert 'if ($QualificationMode -and -not $SkipTests)' in script
+    assert 'if ($QualificationMode -and -not $SkipUat)' in script
     assert "install-report.json" in script
+    assert "timings_seconds = $Timings" in script
     assert "dsn_persisted = $false" in script
 
 

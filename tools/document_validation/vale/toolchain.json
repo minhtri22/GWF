@@ -1,0 +1,15 @@
+{
+  "schema": "DG-P1-TOOLCHAIN-v1",
+  "validator_id": "vale",
+  "repository": "vale-cli/vale",
+  "version": "3.22.0",
+  "release_tag": "v3.22.0",
+  "revalidated_at": "2026-09-21",
+  "linux_asset": "vale_3.22.0_Linux_64-bit.tar.gz",
+  "checksums_asset": "vale_3.22.0_checksums.txt",
+  "config_files": {
+    ".vale.ini": "sha256:6d9113386f1efc797f0f4bafa7dd0d6ea5caaa7e1e3de303a91088e68c59b215",
+    "styles/GWF/Terminology.yml": "sha256:760ebe50287ef544a84f62abda62b51e61848dfc4af58dc19abf6440d9788f06"
+  },
+  "config_bundle_hash": "sha256:270b05bb9d8930556595d3d5a805f8dc72145345545250110d3bda2b65bc55d3"
+}

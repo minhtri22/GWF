@@ -44,7 +44,17 @@ def main():
     qp = json.loads((out / "QA_POSTGRES.json").read_text())
     meta = json.loads((site / "build-meta.json").read_text())
     html = (site / "index.html").read_text(encoding="utf-8")
-    required_ui = all(label in html for label in ("Pending approvals", "Failure & recovery", "Distributed runtime", "Domain SDK"))
+    js = (site / "app.js").read_text(encoding="utf-8")
+    shell_snapshot = (
+        meta.get("mode") == "STATIC_SHELL_SNAPSHOT"
+        and meta.get("slice") == "BPS-I00"
+        and meta.get("authoritative_backend") is False
+        and meta.get("runtime_required_for_product_uat") is True
+        and "Governed Knowledge Studio" in html
+        and "/browser/bootstrap" in js
+        and "demo-data.json" not in js
+        and "gwr-uat-projects" not in js
+    )
     result = {
         "version": "0.8.0",
         "status": "PASS",
@@ -56,12 +66,16 @@ def main():
         "operator_dashboard_pass": all(next(c["pass"] for c in q["checks"] if c["name"] == "dashboard_read_model") for q in (qs, qp)),
         "human_approval_ux_contract_pass": all(next(c["pass"] for c in q["checks"] if c["name"] == "authenticated_exact_hash_rejection") for q in (qs, qp)),
         "failure_recovery_visualization_data_pass": all(next(c["pass"] for c in q["checks"] if c["name"] == "failure_recovery_graph") for q in (qs, qp)),
-        "uat_site_build_pass": meta.get("version") in {"0.8.0", "0.8.1", "0.8.2"} and meta.get("mode") == "STATIC_UAT" and required_ui,
+        # Historical compatibility key: now means the non-authoritative shell snapshot
+        # builds cleanly. It is NOT browser UAT evidence.
+        "uat_site_build_pass": shell_snapshot,
+        "static_shell_snapshot_pass": shell_snapshot,
+        "authoritative_browser_uat": False,
         "ready_for_uat": False,
     }
     required = [v for k, v in result.items() if k.endswith("_pass")]
     result["status"] = "PASS" if all(required) else "FAIL"
-    result["ready_for_uat"] = result["status"] == "PASS"
+    result["ready_for_uat"] = False
     (out / "V08_GATE.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
     print(json.dumps(result, indent=2))
     raise SystemExit(0 if result["status"] == "PASS" else 1)

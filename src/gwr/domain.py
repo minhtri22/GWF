@@ -6,13 +6,54 @@ from .errors import ValidationError
 
 PRIMITIVES = {"PRIM-ARTIFACT","PRIM-REVISION","PRIM-TRACE","PRIM-VALIDITY","PRIM-IMPACT","PRIM-WORKUNIT","PRIM-RUN","PRIM-CHECKPOINT","PRIM-EVIDENCE","PRIM-GATE","PRIM-DECISION","PRIM-FAILURE","PRIM-RECOVERY","PRIM-LOOPGUARD","PRIM-ACTOR","PRIM-AUTHORITY","PRIM-APPROVAL","PRIM-AUDIT","PRIM-DOMAIN"}
 
+CORE_ARTIFACT_TYPES = {
+    "governed_document": {
+        "id": "governed_document",
+        "maps_to": "PRIM-ARTIFACT",
+        "revision_model": "PRIM-REVISION",
+        "normative": False,
+        "hard_dependencies": [],
+        "required_fields": [],
+        "core_reserved": True,
+    }
+}
+
+CORE_EVIDENCE_TYPES = {
+    "document_validator_execution": {
+        "id": "document_validator_execution",
+        "maps_to": "PRIM-EVIDENCE",
+        "trust_class": "AUTHORITATIVE",
+        "core_reserved": True,
+    },
+    "document_qa_record": {
+        "id": "document_qa_record",
+        "maps_to": "PRIM-EVIDENCE",
+        "trust_class": "AUTHORITATIVE",
+        "core_reserved": True,
+    },
+    "document_change_classification": {
+        "id": "document_change_classification",
+        "maps_to": "PRIM-EVIDENCE",
+        "trust_class": "AUTHORITATIVE",
+        "core_reserved": True,
+    },
+}
+
 @dataclass
 class DomainPackage:
     data: dict
     @property
     def domain_id(self): return self.data["domain_id"]
     def artifact(self, type_id):
-        return next((x for x in self.data.get("artifact_types",[]) if x["id"]==type_id), None)
+        declared = next((x for x in self.data.get("artifact_types",[]) if x["id"]==type_id), None)
+        if type_id in CORE_ARTIFACT_TYPES:
+            if declared is not None:
+                raise ValidationError(
+                    "Domain package may not override reserved core artifact type",
+                    details={"artifact_type": type_id},
+                )
+            return dict(CORE_ARTIFACT_TYPES[type_id])
+        return declared
     def trace(self, type_id):
         return next((x for x in self.data.get("trace_types",[]) if x["id"]==type_id), None)
     def workunit(self, type_id):
@@ -26,7 +67,15 @@ class DomainPackage:
     def workunits(self):
         return list(self.data.get("workunit_templates",[]) or [])
     def evidence(self, type_id):
-        return next((x for x in self.data.get("evidence_types",[]) if x["id"]==type_id), None)
+        declared = next((x for x in self.data.get("evidence_types",[]) if x["id"]==type_id), None)
+        if type_id in CORE_EVIDENCE_TYPES:
+            if declared is not None:
+                raise ValidationError(
+                    "Domain package may not override reserved core evidence type",
+                    details={"evidence_type": type_id},
+                )
+            return dict(CORE_EVIDENCE_TYPES[type_id])
+        return declared
     def recovery_policy(self, failure_type):
         return next((x for x in self.data.get("recovery_policies",[]) if x.get("failure_type")==failure_type), None)
     def validate_artifact_payload(self, artifact_type, payload):
@@ -49,6 +98,26 @@ def validate_domain(d: dict) -> None:
     required=["domain_id","version","artifact_types","trace_types","workunit_templates","gate_types","failure_types","recovery_policies","roles","authority_policies","approval_policies"]
     missing=[k for k in required if k not in d]
     if missing: raise ValidationError("Domain package missing required fields", details={"missing":missing})
+    collisions = sorted(
+        x.get("id")
+        for x in d.get("artifact_types",[]) or []
+        if x.get("id") in CORE_ARTIFACT_TYPES
+    )
+    if collisions:
+        raise ValidationError(
+            "Domain package defines reserved core artifact type",
+            details={"artifact_types": collisions},
+        )
+    evidence_collisions = sorted(
+        x.get("id")
+        for x in d.get("evidence_types",[]) or []
+        if x.get("id") in CORE_EVIDENCE_TYPES
+    )
+    if evidence_collisions:
+        raise ValidationError(
+            "Domain package defines reserved core evidence type",
+            details={"evidence_types": evidence_collisions},
+        )
     for section in ["artifact_types","trace_types","workunit_templates","evidence_types","gate_types","failure_types","recovery_policies","roles","authority_policies","approval_policies"]:
         for item in d.get(section,[]) or []:
             m=item.get("maps_to")

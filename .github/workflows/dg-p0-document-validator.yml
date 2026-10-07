@@ -1,0 +1,72 @@
+name: DG-P0 Document Validator Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["v0.8.6-dg-p0-document-validator"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  dg-p0-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Python test dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Install exact markdownlint-cli2
+        run: npm install --no-save --ignore-scripts --no-audit --no-fund markdownlint-cli2@0.23.3
+
+      - name: Unit tests
+        run: python -m pytest -q tests/test_document_validation_p0.py
+
+      - name: Real markdownlint smoke gate
+        run: >-
+          python tools/run_dg_p0_gate.py
+          --executable "$GITHUB_WORKSPACE/node_modules/.bin/markdownlint-cli2"
+          --out evidence/dg-p0/DG_P0_GATE.json
+
+      - name: Assert P0 gate
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('evidence/dg-p0/DG_P0_GATE.json', encoding='utf-8'))
+          assert d['status']=='PASS', d
+          assert d['toolchain']['version']=='0.23.3', d
+          assert d['checks']['real_version_observed'] is True, d
+          assert d['checks']['valid_fixture_pass'] is True, d
+          assert d['checks']['invalid_fixture_findings'] is True, d
+          assert d['checks']['source_not_mutated'] is True, d
+          PY
+
+      - name: Bounded regression
+        run: >-
+          python -m pytest -q
+          tests/test_v084_github_plugin_sha_qa.py
+          tests/test_v085_domain_skills.py
+
+      - name: Compile
+        run: python -m compileall -q src tests tools
+
+      - name: Upload DG-P0 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gwr-dg-p0-evidence
+          path: evidence/dg-p0/DG_P0_GATE.json

@@ -1,10 +1,102 @@
-# Governed Workflow Runtime (GWF) v0.8.5
+# Governed Workflow Runtime (GWF)
 
-GWF is a governance and execution-quality runtime for long-running AI/agent work.
+> **Mandatory BPS agent startup:** before any UI/UX / Browser Product Surface implementation or handoff, read the root `AGENTS.md` first. It is the canonical one-slice-at-a-time QA/local-UAT protocol; repository state and exact governing blobs override chat summaries.
 
-It is deliberately **not** an n8n-style integration platform. External systems are tools/plugins; GWF focuses on authority, frozen plans, evidence, QA, recovery, provenance, handoff and reproducible outcomes that do not depend on one particular agent retaining context.
+GWF is a domain-neutral governance and execution runtime for long-running AI/agent work.
 
-## One-click Windows install
+Its purpose is to make agent work **resumable, auditable, authority-aware and reproducible** even when the agent, model, machine or session changes. GWF treats plans, revisions, evidence, approvals, failures, QA, checkpoints and handoffs as governed runtime state rather than relying on chat history.
+
+GWF is not an n8n-style integration platform and is not a replacement for Git, GitHub, documentation tools or domain-specific scientific methods. External systems remain tools/plugins; GWF owns the control plane around them.
+
+## What GWF governs
+
+A governed execution can make explicit:
+
+- who or what is allowed to act;
+- the exact artifact/revision/SHA being used;
+- what scope is frozen before work starts;
+- what evidence was produced and by which run;
+- what failed and whether retry/recovery is allowed;
+- when human approval is required;
+- which QA result applies to which exact revision;
+- what remains valid/stale/blocked;
+- where execution can safely resume;
+- what must be preserved in the final handoff.
+
+The core design principle is:
+
+> Preserve exact state and evidence; do not silently repair history to make a workflow look clean.
+
+## Project documentation governance
+
+Projects using the current Documentation Governance contract organize governed documentation under their own repository:
+
+```text
+docs/
+  gov/
+    <document>.vN.md
+    archive/
+  <phase-id>/
+    <document>.vN.md
+    archive/
+```
+
+The active document is versioned. On revision, the previous source is destined for the sibling `archive/`, and the new version links to it. Stable GWF Artifact/Revision identity remains canonical even when paths change.
+
+Document mutation consumes the workflow mode already frozen for the running PhaseExecution:
+
+- `AUTO` — the agent may mutate documents owned by its authorized phase/workflow scope;
+- `HUMAN_APPROVE` — document mutation requires human approval.
+
+This does **not** broaden AUTO recovery semantics.
+
+A frozen governance document is stronger than either mode:
+
+```text
+GOV / FROZEN
+    -> BLOCK_REQUIRES_EXPLICIT_USER_AUTHORIZATION
+```
+
+DG-P10 classifies the change, decides mutation authority and computes the deterministic archive/version lineage plan. Concrete multi-file source mutation remains a governed DG-P11 DocumentChangeSet.
+
+## Agent execution protocol
+
+Agent work is observable through:
+
+```text
+LOAD -> PREFLIGHT -> PLAN -> EXECUTE -> VERIFY -> HANDOFF -> COMPLETE
+```
+
+Important invariants include:
+
+- no preflight PASS -> no plan;
+- no plan -> no execution;
+- persist a problem before retry/replan;
+- no QA PASS -> no handoff;
+- no handoff -> no complete;
+- project/database state, not chat context, is authoritative.
+
+## Domain packages
+
+GWF ships domain packages that map domain-specific artifacts, phases, gates, failure modes and approval policies onto the same runtime primitives.
+
+Current first-party examples include:
+
+- `domains/research.workflow.yaml` — governed research execution;
+- `domains/software.workflow.yaml` — repository-first software delivery;
+- `domains/example.workflow.yaml` — scaffold/reference domain.
+
+The runtime is designed so other domains can reuse the same governance substrate without copying the kernel.
+
+## GitHub safety
+
+GWF's GitHub boundary uses exact repository/commit/blob identities and optimistic expected-SHA writes.
+
+For a governed write, GWF freezes the expected branch/file state, verifies it before mutation, writes with an expected head, then re-fetches and verifies the resulting commit, branch and content.
+
+`COMMITTED` alone is not QA-complete; exact verification is required.
+
+## Windows install + canonical product server
 
 After clone or pull:
 
@@ -12,88 +104,72 @@ After clone or pull:
 .\install.ps1
 ```
 
-The installer:
+The default installer is intentionally bounded to make the product runnable:
 
-- resolves Python >=3.11 (prefers Python 3.12 and can install it with winget);
+- resolves Python >=3.11;
 - creates/updates `.venv`;
-- installs development + PostgreSQL dependencies;
-- validates the research and software domain packages;
-- validates the CQG and GWF pilot profiles;
-- runs Python compile checks;
-- runs the full local test suite by default;
-- uses `GWR_TEST_DATABASE_URL` when supplied, or an ephemeral PostgreSQL 17 Docker container when Docker is available;
-- writes a non-secret report to `.gwr/install/install-report.json`.
+- installs normal runtime dependencies, including the canonical ASGI server;
+- validates production Domain/Pilot contracts;
+- compiles runtime sources;
+- validates canonical server configuration wiring with a temporary smoke-only secret;
+- writes exact HEAD/environment/timing evidence to `.gwr\install\install-report.json`.
 
-Useful options:
+Full repository/DG/PostgreSQL qualification is explicit:
 
 ```powershell
-.\install.ps1 -FreshVenv
-.\install.ps1 -SkipPostgres
-.\install.ps1 -RequirePostgres
-.\install.ps1 -SkipTests -SkipPostgres
+.\install.ps1 -Qualification
+.\install.ps1 -Qualification -SkipPostgres
 ```
 
-## Production domain packages
+Legacy qualification switches such as `-SkipPostgres`, `-SkipTests`, `-SkipUat` and `-RequirePostgres` continue to enter qualification mode for compatibility with existing qualification automation.
 
-### Research — `domains/research.workflow.yaml`
+### Start the canonical local product
 
-Research v0.5 adds a prospective `study_lock` so scientific validity is not left to agent memory.
+Configure a deployment auth secret of at least 32 bytes. A fresh local database may optionally receive one bootstrap human identity.
 
-The lock covers preregistration/source/artifact hashes, fresh-data policy, metrics/gates, forbidden adaptations, execution-amendment boundaries, resource limits, stop rules, repair budget and no-rescue policy.
+```powershell
+$env:GWR_AUTH_SECRET = "<at-least-32-byte-local-secret>"
+$env:GWR_BOOTSTRAP_USERNAME = "operator"
+$env:GWR_BOOTSTRAP_PASSWORD = "<at-least-12-character-password>"
 
-Execution remains the 17-phase research cycle with explicit PASS/FAIL/PIVOT, replication/replay, reporting and handoff.
+.\scripts\gwf_server.ps1 start
+```
 
-### Software delivery — `domains/software.workflow.yaml`
+Open:
 
-Software delivery governs:
+```text
+http://127.0.0.1:8765/app
+```
 
-repository audit → scope lock → implementation plan → implementation → local tests → integration/regression → independent QA → candidate verification → merge → exact-main verification → handoff.
+Lifecycle commands:
 
-A commit is not a release. The outcome is complete only after required gates pass again on the exact merged main SHA.
+```powershell
+.\scripts\gwf_server.ps1 status
+.\scripts\gwf_server.ps1 restart
+.\scripts\gwf_server.ps1 stop
+```
 
-### Example — `domains/example.workflow.yaml`
+The browser shell uses an HttpOnly same-origin GWF session cookie. It does not persist reusable bearer tokens in JavaScript-accessible browser storage.
 
-Scaffold/reference only. It is not the production software domain.
+The historical `tools/browser_uat_server.py` and related UAT launchers are not the canonical product server.
 
-## Agent execution protocol
 
-Real phases are governed by:
+## Repository map
 
-`LOAD → PREFLIGHT → PLAN → EXECUTE → VERIFY → HANDOFF → COMPLETE`
+```text
+src/gwr/       runtime kernels/services
+domains/       governed domain packages
+tests/         regression + governance fixtures
+tools/         gates, QA and historical/operational utilities
+scripts/       canonical product lifecycle and slice-local UAT entry points
+docs/          architecture/governance/research records for GWF itself
+pilots/        bounded pilot profiles
+evidence/      generated qualification evidence
+web/           authoritative browser shell/product assets
+```
 
-Important invariants include:
+## Current development model
 
-- no preflight PASS → no plan;
-- no plan → no execution;
-- persist ProblemRecord before retry/replan;
-- no QA PASS → no handoff;
-- no handoff → no complete;
-- project/database state, not chat context, is authoritative.
+GWF evolves through bounded governance transitions. A documentation/specification PASS does not automatically authorize implementation, an implementation PASS does not automatically formal-close a phase, and a later phase is not inferred merely because an earlier one passed.
 
-Recovery mode is configurable:
-
-- `AUTO`: safe/transient retries may proceed within policy and budget;
-- `HUMAN_APPROVE`: pause before retry for human approval.
-
-Normative/high-impact boundaries can still require human authority regardless of default recovery mode.
-
-## GitHub safety
-
-GWF supports SHA-safe repository changes through the GitHub plugin boundary.
-
-A governed write freezes branch/file SHAs, verifies them before write, passes expected head SHA to the provider, then re-fetches the commit/branch/files after write.
-
-Only `VERIFIED` is QA-complete; `COMMITTED` is not.
-
-See `docs/GITHUB_SHA_QA_STANDARD.md`.
-
-## Initial dogfood pilots
-
-- CQG next new research study: `pilots/cqg.research.yaml`
-- GWF bounded self-upgrade: `pilots/gwf.self-upgrade.yaml`
-
-See `docs/PILOT_CQG_GWF_V0.8.5.md`.
-
-## Validation
-
-The v0.8.5 acceptance gate nests the complete v0.8.4 regression chain and adds domain-skill, installer and pilot qualification on SQLite, PostgreSQL and Windows.
+Negative runs and findings are preserved rather than erased by rerun.

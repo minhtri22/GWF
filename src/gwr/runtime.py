@@ -18,6 +18,12 @@ from .project_governance import ProjectGovernanceService
 from .agent_protocol import AgentExecutionProtocolService
 from .plugins import PluginConnectionService
 from .github_plugin import GitHubPluginService
+from .document_facade import DocumentFacadeService
+from .document_qa import DocumentQAService
+from .document_state import DocumentLifecycleValidityService
+from .document_authority import DocumentAuthorityService
+from .document_relation import DocumentRelationService
+from .document_change import DocumentChangeClassificationService
 
 class GovernedWorkflowRuntime:
     def __init__(self, domain: str|DomainPackage, db_path=":memory:", *, auth_secret=None, object_store_root=None, observer=None, observability_path=None):
@@ -50,6 +56,43 @@ class GovernedWorkflowRuntime:
         self.agent_protocol.bootstrap_domain_skills()
         self.plugins=PluginConnectionService(self.db,self.governance,self.tenancy,self.project_governance)
         self.github=GitHubPluginService(self.db,self.governance,self.tenancy,self.project_governance,self.plugins)
+        self.document_qa=DocumentQAService(
+            self.db,
+            self.domain,
+            self.knowledge,
+            self.execution,
+            self.governance,
+            self.project_governance,
+        )
+        self.document_state=DocumentLifecycleValidityService(
+            self.db,
+            self.knowledge,
+            self.document_qa,
+            self.governance,
+            self.project_governance,
+        )
+        self.document_authority=DocumentAuthorityService(
+            self.db,
+            self.knowledge,
+            self.document_qa,
+            self.governance,
+            self.project_governance,
+        )
+        self.document_relations=DocumentRelationService(
+            self.db,
+            self.knowledge,
+            self.governance,
+            self.project_governance,
+        )
+        self.document_changes=DocumentChangeClassificationService(
+            self.db,
+            self.knowledge,
+            self.execution,
+            self.governance,
+            self.project_governance,
+            self.agent_protocol,
+        )
+        self.documents=DocumentFacadeService(self.knowledge,self.github,self.document_state)
         self.process=ProcessInspectorService(self)
         self.object_store=None; self.objects=None
         if object_store_root:
@@ -58,18 +101,26 @@ class GovernedWorkflowRuntime:
         self.observe("runtime_initialized", backend=getattr(self.db,"backend_name","unknown"), domain_id=self.domain.domain_id)
     def observe(self,event,**attrs):
         return self.observer.emit(event,**attrs)
-    def create_project(self,name,project_id=None):
+    def create_project(self,name,project_id=None,*,commit=True,observe=True):
         pid=project_id or uid("project")
         self.db.conn.execute("INSERT INTO projects VALUES(?,?,?,?)",(pid,name,self.domain.domain_id,utcnow()))
         self.db.conn.execute("INSERT INTO project_lifecycle VALUES(?,?,?,?,?,?,?)",(pid,"ACTIVE",None,None,None,None,utcnow()))
-        self.db.conn.commit()
-        self.observe("project_created",project_id=pid,domain_id=self.domain.domain_id)
+        if commit:
+            self.db.conn.commit()
+        if observe:
+            self.observe("project_created",project_id=pid,domain_id=self.domain.domain_id)
         return pid
     def create_scoped_project(self,name,tenant_id,workspace_id,actor_id,project_id=None,domain_revision_id=None):
-        pid=self.create_project(name,project_id=project_id)
-        self.tenancy.bind_project(pid,tenant_id,workspace_id,actor_id)
-        if domain_revision_id:
-            self.domains.pin_project(pid,domain_revision_id,actor_id)
+        # Scoped creation is one authoritative mutation. Keep project row, scope,
+        # owner membership, legacy-scope compatibility and optional immutable
+        # Domain pin in one database transaction so a late validation failure
+        # cannot leave a partially-created project behind.
+        with self.db.tx():
+            pid=self.create_project(name,project_id=project_id,commit=False,observe=False)
+            self.tenancy.bind_project(pid,tenant_id,workspace_id,actor_id,commit=False)
+            if domain_revision_id:
+                self.domains.pin_project(pid,domain_revision_id,actor_id,commit=False)
+        self.observe("project_created",project_id=pid,domain_id=self.domain.domain_id)
         self.observe("scoped_project_created",project_id=pid,tenant_id=tenant_id,workspace_id=workspace_id,actor_id=actor_id,domain_revision_id=domain_revision_id)
         return pid
     def attach_blob(self,project_id,owner_kind,owner_id,data,content_type="application/octet-stream"):
@@ -78,6 +129,10 @@ class GovernedWorkflowRuntime:
     def commit_approved_proposal(self, proposal_id, actor_id, expected_version=0):
         p=self.governance.require_approved(proposal_id)
         if p["action"]=="CREATE_REVISION": return self.knowledge.commit_revision_from_proposal(proposal_id,actor_id,expected_version)
+        if p["action"] in {"DECLARE_DOCUMENT_AUTHORITY","DECLARE_COMPOSED_DOCUMENT_AUTHORITY","RETIRE_DOCUMENT_AUTHORITY"}:
+            return self.document_authority.apply_approved_proposal(proposal_id,actor_id)
+        if p["action"] in {"DECLARE_DOCUMENT_RELATION","BIND_DOCUMENT_RELATION","RETIRE_DOCUMENT_RELATION"}:
+            return self.document_relations.apply_approved_proposal(proposal_id,actor_id)
         raise ValueError(f"No runtime dispatcher for proposal action {p['action']}")
     def close(self):
         self.observe("runtime_closed")

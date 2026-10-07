@@ -23,13 +23,15 @@ def _git_sha(value: str, field: str) -> str:
 
 
 class GitHubPluginService:
-    """SHA-safe GitHub write path.
+    """GitHub exact-identity read resolver plus SHA-safe write path.
 
     Provider credentials live outside GWF. A host attaches a GitHub adapter to an
-    opaque PluginConnection. Every write is optimistic-concurrency controlled by
-    branch SHA and, for updates/deletes, file blob SHA. A commit is not considered
-    QA-complete until the remote commit, branch head and changed file contents are
-    fetched again and verified.
+    opaque PluginConnection. Read-only revision evidence resolves provider repository
+    identity, an exact commit and an exact blob without persisting source content.
+    Every write is optimistic-concurrency controlled by branch SHA and, for
+    updates/deletes, file blob SHA. A commit is not considered QA-complete until
+    the remote commit, branch head and changed file contents are fetched again and
+    verified.
     """
 
     def __init__(self, db, governance, tenancy, project_governance, plugins):
@@ -83,8 +85,8 @@ class GitHubPluginService:
         if connection["project_id"] != project_id or connection["plugin_type"] != "github":
             raise ValidationError("GitHub connection does not belong to project")
         caps = set(connection["capabilities"])
-        if "REPO_READ" not in caps or "CONTENT_WRITE" not in caps:
-            raise ValidationError("GitHub repository binding requires REPO_READ and CONTENT_WRITE capabilities")
+        if "REPO_READ" not in caps:
+            raise ValidationError("GitHub repository binding requires REPO_READ capability")
         repository_full_name = repository_full_name.strip()
         if repository_full_name.count("/") != 1 or any(not x for x in repository_full_name.split("/")):
             raise ValidationError("repository_full_name must be owner/name")
@@ -134,15 +136,20 @@ class GitHubPluginService:
         return item
 
     @staticmethod
+    def _normalize_repository_path(value: str) -> str:
+        path = str(value or "").strip().replace("\\", "/")
+        if not path or path.startswith("/") or ".." in path.split("/"):
+            raise ValidationError("Unsafe repository path", details={"path": path})
+        return path
+
+    @staticmethod
     def _normalize_changes(changes: list[dict[str, Any]], *, include_content: bool) -> list[dict[str, Any]]:
         if not changes:
             raise ValidationError("At least one GitHub file change is required")
         normalized: list[dict[str, Any]] = []
         seen: set[str] = set()
         for raw in changes:
-            path = str(raw.get("path") or "").strip().replace("\\", "/")
-            if not path or path.startswith("/") or ".." in path.split("/"):
-                raise ValidationError("Unsafe repository path", details={"path": path})
+            path = GitHubPluginService._normalize_repository_path(raw.get("path"))
             if path in seen:
                 raise ValidationError("Duplicate repository path in change set", details={"path": path})
             seen.add(path)
@@ -176,6 +183,111 @@ class GitHubPluginService:
             normalized.append(item)
         return normalized
 
+    def resolve_blob_revision(
+        self,
+        project_id: str,
+        binding_id: str,
+        actor_id: str,
+        *,
+        ref_kind: str,
+        ref_value: str,
+        path: str,
+        expected_repository_id: str | int | None = None,
+        expected_commit_sha: str | None = None,
+        expected_blob_sha: str | None = None,
+    ) -> dict[str, Any]:
+        """Resolve immutable GitHub repository/commit/blob evidence without mutation."""
+
+        self._require_use(project_id, actor_id)
+        binding = self.binding(binding_id)
+        if binding["project_id"] != project_id:
+            raise ValidationError("Repository binding does not belong to project")
+
+        connection = self.plugins.get(binding["connection_id"])
+        if "REPO_READ" not in set(connection["capabilities"]):
+            raise AuthorityDenied(
+                "GitHub revision resolution requires REPO_READ capability",
+                details={"connection_id": binding["connection_id"]},
+            )
+        adapter = self.plugins.adapter(binding["connection_id"], capability="REPO_READ")
+        get_repository_identity = getattr(adapter, "get_repository_identity", None)
+        if not callable(get_repository_identity):
+            raise ValidationError("GitHub adapter does not support repository identity resolution")
+
+        safe_path = self._normalize_repository_path(path)
+        repository_identity = get_repository_identity(binding["repository_full_name"])
+        repository_id = repository_identity.get("repository_id")
+        observed_full_name = str(repository_identity.get("full_name") or "").strip()
+        if repository_id is None or not observed_full_name:
+            raise ValidationError("GitHub repository identity response is incomplete")
+        repository_id_text = str(repository_id)
+        if expected_repository_id is not None and str(expected_repository_id) != repository_id_text:
+            raise StaleVersion(
+                "GitHub repository identity changed",
+                details={"expected": str(expected_repository_id), "observed": repository_id_text},
+            )
+
+        kind = str(ref_kind or "").strip().upper()
+        requested_ref = str(ref_value or "").strip()
+        if kind == "BRANCH":
+            if not requested_ref:
+                raise ValidationError("branch ref_value is required")
+            resolved_commit_sha = _git_sha(
+                adapter.get_branch_head(binding["repository_full_name"], requested_ref),
+                "resolved_commit_sha",
+            )
+        elif kind == "COMMIT":
+            resolved_commit_sha = _git_sha(requested_ref, "ref_value")
+        else:
+            raise ValidationError("ref_kind must be BRANCH or COMMIT")
+
+        expected_commit = _git_sha(expected_commit_sha, "expected_commit_sha") if expected_commit_sha else None
+        if expected_commit is not None and resolved_commit_sha != expected_commit:
+            raise StaleVersion(
+                "GitHub commit identity changed",
+                details={"expected": expected_commit, "observed": resolved_commit_sha},
+            )
+
+        commit = adapter.get_commit(binding["repository_full_name"], resolved_commit_sha)
+        observed_commit_sha = _git_sha(commit.get("sha") or resolved_commit_sha, "observed_commit_sha")
+        if observed_commit_sha != resolved_commit_sha:
+            raise StaleVersion(
+                "GitHub commit response does not match resolved commit",
+                details={"expected": resolved_commit_sha, "observed": observed_commit_sha},
+            )
+        tree_sha = _git_sha(commit.get("tree_sha"), "commit_tree_sha")
+
+        remote = adapter.get_file(binding["repository_full_name"], safe_path, resolved_commit_sha)
+        if remote is None:
+            raise NotFound("GitHub path not found at exact commit")
+        blob_sha = _git_sha(remote.get("sha"), "blob_sha")
+        content = remote.get("content")
+        if not isinstance(content, str):
+            raise ValidationError("GitHub file content is not UTF-8 text", details={"path": safe_path})
+        expected_blob = _git_sha(expected_blob_sha, "expected_blob_sha") if expected_blob_sha else None
+        if expected_blob is not None and blob_sha != expected_blob:
+            raise StaleVersion(
+                "GitHub blob identity changed",
+                details={"expected": expected_blob, "observed": blob_sha, "path": safe_path},
+            )
+
+        raw = content.encode("utf-8")
+        return {
+            "provider": "github",
+            "binding_id": binding_id,
+            "repository_id": repository_id,
+            "repository_full_name_at_resolution": observed_full_name,
+            "requested_ref_kind": kind,
+            "requested_ref_value": requested_ref,
+            "resolved_commit_sha": resolved_commit_sha,
+            "commit_tree_sha": tree_sha,
+            "path_locator": safe_path,
+            "blob_sha": blob_sha,
+            "content_sha256": hashlib.sha256(raw).hexdigest(),
+            "content_size_bytes": len(raw),
+            "resolved_at": utcnow(),
+        }
+
     def prepare_change_set(
         self,
         project_id: str,
@@ -190,6 +302,12 @@ class GitHubPluginService:
         binding = self.binding(binding_id)
         if binding["project_id"] != project_id:
             raise ValidationError("Repository binding does not belong to project")
+        connection = self.plugins.get(binding["connection_id"])
+        if "CONTENT_WRITE" not in set(connection["capabilities"]):
+            raise AuthorityDenied(
+                "GitHub write preparation requires CONTENT_WRITE capability",
+                details={"connection_id": binding["connection_id"]},
+            )
         branch = branch.strip()
         if not branch:
             raise ValidationError("branch is required")

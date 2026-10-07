@@ -63,12 +63,17 @@ class ExecutionKernel:
         max_attempts=int(parse_json(w["retry_policy"],{}).get("max_attempts",1))
         if attempt>max_attempts: raise InvalidTransition("Retry budget exhausted")
         rid=uid("run"); self.db.conn.execute("INSERT INTO runs VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",(rid,workunit_id,attempt,actor_id,w["input_revision_ids"],utcnow(),None,"RUNNING",None,canonical_json([]),canonical_json([]),None,correlation_id)); self.db.conn.execute("UPDATE workunits SET status='RUNNING',version=version+1 WHERE workunit_id=?",(workunit_id,)); self.gov.append_audit(w["project_id"],actor_id,"RUN_STARTED","ExecutionRun",rid,run_id=rid,correlation_id=correlation_id); result={"run_id":rid,"attempt_number":attempt}; self._store_idempotent(idempotency_key,ph,result); self.db.conn.commit(); return result
-    def add_evidence(self, project_id, evidence_type, actor_id, subject_refs, payload, trust_class="AUTHORITATIVE", producer_run_id=None):
+    def add_evidence(self, project_id, evidence_type, actor_id, subject_refs, payload, trust_class="AUTHORITATIVE", producer_run_id=None, *, evidence_id=None, commit=True):
         if trust_class not in {"AUTHORITATIVE","SUPPORTED","ADVISORY","UNTRUSTED"}: raise ValidationError("Invalid trust class")
-        eid=uid("ev"); self.db.conn.execute("INSERT INTO evidence VALUES(?,?,?,?,?,?,?,?,?,?,?)",(eid,project_id,evidence_type,producer_run_id,actor_id,canonical_json(subject_refs),canonical_json(payload),content_hash(payload),utcnow(),canonical_json({}),trust_class))
+        eid=evidence_id or uid("ev")
+        self.db.conn.execute("INSERT INTO evidence VALUES(?,?,?,?,?,?,?,?,?,?,?)",(eid,project_id,evidence_type,producer_run_id,actor_id,canonical_json(subject_refs),canonical_json(payload),content_hash(payload),utcnow(),canonical_json({}),trust_class))
         if producer_run_id:
-            r=self.db.one("SELECT evidence_ids FROM runs WHERE run_id=?",(producer_run_id,)); ids=parse_json(r["evidence_ids"],[])+[eid]; self.db.conn.execute("UPDATE runs SET evidence_ids=? WHERE run_id=?",(canonical_json(ids),producer_run_id))
-        self.gov.append_audit(project_id,actor_id,"EVIDENCE_RECORDED","Evidence",eid,run_id=producer_run_id); self.db.conn.commit(); return eid
+            r=self.db.one("SELECT evidence_ids FROM runs WHERE run_id=?",(producer_run_id,))
+            if not r: raise NotFound("Producer run not found")
+            ids=parse_json(r["evidence_ids"],[])+[eid]; self.db.conn.execute("UPDATE runs SET evidence_ids=? WHERE run_id=?",(canonical_json(ids),producer_run_id))
+        self.gov.append_audit(project_id,actor_id,"EVIDENCE_RECORDED","Evidence",eid,run_id=producer_run_id)
+        if commit: self.db.conn.commit()
+        return eid
     def finish_run(self, run_id, runtime_status, exit_metadata=None, await_gate=False):
         r=self.db.one("SELECT * FROM runs WHERE run_id=?",(run_id,));
         if not r: raise NotFound("Run not found")

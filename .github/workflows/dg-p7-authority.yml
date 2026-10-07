@@ -1,0 +1,124 @@
+name: DG-P7 Authority Claims Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["v0.8.6-dg-p7-authority"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  dg-p7-sqlite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: D7-F1 through D7-F20
+        run: python -m pytest -q tests/test_dg_p7_authority.py
+
+      - name: DG-P7 bounded authority gate
+        run: python tools/run_dg_p7_gate.py --out evidence/dg-p7/sqlite/DG_P7_GATE.json
+
+      - name: Assert bounded P7 schema and primitive reuse
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('evidence/dg-p7/sqlite/DG_P7_GATE.json', encoding='utf-8'))
+          assert d['status']=='PASS', d
+          assert all(d['checks'].values()), d
+          assert '0009_v086_dg_p7_document_authority_claims' in d['migration_ids'], d
+          assert 'document_authority_claims' in d['document_tables'], d
+          assert 'document_authority_composition' not in d['document_tables'], d
+          PY
+
+      - name: Governance P4 P5 P6 regressions
+        run: >-
+          python -m pytest -q
+          tests/test_execution_decision.py
+          tests/test_knowledge.py
+          tests/test_persistence.py
+          tests/test_dg_p4_document_facade.py
+          tests/test_dg_p5_qa_findings.py
+          tests/test_dg_p6_lifecycle_validity.py
+
+      - name: Full regression
+        run: python -m pytest -q
+
+      - name: Compile
+        run: python -m compileall -q src tests tools
+
+      - name: Upload SQLite DG-P7 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gwr-dg-p7-sqlite-evidence
+          path: evidence/dg-p7/sqlite
+
+  dg-p7-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: gwr
+          POSTGRES_PASSWORD: gwr_test_password
+          POSTGRES_DB: gwr_p7
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gwr -d gwr_p7"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      GWR_TEST_DATABASE_URL: postgresql://gwr:gwr_test_password@127.0.0.1:5432/gwr_p7
+      GWR_TEST_NAMESPACE_PREFIX: gwr_dg_p7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python + PostgreSQL dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev,postgres]"
+
+      - name: D7-F1 through D7-F20 on PostgreSQL
+        run: python -m pytest -q tests/test_dg_p7_authority.py
+
+      - name: DG-P7 bounded authority gate on PostgreSQL
+        run: python tools/run_dg_p7_gate.py --out evidence/dg-p7/postgres/DG_P7_GATE.json
+
+      - name: Assert PostgreSQL equivalence
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('evidence/dg-p7/postgres/DG_P7_GATE.json', encoding='utf-8'))
+          assert d['status']=='PASS', d
+          assert d['backend']=='postgresql', d
+          assert all(d['checks'].values()), d
+          assert '0009_v086_dg_p7_document_authority_claims' in d['migration_ids'], d
+          PY
+
+      - name: Upload PostgreSQL DG-P7 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gwr-dg-p7-postgres-evidence
+          path: evidence/dg-p7/postgres

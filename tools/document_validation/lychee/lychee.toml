@@ -1,0 +1,7 @@
+format = "json"
+mode = "plain"
+no_progress = true
+cache = false
+max_retries = 0
+timeout = 5
+include_mail = false

@@ -459,6 +459,102 @@ CREATE TABLE IF NOT EXISTS github_sha_checks(
 """.strip(),
     ),
 
+
+    Migration(
+        "0008_v086_dg_p5_document_findings",
+        """
+CREATE TABLE IF NOT EXISTS document_findings(
+  finding_id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  qa_record_id TEXT NOT NULL,
+  subject_revision_id TEXT NOT NULL,
+  finding_class TEXT NOT NULL,
+  severity TEXT NOT NULL,
+  rule_id TEXT NOT NULL,
+  location_json TEXT NOT NULL,
+  description TEXT NOT NULL,
+  evidence_refs_json TEXT NOT NULL,
+  fingerprint TEXT NOT NULL,
+  status TEXT NOT NULL,
+  required_fix TEXT NOT NULL,
+  resolution_revision_ref TEXT,
+  waiver_ref TEXT,
+  version INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+""".strip(),
+    ),
+
+    Migration(
+        "0009_v086_dg_p7_document_authority_claims",
+        """
+CREATE TABLE IF NOT EXISTS document_authority_claims(
+  claim_id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  document_id TEXT NOT NULL,
+  authority_scope TEXT NOT NULL,
+  authority_key TEXT NOT NULL,
+  mode TEXT NOT NULL,
+  composition_role TEXT,
+  composition_policy_ref TEXT,
+  composition_policy_hash TEXT,
+  status TEXT NOT NULL,
+  granted_revision_id TEXT NOT NULL,
+  grant_proposal_id TEXT NOT NULL,
+  retired_by_proposal_id TEXT,
+  version INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  retired_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_document_authority_collision
+  ON document_authority_claims(project_id, authority_scope, authority_key, status);
+CREATE INDEX IF NOT EXISTS idx_document_authority_owner
+  ON document_authority_claims(document_id, status);
+""".strip(),
+    ),
+
+    Migration(
+        "0010_v086_dg_p8_document_relations",
+        """
+CREATE TABLE IF NOT EXISTS document_relations(
+  relation_id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  source_document_id TEXT NOT NULL,
+  relation_type TEXT NOT NULL,
+  target_kind TEXT NOT NULL,
+  target_ref TEXT NOT NULL,
+  invalidation_policy TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_revision_id TEXT NOT NULL,
+  create_proposal_id TEXT NOT NULL,
+  retired_revision_id TEXT,
+  retired_by_proposal_id TEXT,
+  version INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  retired_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_document_relations_source
+  ON document_relations(project_id, source_document_id, status);
+CREATE INDEX IF NOT EXISTS idx_document_relations_target
+  ON document_relations(project_id, target_kind, target_ref, status);
+CREATE INDEX IF NOT EXISTS idx_document_relations_type
+  ON document_relations(project_id, relation_type, status);
+""".strip(),
+    ),
+
+    Migration(
+        "0011_v086_dg_p9_relation_binding",
+        """
+ALTER TABLE document_relations
+  ADD COLUMN target_binding_mode TEXT;
+ALTER TABLE document_relations
+  ADD COLUMN target_revision_or_hash TEXT;
+""".strip(),
+    ),
+
 ]
 
 

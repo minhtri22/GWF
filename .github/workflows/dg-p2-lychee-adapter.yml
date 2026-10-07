@@ -1,0 +1,92 @@
+name: DG-P2 Lychee Link Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["v0.8.6-dg-p2-lychee-adapter"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  dg-p2-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python test dependencies
+        run: python -m pip install -U pip && pip install -e ".[dev]"
+
+      - name: Install exact Lychee release and verify checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="0.24.2"
+          TAG="lychee-v${VERSION}"
+          ASSET="lychee-x86_64-unknown-linux-gnu.tar.gz"
+          BASE="https://github.com/lycheeverse/lychee/releases/download/${TAG}"
+          cd /tmp
+          curl -fsSLo "${ASSET}" "${BASE}/${ASSET}"
+          curl -fsSLo "${ASSET}.sha256" "${BASE}/${ASSET}.sha256"
+          sha256sum -c "${ASSET}.sha256"
+          mkdir -p /tmp/lychee-bin
+          tar -xzf "${ASSET}" -C /tmp/lychee-bin
+          BIN="/tmp/lychee-bin/lychee-x86_64-unknown-linux-gnu/lychee"
+          test -x "${BIN}"
+          echo "/tmp/lychee-bin/lychee-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
+          "${BIN}" --version
+
+      - name: DG-P2 unit tests
+        run: python -m pytest -q tests/test_document_validation_p2.py
+
+      - name: Real Lychee link smoke gate
+        run: >-
+          python tools/run_dg_p2_gate.py
+          --executable /tmp/lychee-bin/lychee-x86_64-unknown-linux-gnu/lychee
+          --out evidence/dg-p2/DG_P2_GATE.json
+
+      - name: Assert P2 gate
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('evidence/dg-p2/DG_P2_GATE.json', encoding='utf-8'))
+          assert d['status']=='PASS', d
+          assert d['toolchain']['version']=='0.24.2', d
+          assert d['checks']['config_hash_matches'] is True, d
+          assert d['checks']['real_version_observed'] is True, d
+          assert d['checks']['internal_valid_pass'] is True, d
+          assert d['checks']['internal_broken_detected'] is True, d
+          assert d['checks']['external_valid_pass'] is True, d
+          assert d['checks']['external_broken_detected'] is True, d
+          assert d['checks']['internal_external_distinguishable'] is True, d
+          assert d['checks']['network_failure_not_content_failure'] is True, d
+          assert d['checks']['raw_urls_not_persisted'] is True, d
+          assert d['checks']['source_not_mutated'] is True, d
+          PY
+
+      - name: Bounded regression
+        run: >-
+          python -m pytest -q
+          tests/test_document_validation_p0.py
+          tests/test_document_validation_p1.py
+          tests/test_v084_github_plugin_sha_qa.py
+          tests/test_v085_domain_skills.py
+
+      - name: Compile
+        run: python -m compileall -q src tests tools
+
+      - name: Upload DG-P2 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gwr-dg-p2-evidence
+          path: evidence/dg-p2/DG_P2_GATE.json
