@@ -1,6 +1,6 @@
 # GWF vNext — Autonomous Research Stack Pivot Plan
 
-**Status:** PIVOT-P0 PASS / PIVOT-P1 PASS+LOCKED / PIVOT-P2 PASS+LOCKED / PIVOT-P3 G2E reconciliation preregistration authorized  
+**Status:** PIVOT-P0 PASS / PIVOT-P1 PASS+LOCKED / PIVOT-P2 PASS+LOCKED / PIVOT-P3 contract freeze PASS / PIVOT-P3 implementation preflight authorized  
 **Pivot branch:** `pivot/gwf-autonomous-research-stack-v1`  
 **Pivot base:** `feature/bps-i00-product-shell@de3247c18c1a8546db9611ecd0fdf24f827662ae`  
 **Date:** 2026-10-07
@@ -569,52 +569,53 @@ Before PIVOT-P3:
 5. preserve historical research evidence in its existing lineage;
 6. do not rewrite P5A scientific/transport history into the vNext product line.
 
-## 16. Current frontier after P2 implementation lock
+## 16. Current frontier after P3 contract freeze
 
 PIVOT-P0 is formally closed PASS.
 
-PIVOT-P1 contract + provider-neutral implementation are formally closed PASS and execution-locked.
+PIVOT-P1 governance kernel contract + implementation are formally closed PASS and execution-locked.
 
 PIVOT-P2 domain-governance-profile contract + implementation are formally closed PASS and execution-locked.
 
-Authoritative P2 contract records:
+PIVOT-P3 G2E semantic/runtime reconciliation preregistration is formally closed PASS and contract-frozen.
 
-- `docs/pivot/GWF_VNEXT_P2_DOMAIN_GOVERNANCE_PROFILE_DEFINITIONS_V1.json`;
-- `docs/pivot/GWF_VNEXT_P2_DOMAIN_GOVERNANCE_PROFILES_PREREGISTRATION_AND_CONTRACT_FREEZE.md`;
-- `docs/pivot/GWF_VNEXT_P2_QA_AND_FORMAL_DECISION.md`.
+Authoritative P3 records:
 
-Qualified P2 implementation:
+- `docs/pivot/GWF_VNEXT_P3_G2E_RECONCILIATION_MANIFEST_V1.json`;
+- `docs/pivot/GWF_VNEXT_P3_G2E_SEMANTIC_RUNTIME_RECONCILIATION_PREREGISTRATION_AND_CONTRACT_FREEZE.md`;
+- `docs/pivot/GWF_VNEXT_P3_QA_AND_FORMAL_DECISION.md`.
 
-- exact implementation HEAD: `2fadb7f7c9ffeb8ba95800b65e06603db852f4ef`;
-- exact-head qualification run: `37603208717` — SUCCESS;
-- execution lock: `docs/pivot/GWF_VNEXT_P2_EXECUTION_LOCK.json`;
-- lock commit: `6893f81a7da9728c909fe05eb44ff572f3ab4bbf`;
-- post-lock exact-head run: `37603357263` — SUCCESS;
-- formal closure: `docs/pivot/P2_DOMAIN_GOVERNANCE_PROFILES_IMPLEMENTATION_LOCK_CLOSURE.md`.
+P3 pins:
 
-P2 preserves the P1 execution lock and qualifies:
+- provider-neutral qualified G2E baseline `6e9c518671c3f9ba140daa798458b37bee83647c`;
+- exact G2E semantic/core blobs;
+- exact classification of 585 G2E-related files;
+- 31 canonical-core files;
+- 2 reusable legacy-adapter files;
+- 16 qualification-test files;
+- 35 historical-evidence files;
+- 501 transport-experiment files;
+- 0 unclassified files;
+- G2E semantic ownership vs GWF governance/runtime ownership;
+- G2E AgentBinding ↔ GWF ExecutorBinding reconciliation without semantic collision;
+- Goal/Claim/Proof/Attempt cardinality;
+- G2E/GWF revision and hash-domain separation;
+- protected-resource bridge;
+- evidence-admission bridge;
+- independent QA/reviewer mapping;
+- 40 preregistered implementation negative tests.
 
-- eight exact-hash domain-owned profiles;
-- forward-only in-place transition graphs;
-- TRIAGE non-downgrade;
-- active-profile operational recovery;
-- research confirmatory activation approval;
-- software release promotion approval;
-- protected-resource/claim/release firewalls;
-- successor/no-rescue enforcement;
-- candidate identity invalidation rules.
+The next authorized bounded phase is:
 
-The next authorized bounded phase is specification/reconciliation only:
+`GWF_VNEXT_P3_G2E_SEMANTIC_RUNTIME_RECONCILIATION_IMPLEMENTATION_STATIC_PREFLIGHT_AND_EXECUTION_LOCK`
 
-`GWF_VNEXT_P3_G2E_SEMANTIC_RUNTIME_RECONCILIATION_PREREGISTRATION_AND_CONTRACT_FREEZE`
-
-P3 may pin/classify the canonical qualified G2E baseline and freeze semantic/runtime mappings between G2E and GWF.
+That phase may implement only the frozen provider-neutral G2E↔GWF semantic/runtime bridge and its qualification fixtures.
 
 Do **not** yet:
 
-- import/merge G2E runtime code;
-- integrate RemoteMCP adapter behavior;
 - integrate Codex adapter behavior;
+- integrate RemoteMCP adapter behavior;
+- import transport-experiment/P5A material as semantic core;
 - refactor Mission Control UI;
 - run a real research/software project;
 - consume protected evidence.
