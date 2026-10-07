@@ -3,7 +3,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $Schema = "GWF-BPS-CURRENT-SURFACE-UAT-v1"
-$QualifiedImplementationHead = "4e95d406e346eba42567835b5a1bd44366618baf"
+$QualifiedImplementationHead = "277dd6c32f10563ebaafca9618b3c479fcea8d41"
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $InstallScript = Join-Path $RepoRoot "install.ps1"
 $ServerLauncher = Join-Path $RepoRoot "scripts\gwf_server.ps1"
