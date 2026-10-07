@@ -1,0 +1,4444 @@
+{
+  "schema_id": "GWF-VNEXT-P3-G2E-SEMANTIC-RUNTIME-RECONCILIATION-v1",
+  "status": "FROZEN_CANDIDATE",
+  "date": "2026-10-07",
+  "p3_start": {
+    "pivot_branch": "pivot/gwf-autonomous-research-stack-v1",
+    "pivot_head": "2c7dccb4727c665d96bd18d9ef31f1af9d492d6c",
+    "p1_lock_commit": "e6d8d01a9480ada5f7cbcaeb4354290576487f9e",
+    "p2_lock_commit": "6893f81a7da9728c909fe05eb44ff572f3ab4bbf"
+  },
+  "g2e_baseline": {
+    "source_branch": "research/p5a-cgw-fx001-transport-corrected",
+    "observed_branch_head": "d2ba5a123e2fbefd0138d3f1a7a0dd81373e5b87",
+    "observed_branch_tree": "02dd219f7291f76fa525fda423b5e5529cfe487f",
+    "canonical_provider_neutral_qualified_commit": "6e9c518671c3f9ba140daa798458b37bee83647c",
+    "canonical_provider_neutral_tree": "38df8b7adf3269ce4eb9b2122c0b2c5391a6df18",
+    "pin_reason": "P1.5 is the latest provider-neutral qualification candidate before actual-harness/transport experiments; P1.5 preserves P1.4 semantics and does not authorize runtime adapters.",
+    "qualification_chain": [
+      {
+        "phase": "P1_CORE_SCHEMAS",
+        "status": "PASS",
+        "qualified_sha": "2fc077f8bc84f8dbdb42c180b3edc7af9418a6c1",
+        "evidence_blob": "4c63e4f27f05e54146eeecea5ebdd4ad3405dfd2"
+      },
+      {
+        "phase": "P2_DETERMINISTIC_CORE",
+        "status": "PASS",
+        "qualified_sha": "c2fc03a7470b835904252246421e1b8d9a1ec5ef",
+        "evidence_blob": "696563e341ac54021265bcd0b4b1b54d94923d1d"
+      },
+      {
+        "phase": "P3_STANDALONE_RUNTIME",
+        "status": "PASS",
+        "qualified_sha": "b9345f3cbeba564a0bf666d388d3873d9ffd1191",
+        "evidence_blob": "1750539fd19365fc9a9df48b4322513be576ba30"
+      },
+      {
+        "phase": "P4_BASE_GWF_ADAPTER",
+        "status": "PASS",
+        "qualified_sha": "1f6d49957c0c0dffa7b83c11caebed4ab2b90e0b",
+        "evidence_blob": "5149daf6c53f08a5559926133a0244ed81a70e78"
+      },
+      {
+        "phase": "P1_4_AGENT_BINDING",
+        "status": "PASS",
+        "qualified_sha": "d3cb0bdb5644a9f1cff382450b5476e166759d72",
+        "evidence_blob": "d81eb05440ccdeb3b49673d09cabfa62c4d40aa9"
+      },
+      {
+        "phase": "P1_5_QUALIFICATION_AUTHORITY",
+        "status": "PASS",
+        "qualified_sha": "6e9c518671c3f9ba140daa798458b37bee83647c",
+        "evidence_blob": "b4b514324e6d3380a0189a8d53e302069166e990"
+      }
+    ],
+    "canonical_runtime_blobs": {
+      "src/g2e/__init__.py": "2e72f06a2fd348127666b35d5d872fe9220d6834",
+      "src/g2e/canonical.py": "964cf296b18d081862d822f8039104d454e68154",
+      "src/g2e/schema_registry.py": "79075f162673cd1c8e0b8cbd26569b02799b9461",
+      "src/g2e/schemas.py": "8631f9af598103f6c095fa3981255b9bf4609f64",
+      "src/g2e/engine.py": "4213f949f10e1f49c977fc22e06ea3a76d787be4",
+      "src/g2e/standalone.py": "48c44050da96ecdac9061f74092b6af00cfc5694"
+    },
+    "reusable_adapter_blobs": {
+      "src/g2e/gwf_adapter.py": "5ae80f28d03893848ec6e693b8c9f6197e87020a",
+      "src/g2e/gwf_domain.py": "f82766aea584e86ea9cbed714a2c1ba2c28222c1"
+    },
+    "branch_head_semantic_blob_drift": false
+  },
+  "classification": {
+    "scope": [
+      "g2e/**",
+      "src/g2e/**",
+      "tests/g2e/**",
+      "scripts/g2e/**",
+      ".github/workflows/g2e-*"
+    ],
+    "precedence": [
+      "reusable_adapter",
+      "canonical_core",
+      "transport_experiment",
+      "qualification_tests",
+      "historical_evidence"
+    ],
+    "category_semantics": {
+      "canonical_core": {
+        "runtime_import_policy": "ELIGIBLE_ONLY_AFTER_SEPARATE_P3_IMPLEMENTATION_QUALIFICATION",
+        "normative_docs": "REFERENCE_ONLY",
+        "semantic_authority": "G2E"
+      },
+      "reusable_adapter": {
+        "reuse_policy": "SELECTIVE_PORT_OR_WRAP_ONLY",
+        "verbatim_import": "FORBIDDEN_UNTIL_REQUALIFIED_AGAINST_GWF_VNEXT_P1_P2",
+        "reason": "P4 adapter targets legacy GWF 0.8.5 domain/workunit surfaces; semantic rules are reusable but runtime coupling must be reconciled."
+      },
+      "qualification_tests": {
+        "reuse_policy": "CANDIDATE_FOR_PORT",
+        "pass_status_transfer": "FORBIDDEN",
+        "reason": "Old PASS proves the pinned baseline only; vNext implementation must rerun adapted tests."
+      },
+      "historical_evidence": {
+        "reuse_policy": "REFERENCE_OR_LINEAGE_ONLY",
+        "runtime_import": "FORBIDDEN",
+        "verdict_rewrite": "FORBIDDEN"
+      },
+      "transport_experiment": {
+        "reuse_policy": "HISTORICAL_EXECUTION_ENVIRONMENT_EVIDENCE_ONLY",
+        "semantic_core_import": "FORBIDDEN",
+        "adapter_import": "FORBIDDEN_IN_P3",
+        "note": "P5A/CGW/Codex/product-smoke material remains separate from provider-neutral semantic/runtime reconciliation."
+      }
+    },
+    "counts": {
+      "qualification_tests": 16,
+      "transport_experiment": 501,
+      "historical_evidence": 35,
+      "canonical_core": 31,
+      "reusable_adapter": 2
+    },
+    "total_files": 585,
+    "unclassified_count": 0,
+    "inventory": [
+      {
+        "path": ".github/workflows/g2e-p1-4-agent-binding.yml",
+        "blob_sha": "c428bd6a582312033cf80f4b4f54a466b67efd17",
+        "size": 4872,
+        "category": "qualification_tests",
+        "role": "qualification_workflow_reference"
+      },
+      {
+        "path": ".github/workflows/g2e-p1-4-preimplementation.yml",
+        "blob_sha": "1716f54921af8e0e501ac29c89a2abb9c1cb6855",
+        "size": 4379,
+        "category": "qualification_tests",
+        "role": "qualification_workflow_reference"
+      },
+      {
+        "path": ".github/workflows/g2e-p1-5-qualification-authority.yml",
+        "blob_sha": "aec9ed777c426a44c67e5683bbf6054b2f2579a2",
+        "size": 5560,
+        "category": "qualification_tests",
+        "role": "qualification_workflow_reference"
+      },
+      {
+        "path": ".github/workflows/g2e-p1-core-schemas.yml",
+        "blob_sha": "64bdfb3d81c1fbe6a8b9ca56fd78aebc52723797",
+        "size": 867,
+        "category": "qualification_tests",
+        "role": "qualification_workflow_reference"
+      },
+      {
+        "path": ".github/workflows/g2e-p2-deterministic-core.yml",
+        "blob_sha": "021381117a37464c09dbbe2d7d2d6a865faf39bc",
+        "size": 1389,
+        "category": "qualification_tests",
+        "role": "qualification_workflow_reference"
+      },
+      {
+        "path": ".github/workflows/g2e-p3-standalone-runtime.yml",
+        "blob_sha": "2362e9c8971c91a9b6710a285c9d23c98e34dca3",
+        "size": 1477,
+        "category": "qualification_tests",
+        "role": "qualification_workflow_reference"
+      },
+      {
+        "path": ".github/workflows/g2e-p4-gwf-adapter.yml",
+        "blob_sha": "454676a3e1339f77ffc6fb40666945af80e16fa6",
+        "size": 2567,
+        "category": "qualification_tests",
+        "role": "qualification_workflow_reference"
+      },
+      {
+        "path": ".github/workflows/g2e-p5-preimplementation-qualification.yml",
+        "blob_sha": "4cad25b3ddc678b77bee5a8a4adbb101840cccd9",
+        "size": 4989,
+        "category": "qualification_tests",
+        "role": "qualification_workflow_reference"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-implementation-qa.yml",
+        "blob_sha": "d129bb069243dc7358fb4bc2488f3e01797368b1",
+        "size": 8940,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-preregistration.yml",
+        "blob_sha": "6a5ffcf2521145a3782bf435eab45259fd086db7",
+        "size": 3090,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-route-path-postmortem-qa.yml",
+        "blob_sha": "887726ca90893bdb9b77bcca3f3f979589a3da28",
+        "size": 2110,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i1c-qa.yml",
+        "blob_sha": "3297ce489e4e6fa10ecb0b760b05eeadef1c2413",
+        "size": 1775,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i1d-qa.yml",
+        "blob_sha": "7d0183462794e19c3df3d1f11e06635acbbe8ba7",
+        "size": 1757,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i1r-qa.yml",
+        "blob_sha": "13f84e6a6380e0b0abafb136f42ca033fda02e21",
+        "size": 1769,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i1s-qa.yml",
+        "blob_sha": "a272b38cf934e9c35d537ca5337816d71b290c99",
+        "size": 1548,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i1t-qa.yml",
+        "blob_sha": "25237f72fea2482f91256e144bdfac9bc2484e0c",
+        "size": 1540,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i1u-qa.yml",
+        "blob_sha": "d7c98ef3e4f44ccdcb13bda5291bb9d5435bb733",
+        "size": 1556,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i3-qa.yml",
+        "blob_sha": "64342c3bfcb62ff4c342c090346902cf8da9b598",
+        "size": 1192,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-i4-qa.yml",
+        "blob_sha": "e93801199fd5dfeefd86917d37f603a88f160a09",
+        "size": 1197,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-l1-qa.yml",
+        "blob_sha": "a274fde7ce2c8f45df6562ee5e55a9d397eaa9d5",
+        "size": 1460,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-rp-l2-qa.yml",
+        "blob_sha": "bb7d2f6304ae49a8e00c6249bd2dda117edb13a6",
+        "size": 1468,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-tc-core-qa.yml",
+        "blob_sha": "f8b72d94d2a04c21d890541df6fa11b8f64caef2",
+        "size": 1130,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-tc-lock-candidate-qa.yml",
+        "blob_sha": "74e7caf63799a0fc9c7c72e497939d89169ac847",
+        "size": 1760,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-tc-oneclick-qa.yml",
+        "blob_sha": "c1acffd4998b773ed77c3c52becbc0eb648efdbb",
+        "size": 1454,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-tc-preregistration.yml",
+        "blob_sha": "413b4879c7ca1469bf8f074f7cad758143656a1a",
+        "size": 990,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-tc2-lock-candidate-qa.yml",
+        "blob_sha": "aebe67a82e2a4bf0d95aaa645215c8a06f48ecac",
+        "size": 1699,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-tc2-semantic-admission-qa.yml",
+        "blob_sha": "19b81baa182f0c388101c4d4d1eeb8ce35a4ef3f",
+        "size": 1634,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-tc3-lock-candidate-qa.yml",
+        "blob_sha": "c2f880f16b6b35ed8174cf595b32700c6cfc5b0a",
+        "size": 1695,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-fx001-tc3-runtime-readiness-qa.yml",
+        "blob_sha": "a219c8f5e0ac235ffbee7720984611607d34d8ef",
+        "size": 1574,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-official-codex-01534-qa.yml",
+        "blob_sha": "db6d1462e785ba1edf93c7b5b67bf3abd75780d9",
+        "size": 2638,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-q0b-runtime-alignment.yml",
+        "blob_sha": "5f3dba290f7f08669410ec173d5a86122b399699",
+        "size": 3830,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-tc-config-semantic-probe-qa.yml",
+        "blob_sha": "edf8b8d71a53a9ddd20351c40a6570055b06aefe",
+        "size": 932,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-tc-config-semantic-probe-v2-qa.yml",
+        "blob_sha": "02c97d864a677c4aa9e13dacb7fd14749cdf3ca9",
+        "size": 969,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-transport-adequacy.yml",
+        "blob_sha": "9875dc22b68c29d61804915219aa455360d23026",
+        "size": 1257,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-v4-source-contract.yml",
+        "blob_sha": "d71669dee1e0463ffe09d929ff3a1d976e3c0419",
+        "size": 5598,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-cgw-zero-model-qualification.yml",
+        "blob_sha": "73d08cf4e8712add2ad522444803b5f3620afe42",
+        "size": 7159,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-codex-d1-manifest.yml",
+        "blob_sha": "ee36ed396eedadbaf5375b810770047e88481236",
+        "size": 6314,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-codex-discovery-preparation.yml",
+        "blob_sha": "6a5799cd6a5f6a498ca49391de63a21c345958a9",
+        "size": 5531,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-codex-observability-qualification.yml",
+        "blob_sha": "7f243f603bf1d8793a0f741e55b750871d9c7f1a",
+        "size": 8619,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d1-adjudication-lock.yml",
+        "blob_sha": "46f0431d600341d45405f57b6840baf2f3caf88d",
+        "size": 5193,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d1-inventory-ordering-repair.yml",
+        "blob_sha": "9ed761d529c24e22ea605ba4b2c5b420ae508a2b",
+        "size": 5440,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2-final-admission.yml",
+        "blob_sha": "99f5d61d440c33ed652b6d1d21d2d7940b6ce1e2",
+        "size": 6530,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2-p5-fx-001-preimplementation.yml",
+        "blob_sha": "93c536d44bb32e20750774f4fc0ae67d378f3238",
+        "size": 5505,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2-qualification-authority-preimplementation.yml",
+        "blob_sha": "58bc9d797b627e77ccda7d3cc2783fe02e6f5728",
+        "size": 5233,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s1-local-preturn.yml",
+        "blob_sha": "38bac2632e465933565a5d9dd7ad9562c9ab3435",
+        "size": 4238,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s1-profile-materializer.yml",
+        "blob_sha": "9e9b3dffb8453130e0551c59ea08135595679e9b",
+        "size": 6805,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s2-a1-ntfs-metadata.yml",
+        "blob_sha": "5c570df853f18393fff16a558fdd88201eb0f459",
+        "size": 5916,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s2-a2-binary-component-lineage.yml",
+        "blob_sha": "cb4a3a9bc8ca9ef271b641dc6511b2c056541a26",
+        "size": 5620,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s2-a2-config-serialization.yml",
+        "blob_sha": "d4feef6c980b37b9928a63af963712e6a26399da",
+        "size": 6356,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s2-a2-sandbox-state-return.yml",
+        "blob_sha": "2c8f09987e3cfc6f753a5629f962e3da5c3e935c",
+        "size": 4981,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s2-a2-setup-evidence-return.yml",
+        "blob_sha": "af1dc4b183bc836fdaea69720cc7b8c990c5921c",
+        "size": 4886,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s2-diagnostic-return-wrapper.yml",
+        "blob_sha": "242a54a08313cb472805e6beb42001ec460d0291",
+        "size": 7407,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s2-egginfo-source-hygiene.yml",
+        "blob_sha": "b06978fb3b1fefec1d49fa440976ad2f6e18f95a",
+        "size": 5343,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s2-elevation-bootstrap-diagnostic.yml",
+        "blob_sha": "bb87b08839327bf1cbf62335c270a767d8452483",
+        "size": 5849,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s2-isolated-volume.yml",
+        "blob_sha": "6823cfe52b4f7565c095bed3cf0f1edd202fffb2",
+        "size": 5225,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s2-vhdx-cleanup.yml",
+        "blob_sha": "091a3ddb90da9ab1cc2f75d2ac2fb800e9cab301",
+        "size": 5849,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s3-config-serialization-repair-001.yml",
+        "blob_sha": "4445b652da69f9c765c514c3db21c642999bec5b",
+        "size": 6318,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s3-local-instrument-staging.yml",
+        "blob_sha": "fe1aa2181f136c848891e87f673af03e5f73962c",
+        "size": 7696,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s3-ntfs-root-closure-repair-002.yml",
+        "blob_sha": "ff8ad53fa07d83b6d3e45fd6236398858c7b85cd",
+        "size": 6542,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s3-official-release-coherence.yml",
+        "blob_sha": "29ea73eb0fd362395f602dedb6ae6b0f502e14e4",
+        "size": 5477,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s3-platform-no-turn-preflight.yml",
+        "blob_sha": "07e1ab8650a87ed521e618dba538f4bbecd63f41",
+        "size": 6585,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s3-postclosure-evidence-collector.yml",
+        "blob_sha": "11df3692feb22d1ea1edee1306c431cee886a158",
+        "size": 3317,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s3-scientific-macro.yml",
+        "blob_sha": "de95b6a86fce3c3abaa6af8abb910a1ce6998201",
+        "size": 14516,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s3-scientific-predispatch-repair-001.yml",
+        "blob_sha": "3186eeb82e7e0438be03addc9336e94543098162",
+        "size": 8967,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s4-persisted-turn-error-recovery.yml",
+        "blob_sha": "36ffd8cd4358248daf6b5f576adacdad7f6bf29c",
+        "size": 6622,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s4-postclosure-evidence-collector.yml",
+        "blob_sha": "1e879de2159780dcc78caee6a787b8469241df42",
+        "size": 3323,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s4-queue-safe-successor.yml",
+        "blob_sha": "e9278d631585f39ca25ab5dcdb6b10def01817fc",
+        "size": 14557,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-p5a-d2s5-observable-successor.yml",
+        "blob_sha": "5a933bd64216b924d9e12e624370fd989bb19ef2",
+        "size": 14738,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": ".github/workflows/g2e-product-smoke-ci.yml",
+        "blob_sha": "94ab3b9959ff556f05a2e3d9776f588a9e3bd2c6",
+        "size": 1229,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/LINEAGE.md",
+        "blob_sha": "5e7cac566e33b0222b7a8cf5f91fe42a8c850e54",
+        "size": 101727,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/README.md",
+        "blob_sha": "a4e6e169b76c586533929cd14cd421d697206281",
+        "size": 10730,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/config/P5A_CGW_FX001_EXECUTION_CONFIG.json",
+        "blob_sha": "aea462b84e4583096129820d2a17417803d0f6a2",
+        "size": 5373,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/config/P5A_CGW_FX001_EXECUTION_CONFIG_V2.json",
+        "blob_sha": "5551262c62389eaecf928e8d60fbde22e39d3b1e",
+        "size": 6568,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/config/P5A_CGW_FX001_TC_EXECUTION_CONFIG.json",
+        "blob_sha": "b8196f331e39e37f2f5fc4b6fc2031f50ac1c192",
+        "size": 3595,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/config/P5A_CGW_TRANSPORT_ADEQUACY_POLICY.json",
+        "blob_sha": "8bbcf39bb04593ea2977b212266dbced771e864d",
+        "size": 3323,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/ARCHITECTURE_DECISIONS.md",
+        "blob_sha": "b83489dc19c12853d5d083324b9769d1f2a480e5",
+        "size": 4691,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/CORE_SEMANTICS.md",
+        "blob_sha": "d224652753378d9a6fb6aec94f5344f63a52b0c1",
+        "size": 16885,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/GWF_LIBRARY_INTEGRATION_MAPPING.md",
+        "blob_sha": "24009aba306c97102366d59070db952168e736de",
+        "size": 8438,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/P0_2_LIBRARY_SYNTHESIS_QA.md",
+        "blob_sha": "9f9832a9315d9f705e0b1280bfeb0ad5492e3e0f",
+        "size": 4882,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P0_3_GWF_LIBRARY_RECONCILIATION_QA.md",
+        "blob_sha": "357bb0c3f76de996374e5e3b1bcde450be56a820",
+        "size": 7142,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P0_DOCUMENT_QA.md",
+        "blob_sha": "a6a4233866a255ec560e325459ed4f99bddceced",
+        "size": 821,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P1_1_DECISION_RULE_BINDING_RESULT.md",
+        "blob_sha": "393caa92d89203c614e53ceabae8f574a45463a1",
+        "size": 1012,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P1_1_QUALIFICATION_EVIDENCE.json",
+        "blob_sha": "078ab82cd0cda148f098133ac8d767b82e623690",
+        "size": 560,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P1_2_QUALIFICATION_EVIDENCE.json",
+        "blob_sha": "8162c24bae6f8c255a356004807724c22759b90a",
+        "size": 784,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P1_2_STANDALONE_PREREQUISITE_RESULT.md",
+        "blob_sha": "74e8abbda337c79a5c43b43bf5a0674e486dda06",
+        "size": 1164,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P1_3_PACKAGE_EXTERNAL_REFERENCE_RESULT.md",
+        "blob_sha": "77695a620c1496f7b386b20ac3f6fc07a0d6e049",
+        "size": 700,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P1_3_QUALIFICATION_EVIDENCE.json",
+        "blob_sha": "d7c4cd018232daaf48049ec21b6e9d8939fe23a2",
+        "size": 495,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P1_4_AGENT_PROFILE_BINDING_EVIDENCE.json",
+        "blob_sha": "d81eb05440ccdeb3b49673d09cabfa62c4d40aa9",
+        "size": 3058,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P1_4_AGENT_PROFILE_BINDING_PREIMPLEMENTATION.md",
+        "blob_sha": "4df89bf0b26ac545b09ee9add9f7be2b50340b8e",
+        "size": 9735,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P1_4_AGENT_PROFILE_BINDING_RESULT.md",
+        "blob_sha": "2f282ce367a39de143c97d0f543ed7ba13776ac0",
+        "size": 6381,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P1_5_QUALIFICATION_ATTEMPT_AUTHORITY_EVIDENCE.json",
+        "blob_sha": "b4b514324e6d3380a0189a8d53e302069166e990",
+        "size": 1754,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P1_5_QUALIFICATION_ATTEMPT_AUTHORITY_IMPLEMENTATION.md",
+        "blob_sha": "01c96bf9c40a499dd569f5b9e7e32696edcafaa0",
+        "size": 5189,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P1_5_QUALIFICATION_ATTEMPT_AUTHORITY_RESULT.md",
+        "blob_sha": "3692e04a4438983cd5dac2c5460848f146dbd49b",
+        "size": 6797,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P1_IMPLEMENTATION_RESULT.md",
+        "blob_sha": "c72a7d3fbf9b566ff2ac76b1a99712f02b54fbdd",
+        "size": 3719,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P1_QUALIFICATION_EVIDENCE.json",
+        "blob_sha": "4c63e4f27f05e54146eeecea5ebdd4ad3405dfd2",
+        "size": 1963,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P2_IMPLEMENTATION_QA.md",
+        "blob_sha": "917635e9440cb3093df3692480cf2f51258a54cd",
+        "size": 4366,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P2_IMPLEMENTATION_RESULT.md",
+        "blob_sha": "a7b2b384c515e9503669cb35f28c8064f72ba4a1",
+        "size": 3066,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P2_PREFLIGHT_P1_DEPENDENCY_FINDING.md",
+        "blob_sha": "7de63c05bc74e52d3c50c784a998e4c4dec71b21",
+        "size": 1535,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P2_QUALIFICATION_EVIDENCE.json",
+        "blob_sha": "696563e341ac54021265bcd0b4b1b54d94923d1d",
+        "size": 2061,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P3_IMPLEMENTATION_QA.md",
+        "blob_sha": "2af55dbaca360a5cd12278505a6b61aa333f71c4",
+        "size": 9244,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P3_IMPLEMENTATION_RESULT.md",
+        "blob_sha": "4bdb92985ee093547349cde24c050231bd452c9f",
+        "size": 3404,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P3_PREFLIGHT_PACKAGE_INTEGRITY_QA.md",
+        "blob_sha": "2d1ec4eb3aef71f402907ee2364d050efe9c8da5",
+        "size": 1247,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P3_PREFLIGHT_SCHEMA_FINDINGS.md",
+        "blob_sha": "3e9141b209fc4dbef51165364a1a94f109ceb35a",
+        "size": 2548,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P3_QUALIFICATION_EVIDENCE.json",
+        "blob_sha": "1750539fd19365fc9a9df48b4322513be576ba30",
+        "size": 3089,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P4L_CAPABILITY_DEPENDENCY_AUDIT.md",
+        "blob_sha": "c4af132c10dffaee192e942f8d8c554e8970b263",
+        "size": 10769,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P4L_CAPABILITY_DEPENDENCY_AUDIT_EVIDENCE.json",
+        "blob_sha": "f7a4d33cec349642ef60471a47626b31d90ebb12",
+        "size": 4545,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P4_IMPLEMENTATION_RESULT.md",
+        "blob_sha": "781c7bf46825d8ffd4758ab0cac84a1eceaa8e0d",
+        "size": 6021,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P4_PREIMPLEMENTATION_MAPPING.md",
+        "blob_sha": "2099a0e28d6a65851f48455542d04a18e1103237",
+        "size": 6695,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P4_QUALIFICATION_EVIDENCE.json",
+        "blob_sha": "5149daf6c53f08a5559926133a0244ed81a70e78",
+        "size": 4048,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_CUSTOM_RUNTIME_IDENTITY_LOCK.json",
+        "blob_sha": "029f1e9d9249b631a861b8e0e828d451721d9aaf",
+        "size": 3269,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_EXECUTION_LOCK.json",
+        "blob_sha": "22cefe57c214cf58c759fd76ad25fff9dba834cb",
+        "size": 5017,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_EXECUTION_LOCK.md",
+        "blob_sha": "b16947084198191f20701413257b2dd3846ecd6d",
+        "size": 3185,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_EXECUTION_LOCK_V2.json",
+        "blob_sha": "6bac51489d1c34c4579ff8bb18d7e1740236df37",
+        "size": 5527,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_EXECUTION_LOCK_V2R1.json",
+        "blob_sha": "a62fa59f634509bdd7b5440f5b20b983befe8134",
+        "size": 6014,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_EXECUTION_LOCK_V2R2.json",
+        "blob_sha": "309cc78be0c1f5e85e887d32b3fa20aaed97d7b7",
+        "size": 2679,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_EXECUTION_LOCK_V2R3.json",
+        "blob_sha": "a0b2ba25acaba6ea235417d282342eb99247e240",
+        "size": 3102,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_EXECUTION_LOCK_V2R4.json",
+        "blob_sha": "8763907047c98cea1240c0abacca94ec406c1eaf",
+        "size": 3170,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_EXECUTION_LOCK_V2R5.json",
+        "blob_sha": "ab20f7cc03bb9ba1dcd9198ed5a80a0d16907319",
+        "size": 3725,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_EXECUTION_LOCK_V2R6.json",
+        "blob_sha": "289e1dd6908d6325775fe3caa38eec319e481db2",
+        "size": 5014,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_FINAL_ADJUDICATION.json",
+        "blob_sha": "869de7f1f20daf2ce3b1d70f1c0e512c72e3318e",
+        "size": 2827,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_FINAL_ADJUDICATION.md",
+        "blob_sha": "e4d85ec7a1ab976200e27ee31fa164b6f382d643",
+        "size": 2122,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_FRESH_RUNTIME_LAUNCHER_IDENTITY_BLOCK.json",
+        "blob_sha": "4e3ccf44b681a8d87caa92bd5789c9d00a2216d0",
+        "size": 1228,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_FRESH_RUNTIME_REGISTERED_LAUNCHER_RP_I1C_AUTHORIZATION.json",
+        "blob_sha": "b2c041cab5f7b9bd02a8b2c62d430a41728be05a",
+        "size": 2122,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_FRESH_RUNTIME_RP_I1C_AUTHORIZATION.json",
+        "blob_sha": "62ccdc129a30e6aa4cf9b733366e69622ce7004b",
+        "size": 1736,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_HELPER_IDENTITY_CENSUS_CHECKPOINT.json",
+        "blob_sha": "27ad43af1cc9d1ce3c38ae42d233607224cc1020",
+        "size": 1279,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_IMPLEMENTATION_QA_PLAN.md",
+        "blob_sha": "97778aa321a0b56a16d31e635352d8c28bb1b0a9",
+        "size": 4941,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_IMPLEMENTATION_QUALIFICATION_RESULT.json",
+        "blob_sha": "ff2eb1222f86d0c2aec45fef677ef9d8e5ff71bc",
+        "size": 2415,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_LAUNCHER_IDENTITY_REPAIR_PLAN.md",
+        "blob_sha": "b740061e45193bc1f1332f5d7b9910fbf22623ef",
+        "size": 1940,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_LAUNCHER_IDENTITY_REPAIR_RESULT.json",
+        "blob_sha": "ea6afe1749f1f6b0411490dbeeb32c789cefcb2b",
+        "size": 2146,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_MIXED_BUILD_ADJUDICATION.json",
+        "blob_sha": "5b6aa344ac6405bbf77e753974edda5530064960",
+        "size": 2618,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_OFFICIAL_CODEX_01534_REPAIR_PLAN.md",
+        "blob_sha": "0ae0dc3e5bac105ba77cfc6582fbd0dc7363f313",
+        "size": 2002,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_PREMARKER_REPAIR_RESULT.json",
+        "blob_sha": "9c18287cc58c9be2dc364fefa35f85249cc58926",
+        "size": 2359,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_PREMARKER_WORKTREE_REPAIR_PLAN.md",
+        "blob_sha": "b1f3b84c42e94b6570fe45db3ffda498f74dfebc",
+        "size": 2041,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_PREREGISTRATION_PLAN.md",
+        "blob_sha": "f160d4bad3c9e3a22573771a0c13248833a05bb8",
+        "size": 3548,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_PREREGISTRATION_RESULT.json",
+        "blob_sha": "620abc2bb874cf81e1c1dfed6b8a5582759dae9a",
+        "size": 2123,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_PRE_UAC_DIAGNOSTIC_REPAIR_PLAN.md",
+        "blob_sha": "abb0e1469d7d34de87e095f76591d7ec27b0ad42",
+        "size": 2149,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_PRE_UAC_DIAGNOSTIC_REPAIR_RESULT.json",
+        "blob_sha": "5b1798346bcffaf5ff733380896c4d0372f98c7f",
+        "size": 1714,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_ROUTE_PATH_CAUSAL_CLOSURE.json",
+        "blob_sha": "57d3775f9fe48ac80e24498bc145e8c71d23af62",
+        "size": 4144,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_ROUTE_PATH_INSTRUMENTATION_DESIGN.json",
+        "blob_sha": "7fb604e16e59c6038c303fdc1001b581982e7e43",
+        "size": 3959,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_ROUTE_PATH_POSTMORTEM.md",
+        "blob_sha": "c093066ed7e0f89597c819a15c6b5e784d51656f",
+        "size": 8978,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_ROUTE_PATH_POSTMORTEM_QUALIFICATION.json",
+        "blob_sha": "7db1b519bbf44357d56c3b8795dce9d376158475",
+        "size": 2625,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1C_CUSTOM_RUNTIME_ADJUDICATION.json",
+        "blob_sha": "475c676e8c7996a8827c3cc2718e7f72dc291197",
+        "size": 1595,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1C_DERIVED_CORE_HOME_PLAN.md",
+        "blob_sha": "7ea524b73193735d12c6f909111116df27a85635",
+        "size": 1007,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1C_LOCAL_AUTHORIZATION.json",
+        "blob_sha": "25d8c1815a76fa59c3247b3d972ac0c57187c872",
+        "size": 938,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1C_LOCAL_EXECUTION_001_ADJUDICATION.json",
+        "blob_sha": "06afa3c5630816bb15bc24dcefa1cc2caff49471",
+        "size": 864,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1C_LOCAL_EXECUTION_002_ADJUDICATION.json",
+        "blob_sha": "700efe51997ddf238b5f0cfb610c84cc1e6ec682",
+        "size": 1070,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1C_LOCAL_REEXECUTION_AUTHORIZATION.json",
+        "blob_sha": "b353196da8c71046ea9455bde6a25ac171f450a2",
+        "size": 916,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1C_POWERSHELL51_TIMESTAMP_QUALIFICATION.json",
+        "blob_sha": "6e70cd24fc684aa8f44c87f0a43035883d909fb1",
+        "size": 1894,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1C_QUALIFICATION.json",
+        "blob_sha": "3d76f1ce1b888ea5067f6696589636ec01c1dd94",
+        "size": 1824,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1D_DIAGNOSTIC_PLAN.md",
+        "blob_sha": "c8c3fc2fead151f427631e8de5468e49fcf39931",
+        "size": 1330,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1D_LOCAL_AUTHORIZATION.json",
+        "blob_sha": "448d4b9c85dae7d88ac037023bd51cd35a95ce28",
+        "size": 956,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1D_LOCAL_EXECUTION_001_ADJUDICATION.json",
+        "blob_sha": "7cab4a21432f33b5b0bcd4f162d18738fc804c15",
+        "size": 1418,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1D_LOCAL_EXECUTION_002_ADJUDICATION.json",
+        "blob_sha": "982f6c37c8cd7dc2c37659a68e9cd6f0803c8c17",
+        "size": 3104,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1D_LOCAL_REEXECUTION_AUTHORIZATION.json",
+        "blob_sha": "2605c4f475df2515e520e37de1710a49f0654cf9",
+        "size": 992,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1D_PID_COLLISION_REPAIR_QUALIFICATION.json",
+        "blob_sha": "7f777b956a51713ed89e3b7f625621ba8fa0adee",
+        "size": 1897,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1D_QUALIFICATION.json",
+        "blob_sha": "54cca28edf2643183b7a8b53ca782704a8c587a8",
+        "size": 1810,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1R_ACTIVE_PROFILE_REPAIR_PLAN.md",
+        "blob_sha": "e5f565ecf73b62a9975b9e12dbe18624dd16d1cb",
+        "size": 2277,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1R_LOCAL_AUTHORIZATION.json",
+        "blob_sha": "f8a4372fe647b5e964f478e2058a3607d4c47c2e",
+        "size": 1037,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1R_LOCAL_EXECUTION_001_ADJUDICATION.json",
+        "blob_sha": "34cb826f87a62fa450488749f1ab1fb45d44908c",
+        "size": 969,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1R_LOCAL_EXECUTION_002_ADJUDICATION.json",
+        "blob_sha": "cd94dfcd4cac4f354a57e0acebfe59537bade1a9",
+        "size": 1953,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1R_LOCAL_REEXECUTION_AUTHORIZATION.json",
+        "blob_sha": "27147fac5565e53a0479987f4f7352e53a8725af",
+        "size": 945,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1R_POWERSHELL51_RUNTIME_QUALIFICATION.json",
+        "blob_sha": "217251134aa95caa90e0a8e2d6571ead62556d67",
+        "size": 1711,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1R_QUALIFICATION.json",
+        "blob_sha": "8749e483127aae69a5b687fc057e8b6a1b032532",
+        "size": 2271,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1S_LOCAL_AUTHORIZATION.json",
+        "blob_sha": "a921bef3e095505b20f92d9bdd2c1dbd6cb63552",
+        "size": 882,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1S_LOCAL_EXECUTION_001_ADJUDICATION.json",
+        "blob_sha": "f6ac067677a2433ea9efedd7e70851291dd9847a",
+        "size": 1778,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1S_OWNERSHIP_SNAPSHOT_PLAN.md",
+        "blob_sha": "d11a9fbebbc9b7fdcc3ad4ec0fa85648faab82bd",
+        "size": 952,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1S_QUALIFICATION.json",
+        "blob_sha": "00f08a1673b2878fbdead6288fcf0431c1101511",
+        "size": 1751,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1T_LOCAL_AUTHORIZATION.json",
+        "blob_sha": "3d0cabb7c9cffa25e572c45c798d31b9767d517b",
+        "size": 1173,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1T_LOCAL_EXECUTION_001_ADJUDICATION.json",
+        "blob_sha": "34f2d893f552dcec3c7f710a852562c5f1660836",
+        "size": 2269,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1T_QUALIFICATION.json",
+        "blob_sha": "81465e9efca763ae48a2a321daed32def1001d20",
+        "size": 2344,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1T_TEMPORAL_BINDING_PLAN.md",
+        "blob_sha": "0830a74790ec1dba64f42272b4b591e1d822c71f",
+        "size": 1446,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1U_LOCAL_AUTHORIZATION.json",
+        "blob_sha": "fafdb7a968f8fa621ede579ae3d680f841183df1",
+        "size": 881,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1U_LOCAL_EXECUTION_001_ADJUDICATION.json",
+        "blob_sha": "256fb9ea4bcee0562e2e51b5f880f0d93615fadc",
+        "size": 1209,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1U_QUALIFICATION.json",
+        "blob_sha": "c7d594e5713255905a17c8e2930d9aedb1cf0989",
+        "size": 1816,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1U_RUNTIME_AVAILABILITY_PLAN.md",
+        "blob_sha": "9135e7c07787f5b3090f1b37055b53dc9113a0e7",
+        "size": 626,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1_HARNESS_REPAIR_QUALIFICATION.json",
+        "blob_sha": "64437f5f9b6248ff113ebca36059f97b99da15a2",
+        "size": 2272,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1_LOCAL_AUTHORIZATION.json",
+        "blob_sha": "906cba33d8878e1014585fcba4c754e6f045138e",
+        "size": 756,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1_LOCAL_EXECUTION_001_ADJUDICATION.json",
+        "blob_sha": "a28b82b862b93d0c94743ca4dc636d0bc36a38ad",
+        "size": 1352,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1_RP_I2_LOCAL_EXECUTION_002_ADJUDICATION.json",
+        "blob_sha": "6bfb9e16408aeedcbec6fd1e06eef162445b739d",
+        "size": 1857,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I1_RP_I2_LOCAL_REEXECUTION_AUTHORIZATION.json",
+        "blob_sha": "bfbd342f5f02c1f82186185eb5551b9c11a21e85",
+        "size": 1181,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I2_CUSTOM_RUNTIME_LOCAL_AUTHORIZATION.json",
+        "blob_sha": "204e190d5e4cb0f5649be19d26e42fa32613a42c",
+        "size": 1797,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I2_HTTPCLIENT_REPAIR_QUALIFICATION.json",
+        "blob_sha": "d888f75185ff5a4452942fd94db56464870ce178",
+        "size": 1780,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I2_LOCAL_EXECUTION_001_ADJUDICATION.json",
+        "blob_sha": "e429332b07ff9c1266e9eaab0dbbed3b2149540f",
+        "size": 1421,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I2_LOCAL_REEXECUTION_001_ADJUDICATION.json",
+        "blob_sha": "4bd1e9bc573c5891b36be108ad083cd7bdb327d2",
+        "size": 1750,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I2_LOCAL_REEXECUTION_AUTHORIZATION.json",
+        "blob_sha": "cce1d5bf983a1e772520c17fbfe7f9fee9b456f6",
+        "size": 1388,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I3_DESIGN.json",
+        "blob_sha": "770815bd0b1f17c745af460ba8746ce9723ae0a3",
+        "size": 2483,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I3_LOCAL_AUTHORIZATION.json",
+        "blob_sha": "3015a9864492325ae42e44d508022055eff1a38e",
+        "size": 1378,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I3_LOCAL_EXECUTION_001_ADJUDICATION.json",
+        "blob_sha": "f54da5c23a6afb0846a3865d560b12c7077402b3",
+        "size": 2183,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I3_QUALIFICATION.json",
+        "blob_sha": "c1163534e5a3acae9c5fa2ef87808ee52442b04c",
+        "size": 2268,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_I4_DESIGN.json",
+        "blob_sha": "e50aae937d3e2af6a321d70ab6732fc4526f10ad",
+        "size": 3580,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_L1_LAUNCHER_IDENTITY_PLAN.md",
+        "blob_sha": "82384350eb66a6f3375de9e19004b7f41a8d7ca4",
+        "size": 830,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_L1_LOCAL_AUTHORIZATION.json",
+        "blob_sha": "62163dbd11d2c419c791707d6c9a8f76f6af63f1",
+        "size": 957,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_L1_LOCAL_EXECUTION_001_ADJUDICATION.json",
+        "blob_sha": "ceeee295e155bfd42c444be8d9450635538bbf85",
+        "size": 1645,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_L1_QUALIFICATION.json",
+        "blob_sha": "a2d1705b0b44175985d469d0f6b12c8bd1aad055",
+        "size": 2145,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_L2_LAUNCHER_PROVENANCE_PLAN.md",
+        "blob_sha": "ca821fcb1cef8fc892aae74db7616fc9dd7fe4e5",
+        "size": 992,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_L2_LOCAL_AUTHORIZATION.json",
+        "blob_sha": "e5c4c6b2dbca6edbdad5f897e739dbfe5d3c9232",
+        "size": 996,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_L2_LOCAL_EXECUTION_001_ADJUDICATION.json",
+        "blob_sha": "0a50c10f39fdb8bbb1110027c6b63a5d5f01204f",
+        "size": 2294,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RP_L2_QUALIFICATION.json",
+        "blob_sha": "da8692c2b5ff638f727b5ee9dd8ae2f9a651f8d9",
+        "size": 2063,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_RUNTIME_OF_RECORD_CORRECTION.json",
+        "blob_sha": "847ba86e6df5e0ede186e20e9d63221d5089c742",
+        "size": 1905,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_SANDBOX_FAILURE_DECOMPOSITION.md",
+        "blob_sha": "e656ba9ec83e90a6717b3427b61805dc36fdb306",
+        "size": 1878,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_SANDBOX_VERSION_SKEW_HYPOTHESIS.json",
+        "blob_sha": "3bde149c56b89f8c31c257f7ee2fa0219385581a",
+        "size": 1047,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_SANDBOX_VERSION_SKEW_HYPOTHESIS.md",
+        "blob_sha": "0f540fe86f77c0a9e0376d009957a07c92132f9a",
+        "size": 3294,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_SINGLE_SOURCE_HASH_REPAIR_PLAN.md",
+        "blob_sha": "565c966f87ac2cd1b7a6566c87ea215054f4c333",
+        "size": 1800,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_SINGLE_SOURCE_HASH_REPAIR_RESULT.json",
+        "blob_sha": "97926d1a96abd661f408f57f221e23196ee061d2",
+        "size": 1697,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC2_EXECUTION_LOCK.json",
+        "blob_sha": "2debd81a6f45e9764a69d0749b19e5b9a5dee3ab",
+        "size": 5928,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC2_EXECUTION_LOCK_CANDIDATE.json",
+        "blob_sha": "2debd81a6f45e9764a69d0749b19e5b9a5dee3ab",
+        "size": 5928,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC2_EXECUTION_LOCK_QUALIFICATION_RESULT.json",
+        "blob_sha": "db73bb44ad86b7022239bf6ac7ba8a1c98651fb6",
+        "size": 1495,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC2_IMPLEMENTATION_QUALIFICATION_RESULT.json",
+        "blob_sha": "3843c35c30e2e93edb141ef5a75920fadaec747f",
+        "size": 2679,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC2_LOCAL_PREFLIGHT_AUTHORIZATION.json",
+        "blob_sha": "3081e622e2681d357f82aec561880c18feb2b4a3",
+        "size": 1324,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC2_LOCAL_PREFLIGHT_RESULT.json",
+        "blob_sha": "461a08c0b262f38c93ee761f8a2429cc136ac6d3",
+        "size": 1635,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC2_POSTLIVE_ADJUDICATION.json",
+        "blob_sha": "28d115d2ef220b9b353e68cdb2e12fe09f530bd1",
+        "size": 2111,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC2_SEMANTIC_ADMISSION_REPAIR_PLAN.md",
+        "blob_sha": "62f664c285459c5cc3c983bb7c5d4aadd87c825d",
+        "size": 2494,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC3_EXECUTION_LOCK.json",
+        "blob_sha": "5c86ff49dbcdd21ad040d39bd82decb40a63e69e",
+        "size": 6414,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC3_EXECUTION_LOCK_CANDIDATE.json",
+        "blob_sha": "5c86ff49dbcdd21ad040d39bd82decb40a63e69e",
+        "size": 6414,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC3_EXECUTION_LOCK_QUALIFICATION_RESULT.json",
+        "blob_sha": "5c423974aacf0380d8f2edf04dd342453843d330",
+        "size": 1549,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC3_LOCAL_PREFLIGHT_AUTHORIZATION.json",
+        "blob_sha": "de6d70b6630f2f7b4bb8e1defb11bae732efca1b",
+        "size": 1281,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC3_LOCAL_PREFLIGHT_RESULT.json",
+        "blob_sha": "3e044e5473bbadda93dac4a80424b7609259909f",
+        "size": 1689,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC3_POSTLIVE_ADJUDICATION.json",
+        "blob_sha": "e4f452795df3b87288fbea375a76b8eec337621d",
+        "size": 4928,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC3_RUNTIME_READINESS_QUALIFICATION.json",
+        "blob_sha": "d2f9a7cb50c8e1e789beae9e818b8c953327b949",
+        "size": 2213,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC3_RUNTIME_READINESS_REPAIR_PLAN.md",
+        "blob_sha": "c85ede49756e167a4446619d51e70b5519d912db",
+        "size": 1696,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_CONFIG_SEMANTIC_PROBE_OBSERVATION.json",
+        "blob_sha": "0bd9b2919bafc25519b3f45b33cfe1ee0c967fdf",
+        "size": 1031,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_CONFIG_SEMANTIC_PROBE_PLAN.md",
+        "blob_sha": "29ae4089e11944967913006ada24d51779c1cbb1",
+        "size": 1920,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_CONFIG_SEMANTIC_PROBE_QUALIFICATION.json",
+        "blob_sha": "515a1bf8eb8e8bb206adccc815c0ed49637ee0b0",
+        "size": 725,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_CONFIG_SEMANTIC_PROBE_V2_LOCAL_RESULT.json",
+        "blob_sha": "5c8a854bf4a959b1f4a0759419c42c27e54193cb",
+        "size": 1760,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_CONFIG_SEMANTIC_PROBE_V2_PLAN.md",
+        "blob_sha": "6ea6c9f94d825b773c06f6decbaffd1cf8a13aac",
+        "size": 2484,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_CONFIG_SEMANTIC_PROBE_V2_QUALIFICATION.json",
+        "blob_sha": "3d10c6535e976a84c90bb8d7869f32ca0cc08e59",
+        "size": 928,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_CORE_IMPLEMENTATION_RESULT.json",
+        "blob_sha": "5f73eedf10c54467de4190e8d284b5066642984a",
+        "size": 1564,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_EXECUTION_LOCK.json",
+        "blob_sha": "1c92e3a063eff563b4e2a5026728da4fbf01c178",
+        "size": 5126,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_EXECUTION_LOCK_CANDIDATE.json",
+        "blob_sha": "1c92e3a063eff563b4e2a5026728da4fbf01c178",
+        "size": 5126,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_EXECUTION_LOCK_QUALIFICATION_RESULT.json",
+        "blob_sha": "837350c8f83e2e92e186012d7713368421786151",
+        "size": 1487,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_IMPLEMENTATION_QUALIFICATION_RESULT.json",
+        "blob_sha": "f31f64621a44a3b95e6b95ec9c8cbf6427de0ffe",
+        "size": 3397,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_LOCAL_PREFLIGHT_AUTHORIZATION.json",
+        "blob_sha": "5821b59a6b0bfd72629e2932924f7319186d5adb",
+        "size": 1862,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_LOCAL_PREFLIGHT_RESULT.json",
+        "blob_sha": "20864763349585fcf6d5cffb6eab71eab7e3b434",
+        "size": 1953,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_PREDISPATCH_ADJUDICATION.json",
+        "blob_sha": "aa8c41af5b6b7f171f2d4b8547b73998581eb1d8",
+        "size": 2192,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_PREREGISTRATION.md",
+        "blob_sha": "0c0b9517c817bfeb52c6e4bd873160fe56bb596f",
+        "size": 3959,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_PREREGISTRATION_LOCK.json",
+        "blob_sha": "5fd91d79a9a02851c75390a073229eebb2a1179d",
+        "size": 1063,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TC_PREREGISTRATION_RESULT.json",
+        "blob_sha": "e78c5c2047c912f55c619423fecb5b6c29c4bd0d",
+        "size": 1040,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_TRANSPORT_CORRECTED_FORMAL_CLOSE.json",
+        "blob_sha": "0111ca219af454c22f0a8ef8b588ab36bb5f6461",
+        "size": 2229,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_UAC_HANDOFF_REPAIR_PLAN.md",
+        "blob_sha": "5a26f4d22d580683f94a2fc934577b251377669e",
+        "size": 2424,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_UAC_HANDOFF_REPAIR_RESULT.json",
+        "blob_sha": "d2ec57b6b73abba8e2b8c37afe1245e21f6d69da",
+        "size": 1848,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_V2R5_PREMARKER_ADJUDICATION.json",
+        "blob_sha": "59988dc16378feee5e1f253ac2a20d25905eb67f",
+        "size": 1785,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_V2R6_INFRASTRUCTURE_AMENDMENT_PLAN.md",
+        "blob_sha": "cd8a52da7ef5a78496201e7ac81690afa5f656b4",
+        "size": 3005,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_FX001_V2R6_QUALIFICATION_RESULT.json",
+        "blob_sha": "0625cbc7faf403eda7da730a2dfe1ffc80253c9a",
+        "size": 1972,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_IMPLEMENTATION_QUALIFICATION_LOCK.json",
+        "blob_sha": "ffe99e383fe43ea3fbd0ee60bead69da99f85181",
+        "size": 3144,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_IMPLEMENTATION_QUALIFICATION_RESULT.md",
+        "blob_sha": "f670235687425e23614bc265a11de5a02968ed40",
+        "size": 4845,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_LOCAL_CODEX_01534_QUALIFICATION_ADJUDICATION.json",
+        "blob_sha": "3434d7cb00cbb9781b53514cb8bf1ae55de7dd79",
+        "size": 1495,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_LOCAL_Q0B_ADJUDICATION.json",
+        "blob_sha": "49cc5a327d056762f31170e116bf521788b58e6b",
+        "size": 2252,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_LOCAL_Q0B_ADJUDICATION.md",
+        "blob_sha": "fc0a0ffbe3f96ad90d58974a61d17100e2aa16b2",
+        "size": 2322,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_OFFICIAL_CODEX_01534_LOCAL_PREP_AUTHORIZATION.md",
+        "blob_sha": "0051c59193213697303f2259a0c9a8267c6dfa11",
+        "size": 893,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_OFFICIAL_CODEX_01534_QA_RESULT.json",
+        "blob_sha": "343b39cfc003ca5b24a9fbf5a8a2538e602c93ba",
+        "size": 1477,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_ORIGIN_AND_SCOPE.md",
+        "blob_sha": "786b119f87d7a2cb1d17f309182d6d4668a39aa2",
+        "size": 5774,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_Q0B_RUNTIME_ALIGNMENT_LOCK.json",
+        "blob_sha": "1406fbf9f1f6adff1f419ab6eed4f29e8037118b",
+        "size": 3063,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_Q0B_RUNTIME_ALIGNMENT_PLAN.md",
+        "blob_sha": "1c2951c9e4286403a02174ad1c94a96ecb98cc10",
+        "size": 2126,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_Q0B_RUNTIME_ALIGNMENT_RESULT.md",
+        "blob_sha": "ebf27bcc5d132afcf5ac27be2ad6c97231709d37",
+        "size": 2640,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_RUNTIME_TARGET_CORRECTION_V4_0_7.json",
+        "blob_sha": "3beb1b25ce0929f9d29a5c84b1b258ac7f15b1e1",
+        "size": 1972,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_RUNTIME_TARGET_CORRECTION_V4_0_7.md",
+        "blob_sha": "278aca26d2f9d004a9f86e45615006e86add3097",
+        "size": 3278,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_SPECIFICATION_LOCK.json",
+        "blob_sha": "dda7d753a47245368c1a59d1b88503db87c2e27e",
+        "size": 1465,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_TRANSPORT_ADEQUACY_MECHANISM_AUDIT.md",
+        "blob_sha": "4bf98224fc98b1f9ab4ac30514ef4d27c346e14c",
+        "size": 5713,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_TRANSPORT_ADEQUACY_RESULT.json",
+        "blob_sha": "af22c5bad9ec8d3ba64450a904027df0cfdd76a3",
+        "size": 1972,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_TRUST_AUTHORITY_OBSERVABILITY_SPEC.md",
+        "blob_sha": "a9734274ed01b45530c6aa4383e128741c3b3401",
+        "size": 12990,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_V4_SOURCE_CONTRACT_PLAN.md",
+        "blob_sha": "cc0041da9c93e7a6079c187fa3a8575fa2f99f81",
+        "size": 2509,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_ZERO_MODEL_FORMAL_CLOSE.json",
+        "blob_sha": "b00f52e29497acd6e04f61db114311394c7936f0",
+        "size": 2383,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_ZERO_MODEL_FORMAL_CLOSE.md",
+        "blob_sha": "5f31c60b3cb48f6bb406c94c6a3fe1696614b6eb",
+        "size": 2962,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_ZERO_MODEL_QUALIFICATION_PLAN.md",
+        "blob_sha": "fa3eff8ab7b6471ee751b3344c368114477679ef",
+        "size": 8669,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_ZERO_MODEL_V4_Q0B_READJUDICATION.json",
+        "blob_sha": "9584fcbe0e2e20c86c2801e9cb815eb36e557d25",
+        "size": 1903,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CGW_ZERO_MODEL_V4_SOURCE_RESULT.json",
+        "blob_sha": "a53ce8c3305efa58fc3f4e3a8ac0338be6b3aa6f",
+        "size": 1760,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CODEX_D1_EVIDENCE.json",
+        "blob_sha": "a4d50cc75501573e981f33cad2af004a452a75b2",
+        "size": 2769,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CODEX_D1_MANIFEST_EVIDENCE.json",
+        "blob_sha": "5caaeb63e9ec8edc68527f946e369838d50d393e",
+        "size": 1806,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CODEX_D1_MANIFEST_QUALIFICATION.md",
+        "blob_sha": "9243ed8ea21b5afae62bc1be62e2de0a539f16c4",
+        "size": 4010,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CODEX_D1_MANIFEST_RESULT.md",
+        "blob_sha": "dda69bf5f690efb83cd92d184f8c5f8fe42c9de1",
+        "size": 3417,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CODEX_D1_RESULT.md",
+        "blob_sha": "f1acf4ca4e60289aa2a60be6b8b28a83be9cebc8",
+        "size": 3750,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CODEX_DISCOVERY_PREPARATION.md",
+        "blob_sha": "14d83df31a788699990aa7cbeed250b85584ad98",
+        "size": 9215,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CODEX_DISCOVERY_PREPARATION_EVIDENCE.json",
+        "blob_sha": "fca4e791492253092fc848204e2485bb3b164189",
+        "size": 1383,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CODEX_DISCOVERY_PREPARATION_RESULT.md",
+        "blob_sha": "5d7286a7db34f12edb541106086d8bede2d7ee57",
+        "size": 4465,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CODEX_OBSERVABILITY_QUALIFICATION_LOCK.json",
+        "blob_sha": "a2a0ddce8d1f97b4de42bb82e4ecec54ff4d5c90",
+        "size": 1988,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CODEX_OBSERVABILITY_QUALIFICATION_RESULT.md",
+        "blob_sha": "8350af5826d7ec561a7ff1533774e280463a9c43",
+        "size": 2289,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CODEX_OBSERVABILITY_QUALIFICATION_SPEC.md",
+        "blob_sha": "ea14734851eace8bb4ec3de43eaa702bc306e42b",
+        "size": 4717,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_CODEX_OBSERVABILITY_SCOPE_AMENDMENT.md",
+        "blob_sha": "a5aedbbb05dd9314ba1af6a2380186cef6ed2bbf",
+        "size": 2140,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D1_ADJUDICATION_LOCK.md",
+        "blob_sha": "a48236824e66b2618e4a08bf00928c94e9b5a815",
+        "size": 6044,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D1_ADJUDICATION_LOCK_EVIDENCE.json",
+        "blob_sha": "74d03e32017bb5129365c7e93acce3ba68e5fb33",
+        "size": 1225,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D1_ADJUDICATION_LOCK_RESULT.md",
+        "blob_sha": "5de30fe81e5c17747bc7c3d2bd9a0de9b490e39b",
+        "size": 3691,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D1_INVENTORY_ORDERING_INVALIDITY_REPAIR.md",
+        "blob_sha": "246a90d468c194ede91e7a2fb87925d971610028",
+        "size": 4602,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D1_INVENTORY_ORDERING_INVALIDITY_REPAIR_EVIDENCE.json",
+        "blob_sha": "8d32f38cdce70d23c09efad3fbb055881c885ddb",
+        "size": 1524,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D1_INVENTORY_ORDERING_INVALIDITY_REPAIR_RESULT.md",
+        "blob_sha": "5c3ed86e5a7d5b219407fdf3289572f8f5f7c00c",
+        "size": 3459,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_DEFAULT_PERMISSIONS_AMENDMENT.md",
+        "blob_sha": "de1a900e7595c0b9cb2152089903af15f6121db3",
+        "size": 4357,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_DEFAULT_PERMISSIONS_AMENDMENT_QA.md",
+        "blob_sha": "7345afeab043fb369158d0258e1a296ce1fd2c00",
+        "size": 2810,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_DEFAULT_PERMISSIONS_MATERIALIZER_EVIDENCE.json",
+        "blob_sha": "a30d25faf3919d3928c5ad9a58d15e88e67d6531",
+        "size": 1379,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_DEFAULT_PERMISSIONS_MATERIALIZER_RESULT.md",
+        "blob_sha": "182c5ccbad1ad43522382bbc4238964643d540ad",
+        "size": 1795,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_DEFAULT_PERMISSIONS_PRETURN_REBIND_EVIDENCE.json",
+        "blob_sha": "42208c7056c79cbf7271df274430574da068cca3",
+        "size": 1216,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_DEFAULT_PERMISSIONS_PRETURN_REBIND_RESULT.md",
+        "blob_sha": "6e2fda96336e5434486ce1710c4473fcbeff2565",
+        "size": 1796,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_LOCAL_PRETURN_IMPLEMENTATION_EVIDENCE.json",
+        "blob_sha": "515f123f7b50ca9502ab7f6e8dbf284e3ca8354b",
+        "size": 996,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_LOCAL_PRETURN_IMPLEMENTATION_RESULT.md",
+        "blob_sha": "722dbb3f3c7f0432892c83dfe3f45dacea889ba4",
+        "size": 2431,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_PERMISSION_PROFILE_SUCCESSOR_PREIMPLEMENTATION.md",
+        "blob_sha": "7764ede707b632a18346a650adeb4d1fb23f7f54",
+        "size": 13479,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_PROFILE_MATERIALIZER_EVIDENCE.json",
+        "blob_sha": "4f23914eefbba631c9c8cf12b7797494a70b759e",
+        "size": 1524,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_PROFILE_MATERIALIZER_RESULT.md",
+        "blob_sha": "fb3bf419be84f040723e9e0d1bc1800c8b381bb6",
+        "size": 2600,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_ROOT_READ_AUTHORITY_INCOMPATIBILITY_ADJUDICATION.md",
+        "blob_sha": "77babd5045b6023c960542b23c4a695a09f2dee4",
+        "size": 2668,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_WINDOWS_ELEVATED_PRETURN_IMPLEMENTATION_EVIDENCE.json",
+        "blob_sha": "701df2ca7a6a6b227cbd55bc9ca5cddca339abcf",
+        "size": 1250,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_WINDOWS_ELEVATED_PRETURN_IMPLEMENTATION_RESULT.md",
+        "blob_sha": "1fb2b19a395d9ffda97935fbbec5aba2029a6a06",
+        "size": 2120,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_WINDOWS_ELEVATED_SANDBOX_AMENDMENT.md",
+        "blob_sha": "9b685c812dc388539a7af1dfff269dd86f189b14",
+        "size": 6019,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_WINDOWS_ELEVATED_SANDBOX_AMENDMENT_QA.md",
+        "blob_sha": "bf2c31f5985e8bdef5e52c1688f98f27ac847004",
+        "size": 3467,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_WINDOWS_ELEVATED_SANDBOX_MATERIALIZER_EVIDENCE.json",
+        "blob_sha": "c92c0ff450ee18533ef1b7318a650e927c80ef90",
+        "size": 1417,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_WINDOWS_ELEVATED_SANDBOX_MATERIALIZER_RESULT.md",
+        "blob_sha": "a612214ea0ad1c1110bae21e675789ea3c3265d7",
+        "size": 1931,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_WINDOWS_ELEVATED_SETUP_FAILURE_DIAGNOSTIC.md",
+        "blob_sha": "8d343a65660726ca66058f7161e4e1c4c2e39cb8",
+        "size": 4766,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_WINDOWS_ELEVATED_SETUP_FAILURE_DIAGNOSTIC_EVIDENCE.json",
+        "blob_sha": "fedd853e26e1981c6af817614105e924b079f830",
+        "size": 1480,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_WINDOWS_ELEVATED_SETUP_FAILURE_DIAGNOSTIC_QA.md",
+        "blob_sha": "42d9db0d53ee2495a11e7f3148f7bbf47d2786a4",
+        "size": 2948,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_WINDOWS_ELEVATED_SETUP_FAILURE_DIAGNOSTIC_RESULT.md",
+        "blob_sha": "c7771651fbe80469b5f822cf3d4c8681071da6f0",
+        "size": 1890,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S1_ZERO_FRESH_SPEC_QA.md",
+        "blob_sha": "31ae7e0a5355e53e6da01cfc7818a8758be57384",
+        "size": 4472,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_A1_CONFIG_SERIALIZATION_BLOCKER_ADJUDICATION.md",
+        "blob_sha": "4ee336e55080342dc9cfc4730200579f768ed1fc",
+        "size": 2310,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_A1_NTFS_METADATA_PRETURN_AMENDMENT.md",
+        "blob_sha": "9e204421c22a00aa33564e6f9f8b386a1cb9e812",
+        "size": 3123,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_A1_ONECLICK_LOCK.json",
+        "blob_sha": "ec2733aaba0eba99d8e0c09dd362201f0f0fd1a7",
+        "size": 1962,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_A2_BINARY_COMPONENT_LINEAGE_LOCK.json",
+        "blob_sha": "45c2e4e6e9d710787078ee711d8d320a8cbdd36d",
+        "size": 1392,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_A2_BINARY_COMPONENT_LINEAGE_SPEC.md",
+        "blob_sha": "ef5f87c76197be96c73e978ed35af4084274d4da",
+        "size": 2993,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_A2_CONFIG_SERIALIZATION_PRETURN_AMENDMENT.md",
+        "blob_sha": "7ee9f5515bc04fdaf671b9c6560194d6cfd83423",
+        "size": 2577,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_A2_ONECLICK_LOCK.json",
+        "blob_sha": "ee98d38c78331a13d6d3616e9bbad36762eea10d",
+        "size": 1695,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_A2_SANDBOX_STATE_MECHANISM_ADJUDICATION.md",
+        "blob_sha": "5ba7f633c7ed82ce6ca1fea19e9c8808084d8579",
+        "size": 3332,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_A2_SANDBOX_STATE_RETURN_LOCK.json",
+        "blob_sha": "af937b94e744e9b1c0614d1ab7690a3df51b40c6",
+        "size": 1233,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_A2_SANDBOX_STATE_RETURN_SPEC.md",
+        "blob_sha": "4ccd8ca7a9fe1bf8093f7543f6c92f1056ba2c81",
+        "size": 2653,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_A2_SETUP_EVIDENCE_RETURN_ADJUDICATION.md",
+        "blob_sha": "b15b479c24ff8db19520064d46cc47b849606306",
+        "size": 3120,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_A2_SETUP_EVIDENCE_RETURN_LOCK.json",
+        "blob_sha": "ec8a64a94146ba263ec76b5ddb3c99b06546412e",
+        "size": 1249,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_A2_SETUP_EVIDENCE_RETURN_SPEC.md",
+        "blob_sha": "8dadf05d59dce659ee1944d698c7d35b395e588b",
+        "size": 2710,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_A2_WINDOWS_SANDBOX_SETUP_BLOCKER_ADJUDICATION.md",
+        "blob_sha": "16e25727af95e026a8c102f3edca41a724474f96",
+        "size": 2589,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_BINARY_COMPONENT_LINEAGE_ADJUDICATION.md",
+        "blob_sha": "4b6c92caa59f18d6bb03575704e10745f1751934",
+        "size": 4930,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_LOCK.json",
+        "blob_sha": "daebf8e55876d885f2f9f35c7a377a169b8cc483",
+        "size": 1121,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_NATIVE_STDERR_REPAIR_LOCK.json",
+        "blob_sha": "b320640295167c4b48cd9a2cf03ba3d1c6f583da",
+        "size": 1242,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_NATIVE_STDERR_REPAIR_SPEC.md",
+        "blob_sha": "76d1608ee2851bc4b0ae771567df14608a395b43",
+        "size": 2560,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_RUNTIME_REPAIR_LOCK.json",
+        "blob_sha": "e3ee2d3fc601f28b567140399b17d2bef1f5b16d",
+        "size": 1199,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_RUNTIME_REPAIR_SPEC.md",
+        "blob_sha": "729080ce6638bfc2625286762f16cecc62b609a4",
+        "size": 2402,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_DIAGNOSTIC_RETURN_WRAPPER_SPEC.md",
+        "blob_sha": "c5c4cb885122539f96b436700c6b8487d0ae4e2a",
+        "size": 2372,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_EGGINFO_SOURCE_HYGIENE_LOCK.json",
+        "blob_sha": "2464b1b4211c8496c5a97d1196a98f4c7a21fb59",
+        "size": 1055,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_EGGINFO_SOURCE_HYGIENE_REPAIR_SPEC.md",
+        "blob_sha": "2e49e751e107dc26978f4abe49a3597115f66fd3",
+        "size": 1806,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_ELEVATION_BOOTSTRAP_DIAGNOSTIC_LOCK.json",
+        "blob_sha": "ea7abbe7b1c15a70d7ae7288931fac53b43a13c4",
+        "size": 1240,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_ELEVATION_BOOTSTRAP_DIAGNOSTIC_SPEC.md",
+        "blob_sha": "baab6eb25d9d367d6145e75f386ecf339b28d45b",
+        "size": 3288,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_EPHEMERAL_VHDX_CLEANUP_CONTRACT.md",
+        "blob_sha": "a31c956e6a73fd63c12959295942697af60d5678",
+        "size": 2256,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_ISOLATED_VOLUME_ONECLICK_EVIDENCE.json",
+        "blob_sha": "b37543b55a8a08c384bc8d893b61414bd5df49d7",
+        "size": 1836,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_ISOLATED_VOLUME_ONECLICK_RESULT.md",
+        "blob_sha": "bae43b0f0a7752d2f637a35eb2755ccf964f0380",
+        "size": 2467,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_ISOLATED_VOLUME_SUCCESSOR_PREIMPLEMENTATION.md",
+        "blob_sha": "29f15cbd08e6d6ad3dbae4fa2fe45dc728a7d7ec",
+        "size": 5313,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_ISOLATED_VOLUME_SUCCESSOR_ZERO_FRESH_QA.md",
+        "blob_sha": "d414115ba2ba5fee507877cf73bc2a3cf898ff33",
+        "size": 3457,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_LOCAL_PRETURN_EXECUTION_AUTHORIZATION.json",
+        "blob_sha": "5539d2b84e83bb4840cba057b4b01ab34d6085fb",
+        "size": 1266,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_LOCAL_PRETURN_EXECUTION_AUTHORIZATION.md",
+        "blob_sha": "d0fcf21aaccd6c53f3a494c6db716435f6b6e259",
+        "size": 3642,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_NTFS_METADATA_BLOCKER_ADJUDICATION.md",
+        "blob_sha": "82e75d3ad2c6bff4325c8d145b1a6c10d877a589",
+        "size": 2859,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_ONECLICK_LOCK.json",
+        "blob_sha": "15cc9ce75f34944277d6c7dbe1787661afd9b378",
+        "size": 873,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S2_VHDX_CLEANUP_LOCK.json",
+        "blob_sha": "83044ca6ad74f4d30052372b535bcce5d8d1e1fa",
+        "size": 1430,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_FIRST_LOCAL_PREFLIGHT_ADJUDICATION.md",
+        "blob_sha": "95ff76728fb82801a9348fad3bc28968462b1159",
+        "size": 2587,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_FORMAL_CLOSE_QA.md",
+        "blob_sha": "842d87d73d11435fea07f0cae2efddb4438144dd",
+        "size": 948,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_LOCAL_INSTRUMENT_STAGING_LOCK.json",
+        "blob_sha": "1e2d117ad5a3a339526c2e5e9c3bdfc2388999ee",
+        "size": 1555,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_LOCAL_INSTRUMENT_STAGING_SPEC.md",
+        "blob_sha": "27b72ac12a9045d89cca5ce09576ebb8045f2ae1",
+        "size": 3507,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_LOCAL_STAGING_EVIDENCE_ADJUDICATION.md",
+        "blob_sha": "dc5de4dbf5c9174e9ed7c2373beb91d07d1159d7",
+        "size": 2526,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_PLATFORM_NO_TURN_PREFLIGHT_LOCK.json",
+        "blob_sha": "93e2d0ebcfc93da377eda5c6fdda8238e0798cc9",
+        "size": 1844,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_PLATFORM_NO_TURN_PREFLIGHT_SPEC.md",
+        "blob_sha": "3e9fe69875ea081117746ffec67c0c2d9594268f",
+        "size": 5477,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_POSTCLOSURE_EVIDENCE_COLLECTOR_LOCK.json",
+        "blob_sha": "d55448468f360ba6cfd9e469a1d71b5d3588cc70",
+        "size": 1408,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_POSTCLOSURE_PROTOCOL_FAILURE_DECOMPOSITION.md",
+        "blob_sha": "f85778fd021c7f0d9d6b506b07cf4acbec067d6e",
+        "size": 2862,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_POSTCLOSURE_PROTOCOL_FAILURE_DECOMPOSITION_RESULT.md",
+        "blob_sha": "264dd03830dc930d6cea2d8ed951a0dd77c06390",
+        "size": 5708,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_PRETURN_CONFIG_SERIALIZATION_REPAIR_001_LOCK.json",
+        "blob_sha": "49f6cc59a01adf1dab25f89d818031de34c678b5",
+        "size": 1541,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_PRETURN_CONFIG_SERIALIZATION_REPAIR_001_SPEC.md",
+        "blob_sha": "d7aa9cb989d71741a8068c575acb304623bc5231",
+        "size": 2114,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_PRETURN_NTFS_ROOT_CLOSURE_REPAIR_002_LOCK.json",
+        "blob_sha": "9baf3230ec646c444cc953bf86ea827afdf2280b",
+        "size": 1739,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_PRETURN_NTFS_ROOT_CLOSURE_REPAIR_002_SPEC.md",
+        "blob_sha": "cae043099700168bf1244b229b1d7b06495de78c",
+        "size": 2563,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_R1_LOCAL_PREFLIGHT_ADJUDICATION.md",
+        "blob_sha": "bbb1002f00723d21aae4a3b097571d8e7e4e9494",
+        "size": 2620,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_R2_PLATFORM_PREFLIGHT_ADJUDICATION.md",
+        "blob_sha": "8aeb927aa7cbd83632bb59c72958176209d81316",
+        "size": 2883,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_R2_PRETURN_EVIDENCE_BINDING.json",
+        "blob_sha": "e8da11fbaf13a12c00be1c19decf2307f4afbdd3",
+        "size": 2226,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_R2_SCIENTIFIC_AUTHORIZATION_MACRO_GATE.md",
+        "blob_sha": "99c755f99337dae4c7fb9e13a0cae02e98d4d7ec",
+        "size": 5814,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_RELEASE_COHERENT_INSTRUMENT_PREIMPLEMENTATION.md",
+        "blob_sha": "bfa6536744d5f3ad0aff5e1d90868851f30e0889",
+        "size": 4800,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_S3_I0_OFFICIAL_RELEASE_COHERENCE_LOCK.json",
+        "blob_sha": "99e4c1181c1f9f47b235c7217c20e91446571acc",
+        "size": 1403,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_SCIENCE001_PREDISPATCH_ADJUDICATION.md",
+        "blob_sha": "39ccbe516954b5255833c941482508b4b84f083e",
+        "size": 2741,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_SCIENCE002_FORMAL_ADJUDICATION.md",
+        "blob_sha": "75333fad6f8aba67304dc9f95d30cfdb384e8bb9",
+        "size": 4213,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_SCIENTIFIC_EXECUTION_LOCK.json",
+        "blob_sha": "742e4f8da7dfc0f73ecaf49ced325a94502b946d",
+        "size": 3520,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_SCIENTIFIC_EXECUTION_MACRO_SPEC.md",
+        "blob_sha": "cb9271072ed9227d0bae30d2ef96a5efa9feef5b",
+        "size": 7278,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_SCIENTIFIC_PREDISPATCH_REPAIR_001_LOCK.json",
+        "blob_sha": "6726b18449c9f41945bfb67feee0f287c67ba8db",
+        "size": 2871,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S3_SCIENTIFIC_PREDISPATCH_REPAIR_001_SPEC.md",
+        "blob_sha": "da737c70499856f5d81ed0d425e11e85d15674c7",
+        "size": 2717,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S4_FORMAL_CLOSE_QA.md",
+        "blob_sha": "a982585f1ffe8f0ca1432adab57348e16a7f59a5",
+        "size": 1395,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S4_PERSISTED_TURN_ERROR_RECOVERY_LOCK.json",
+        "blob_sha": "2ad85195cc9d47bc9abca17c05737cf77256c17e",
+        "size": 1668,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S4_PERSISTED_TURN_ERROR_RECOVERY_RESULT.md",
+        "blob_sha": "5e7a946cd675a4ac74828af050b105357ac36327",
+        "size": 3798,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S4_PERSISTED_TURN_ERROR_RECOVERY_SPEC.md",
+        "blob_sha": "bbed090395ba25b091b85ed5c3ea29c6cbc1c62e",
+        "size": 1955,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S4_POSTCLOSURE_EVIDENCE_COLLECTOR_LOCK.json",
+        "blob_sha": "abaf09bb826c221703fc2abe022304c50c87b8d5",
+        "size": 1623,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S4_POSTCLOSURE_TERMINAL_FAILURE_DECOMPOSITION.md",
+        "blob_sha": "8dbcd9f7a044d62218ed18154705c6c93ef4e90b",
+        "size": 2913,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S4_POSTCLOSURE_TERMINAL_FAILURE_DECOMPOSITION_RESULT.md",
+        "blob_sha": "45ca1aa95698d559b35f24f56eefd83bb7d3db2f",
+        "size": 4636,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S4_PREEXECUTION_QA.md",
+        "blob_sha": "5bb124384f4a72bf9c6fb9ef310292cbe8ab297b",
+        "size": 1415,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S4_QUEUE_SAFE_SUCCESSOR_SPEC.md",
+        "blob_sha": "21da03ae32924dd29114812c8a269cb4c16aa93a",
+        "size": 3836,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S4_SCIENCE001_FORMAL_ADJUDICATION.md",
+        "blob_sha": "72d4cbe1a68fb9f8b42742e0784d21e85ad508ad",
+        "size": 4343,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S4_SCIENTIFIC_EXECUTION_LOCK.json",
+        "blob_sha": "298d298c6fed43d9ff7e06da835def72402a7b06",
+        "size": 3701,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S4_VERIFICATION_HASH_IDENTITY_CORRECTION.md",
+        "blob_sha": "4101095253c95cf90aa2bd38d4adff19e330e0d2",
+        "size": 943,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S5_IMPLEMENTATION_QUALIFICATION_RESULT.md",
+        "blob_sha": "f3cb71e246a9e30c12de0c66de3d38b5ae303577",
+        "size": 3241,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S5_OBSERVABILITY_QUALIFIED_SUCCESSOR_PREIMPLEMENTATION.md",
+        "blob_sha": "493c261d64296422d429c7c87026fa963b7b760d",
+        "size": 5624,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S5_PREEXECUTION_QA.md",
+        "blob_sha": "f705e165c4be936e699f6c45f7387452df1f5183",
+        "size": 1807,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S5_PREIMPLEMENTATION_DESIGN_QA.md",
+        "blob_sha": "c3f9427de113f823f759dc4382afb4ea33d65b90",
+        "size": 1024,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2S5_SCIENTIFIC_EXECUTION_LOCK.json",
+        "blob_sha": "59dee8760519476b2f874652acece88f7e22b7f2",
+        "size": 4040,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2_ATTEMPT_001_ADJUDICATION.md",
+        "blob_sha": "1da0152389c797b20a31c699fa56240ad0343807",
+        "size": 5495,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2_ATTEMPT_001_VERIFICATION.json",
+        "blob_sha": "6ee55550187a6182a76593fd30b7117c18eef08f",
+        "size": 2937,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2_FINAL_ADMISSION_EVIDENCE.json",
+        "blob_sha": "da94dd02a8649292cd3f038b6d697e9fd5841f03",
+        "size": 2746,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2_FINAL_ADMISSION_MATERIALIZATION_AND_ZERO_FRESH_QUALIFICATION.md",
+        "blob_sha": "6b00c9ddec549e59d7d0234da0d27b782608d990",
+        "size": 7072,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2_FINAL_ADMISSION_RESULT.md",
+        "blob_sha": "efd432d1f23053c71cd731c829f6cde46918e8b7",
+        "size": 6037,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2_P5_FX_001_PREIMPLEMENTATION_EVIDENCE.json",
+        "blob_sha": "7c8db071a71c79ea8918fdf50e5f41cd243c7c55",
+        "size": 2071,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2_P5_FX_001_PREIMPLEMENTATION_QUALIFICATION.md",
+        "blob_sha": "401762a3edb0c9fd81b25d9428bf7d49926d2ad5",
+        "size": 11884,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2_P5_FX_001_PREIMPLEMENTATION_RESULT.md",
+        "blob_sha": "6abf06fee647b63c568c8d9da69b8443d652ff51",
+        "size": 5426,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2_QUALIFICATION_AUTHORITY_ADMISSION_PREIMPLEMENTATION.md",
+        "blob_sha": "dfaed0e1fcabf23d1cd3d2b4b5978dc9190eef68",
+        "size": 14111,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2_QUALIFICATION_AUTHORITY_ADMISSION_PREIMPLEMENTATION_EVIDENCE.json",
+        "blob_sha": "20050feab88fec9d115b5b29b9d05e3abbc3d305",
+        "size": 2451,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2_QUALIFICATION_AUTHORITY_ADMISSION_PREIMPLEMENTATION_RESULT.md",
+        "blob_sha": "fbb0611b575ec87f3cbc61d17695104196f5778b",
+        "size": 6292,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2_TERMINAL_CLOSE_QA.md",
+        "blob_sha": "850e98866799e88e2f086bcb34dfe4a7922461eb",
+        "size": 832,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5A_D2_TERMINAL_STOP_DECISION.md",
+        "blob_sha": "6defa275e745c54642ddbcb4ae30ea061a989376",
+        "size": 1881,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/P5_PREIMPLEMENTATION_QUALIFICATION.md",
+        "blob_sha": "7dc381d8022f61a81f26d39a1350dd4a8501e49e",
+        "size": 16791,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P5_PREIMPLEMENTATION_QUALIFICATION_EVIDENCE.json",
+        "blob_sha": "9d6d5208cc0745d4e31419454d229ad39422df51",
+        "size": 2775,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/P5_PREIMPLEMENTATION_QUALIFICATION_RESULT.md",
+        "blob_sha": "88811ae407ae51836360ab445123fc4af2545cf6",
+        "size": 5106,
+        "category": "historical_evidence",
+        "role": "preserve_append_only_or_reference_only"
+      },
+      {
+        "path": "g2e/docs/PHASE_PLAN.md",
+        "blob_sha": "f8d43320ed615c80f21c0f3bfdfa3f6dd951205d",
+        "size": 7713,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_01_GOAL_CONTRACT.md",
+        "blob_sha": "108cd0e4c554c0424b92204f587f41afbe3b6c71",
+        "size": 2514,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_02_CLAIM_GRAPH.md",
+        "blob_sha": "8c7a757fdd29b46babf8630680152f735f4ae295",
+        "size": 3456,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_03_PROOF_PLANNER.md",
+        "blob_sha": "6aa00f7209d88b9ab482a1ba23badf588988915b",
+        "size": 3337,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_04_EVIDENCE_GRAPH.md",
+        "blob_sha": "0d0068b2b4d740370c145a17e193baeec97c7c6d",
+        "size": 3595,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_05_ADJUDICATOR.md",
+        "blob_sha": "16dc16c748c33cd54c3bff14620f3e9e0084f231",
+        "size": 2772,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_06_NEXT_STEP_SELECTOR.md",
+        "blob_sha": "e0cd01bd8ac28a034ca3b99e272408b4aa116bfb",
+        "size": 2600,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_07_EXECUTION_PROTOCOL.md",
+        "blob_sha": "8072310b3220f94e765b992d91a1904de67348cb",
+        "size": 2729,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_08_GWF_ADAPTER.md",
+        "blob_sha": "a0e481e13434e7b2c22df381261cd6820c9bf41a",
+        "size": 3299,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_09_AGENT_APP_ADAPTERS.md",
+        "blob_sha": "22c3a6becd1175d90d840d94ba0dd39d5374578b",
+        "size": 2792,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_10_GITHUB_ADAPTER.md",
+        "blob_sha": "382d0adba77e0ff18227b4b3dc9c7d9f350826ff",
+        "size": 2338,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_11_STANDALONE_RUNTIME.md",
+        "blob_sha": "497748aae7b00fd3f7fed3b2dec50cba36d983de",
+        "size": 2486,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_12_RESULT_PACKAGE.md",
+        "blob_sha": "4532b5d5c5662e1115469c3168d22ae9b48577b3",
+        "size": 4408,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_13_REFERENCE_ACQUISITION.md",
+        "blob_sha": "e6f9b85de125af5c6a7499befebbf4b0207df861",
+        "size": 4735,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_14_SECURITY_AUTHORITY.md",
+        "blob_sha": "7773f998f50ac252ac92b3d92329789666d57ef9",
+        "size": 3458,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_15_EVIDENCE_REUSE_APPLICABILITY.md",
+        "blob_sha": "6fd9e6a60bbdefd02091cd147b7b73ed05e50523",
+        "size": 7648,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_16_SYNTHESIS_CONVERGENCE.md",
+        "blob_sha": "5566c1c3aef022f95ee93f07521c91c0bdec5a09",
+        "size": 9687,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_17_EVIDENCE_LIBRARY_ADAPTER.md",
+        "blob_sha": "4d126221a182510abef436c0b82af39c71e0dde8",
+        "size": 9142,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/PRD_INDEX.md",
+        "blob_sha": "e6b93407d2af44ef1dcba9e261a380424209f1d7",
+        "size": 4165,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/QA_doc.md",
+        "blob_sha": "afeefbe11a968b4e1fdfe41ec8c5ff857642eeee",
+        "size": 12228,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/REFERENCE_BASELINE.md",
+        "blob_sha": "e066c1f43212a366c92765ff912694cd5c460a1c",
+        "size": 5965,
+        "category": "canonical_core",
+        "role": "normative_specification"
+      },
+      {
+        "path": "g2e/docs/evidence/P5A_D2_ATTEMPT_001_PROTOCOL_SANITIZED.jsonl",
+        "blob_sha": "820f77c22a31b782906c25861ee9c071c5a91a12",
+        "size": 1267,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/evidence/P5A_D2_ATTEMPT_001_RUNNER_EVIDENCE.json",
+        "blob_sha": "498f8434945ee9341e72f59aea8edaec499339be",
+        "size": 4164,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "g2e/docs/evidence/P5A_D2_ATTEMPT_001_TURN_START_SENT.marker",
+        "blob_sha": "a84d3de212e867c2c308ab7f0ebe01ad1b12139d",
+        "size": 122,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/g2e_product_smoke.ps1",
+        "blob_sha": "e11f3035153110c75472967512c2c2bb2d326714",
+        "size": 5085,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/g2e_product_smoke.py",
+        "blob_sha": "e1dd1cdd3f27e2ab89dc21674c899d1f41246f8f",
+        "size": 21952,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_adjudicate_d1.py",
+        "blob_sha": "b2ba81801d2bfe7a662acb477fa449e16d13fa55",
+        "size": 11719,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_bridge_qualification.py",
+        "blob_sha": "aa600a55e29bcaf06e2a8531252976575b178b94",
+        "size": 28016,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_admission.py",
+        "blob_sha": "ea762293d4534598c805dcbbc72a00f999c39a47",
+        "size": 10859,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_oneclick.ps1",
+        "blob_sha": "6154d2f9beb0d92d9b2b6bbe797e2d08618bec2e",
+        "size": 23414,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_preregister.py",
+        "blob_sha": "393ad5f3ba20cf28de535de78d29d4e8102d3de8",
+        "size": 14466,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_route_instance_diagnostic.ps1",
+        "blob_sha": "60f5a20fa9b73aa30f0f2b09d54a53848fc3bfa2",
+        "size": 9052,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_route_instance_probe.ps1",
+        "blob_sha": "852fc3c8d14bfb1feb4f809f5c1f5a529fa6bb2f",
+        "size": 9720,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_rp_i1c_derived_core_home.ps1",
+        "blob_sha": "f7f02ea994c7e911ad2cdeee7e594365c930ff93",
+        "size": 7872,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_rp_i1r_active_profile_probe.ps1",
+        "blob_sha": "784defd507c765e28d5c76f6aca5e8945a58f303",
+        "size": 10123,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_rp_i1s_ownership_snapshot.ps1",
+        "blob_sha": "ee0e120c09cb0b5ecb18a7e12582e02ca76e0c15",
+        "size": 7552,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_rp_i1t_temporal_binding.ps1",
+        "blob_sha": "87dec076673f96ee72d51576920f9b836878d466",
+        "size": 7478,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_rp_i1u_runtime_availability.ps1",
+        "blob_sha": "81c67dea5aa2ece248af26d94f8165bc267232e9",
+        "size": 3220,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_rp_i3_outbound_witness.py",
+        "blob_sha": "3f3a5a0176bcc67a988c732d6da14b465636a18e",
+        "size": 15123,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_rp_i4_sink_source_binding.py",
+        "blob_sha": "8eb4c4c339acbd0a4751551c553bcef8e3f6f860",
+        "size": 9049,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_rp_l1_launcher_identity.ps1",
+        "blob_sha": "32d38088797a6c0d14f5fb6ea0b1db0f44078965",
+        "size": 2846,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_rp_l2_launcher_provenance.ps1",
+        "blob_sha": "f04fb6da72391681665dc0cec232d67fd510ec91",
+        "size": 5237,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_runner.py",
+        "blob_sha": "678504c62cbd9afe1f6a0fd0b39c5147973bad8d",
+        "size": 30100,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_tc2_admission.py",
+        "blob_sha": "0c676f33aeffbffd8a9dc63af9e9bf0934e9dda1",
+        "size": 16203,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_tc2_oneclick.ps1",
+        "blob_sha": "38d424e38bd1c393b4f0cdbc7876948ac205e01b",
+        "size": 25326,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_tc3_oneclick.ps1",
+        "blob_sha": "78e9aba82d8a6fc8a8f28281345cee1798db2496",
+        "size": 26379,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_tc_admission.py",
+        "blob_sha": "9042940d696f41990c3eb1808035a49f0ddc938e",
+        "size": 10874,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_tc_oneclick.ps1",
+        "blob_sha": "5cb4285819819a5e6e034be7043628b978332b16",
+        "size": 25320,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_tc_runner.py",
+        "blob_sha": "d999931d67a6e5958ed1059f894a359aeef82e22",
+        "size": 30341,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_tc_verify.py",
+        "blob_sha": "5ff0190f4024625f3c5330813878a1b17b663b8c",
+        "size": 16119,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_fx001_verify.py",
+        "blob_sha": "c37052a00f3cef97b138c83c632e80ae88323142",
+        "size": 15628,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_local_zero_model_oneclick.ps1",
+        "blob_sha": "8d311c1a301e9b96a1d465c9330103a3e5668b82",
+        "size": 4763,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_prepare_official_codex_01534.ps1",
+        "blob_sha": "2f3db7e3b8c92eabb08646944da3f7c55b2e7070",
+        "size": 3643,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_q0b_align_runtime_5_0_8.ps1",
+        "blob_sha": "cbbd99ed902ea7ff62fca4e3c9695c133c00b98c",
+        "size": 9251,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_tc_config_semantic_probe.py",
+        "blob_sha": "501d1f070de33deb48d9b1663d856bcb56bdac0c",
+        "size": 8048,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_tc_config_semantic_probe_v2.py",
+        "blob_sha": "0824a9cd6fce901891164041819c8de818c62c21",
+        "size": 8841,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_transport_adequacy.py",
+        "blob_sha": "2e0cbfa6dadb6be4f2863854e7ea8ff25534c257",
+        "size": 4275,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_cgw_v4_source_contract_qualification.py",
+        "blob_sha": "d4c66d9990a8e09284f4cfa40ccdf9154616ae93",
+        "size": 15320,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_codex_discovery.ps1",
+        "blob_sha": "20a623830be89ac84bd287b8b49c7db3b7cd748d",
+        "size": 911,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_codex_discovery.py",
+        "blob_sha": "5861298808bd4cc91845f1c10ae114709a955e88",
+        "size": 10359,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_codex_observability.py",
+        "blob_sha": "b6d3c6fcb671dd166893edd46388c8d69dca9105",
+        "size": 9726,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2_attempt_001_verify.py",
+        "blob_sha": "d7ace2b95774130ce66aa7cd5f9e6ed58d15f7d0",
+        "size": 8408,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2_final_admission.py",
+        "blob_sha": "a8ae87414a3c69333d13600b6d3d7ebb506a138b",
+        "size": 17857,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2_p5_fx_001_preregister.py",
+        "blob_sha": "e25cf943091571c4b7f8b6a3413aaeb2bc6e1e8a",
+        "size": 11156,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s1_local_preflight.py",
+        "blob_sha": "21a7ac5054cc6bf60515baae481069fb6b9db004",
+        "size": 25152,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s1_profile_materializer.py",
+        "blob_sha": "63a9cce5e53e779da3de82ace36f18b5dd27788e",
+        "size": 12073,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s2_a1_ntfs_metadata_oneclick.ps1",
+        "blob_sha": "23b97c6e41e633782ac0fb69ae67d7596c05ac7d",
+        "size": 15817,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s2_a1_ntfs_metadata_preflight.py",
+        "blob_sha": "df3dcf3194d1f6198e75be8d2d46f1f22b8591b5",
+        "size": 26726,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s2_a2_binary_component_lineage.ps1",
+        "blob_sha": "87467cde26f7858bc3ba150ebeb511c3203db42c",
+        "size": 10194,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s2_a2_config_serialization_oneclick.ps1",
+        "blob_sha": "c714da50f577fad5e4fdd7b64ede894330459243",
+        "size": 16384,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s2_a2_config_serialization_preflight.py",
+        "blob_sha": "8d449867586663195a998ce6eefbcbf8a218030f",
+        "size": 26733,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s2_a2_sandbox_state_return.ps1",
+        "blob_sha": "40523836044b7cf248922777b1ce70e23a77f346",
+        "size": 7105,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s2_a2_setup_evidence_return.ps1",
+        "blob_sha": "377888d8506b5fe316c55184d52ba645a3594e95",
+        "size": 8863,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s2_cleanup_mounted_vhdx.ps1",
+        "blob_sha": "7728bbf19e2e48a0e90045a837e10a83343cc49e",
+        "size": 5003,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s2_diagnostic_return_oneclick.ps1",
+        "blob_sha": "1b6fd6b0352c4d484d202a8b7fa3fd88dbddf9f2",
+        "size": 7720,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s2_elevation_bootstrap_diagnostic.ps1",
+        "blob_sha": "90b3f9d834974d62b0b8b6e1966705e680d164bc",
+        "size": 18545,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s2_isolated_volume_oneclick.ps1",
+        "blob_sha": "1507b716645971ee60b0c2131973a953f98e7036",
+        "size": 13105,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s2_isolated_volume_preflight.py",
+        "blob_sha": "005bd3ff5f34ea60a05d15baa25a0d4f6e9341c3",
+        "size": 25513,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s3_collect_postclosure_evidence.ps1",
+        "blob_sha": "44351495f3860768f3a2330a9e7ce80e32c78db0",
+        "size": 6003,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s3_official_release_asset_audit.py",
+        "blob_sha": "2d40055da292f79228cfe7df6ed54b8b1b342390",
+        "size": 6552,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s3_platform_no_turn_oneclick.ps1",
+        "blob_sha": "046291e068cc3c42bd4dcf200201ad91e38a0eeb",
+        "size": 22909,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s3_platform_no_turn_preflight.py",
+        "blob_sha": "ecd0af7cd487e14ea1691f4195af1d147efd0fe4",
+        "size": 26736,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s3_scientific_admission.py",
+        "blob_sha": "311b086c4fe5061a2c4ab18a5252e1b560840782",
+        "size": 28046,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s3_scientific_oneclick.ps1",
+        "blob_sha": "bc79049c55bc78f0754b74e0c00dea553b7188b3",
+        "size": 22301,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s3_scientific_runner.py",
+        "blob_sha": "a050347e25a62ba18212783edcd30ffeb3fd59af",
+        "size": 26978,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s3_scientific_verify.py",
+        "blob_sha": "8d92d4aac7b6c7449ede36c764650223648bd5b4",
+        "size": 12066,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s3_stage_release_coherent_instrument.ps1",
+        "blob_sha": "80de5a1744b51e6996afab92a2919e5215da6bef",
+        "size": 9015,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s3_successor_admission.py",
+        "blob_sha": "f6b3aff15e7cda709da424ae12e521673b7718d6",
+        "size": 25623,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s4_collect_persisted_turn_error.ps1",
+        "blob_sha": "5b9d7f6177600d5ab707310eae7b0dd0a81c5fe7",
+        "size": 3720,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s4_collect_postclosure_evidence.ps1",
+        "blob_sha": "ad169b7522b9cdf4958cbae683873944dfc76565",
+        "size": 7197,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s4_queue_safe_client.py",
+        "blob_sha": "b861f9fdb2f4af5d30961bb307aa6f943e07964d",
+        "size": 26842,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s4_recover_persisted_turn_error.py",
+        "blob_sha": "8c7bbb3a914ea02778033e06ba5e024eec557348",
+        "size": 12936,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s4_scientific_admission.py",
+        "blob_sha": "0a89b88fe31a587977f201051bade07e05f90be3",
+        "size": 28656,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s4_scientific_oneclick.ps1",
+        "blob_sha": "65317fa036472a29be4dd18449bdc35a8eb472e4",
+        "size": 22273,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s4_scientific_runner.py",
+        "blob_sha": "6d804429e8ab6a9881013149efd08051a7cbb7e4",
+        "size": 27116,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s4_scientific_verify.py",
+        "blob_sha": "bd1598cdaf4ab375c536364aad54e677a361269a",
+        "size": 12066,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s5_observable_client.py",
+        "blob_sha": "72c77c1fbd1e2c20881723f18ef2f1435ded2b2b",
+        "size": 27573,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s5_scientific_admission.py",
+        "blob_sha": "a37e78d28bf9cc59b0e9ee5dc2b41c659e316f92",
+        "size": 29131,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s5_scientific_oneclick.ps1",
+        "blob_sha": "175ff9e22a912c4c1a20d66ddc41ff41a36d7077",
+        "size": 22516,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s5_scientific_runner.py",
+        "blob_sha": "259224a53aac7b79d0607360ba496d07503ef38d",
+        "size": 27468,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_d2s5_scientific_verify.py",
+        "blob_sha": "91b30c10c0626a82989c6f8091155b63d784fa41",
+        "size": 16385,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "scripts/g2e/p5a_materialize_codex_d1_manifest.py",
+        "blob_sha": "3fb03310561793faf2451437694e02b1cfe98b46",
+        "size": 6544,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "src/g2e/__init__.py",
+        "blob_sha": "2e72f06a2fd348127666b35d5d872fe9220d6834",
+        "size": 394,
+        "category": "canonical_core",
+        "role": "qualified_runtime_core"
+      },
+      {
+        "path": "src/g2e/canonical.py",
+        "blob_sha": "964cf296b18d081862d822f8039104d454e68154",
+        "size": 4853,
+        "category": "canonical_core",
+        "role": "qualified_runtime_core"
+      },
+      {
+        "path": "src/g2e/engine.py",
+        "blob_sha": "4213f949f10e1f49c977fc22e06ea3a76d787be4",
+        "size": 46808,
+        "category": "canonical_core",
+        "role": "qualified_runtime_core"
+      },
+      {
+        "path": "src/g2e/gwf_adapter.py",
+        "blob_sha": "5ae80f28d03893848ec6e693b8c9f6197e87020a",
+        "size": 29583,
+        "category": "reusable_adapter",
+        "role": "qualified_provider_neutral_adapter_reference"
+      },
+      {
+        "path": "src/g2e/gwf_domain.py",
+        "blob_sha": "f82766aea584e86ea9cbed714a2c1ba2c28222c1",
+        "size": 4277,
+        "category": "reusable_adapter",
+        "role": "qualified_provider_neutral_adapter_reference"
+      },
+      {
+        "path": "src/g2e/schema_registry.py",
+        "blob_sha": "79075f162673cd1c8e0b8cbd26569b02799b9461",
+        "size": 549,
+        "category": "canonical_core",
+        "role": "qualified_runtime_core"
+      },
+      {
+        "path": "src/g2e/schemas.py",
+        "blob_sha": "8631f9af598103f6c095fa3981255b9bf4609f64",
+        "size": 48211,
+        "category": "canonical_core",
+        "role": "qualified_runtime_core"
+      },
+      {
+        "path": "src/g2e/standalone.py",
+        "blob_sha": "48c44050da96ecdac9061f74092b6af00cfc5694",
+        "size": 90638,
+        "category": "canonical_core",
+        "role": "qualified_runtime_core"
+      },
+      {
+        "path": "tests/g2e/fixtures/P5A_CGW_LOCAL_ZERO_MODEL_ADMISSION_V4_EXISTING.json",
+        "blob_sha": "d771f4942f563e4595d5a2b7eb51a359a70d2e2b",
+        "size": 2311,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/p5a_cgw_fx001_route_probe_container_regression.ps1",
+        "blob_sha": "369cb2cbbca43757e9e919ecfec00ab7989650b1",
+        "size": 785,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/p5a_cgw_fx001_rp_i1c_timestamp_regression.ps1",
+        "blob_sha": "00a98924e7bee501425b6282748fb92a9302f27a",
+        "size": 1279,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/p5a_cgw_fx001_rp_i1d_pid_binding_regression.ps1",
+        "blob_sha": "1055db0599b63d6430992af20f91b012f1651651",
+        "size": 401,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/p5a_cgw_fx001_rp_i1r_httpclient_regression.ps1",
+        "blob_sha": "76642a932e7003b4c5bc7f5e4198197bb22b24c3",
+        "size": 293,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/p5a_cgw_fx001_rp_i2_httpclient_regression.ps1",
+        "blob_sha": "843457e585ecff06682e1cf541285df29e56f4a2",
+        "size": 288,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_g2e_product_smoke.py",
+        "blob_sha": "01e7482e494456bc8e344a9ddb24efcfa48725ae",
+        "size": 2872,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p1_4_agent_binding.py",
+        "blob_sha": "a87e094bed885198af0e95c89696bd02d28811a9",
+        "size": 12156,
+        "category": "qualification_tests",
+        "role": "candidate_for_reuse_after_vnext_rebinding"
+      },
+      {
+        "path": "tests/g2e/test_p1_4_preimplementation.py",
+        "blob_sha": "eeb4d3015eda0562c6f57f798fec8414e7808ee1",
+        "size": 3846,
+        "category": "qualification_tests",
+        "role": "candidate_for_reuse_after_vnext_rebinding"
+      },
+      {
+        "path": "tests/g2e/test_p1_5_qualification_authority.py",
+        "blob_sha": "6799d4f524cf4c59301f8fb55532060590e3cdfb",
+        "size": 17487,
+        "category": "qualification_tests",
+        "role": "candidate_for_reuse_after_vnext_rebinding"
+      },
+      {
+        "path": "tests/g2e/test_p1_core_schemas.py",
+        "blob_sha": "0fa530ff8e65aaa9ffb48878088ea31e29321a29",
+        "size": 28919,
+        "category": "qualification_tests",
+        "role": "candidate_for_reuse_after_vnext_rebinding"
+      },
+      {
+        "path": "tests/g2e/test_p2_deterministic_core.py",
+        "blob_sha": "2bed4b2e6db339d541b66a70d47077032cc6d54a",
+        "size": 46586,
+        "category": "qualification_tests",
+        "role": "candidate_for_reuse_after_vnext_rebinding"
+      },
+      {
+        "path": "tests/g2e/test_p3_standalone_runtime.py",
+        "blob_sha": "3bfc23315e2d5b24f8bdb05dd4fc76fdd595e6e9",
+        "size": 41803,
+        "category": "qualification_tests",
+        "role": "candidate_for_reuse_after_vnext_rebinding"
+      },
+      {
+        "path": "tests/g2e/test_p4_gwf_adapter.py",
+        "blob_sha": "13a94648df5154e769174d618604d03308f775c8",
+        "size": 32418,
+        "category": "qualification_tests",
+        "role": "candidate_for_reuse_after_vnext_rebinding"
+      },
+      {
+        "path": "tests/g2e/test_p5_preimplementation_qualification.py",
+        "blob_sha": "c6b6a5238c8badf59b2ce49c33d13d3435f6cabe",
+        "size": 6116,
+        "category": "qualification_tests",
+        "role": "candidate_for_reuse_after_vnext_rebinding"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_implementation.py",
+        "blob_sha": "2fdd5f06aefe8df0d5db1712d09ecd4db38e4837",
+        "size": 21930,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_preregistration.py",
+        "blob_sha": "2cdc3cb79e16fef9275dc7b0578145fa04dcc099",
+        "size": 4202,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_route_path_postmortem.py",
+        "blob_sha": "6647a203f14c45c20e668f101e063bd93f1db65f",
+        "size": 2433,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_rp_i1c.py",
+        "blob_sha": "e7cd0e67aa346f3f86dc76f3be2ca4adbd6e2dea",
+        "size": 1757,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_rp_i1d.py",
+        "blob_sha": "4aa44ceb42d21e34a10faf3460505ec70914aeb3",
+        "size": 1588,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_rp_i1r.py",
+        "blob_sha": "7a15b76119b60edaff3f70a4cabfb256ce28a2b2",
+        "size": 2204,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_rp_i1s.py",
+        "blob_sha": "e89c3f9603e6918d61fb3909371f173c70cd8e89",
+        "size": 1473,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_rp_i1t.py",
+        "blob_sha": "26a136efa34e2f10880f10c1293b6fd1ee85fb3b",
+        "size": 1380,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_rp_i1u.py",
+        "blob_sha": "4b86144d552233214213dfc5b5cf69a6b2fcc2ec",
+        "size": 1184,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_rp_i3_outbound_witness.py",
+        "blob_sha": "d14a5cfa953aded1784e1cc02242057b4bb34f50",
+        "size": 3532,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_rp_i4_sink_source_binding.py",
+        "blob_sha": "2b66139a9391e747d204f234f9412f4dc857ff76",
+        "size": 2130,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_rp_l1.py",
+        "blob_sha": "88695ad9f493a40f9bd36996288fdee0d7b40a9f",
+        "size": 1274,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_rp_l2.py",
+        "blob_sha": "563f95dce66e658df2b2c0941ad1d986c7671bcf",
+        "size": 1711,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_tc2_lock_candidate.py",
+        "blob_sha": "b7017fca8b17c5aca1914bc419a12276208556e2",
+        "size": 4414,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_tc2_semantic_admission.py",
+        "blob_sha": "df3257eca8d34fc654bc91a5e528cfe68cfc070d",
+        "size": 4821,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_tc3_lock_candidate.py",
+        "blob_sha": "b4c36d8f34d91f9b301bb0e82eabb7872f6e1c27",
+        "size": 4883,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_tc3_runtime_readiness.py",
+        "blob_sha": "dffea8153e65f14e5606108e297d0bba3767b81f",
+        "size": 2052,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_tc_implementation.py",
+        "blob_sha": "8cbec751ae9883051b054876ceb53667d2104800",
+        "size": 10606,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_tc_lock_candidate.py",
+        "blob_sha": "7c504d67c9cb69232378e1f39da9312b367651d1",
+        "size": 4360,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_tc_oneclick.py",
+        "blob_sha": "a1d5c3effb9f6a9201cfa8f6761a4e503ab18e90",
+        "size": 4349,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_fx001_tc_preregistration.py",
+        "blob_sha": "5dabb79f34adb5fa387737a7b584f0bfa349e75d",
+        "size": 3430,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_q0b_runtime_alignment.py",
+        "blob_sha": "54a7f70aa27d6184718d50b21225626ae1f0df3d",
+        "size": 2564,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_tc_config_semantic_probe.py",
+        "blob_sha": "701072c839036b07eaf80e400bdec1c6cffcf4aa",
+        "size": 1623,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_tc_config_semantic_probe_v2.py",
+        "blob_sha": "399bb6ef2ff2f6bb9078a416e249954e8a0f8ec0",
+        "size": 2111,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_transport_adequacy.py",
+        "blob_sha": "d07d54c129b1bcfcbfe487805292fc79f5341aaa",
+        "size": 4910,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_v4_source_contract.py",
+        "blob_sha": "54689c4b29cc5eb9ccf678a148eb4c2f2a2e3d37",
+        "size": 3119,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_cgw_zero_model_qualification.py",
+        "blob_sha": "3a650f033324f97e552f9c473a57f381183fa795",
+        "size": 10911,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_codex_d1_manifest.py",
+        "blob_sha": "1f95e2647a018503f97a6c79a68a1db8f1036d4d",
+        "size": 4277,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_codex_discovery_preparation.py",
+        "blob_sha": "4cc57db26c27eb783438b2bb23716dc387b47dc9",
+        "size": 5482,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_codex_observability_qualification.py",
+        "blob_sha": "18aae7d6f23db5671c87619dfdc6a856b6dde870",
+        "size": 10620,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d1_adjudication_lock.py",
+        "blob_sha": "0f35f211f48b09cb6f1b8dcaa99451a1203dfc6e",
+        "size": 6412,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d1_inventory_ordering_repair.py",
+        "blob_sha": "e36121ef55c572acdf03e951387590706656567f",
+        "size": 6588,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2_final_admission.py",
+        "blob_sha": "130568e3e619a868b3d87e348a2ff36a057b19f9",
+        "size": 8192,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2_p5_fx_001_preimplementation.py",
+        "blob_sha": "c8c238446f87c0b7e3d1ea376ce439ba88db5112",
+        "size": 6162,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2_qualification_authority_preimplementation.py",
+        "blob_sha": "7d3f0df49527b52a7941a3e4188aa0666e127d89",
+        "size": 6882,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s1_local_preflight.py",
+        "blob_sha": "c512917dcf6320ba0e0224d1a46cf9c18d1fb078",
+        "size": 4174,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s1_profile_materializer.py",
+        "blob_sha": "ec4c596d5be7fbd9d660ff21df6b6e08f6cb84bb",
+        "size": 7418,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s2_a1_ntfs_metadata.py",
+        "blob_sha": "d1ca9d6735bdb7402b249eee9919656eecf135d2",
+        "size": 5537,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s2_a2_binary_component_lineage.py",
+        "blob_sha": "66a15a3bb9bb9a868660cce0e844f8d78cc85253",
+        "size": 3183,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s2_a2_config_serialization.py",
+        "blob_sha": "d54759b49b3dcc85511377cde946e243737f15d5",
+        "size": 3959,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s2_a2_sandbox_state_return.py",
+        "blob_sha": "be67eb8a18b0bf007d1e1f976cb68db05b822f02",
+        "size": 3124,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s2_a2_setup_evidence_return.py",
+        "blob_sha": "d66026eb9a2753cda1d719b23519025d48321bdd",
+        "size": 3357,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s2_diagnostic_return_wrapper.py",
+        "blob_sha": "e73c74041f381a6ed67e640afafd559b36a396bf",
+        "size": 4953,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s2_egginfo_source_hygiene.py",
+        "blob_sha": "8fdded9cf98b4c612460376b2e6e40033e0ee7d0",
+        "size": 2106,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s2_elevation_bootstrap_diagnostic.py",
+        "blob_sha": "b0c1e5995aca47bdeaca5168d8405e1b635e10a7",
+        "size": 3413,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s2_isolated_volume_preflight.py",
+        "blob_sha": "a4aa31f4c52998b6eaff7c737740d5a9f2c84ecb",
+        "size": 3496,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s2_vhdx_cleanup.py",
+        "blob_sha": "42b28cacfd4fc1bc9f24dcd4917a06994af32cb4",
+        "size": 2521,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s3_config_serialization_repair_001.py",
+        "blob_sha": "58bbc933b4df4264bda323b24a11be83e02aa11d",
+        "size": 3259,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s3_local_instrument_staging.py",
+        "blob_sha": "77a41f3d40e38c667b0e28df150bca865d867ff3",
+        "size": 3288,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s3_ntfs_root_closure_repair_002.py",
+        "blob_sha": "25e79e5d0dec777b444493d9e13d660aa29f43fb",
+        "size": 4661,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s3_official_release_asset_audit.py",
+        "blob_sha": "f3520c78c27be98aba928a84efcdc9cbf98df8b3",
+        "size": 3326,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s3_platform_no_turn_preflight.py",
+        "blob_sha": "cb8a156e1111b947a629b1d23c84210fbc98add3",
+        "size": 4576,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s3_postclosure_evidence_collector.py",
+        "blob_sha": "043d0759993abfc18d222ea7f30d560bc8357eaa",
+        "size": 2762,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s3_scientific_macro.py",
+        "blob_sha": "3b65ecfd32c0663f47009dbeee2e151359805d37",
+        "size": 7444,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s3_scientific_predispatch_repair_001.py",
+        "blob_sha": "2edb2168910e474e3b470bc57016f831d87fd8c3",
+        "size": 3810,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s4_persisted_turn_error_recovery.py",
+        "blob_sha": "4fc1e9a4a84b6c0d979830e5b0242c3e86ddbe90",
+        "size": 6016,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s4_postclosure_evidence_collector.py",
+        "blob_sha": "337e0b9962d3c148f1a22b39f4210057bca53fe1",
+        "size": 3768,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s4_queue_safe_successor.py",
+        "blob_sha": "6096eb252df7c7487487bc52786f68448d783fc0",
+        "size": 9028,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      },
+      {
+        "path": "tests/g2e/test_p5a_d2s5_observability_qualified_successor.py",
+        "blob_sha": "325c8d2836bc67538bd99725fe0ec6954ee18a83",
+        "size": 14476,
+        "category": "transport_experiment",
+        "role": "preserve_as_transport_historical_evidence_not_semantic_baseline"
+      }
+    ]
+  },
+  "ownership": {
+    "G2E": {
+      "owns": [
+        "GoalContract",
+        "GoalClosureContract",
+        "ClaimGraph",
+        "Claim",
+        "ProofObligation",
+        "ExecutionAttemptEnvelope",
+        "ExecutionResult",
+        "AgentCapabilityManifest",
+        "AgentEquivalencePolicy",
+        "AgentBinding",
+        "ProtectedResource",
+        "EvidenceAdmissionPolicy",
+        "EvidenceRecord",
+        "EvidenceRelation",
+        "Adjudication",
+        "ProofResult",
+        "ClaimResolution",
+        "GoalVerdict"
+      ],
+      "cannot_be_replaced_by": [
+        "GWF runtime state",
+        "GWF object IDs",
+        "WorkAssignment state",
+        "ExecutorBinding state",
+        "ExecutionEnvironmentRef",
+        "transport state",
+        "UI state"
+      ]
+    },
+    "GWF": {
+      "owns": [
+        "GovernanceProfile",
+        "GovernanceTransitionProposal",
+        "AuthorityEnvelope",
+        "BudgetEnvelope",
+        "WorkAssignment",
+        "ExecutorBinding",
+        "ExecutionEnvironmentRef",
+        "HumanActionRequest",
+        "durable runtime/persistence mapping",
+        "operational checkpoint/recovery ledger"
+      ],
+      "may_be_stricter_than_G2E_authority": true,
+      "may_create_scientific_verdict": false,
+      "may_create_release_acceptance": false
+    }
+  },
+  "bridge_contracts": {
+    "canonical_mapping": {
+      "mapping_scope_key": [
+        "gwf_project_id",
+        "mapping_version"
+      ],
+      "g2e_exact_ref_is_authoritative": true,
+      "per_scope_cardinality": "one G2E exact revision -> at most one active canonical GWF mirror; same exact ref may be mirrored in multiple runtime/project scopes",
+      "hash_domains_distinct": true,
+      "gwf_hash_must_not_replace_g2e_hash": true
+    },
+    "proof_to_execution": {
+      "proof_to_attempt": "1 ProofObligation revision -> 0..N ExecutionAttempt identities as allowed by frozen retry/multipart policy",
+      "attempt_to_work_assignment": "In GWF mode, exactly 1 frozen G2E ExecutionAttempt -> exactly 1 GWF WorkAssignment revision for that dispatch",
+      "work_assignment_origin_refs_required": [
+        "G2E ProofObligation exact ref",
+        "G2E ExecutionAttempt exact ref"
+      ],
+      "work_assignment_completion_semantics": "operational only",
+      "runtime_retry_expansion": "FORBIDDEN; replacement attempt must be created by G2E under frozen retry policy"
+    },
+    "agent_to_executor": {
+      "agent_binding_cardinality": "agent-backed G2E ExecutionAttempt -> exactly 1 G2E AgentBinding; non-agent attempt -> 0",
+      "executor_binding_cardinality": "dispatched GWF WorkAssignment -> exactly 1 resolved ExecutorBinding",
+      "bridge_cardinality": "agent-backed GWF attempt -> exactly 1 AgentBinding <-> exactly 1 ExecutorBinding for the attempt",
+      "resolution_order": [
+        "G2E ExecutionAttempt identity exists",
+        "G2E AgentBinding resolves prospectively",
+        "GWF WorkAssignment freezes/authorizes exact attempt refs",
+        "GWF ExecutorBinding resolves compatible execution environment",
+        "cross-binding reconciliation passes",
+        "dispatch"
+      ],
+      "identity_projection": {
+        "from_g2e_agent_binding": [
+          "agent_app",
+          "provider_ref",
+          "model_ref",
+          "harness_ref",
+          "transport_ref"
+        ],
+        "to_gwf_executor_binding": "agent_identity",
+        "rule": "GWF agent_identity must be an exact non-widening projection of G2E AgentBinding identity; runtime observations are evidence, not silent binding mutation."
+      },
+      "capability_domains": {
+        "g2e_agent_capability_manifest": "agent/harness capability identity",
+        "gwf_executor_binding_capability_manifest_ref": "must map the exact G2E AgentCapabilityManifest for agent-backed attempts",
+        "gwf_execution_environment_capability_manifest_ref": "execution-environment/adapter capability identity",
+        "substitution_between_domains": "FORBIDDEN"
+      },
+      "binding_mode_rules": [
+        "G2E FROZEN requires GWF FROZEN",
+        "G2E DYNAMIC may resolve to GWF DYNAMIC or stricter FROZEN, but both are immutable within the attempt after resolution",
+        "material substitution requires a new G2E ExecutionAttempt and new GWF WorkAssignment/ExecutorBinding"
+      ],
+      "equivalence_policy": "GWF equivalence_policy_ref must preserve/map the exact G2E AgentEquivalencePolicy; GWF may narrow but not widen substitutions.",
+      "authority_rule": "effective GWF AuthorityEnvelope must be a subset/equal to G2E AgentBinding authority_scope and upstream proof/goal authority",
+      "qualification_authority_rule": "G2E QualificationAuthorityGrant is qualification-only and may never be reused as operational ExecutorBinding authority"
+    },
+    "protected_resource": {
+      "semantic_owner": "G2E",
+      "governance_enforcer": "GWF may enforce equal-or-stricter profile/authority/budget constraints",
+      "exact_ref_propagation": "Every G2E protected_resource_ref used by an attempt must be present unchanged in WorkAssignment protected_resource_constraints and consumption lineage.",
+      "freshness_order": [
+        "FRESH",
+        "RESERVED",
+        "EXPOSED"
+      ],
+      "backward_transition": "FORBIDDEN",
+      "uncertain_recovery": "EXPOSED_FAIL_CLOSED",
+      "reservation_timing": "durably before protected access begins",
+      "exposure_timing": "before or atomically with outcome availability to human/agent/downstream process",
+      "profile_firewall": "research profile rules may block access earlier; they cannot make G2E-disallowed access admissible",
+      "budget_rule": "GWF hard budget/protected-consumption ceiling may be stricter; expansion requires governed authorization"
+    },
+    "evidence_admission": {
+      "candidate_flow": [
+        "Executor/runtime emits candidate payload and runtime provenance",
+        "bridge verifies exact attempt, AgentBinding/ExecutorBinding when applicable, environment/resource identity and payload digest",
+        "canonical G2E EvidenceRecord remains CANDIDATE",
+        "G2E EvidenceAdmissionPolicy validates source class, integrity, attempt linkage, freshness/protection, independence, derivation depth and missing-data policy",
+        "only G2E admission transition may produce ADMITTED",
+        "Adjudication consumes only exact ADMITTED EvidenceRecord refs"
+      ],
+      "gwf_runtime_success_implies_admission": false,
+      "gwf_runtime_success_implies_pass": false,
+      "rejected_or_invalidated_evidence_preserved": true,
+      "payload_digest_required_when_payload_is_external_to_canonical_record": true,
+      "authoritative_relation_refs": "immutable G2E exact refs only"
+    },
+    "adjudication": {
+      "semantic_owner": "G2E deterministic adjudicator",
+      "cardinality": "one-shot per ExecutionAttempt; ProofResult may reference multiple adjudications only through frozen INVALID-replacement/multipart semantics",
+      "gwf_role": "persist immutable adjudication mirror and governance disposition only",
+      "human_role": "may attach GovernanceDisposition / authorize next action but cannot rewrite verdict"
+    },
+    "independence": {
+      "semantic_owner": "G2E IndependencePolicy",
+      "gwf_mirror": "WorkAssignment.independence_requirements",
+      "rule": "GWF must enforce equal-or-stricter independence and may not infer independence from provider/model difference alone.",
+      "reviewer_rule": "when independent QA/reviewer execution is required, it is a separate governed execution context/attempt with its own binding(s) and must satisfy the exact frozen independence dimensions."
+    }
+  },
+  "revision_and_lineage_rules": [
+    "G2E object_id/revision_id/content_hash remain canonical and are never replaced by GWF IDs/hashes.",
+    "Editorial G2E change creates a new G2E revision; semantic equality must be verified if lineage is retained.",
+    "Normative pre-outcome G2E change creates new affected G2E revision and refreezes downstream dependencies.",
+    "Normative post-outcome change creates successor proof/study lineage and never rewrites old adjudication.",
+    "Frozen WorkAssignment normative mutation requires a new GWF revision/frozen hash and reauthorization; it cannot silently mutate any referenced G2E exact ref.",
+    "If a change affects G2E semantics, the new G2E exact revision/successor must exist before any replacement WorkAssignment is frozen.",
+    "INVALID technical replacement attempt uses a new G2E attempt_id and a new GWF WorkAssignment/ExecutorBinding; old attempt history remains.",
+    "Material agent/harness/provider/model/transport substitution follows G2E equivalence policy and creates a new attempt when material.",
+    "Checkpoint/resume may retain exact refs only when semantic identity and protected-resource state remain provably unchanged."
+  ],
+  "p3_implementation_preregistered_negative_tests": [
+    "GWF ID cannot replace G2E object_id/revision_id/content_hash",
+    "GWF content hash cannot be compared as semantic substitute for G2E canonical hash",
+    "same G2E exact ref cannot map to two conflicting active canonical mirrors in one mapping scope",
+    "unknown mapping version fails closed",
+    "WorkAssignment missing exact ProofObligation ref fails closed",
+    "WorkAssignment missing exact ExecutionAttempt ref fails closed",
+    "one G2E attempt cannot dispatch through two active WorkAssignments",
+    "GWF runtime retry cannot create replacement attempt implicitly",
+    "WorkAssignment COMPLETED cannot create EvidenceRecord ADMITTED",
+    "WorkAssignment COMPLETED cannot create Adjudication PASS",
+    "ExecutorBinding cannot replace G2E AgentBinding semantic identity",
+    "agent-backed attempt without G2E AgentBinding fails closed",
+    "AgentBinding resolved_attempt_id mismatch fails closed",
+    "ExecutorBinding agent_identity widening/mismatch fails closed",
+    "G2E FROZEN binding cannot map to GWF DYNAMIC binding",
+    "material ExecutorBinding substitution requires new G2E attempt",
+    "G2E AgentCapabilityManifest cannot be substituted by ExecutionEnvironment capability manifest",
+    "ExecutionEnvironment capability manifest cannot be substituted by G2E AgentCapabilityManifest",
+    "GWF required capabilities cannot drop G2E required agent capabilities",
+    "effective GWF authority cannot exceed G2E AgentBinding authority scope",
+    "QualificationAuthorityGrant cannot authorize operational dispatch",
+    "protected resource exact ref substitution fails closed",
+    "EXPOSED protected resource cannot transition to RESERVED or FRESH",
+    "uncertain protected access recovery becomes EXPOSED",
+    "protected resource access before durable reservation fails closed",
+    "research profile cannot make G2E-disallowed protected access admissible",
+    "candidate runtime evidence cannot become ADMITTED without G2E EvidenceAdmissionPolicy",
+    "evidence payload digest mismatch is rejected",
+    "producer attempt mismatch is rejected",
+    "freshness/admission-policy mismatch is rejected",
+    "independence-policy mismatch is rejected",
+    "different provider/model alone does not satisfy independence",
+    "adjudication consuming non-ADMITTED evidence is rejected",
+    "GWF or human state cannot rewrite terminal G2E Adjudication",
+    "normative post-outcome change cannot reuse old proof/attempt identity",
+    "material agent substitution cannot reuse old attempt identity",
+    "checkpoint with mismatched G2E exact refs is rejected",
+    "checkpoint uncertainty cannot reset protected-resource exposure",
+    "transport-experiment files cannot be imported as canonical semantic core by classifier",
+    "historical evidence files cannot be executed/imported as runtime implementation by classifier"
+  ],
+  "implementation_lock": {
+    "allowed_in_P3": [
+      "reconciliation_manifest",
+      "normative_preregistration",
+      "contract_consistency_QA",
+      "plan_frontier_update"
+    ],
+    "forbidden_in_P3": [
+      "src_runtime_mutation",
+      "G2E_runtime_import_or_merge",
+      "legacy_adapter_import",
+      "RemoteMCP_adapter",
+      "Codex_adapter",
+      "Mission_Control_UI",
+      "real_project_execution",
+      "protected_evidence_consumption"
+    ]
+  }
+}
