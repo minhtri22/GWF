@@ -1,6 +1,6 @@
 # GWF vNext — Autonomous Research Stack Pivot Plan
 
-**Status:** PIVOT-P0 PASS / PIVOT-P1 contract + implementation PASS / EXECUTION LOCKED / PIVOT-P2 preregistration authorized  
+**Status:** PIVOT-P0 PASS / PIVOT-P1 PASS+LOCKED / PIVOT-P2 contract freeze PASS / PIVOT-P2 implementation preflight authorized  
 **Pivot branch:** `pivot/gwf-autonomous-research-stack-v1`  
 **Pivot base:** `feature/bps-i00-product-shell@de3247c18c1a8546db9611ecd0fdf24f827662ae`  
 **Date:** 2026-10-07
@@ -569,47 +569,65 @@ Before PIVOT-P3:
 5. preserve historical research evidence in its existing lineage;
 6. do not rewrite P5A scientific/transport history into the vNext product line.
 
-## 16. Current frontier after P1 implementation lock
+## 16. Current frontier after P2 contract freeze
 
 PIVOT-P0 is formally closed PASS.
 
-Authoritative P0 records:
+PIVOT-P1 contract + provider-neutral implementation are formally closed PASS and execution-locked.
 
-- `docs/pivot/GWF_VNEXT_P0_ARCHITECTURE_AND_IDENTITY_RECONCILIATION.md`;
-- `docs/pivot/GWF_VNEXT_P0_QA_AND_DECISION.md`.
+Authoritative P1 implementation records:
 
-PIVOT-P1 preregistration/contract freeze is formally closed PASS.
+- `docs/pivot/GWF_VNEXT_P1_EXECUTION_LOCK.json`;
+- `docs/pivot/P1_GOVERNANCE_KERNEL_IMPLEMENTATION_LOCK_CLOSURE.md`.
 
-Authoritative P1 contract records:
+PIVOT-P2 domain-governance-profile preregistration/contract freeze is formally closed PASS.
 
-- `docs/pivot/GWF_VNEXT_P1_CONTRACT_MANIFEST_V1.yaml`;
-- `docs/pivot/GWF_VNEXT_P1_GOVERNANCE_KERNEL_PREREGISTRATION_AND_CONTRACT_FREEZE.md`;
-- `docs/pivot/GWF_VNEXT_P1_QA_AND_FORMAL_DECISION.md`.
+Authoritative P2 records:
 
-PIVOT-P1 provider-neutral implementation/static preflight is also formally closed PASS and execution-locked.
+- `docs/pivot/GWF_VNEXT_P2_DOMAIN_GOVERNANCE_PROFILE_DEFINITIONS_V1.json`;
+- `docs/pivot/GWF_VNEXT_P2_DOMAIN_GOVERNANCE_PROFILES_PREREGISTRATION_AND_CONTRACT_FREEZE.md`;
+- `docs/pivot/GWF_VNEXT_P2_QA_AND_FORMAL_DECISION.md`.
 
-Qualified implementation:
+P2 freezes eight profiles:
 
-- exact implementation HEAD: `15daa586987734910a5766a23361a021463efe08`;
-- exact-head qualification run: `37598821897` — SUCCESS;
-- execution lock: `docs/pivot/GWF_VNEXT_P1_EXECUTION_LOCK.json`;
-- lock commit: `e6d8d01a9480ada5f7cbcaeb4354290576487f9e`;
-- post-lock exact-head run: `37598991282` — SUCCESS;
-- formal closure: `docs/pivot/P1_GOVERNANCE_KERNEL_IMPLEMENTATION_LOCK_CLOSURE.md`.
+Research:
 
-The next authorized bounded phase is specification only:
+- `research.triage`;
+- `research.exploratory`;
+- `research.measurement`;
+- `research.confirmatory`.
 
-`GWF_VNEXT_P2_DOMAIN_GOVERNANCE_PROFILES_PREREGISTRATION_AND_CONTRACT_FREEZE`
+Software:
 
-P2 may define and freeze domain-owned governance-profile semantics and transition policies. Research and software remain separate packages.
+- `software.triage`;
+- `software.development`;
+- `software.qualification`;
+- `software.release`.
+
+P2 also freezes:
+
+- TRIAGE as bootstrap/pre-domain-work, not a later downgrade;
+- operational recovery inside the active advanced profile;
+- forward-only acyclic in-place transitions;
+- successor lineage/cycle instead of backward rescue;
+- human approval for research confirmatory activation;
+- human approval for software release promotion;
+- protected-confirmatory evidence firewall;
+- formal scientific verdict remaining outside GovernanceProfile authority;
+- release acceptance remaining outside profile-completion semantics.
+
+The next authorized bounded phase is:
+
+`GWF_VNEXT_P2_DOMAIN_GOVERNANCE_PROFILES_IMPLEMENTATION_STATIC_PREFLIGHT_AND_EXECUTION_LOCK`
+
+That phase may materialize only the eight frozen profile definitions, required domain-profile binding/lookup, transition enforcement, zero-protected-resource fixtures, and the 30 preregistered negative tests.
 
 Do **not** yet:
 
-- implement real research GovernanceProfiles;
-- implement real software GovernanceProfiles;
 - integrate RemoteMCP adapter behavior;
 - implement Codex adapter behavior;
 - merge/import G2E runtime code;
 - refactor Mission Control UI;
-- run a real research project;
-- consume protected evidence.
+- run a real research/software project;
+- consume protected confirmatory evidence.
+
