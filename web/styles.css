@@ -185,3 +185,64 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 
 /* Current UI/UX re-audit: componentized diagnostics */
 .diagnostics-detail{display:grid;gap:7px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-subtle)}.diagnostics-detail>div{display:grid;gap:3px}.diagnostics-detail span{color:var(--text-muted);font-size:8px;text-transform:uppercase;letter-spacing:.05em}.diagnostics-detail code{font:8px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere;color:var(--text-secondary)}
+
+/* UAT U16: diagnostics status rows carry label/value/detail, not icon/name/action. */
+#diagnosticsMigrationList .status-row,
+#diagnosticsFoundationServices .status-row,
+#diagnosticsGithubStatus .status-row{
+  grid-template-columns:minmax(150px,1fr) minmax(88px,max-content) minmax(0,1.45fr);
+  align-items:start;
+  gap:12px;
+  min-height:0;
+  padding:9px 0;
+}
+#diagnosticsMigrationList .status-row>span,
+#diagnosticsMigrationList .status-row>strong,
+#diagnosticsMigrationList .status-row>small,
+#diagnosticsFoundationServices .status-row>span,
+#diagnosticsFoundationServices .status-row>strong,
+#diagnosticsFoundationServices .status-row>small,
+#diagnosticsGithubStatus .status-row>span,
+#diagnosticsGithubStatus .status-row>strong,
+#diagnosticsGithubStatus .status-row>small{
+  min-width:0;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+#diagnosticsMigrationList .status-row>strong,
+#diagnosticsFoundationServices .status-row>strong,
+#diagnosticsGithubStatus .status-row>strong{
+  white-space:normal;
+}
+#diagnosticsMigrationList .status-row>small,
+#diagnosticsFoundationServices .status-row>small,
+#diagnosticsGithubStatus .status-row>small{
+  color:var(--text-secondary);
+  font-size:8px;
+}
+@media(max-width:900px){
+  #diagnosticsMigrationList .status-row,
+  #diagnosticsFoundationServices .status-row,
+  #diagnosticsGithubStatus .status-row{
+    grid-template-columns:minmax(120px,1fr) minmax(76px,max-content);
+  }
+  #diagnosticsMigrationList .status-row>small,
+  #diagnosticsFoundationServices .status-row>small,
+  #diagnosticsGithubStatus .status-row>small{
+    grid-column:1/-1;
+  }
+}
+@media(max-width:620px){
+  #diagnosticsMigrationList .status-row,
+  #diagnosticsFoundationServices .status-row,
+  #diagnosticsGithubStatus .status-row{
+    grid-template-columns:1fr;
+    gap:3px;
+  }
+  #diagnosticsMigrationList .status-row>small,
+  #diagnosticsFoundationServices .status-row>small,
+  #diagnosticsGithubStatus .status-row>small{
+    grid-column:auto;
+  }
+}
