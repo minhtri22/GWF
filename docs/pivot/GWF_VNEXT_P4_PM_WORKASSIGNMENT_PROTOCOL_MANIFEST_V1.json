@@ -1,0 +1,23 @@
+{
+  "schema_id":"GWF-VNEXT-P4-PM-WORKASSIGNMENT-PROTOCOL-v1",
+  "status":"FROZEN",
+  "date":"2026-10-07",
+  "gate":"GWF_VNEXT_P4_PM_WORKASSIGNMENT_PROTOCOL_PREREGISTRATION_AND_CONTRACT_FREEZE",
+  "contract_base_head":"6f580e240be9a4f7a61023e4e6872a473b316fef",
+  "preserved_locks":{"p1":"ecfc8435f0f381d0a2edfac8575cbbc09a87abe3","p2":"25660c52526923d557224ac9fbc9abeae23adcc4","p3":"60aa70e8f03a2c4f11e5693bf58cf82b5806b24e"},
+  "authority":{"pm":"PROPOSAL_DECOMPOSITION_ESCALATION_ONLY","g2e":"SEMANTIC_SCIENTIFIC_AUTHORITY","gwf":"GOVERNANCE_AUTHORIZATION_DURABLE_RUNTIME_AUTHORITY","provider_model_neutral":true},
+  "objects":{
+    "PMVisibleGovernedState":{"owner":"GWF_READ_MODEL","immutable":true,"protected_payload_exposure":"FORBIDDEN"},
+    "PMPlanRevision":{"owner":"PM_PROPOSAL_SPACE","identity":["plan_id","revision_id","content_hash"],"normative_change":"NEW_REVISION","stale_state":"REVALIDATION_REQUIRED"},
+    "PMRoleRequest":{"owner":"PM_PROPOSAL_SPACE","role_classes":["WORKER","QA_REVIEWER"],"qa_requires":["independence_requirements"],"provider_model_required":false},
+    "WorkAssignmentProposal":{"owner":"PM_PROPOSAL_SPACE","identity":["proposal_id","revision_id","content_hash"],"lifecycle":["DRAFT","FROZEN","SUBMITTED","REJECTED","ESCALATED","AUTHORIZED_MATERIALIZED","SUPERSEDED"],"submitted_revision_mutable":false},
+    "PMHandoffRecord":{"owner":"GWF_DURABLE_OPERATIONAL_STATE","identity":["handoff_id","revision_id","content_hash"],"silent_proposal_identity_change":"FORBIDDEN"}
+  },
+  "cardinality":{"proposal_revision_to_authorized_work_assignment":"0..1","authorized_work_assignment_to_source_proposal_revision":"1","g2e_execution_attempt_to_active_work_assignment_dispatch":"0..1","active_authorized_revision_per_proposal_id":"0..1"},
+  "materialization":{"owner":"GWF_AUTHORIZATION_PATH","pm_direct_materialization":"FORBIDDEN","work_assignment_source":"P1_EXISTING_WORKASSIGNMENT","p4_redefinition":"FORBIDDEN","must_validate":["governed_state_revision","g2e_exact_refs","active_governance_profile","authority_ceiling","budget_ceiling","protected_resource_policy","p3_attempt_dispatch_rule","human_action_requirements","qa_independence_policy"]},
+  "execution_environment_request":{"p4":"CLASS_AND_CAPABILITY_ONLY","provider_binding":"DEFERRED","remote_mcp_adapter":"FORBIDDEN","codex_adapter":"FORBIDDEN"},
+  "human_action":{"object":"HumanActionRequest","pm_may_request":true,"pm_may_resolve":false},
+  "negative_tests":["N01_AUTHORITY_CREATE","N02_AUTHORITY_EXPAND","N03_BUDGET_EXPAND","N04_PROTECTED_PAYLOAD","N05_PROTECTED_CONSUME","N06_DIRECT_DISPATCH","N07_SCIENTIFIC_VERDICT","N08_EVIDENCE_ADMISSION","N09_RELEASE_ACCEPTANCE","N10_G2E_AGENT_OVERRIDE","N11_GWF_EXECUTOR_OVERRIDE","N12_FROZEN_WORKASSIGNMENT_MUTATION","N13_FROZEN_PROOF_MUTATION","N14_PROFILE_MUTATION","N15_PROFILE_DOWNGRADE_ESCAPE","N16_TERMINAL_LINEAGE_REINTERPRET","N17_STALE_PROPOSAL","N18_WORKER_SUBSTITUTION","N19_QA_SUBSTITUTION","N20_PROVIDER_NOT_INDEPENDENCE","N21_OPERATIONAL_NOT_EVIDENCE","N22_BYPASS_HUMAN_ACTION","N23_SELF_RESOLVE_HUMAN_ACTION","N24_NO_GWF_AUTHORIZATION","N25_DUPLICATE_ACTIVE_ASSIGNMENT","N26_HANDOFF_IDENTITY_DRIFT","N27_RECOVERY_STATE_REVISION","N28_CAPABILITY_BEYOND_PROFILE","N29_PROTECTED_ACCESS_BEFORE_AUTH","N30_EXPLORATORY_TO_CONFIRMATORY","N31_FROZEN_THRESHOLD_METRIC_SEED","N32_UI_NOT_AUTHORITY","N33_REDEFINE_WORKASSIGNMENT","N34_CREATE_REPLACEMENT_G2E_ATTEMPT","N35_MODEL_STRENGTH_NOT_AUTHORITY","N36_BYPASS_P1_P2_P3_LOCKS"],
+  "next_gate":"GWF_VNEXT_P4_PM_WORKASSIGNMENT_PROTOCOL_IMPLEMENTATION_STATIC_PREFLIGHT_AND_EXECUTION_LOCK",
+  "still_forbidden":["real_project_execution","protected_evidence_consumption","mission_control_refactor","provider_specific_runtime"]
+}
