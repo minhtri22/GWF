@@ -3,7 +3,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $Schema = "GWF-BPS-CURRENT-SURFACE-UAT-v1"
-$QualifiedImplementationHead = "277dd6c32f10563ebaafca9618b3c479fcea8d41"
+$QualifiedImplementationHead = "4e95d406e346eba42567835b5a1bd44366618baf"
+$U16VisualRepairHead = "277dd6c32f10563ebaafca9618b3c479fcea8d41"
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $InstallScript = Join-Path $RepoRoot "install.ps1"
 $ServerLauncher = Join-Path $RepoRoot "scripts\gwf_server.ps1"
@@ -210,7 +211,23 @@ try{
  & git -C $RepoRoot merge-base --is-ancestor $QualifiedImplementationHead HEAD
  Add-Check "qualified_head_is_ancestor" ($LASTEXITCODE -eq 0) $QualifiedImplementationHead
  $drift=@(& git -C $RepoRoot diff --name-only $QualifiedImplementationHead HEAD -- src web install.ps1 scripts/gwf_server.ps1)
- Add-Check "no_product_drift_after_qualified_head" ($drift.Count -eq 0) @($drift)
+ $repairHeadIsAncestor=$false
+ & git -C $RepoRoot merge-base --is-ancestor $U16VisualRepairHead HEAD
+ $repairHeadIsAncestor=($LASTEXITCODE -eq 0)
+ $postRepairDrift=@(& git -C $RepoRoot diff --name-only $U16VisualRepairHead HEAD -- src web install.ps1 scripts/gwf_server.ps1)
+ $boundedU16Repair=(
+  $repairHeadIsAncestor -and
+  $drift.Count -eq 1 -and
+  $drift[0] -eq "web/styles.css" -and
+  $postRepairDrift.Count -eq 0
+ )
+ Add-Check "no_product_drift_after_qualified_head" (($drift.Count -eq 0)-or$boundedU16Repair) @{
+  baseline=$QualifiedImplementationHead
+  drift=@($drift)
+  bounded_u16_repair=$boundedU16Repair
+  repair_head=$U16VisualRepairHead
+  post_repair_drift=@($postRepairDrift)
+ }
 
  Write-Host ""
  Write-Host "=== GWF CURRENT SURFACE USER UAT ===" -ForegroundColor Cyan
