@@ -209,6 +209,7 @@ def test_browser_diagnostics_is_authorized_exact_and_scoped(tmp_path, monkeypatc
 def test_diagnostics_browser_ui_consumes_authoritative_projection():
     html = (WEB / "index.html").read_text(encoding="utf-8")
     js = (WEB / "app.js").read_text(encoding="utf-8")
+    css = (WEB / "styles.css").read_text(encoding="utf-8")
 
     for element_id in (
         "diagnosticsStateBanner",
@@ -233,6 +234,18 @@ def test_diagnostics_browser_ui_consumes_authoritative_projection():
     assert "Migration status unavailable" in js
     assert "System / GitHub is separate from core health" in js
     assert "No provider attempts are recorded in the current authorized scope." in js
+
+    # UAT U16 regression: Diagnostics rows are label/value/detail rows, not the
+    # shared icon/name/action status-row geometry.
+    for selector in (
+        "#diagnosticsMigrationList .status-row",
+        "#diagnosticsFoundationServices .status-row",
+        "#diagnosticsGithubStatus .status-row",
+    ):
+        assert selector in css
+    assert "grid-template-columns:minmax(150px,1fr) minmax(88px,max-content) minmax(0,1.45fr)" in css
+    assert "overflow-wrap:anywhere" in css
+    assert "word-break:break-word" in css
 
 
 def test_diagnostics_route_is_registered_once():
