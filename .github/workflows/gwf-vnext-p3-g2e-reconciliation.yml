@@ -1,0 +1,49 @@
+name: GWF vNext P3 G2E Reconciliation
+
+on:
+  push:
+    branches:
+      - pivot/gwf-autonomous-research-stack-v1
+    paths:
+      - "src/gwr/g2e_bridge_vnext.py"
+      - "tests/test_gwf_vnext_p3_g2e_reconciliation.py"
+      - "scripts/pivot/gwf_vnext_p3_static_preflight.py"
+      - "docs/pivot/GWF_VNEXT_P3_*"
+      - ".github/workflows/gwf-vnext-p3-g2e-reconciliation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install package and test dependencies
+        run: python -m pip install -e ".[dev]"
+
+      - name: P3 static contract/hash/scope preflight
+        run: python scripts/pivot/gwf_vnext_p3_static_preflight.py
+
+      - name: P3 40 preregistered negative tests and positive bridge fixtures
+        run: python -m pytest -q tests/test_gwf_vnext_p3_g2e_reconciliation.py
+
+      - name: P1 and P2 locked regressions
+        run: python -m pytest -q tests/test_gwf_vnext_p1_governance_kernel.py tests/test_gwf_vnext_p2_domain_governance_profiles.py
+
+      - name: Core governance regressions
+        run: python -m pytest -q tests/test_governance.py tests/test_execution_decision.py tests/test_persistence.py tests/test_domain_api.py tests/test_v085_domain_skills.py
+
+      - name: Python compile preflight
+        run: python -m compileall -q src/gwr tests/test_gwf_vnext_p3_g2e_reconciliation.py scripts/pivot/gwf_vnext_p3_static_preflight.py
