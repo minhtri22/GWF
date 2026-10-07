@@ -1,0 +1,58 @@
+{
+  "gate": "GWF_VNEXT_P1_GOVERNANCE_KERNEL_IMPLEMENTATION_STATIC_PREFLIGHT_AND_EXECUTION_LOCK",
+  "status": "PASS_EXECUTION_LOCKED",
+  "created_at": "2026-10-07",
+  "branch": "pivot/gwf-autonomous-research-stack-v1",
+  "p1_contract_freeze_head": "e62032607af28603d776ea6d4a494fbc250ddd4b",
+  "implementation_head": "15daa586987734910a5766a23361a021463efe08",
+  "contract": {
+    "manifest_blob": "c05a94657863cc5ccb3b95273723fd0dda2ff519",
+    "preregistration_blob": "35059f072be1d2776d2e58cd97e07d69be04dbea"
+  },
+  "implementation_blobs": {
+    "src/gwr/governance_vnext.py": "3ed843327b1219d48e9348d76ab449caef19b6ed",
+    "src/gwr/migrations.py": "edac944c7d3e4ce0121811ab72cb758436f96bee",
+    "src/gwr/runtime.py": "b01cceafe38ddf8feb9acafac53fefa2038ebabe",
+    "src/gwr/__init__.py": "f7ff73b34f59e0f2dd1ec9080069029966a11587",
+    "tests/test_gwf_vnext_p1_governance_kernel.py": "452aa277f36ecb784e04077006b2a8934afe3ae3",
+    "scripts/pivot/gwf_vnext_p1_static_preflight.py": "310d3e5883c06f840ebb311f6e772e81bf49e1d6",
+    ".github/workflows/gwf-vnext-p1-governance-kernel.yml": "cfc4b6d8f152e0ea0592a939cfe5deb7170bd8ad"
+  },
+  "static_preflight": {
+    "workflow_run_id": 37598821897,
+    "workflow_run_number": 2,
+    "workflow_job_id": 112717889771,
+    "head_sha": "15daa586987734910a5766a23361a021463efe08",
+    "conclusion": "success",
+    "checks": {
+      "architecture_and_scope_preflight": "PASS",
+      "preregistered_negative_tests": "PASS",
+      "core_governance_execution_regressions": "PASS",
+      "python_compile_preflight": "PASS"
+    },
+    "negative_test_count": 16,
+    "forbidden_scope_changes": []
+  },
+  "implementation_scope": {
+    "provider_neutral_governance_kernel": true,
+    "persistence_migration": "0012_vnext_p1_governance_kernel",
+    "runtime_service": "VNextGovernanceService",
+    "zero_domain_zero_provider_fixtures_only": true
+  },
+  "explicitly_not_authorized": [
+    "RemoteMCP adapter integration",
+    "Codex adapter integration",
+    "G2E runtime import or merge",
+    "real research GovernanceProfile implementation",
+    "real software GovernanceProfile implementation",
+    "Mission Control UI refactor",
+    "real project execution",
+    "protected evidence consumption"
+  ],
+  "lock_semantics": [
+    "Any normative change to a frozen P1 contract requires a new contract revision and reauthorization.",
+    "Any change to implementation_blobs invalidates this execution lock.",
+    "Runtime success cannot imply G2E, scientific, software-release, or domain PASS.",
+    "The lock authorizes progression only to the next separately governed vNext phase."
+  ]
+}
