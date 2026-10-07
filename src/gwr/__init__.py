@@ -7,6 +7,7 @@ from .distributed import DistributedRuntime
 from .domain_sdk import DomainSDK, DomainValidationReport
 from .product import ProjectDashboardService
 from .project_governance import ProjectGovernanceService
+from .governance_vnext import VNextGovernanceService, GovernanceProfileRef
 from .agent_protocol import AgentExecutionProtocolService
 from .domain_registry import DomainRegistryService
 from .process_inspector import ProcessInspectorService
@@ -43,6 +44,8 @@ __all__ = [
     "DomainValidationReport",
     "ProjectDashboardService",
     "ProjectGovernanceService",
+    "VNextGovernanceService",
+    "GovernanceProfileRef",
     "AgentExecutionProtocolService",
     "DomainRegistryService",
     "ProcessInspectorService",
