@@ -554,7 +554,6 @@ ALTER TABLE document_relations
   ADD COLUMN target_revision_or_hash TEXT;
 """.strip(),
     ),
-,
     Migration(
         "0012_vnext_p1_governance_kernel",
         """
