@@ -1,6 +1,6 @@
 # GWF vNext — Autonomous Research Stack Pivot Plan
 
-**Status:** PIVOT-P0 PASS / architecture identity reconciled / PIVOT-P1 authorized for contract freeze only  
+**Status:** PIVOT-P0 PASS / PIVOT-P1 contract freeze PASS / implementation preflight authorized  
 **Pivot branch:** `pivot/gwf-autonomous-research-stack-v1`  
 **Pivot base:** `feature/bps-i00-product-shell@de3247c18c1a8546db9611ecd0fdf24f827662ae`  
 **Date:** 2026-10-07
@@ -569,7 +569,7 @@ Before PIVOT-P3:
 5. preserve historical research evidence in its existing lineage;
 6. do not rewrite P5A scientific/transport history into the vNext product line.
 
-## 16. Current frontier after P0
+## 16. Current frontier after P1
 
 PIVOT-P0 is formally closed PASS.
 
@@ -578,18 +578,26 @@ Authoritative P0 records:
 - `docs/pivot/GWF_VNEXT_P0_ARCHITECTURE_AND_IDENTITY_RECONCILIATION.md`;
 - `docs/pivot/GWF_VNEXT_P0_QA_AND_DECISION.md`.
 
+PIVOT-P1 preregistration/contract freeze is formally closed PASS.
+
+Authoritative P1 records:
+
+- `docs/pivot/GWF_VNEXT_P1_CONTRACT_MANIFEST_V1.yaml`;
+- `docs/pivot/GWF_VNEXT_P1_GOVERNANCE_KERNEL_PREREGISTRATION_AND_CONTRACT_FREEZE.md`;
+- `docs/pivot/GWF_VNEXT_P1_QA_AND_FORMAL_DECISION.md`.
+
 The next authorized bounded phase is:
 
-`GWF_VNEXT_P1_GOVERNANCE_KERNEL_PREREGISTRATION_AND_CONTRACT_FREEZE`
+`GWF_VNEXT_P1_GOVERNANCE_KERNEL_IMPLEMENTATION_STATIC_PREFLIGHT_AND_EXECUTION_LOCK`
 
-P1 is specification/contract freeze only. It may define provider-neutral schemas and invariants for GovernanceProfile, GovernanceTransitionProposal, WorkAssignment, HumanActionRequest, ExecutorBinding, ExecutionEnvironment references, and budget/authority overlays.
+That phase may implement only the frozen provider-neutral P1 contracts, required persistence/migrations, zero-domain/zero-provider fixtures, and the preregistered negative tests.
 
 Do **not** yet:
 
 - refactor UI;
-- implement GovernanceProfile runtime code;
 - integrate RemoteMCP adapter behavior;
 - implement Codex adapter behavior;
-- merge/import G2E code;
-- rewrite research/software packages;
-- run a real research project.
+- merge/import G2E runtime code;
+- implement research/software GovernanceProfiles beyond zero-domain fixtures;
+- run a real research project;
+- consume protected evidence.
