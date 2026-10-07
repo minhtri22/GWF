@@ -1,0 +1,78 @@
+{
+  "gate": "GWF_VNEXT_P2_DOMAIN_GOVERNANCE_PROFILES_IMPLEMENTATION_STATIC_PREFLIGHT_AND_EXECUTION_LOCK",
+  "status": "PASS_EXECUTION_LOCKED",
+  "created_at": "2026-10-07",
+  "branch": "pivot/gwf-autonomous-research-stack-v1",
+  "p2_contract_head": "1f64ff9df32ddbfe1460025ac8ec2716cb884669",
+  "p2_definitions_blob": "fe83c0c638baee9912aa6b15f82bee1c19c2267a",
+  "p2_preregistration_blob": "4009b9fe8cb9bb0d48b6dea15b7df528010c7bde",
+  "qualified_implementation_head": "2fadb7f7c9ffeb8ba95800b65e06603db852f4ef",
+  "p1_execution_lock_preserved": true,
+  "implementation_blobs": {
+    "domains/research.governance_profiles.v1.json": "7ca53b894c8be051e7375e036d43c6c7b6499326",
+    "domains/software.governance_profiles.v1.json": "9b8a18eed9d45343a32a733efd9b400f022285f8",
+    "src/gwr/domain_governance_vnext.py": "d83ec96de7c572401f44d23f8a7e9dd3a05b4f60",
+    "tests/test_gwf_vnext_p2_domain_governance_profiles.py": "0f0f31d6c0d59067f31997333c00dea8de9f8578",
+    "scripts/pivot/gwf_vnext_p2_static_preflight.py": "bcafb2e0589290b012268623b595c85f183435ff",
+    ".github/workflows/gwf-vnext-p2-domain-governance-profiles.yml": "c9a1df7b9b4a6ecf808d00497a6f9abf3f81cffe"
+  },
+  "frozen_profile_hashes": {
+    "research.triage": "2aa6068a82ab9b274cd9d9f5700b2166d499d2d8a8554c8b6e23be6b95aa99ef",
+    "research.exploratory": "90114f02baee23f4c6c8ec5eb9b817cd5c3f332dbe014c38595254e20037373d",
+    "research.measurement": "619a6a7ea903b4ad736222d89d92f23bfd58adff36dd31a6c3e69fd3150691a6",
+    "research.confirmatory": "00487a768af2d3040bc7c847f0933764d84aed0a3e34988ad5876048aa73ca8b",
+    "software.triage": "abbf4b6c440b362194e2b760e9c0c6d7a9eded589731ba0199aa72ea7084e724",
+    "software.development": "a84df83e51d4a598d2a6f53a7b29f93bd407699cc0cc40e3bac01cdaa7dfd949",
+    "software.qualification": "cb6177440faccbacde9f588bbdf2c80ed61f8728a2b0b2fdb90c5aa2cd3cf2c4",
+    "software.release": "7c8ca2a092141297f0da8caf2b80a4fcd04eb830e900a5eface9e11e289d1388"
+  },
+  "qualification": {
+    "first_run": {
+      "run_id": 37603082434,
+      "head_sha": "ee50c33d380209e8df2c980fddea4be40da2c740",
+      "conclusion": "failure",
+      "failure_class": "CI_HARNESS_PATH_ERROR",
+      "scientific_or_contract_failure": false
+    },
+    "qualified_run": {
+      "run_id": 37603208717,
+      "head_sha": "2fadb7f7c9ffeb8ba95800b65e06603db852f4ef",
+      "conclusion": "success"
+    },
+    "checks": {
+      "P2 static architecture/hash/P1-lock preflight": "PASS",
+      "30 preregistered negative tests": "PASS",
+      "positive zero-protected-resource/domain fixtures": "PASS",
+      "P1 locked governance regressions": "PASS",
+      "domain package regressions": "PASS",
+      "Python compile preflight": "PASS"
+    }
+  },
+  "locked_invariants": [
+    "Exactly eight P2 domain governance profiles are materialized and exact-hash bound.",
+    "Research and software remain separate domain-owned profile packages.",
+    "In-place profile transitions are acyclic and strictly forward.",
+    "TRIAGE is not a post-lock downgrade path.",
+    "Advanced-profile operational recovery occurs inside the active profile.",
+    "Research confirmatory activation requires exact readiness conditions plus HumanActionRequest resolution.",
+    "Software release activation requires exact readiness conditions plus HumanActionRequest resolution.",
+    "Protected confirmatory access requires exact resource identity, budget binding, and human authorization.",
+    "GovernanceProfile cannot emit formal scientific verdict or formal release acceptance.",
+    "Material backward semantic change requires successor lineage/cycle.",
+    "P1 execution-lock blobs remain unchanged."
+  ],
+  "explicitly_not_authorized": [
+    "RemoteMCP adapter integration",
+    "Codex adapter integration",
+    "G2E runtime import or merge",
+    "Mission Control UI refactor",
+    "real research project execution",
+    "real software project execution",
+    "protected confirmatory evidence consumption"
+  ],
+  "lock_semantics": [
+    "Any change to a bound implementation blob invalidates this P2 execution lock.",
+    "Any change to frozen P2 profile payloads or hashes requires a new contract revision and requalification.",
+    "This lock qualifies domain-governance profile enforcement only; it does not authorize execution-environment integration or domain substantive claims."
+  ]
+}
