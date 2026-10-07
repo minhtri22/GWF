@@ -1,0 +1,49 @@
+name: GWF vNext P1 Governance Kernel
+
+on:
+  push:
+    branches:
+      - pivot/gwf-autonomous-research-stack-v1
+    paths:
+      - "src/gwr/governance_vnext.py"
+      - "src/gwr/migrations.py"
+      - "src/gwr/runtime.py"
+      - "src/gwr/__init__.py"
+      - "tests/test_gwf_vnext_p1_governance_kernel.py"
+      - "scripts/pivot/gwf_vnext_p1_static_preflight.py"
+      - "docs/pivot/GWF_VNEXT_P1_*"
+      - ".github/workflows/gwf-vnext-p1-governance-kernel.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install package and test dependencies
+        run: python -m pip install -e ".[dev]"
+
+      - name: Static architecture and scope preflight
+        run: python scripts/pivot/gwf_vnext_p1_static_preflight.py
+
+      - name: P1 governance kernel tests
+        run: python -m pytest -q tests/test_gwf_vnext_p1_governance_kernel.py
+
+      - name: Core governance/execution regressions
+        run: python -m pytest -q tests/test_governance.py tests/test_execution_decision.py tests/test_persistence.py
+
+      - name: Python compile preflight
+        run: python -m compileall -q src/gwr tests/test_gwf_vnext_p1_governance_kernel.py scripts/pivot/gwf_vnext_p1_static_preflight.py
