@@ -378,6 +378,21 @@ class DomainGovernanceProfileService:
             )
             if not har or har["state"] != "RESOLVED":
                 raise AuthorityDenied("Required HumanActionRequest is not resolved")
+            resolution = parse_json(har["resolution_ref"], {})
+            approval_id = resolution.get("approval_id")
+            approval = self.db.one("SELECT * FROM approvals WHERE approval_id=?", (approval_id,))
+            if not approval or approval["decision"] != "APPROVED":
+                raise AuthorityDenied("HumanActionRequest resolution lacks authoritative approval")
+            approver = self.db.one("SELECT * FROM actors WHERE actor_id=?", (approval["approver_actor_id"],))
+            if not approver or approver["actor_type"] != "HUMAN":
+                raise AuthorityDenied("Governance profile elevation requires HUMAN approval")
+            proposal = self.db.one("SELECT * FROM proposals WHERE proposal_id=?", (approval["proposal_id"],))
+            if (
+                not proposal
+                or proposal["payload_hash"] != har["frozen_payload_hash"]
+                or approval["expected_payload_hash"] != har["frozen_payload_hash"]
+            ):
+                raise AuthorityDenied("Human approval is not bound to the exact HumanActionRequest payload")
         elif disposition != "AUTO_ALLOWED":
             raise InvalidTransition("Unknown transition disposition")
 
