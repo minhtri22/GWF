@@ -390,7 +390,7 @@ class DomainGovernanceProfileService:
             if (
                 not proposal
                 or proposal["payload_hash"] != har["frozen_payload_hash"]
-                or approval["expected_payload_hash"] != har["frozen_payload_hash"]
+                or approval["proposal_hash"] != har["frozen_payload_hash"]
             ):
                 raise AuthorityDenied("Human approval is not bound to the exact HumanActionRequest payload")
         elif disposition != "AUTO_ALLOWED":
