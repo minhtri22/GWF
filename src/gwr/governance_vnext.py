@@ -549,7 +549,13 @@ class VNextGovernanceService:
         self._reject_secret_material(payload)
         aid = uid("wa")
         self.db.conn.execute(
-            "INSERT INTO work_assignments VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO work_assignments("
+            "work_assignment_id,revision,project_id,origin_refs,objective,agent_role_ref,"
+            "required_capabilities,execution_environment_constraints,executor_binding_id,"
+            "authority_envelope_ref,budget_envelope_ref,protected_resource_constraints,"
+            "expected_outputs,completion_contract,independence_requirements,state,"
+            "frozen_payload_hash,proposer_actor_id,created_at,frozen_at"
+            ") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 aid,
                 revision,
