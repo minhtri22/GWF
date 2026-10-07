@@ -1,0 +1,50 @@
+name: GWF vNext P2 Domain Governance Profiles
+
+on:
+  push:
+    branches:
+      - pivot/gwf-autonomous-research-stack-v1
+    paths:
+      - "domains/*.governance_profiles.v1.json"
+      - "src/gwr/domain_governance_vnext.py"
+      - "tests/test_gwf_vnext_p2_domain_governance_profiles.py"
+      - "scripts/pivot/gwf_vnext_p2_static_preflight.py"
+      - "docs/pivot/GWF_VNEXT_P2_*"
+      - ".github/workflows/gwf-vnext-p2-domain-governance-profiles.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install package and test dependencies
+        run: python -m pip install -e ".[dev]"
+
+      - name: P2 static architecture, hash, and lock preflight
+        run: python scripts/pivot/gwf_vnext_p2_static_preflight.py
+
+      - name: P2 domain governance profile tests
+        run: python -m pytest -q tests/test_gwf_vnext_p2_domain_governance_profiles.py
+
+      - name: P1 locked governance regressions
+        run: python -m pytest -q tests/test_gwf_vnext_p1_governance_kernel.py tests/test_governance.py tests/test_execution_decision.py tests/test_persistence.py
+
+      - name: Domain package regressions
+        run: python -m pytest -q tests/test_domain*.py tests/test_software_domain.py
+
+      - name: Python compile preflight
+        run: python -m compileall -q src/gwr tests/test_gwf_vnext_p2_domain_governance_profiles.py scripts/pivot/gwf_vnext_p2_static_preflight.py
