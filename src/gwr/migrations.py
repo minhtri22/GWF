@@ -554,6 +554,171 @@ ALTER TABLE document_relations
   ADD COLUMN target_revision_or_hash TEXT;
 """.strip(),
     ),
+,
+    Migration(
+        "0012_vnext_p1_governance_kernel",
+        """
+CREATE TABLE IF NOT EXISTS governance_profile_definitions(
+  definition_id TEXT PRIMARY KEY,
+  domain_id TEXT NOT NULL,
+  profile_id TEXT NOT NULL,
+  profile_version TEXT NOT NULL,
+  policy TEXT NOT NULL,
+  transition_edges TEXT NOT NULL,
+  profile_hash TEXT NOT NULL,
+  created_by_actor_id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE(domain_id, profile_id, profile_version)
+);
+CREATE TABLE IF NOT EXISTS project_governance_profiles(
+  project_id TEXT PRIMARY KEY,
+  domain_id TEXT NOT NULL,
+  profile_id TEXT NOT NULL,
+  profile_version TEXT NOT NULL,
+  profile_hash TEXT NOT NULL,
+  bound_by_actor_id TEXT NOT NULL,
+  bound_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS governance_transition_proposals(
+  transition_id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  subject_ref TEXT NOT NULL,
+  from_profile_ref TEXT NOT NULL,
+  to_profile_ref TEXT NOT NULL,
+  proposer_actor_id TEXT NOT NULL,
+  reason_codes TEXT NOT NULL,
+  evidence_refs TEXT NOT NULL,
+  requested_authority_delta TEXT,
+  requested_budget_delta TEXT,
+  state TEXT NOT NULL,
+  disposition TEXT,
+  human_action_request_id TEXT,
+  successor_ref TEXT,
+  frozen_payload_hash TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  evaluated_at TEXT,
+  resolved_at TEXT
+);
+CREATE TABLE IF NOT EXISTS authority_envelopes(
+  authority_envelope_id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  parent_authority_ref TEXT NOT NULL,
+  subject_actor_or_role_ref TEXT NOT NULL,
+  resource_selectors TEXT NOT NULL,
+  allow_actions TEXT NOT NULL,
+  deny_actions TEXT NOT NULL,
+  conditions TEXT NOT NULL,
+  expires_at TEXT,
+  payload_hash TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS budget_envelopes(
+  budget_envelope_id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  parent_budget_ref TEXT,
+  limits TEXT NOT NULL,
+  payload_hash TEXT NOT NULL,
+  created_by_actor_id TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS budget_usage(
+  budget_envelope_id TEXT NOT NULL,
+  dimension TEXT NOT NULL,
+  unit TEXT NOT NULL,
+  consumed REAL NOT NULL,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY(budget_envelope_id, dimension)
+);
+CREATE TABLE IF NOT EXISTS execution_environments(
+  execution_environment_id TEXT PRIMARY KEY,
+  environment_type TEXT NOT NULL,
+  adapter_id TEXT NOT NULL,
+  adapter_version TEXT NOT NULL,
+  adapter_hash TEXT NOT NULL,
+  capability_manifest_ref TEXT NOT NULL,
+  transport_class TEXT,
+  locality_class TEXT,
+  secret_connection_ref TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS work_assignments(
+  work_assignment_id TEXT PRIMARY KEY,
+  revision INTEGER NOT NULL,
+  project_id TEXT NOT NULL,
+  origin_refs TEXT NOT NULL,
+  objective TEXT NOT NULL,
+  agent_role_ref TEXT NOT NULL,
+  required_capabilities TEXT NOT NULL,
+  execution_environment_constraints TEXT NOT NULL,
+  executor_binding_id TEXT,
+  authority_envelope_ref TEXT NOT NULL,
+  budget_envelope_ref TEXT NOT NULL,
+  protected_resource_constraints TEXT NOT NULL,
+  expected_outputs TEXT NOT NULL,
+  completion_contract TEXT NOT NULL,
+  independence_requirements TEXT,
+  state TEXT NOT NULL,
+  frozen_payload_hash TEXT,
+  proposer_actor_id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  frozen_at TEXT,
+  authorized_by_actor_id TEXT,
+  authorized_at TEXT,
+  dispatched_at TEXT
+);
+CREATE TABLE IF NOT EXISTS executor_bindings(
+  executor_binding_id TEXT PRIMARY KEY,
+  work_assignment_id TEXT NOT NULL,
+  binding_mode TEXT NOT NULL,
+  agent_role_ref TEXT NOT NULL,
+  agent_identity TEXT NOT NULL,
+  execution_environment_ref TEXT NOT NULL,
+  capability_manifest_ref TEXT NOT NULL,
+  material_identity_dimensions TEXT NOT NULL,
+  equivalence_policy_ref TEXT,
+  authority_envelope_ref TEXT NOT NULL,
+  budget_envelope_ref TEXT NOT NULL,
+  resolved_at TEXT NOT NULL,
+  status TEXT NOT NULL,
+  resolved_payload_hash TEXT NOT NULL,
+  released_at TEXT
+);
+CREATE TABLE IF NOT EXISTS human_action_requests(
+  human_action_request_id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  action_kind TEXT NOT NULL,
+  subject_ref TEXT NOT NULL,
+  proposal_ref TEXT,
+  frozen_payload TEXT NOT NULL,
+  frozen_payload_hash TEXT NOT NULL,
+  required_authority_action TEXT NOT NULL,
+  approver_constraints TEXT NOT NULL,
+  reason_codes TEXT NOT NULL,
+  expires_at TEXT,
+  state TEXT NOT NULL,
+  resolution_ref TEXT,
+  created_by_actor_id TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS effective_governance_policies(
+  effective_policy_id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  compiled_hash TEXT NOT NULL,
+  payload TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_governance_profiles_lookup
+  ON governance_profile_definitions(domain_id, profile_id, profile_version);
+CREATE INDEX IF NOT EXISTS idx_transition_project_state
+  ON governance_transition_proposals(project_id, state);
+CREATE INDEX IF NOT EXISTS idx_work_assignment_project_state
+  ON work_assignments(project_id, state);
+CREATE INDEX IF NOT EXISTS idx_executor_binding_assignment
+  ON executor_bindings(work_assignment_id);
+CREATE INDEX IF NOT EXISTS idx_human_action_project_state
+  ON human_action_requests(project_id, state);
+""".strip(),
+    )
 
 ]
 
