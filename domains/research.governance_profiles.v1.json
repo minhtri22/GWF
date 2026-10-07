@@ -1,0 +1,455 @@
+{
+  "schema_id": "GWF-DOMAIN-GOVERNANCE-PROFILES-v1",
+  "domain_id": "research.full-cycle",
+  "source_domain_file": "domains/research.workflow.yaml",
+  "source_domain_version": "0.5.0",
+  "profile_order": [
+    "research.triage",
+    "research.exploratory",
+    "research.measurement",
+    "research.confirmatory"
+  ],
+  "transition_topology": "ACYCLIC_FORWARD_ONLY",
+  "later_operational_incidents": "RECOVER_WITHIN_ACTIVE_PROFILE_NOT_TRIAGE_DOWNGRADE",
+  "protected_resource_classes": [
+    "UNPROTECTED",
+    "DEVELOPMENT",
+    "CALIBRATION",
+    "PROTECTED_CONFIRMATORY",
+    "FROZEN_RAW_EVIDENCE"
+  ],
+  "profiles": {
+    "research.confirmatory": {
+      "canonical_key": "research.confirmatory",
+      "expected_profile_hash": "00487a768af2d3040bc7c847f0933764d84aed0a3e34988ad5876048aa73ca8b",
+      "definition": {
+        "domain_id": "research.full-cycle",
+        "profile_id": "confirmatory",
+        "version": "1.0.0",
+        "policy": {
+          "authority_overlay": {
+            "allow_domain_actions": [
+              "READ_GOVERNED_STATE",
+              "PROPOSE_WORK",
+              "EXECUTE_FROZEN_CONFIRMATORY_PLAN",
+              "COLLECT_EVIDENCE",
+              "REQUEST_INDEPENDENT_QA",
+              "REQUEST_CLAIM_ELEVATION",
+              "PAUSE_EXECUTION",
+              "CANCEL_EXECUTION",
+              "RECOVER_OPERATIONAL_SAME_SEMANTICS"
+            ],
+            "deny_domain_actions": [
+              "MUTATE_HYPOTHESIS",
+              "MUTATE_CONFIRMATORY_METRIC",
+              "MUTATE_CONFIRMATORY_THRESHOLD",
+              "MUTATE_CONFIRMATORY_COHORT",
+              "MUTATE_CONFIRMATORY_SEED_NAMESPACE",
+              "SILENT_EXECUTOR_SUBSTITUTION",
+              "RETROACTIVE_PREREGISTRATION",
+              "REINTERPRET_TERMINAL_VERDICT"
+            ]
+          },
+          "budget_overlay": {
+            "requirements": [
+              "exact protected-resource consumption budget must be frozen before dispatch",
+              "hard budget exhaustion blocks further protected consumption",
+              "budget expansion requires explicit authorized HumanActionRequest"
+            ]
+          },
+          "autonomy_policy": {
+            "auto_actions": [
+              "execute_frozen_plan",
+              "same-semantics operational recovery when preregistered",
+              "request independent QA"
+            ],
+            "forbidden_auto_actions": [
+              "scientific replanning",
+              "threshold tuning",
+              "metric tuning",
+              "cohort replacement",
+              "fresh evidence substitution",
+              "claim elevation"
+            ]
+          },
+          "mutation_policy": {
+            "operational_repairs": "ALLOWED_ONLY_IF_SCIENTIFIC_SEMANTICS_UNCHANGED_AND_AMENDMENT_POLICY_PERMITS",
+            "scientific_normative_mutation": "FORBIDDEN_AFTER_STUDY_LOCK",
+            "after_protected_outcome_exposure": "NO_RESCUE; consumed attempt remains immutable/spent",
+            "material_executor_or_environment_change": "NEW_AUTHORIZED_ATTEMPT_OR_SUCCESSOR_REQUIRED"
+          },
+          "protected_resource_policy": {
+            "allowed_classes": [
+              "UNPROTECTED",
+              "DEVELOPMENT",
+              "CALIBRATION",
+              "PROTECTED_CONFIRMATORY",
+              "FROZEN_RAW_EVIDENCE"
+            ],
+            "protected_confirmatory_access": "EXACT_RESOURCE_SET_AND_CONSUMPTION_BUDGET_REQUIRED",
+            "authorization": "durable human authorization required unless confirmatory activation approval binds exact same resource set and budget",
+            "first_access_effect": "record consumption atomically before/with execution",
+            "raw_evidence": "freeze append-only before adjudication"
+          },
+          "lineage_policy": {
+            "formal_outcomes": [
+              "PASS",
+              "FAIL",
+              "UNRESOLVED",
+              "INVALID",
+              "SPENT"
+            ],
+            "formal_outcome_owner": "G2E_OR_DOMAIN_ADJUDICATOR_NOT_PROFILE",
+            "terminal_outcomes_append_only": true,
+            "no_rescue": true,
+            "operational_failure_not_scientific_failure": true,
+            "successor_policy": {
+              "when_scientific_change_needed_after_terminal_or_spent_attempt": "CREATE_NEW_GOVERNED_SUCCESSOR_SUBJECT",
+              "successor_initial_profile": "research.exploratory",
+              "fresh_evidence_namespace_required": true,
+              "prior_terminal_lineage_remains_immutable": true
+            }
+          },
+          "approval_policy": {
+            "profile_activation": "HUMAN_APPROVAL_REQUIRED",
+            "human_action_kind": "RESEARCH_CONFIRMATORY_ACTIVATION",
+            "external_claim_elevation": "HUMAN_ACTION_REQUIRED",
+            "human_cannot_override_adjudicated_verdict": true
+          },
+          "retry_recovery_policy": {
+            "retry_scope": "ONLY_IDENTICAL_SCIENTIFIC_SEMANTICS_AND_WITHIN_FROZEN_PROTOCOL",
+            "one_shot_if_declared": true,
+            "after_protected_resource_consumption": "attempt is spent; no hidden rerun/rescue",
+            "operational_recovery": "may resume from durable checkpoint if evidence identity and scientific semantics remain exact"
+          },
+          "claim_permission_policy": {
+            "max_candidate_claim_class": "CONFIRMATORY_CANDIDATE",
+            "formal_scientific_verdict": "ADJUDICATOR_ONLY",
+            "external_or_public_claim_elevation": "HUMAN_ACTION_REQUIRED",
+            "profile_completion_never_equals_scientific_PASS": true
+          }
+        },
+        "transition_edges": []
+      }
+    },
+    "research.measurement": {
+      "canonical_key": "research.measurement",
+      "expected_profile_hash": "619a6a7ea903b4ad736222d89d92f23bfd58adff36dd31a6c3e69fd3150691a6",
+      "definition": {
+        "domain_id": "research.full-cycle",
+        "profile_id": "measurement",
+        "version": "1.0.0",
+        "policy": {
+          "authority_overlay": {
+            "allow_domain_actions": [
+              "READ_GOVERNED_STATE",
+              "PROPOSE_WORK",
+              "EXECUTE_FROZEN_MEASUREMENT_PLAN",
+              "COLLECT_MEASUREMENT_EVIDENCE",
+              "CONSUME_AUTHORIZED_CALIBRATION",
+              "PAUSE_EXECUTION",
+              "CANCEL_EXECUTION",
+              "RECOVER_OPERATIONAL_SAME_SEMANTICS"
+            ],
+            "deny_domain_actions": [
+              "CONSUME_PROTECTED_CONFIRMATORY",
+              "EMIT_FORMAL_SCIENTIFIC_VERDICT",
+              "RETROACTIVE_PREREGISTRATION",
+              "SILENT_METRIC_MUTATION"
+            ]
+          },
+          "budget_overlay": {
+            "requirements": [
+              "calibration consumption must be explicitly budgeted when used",
+              "protected confirmatory consumption ceiling is zero"
+            ]
+          },
+          "autonomy_policy": {
+            "auto_actions": [
+              "repeat frozen measurement protocol within budget",
+              "operational recovery",
+              "collect diagnostics"
+            ],
+            "forbidden_auto_actions": [
+              "change metric after measurement exposure",
+              "consume protected confirmatory evidence",
+              "elevate to confirmatory claim"
+            ]
+          },
+          "mutation_policy": {
+            "operational_repairs": "ALLOWED_IF_MEASUREMENT_SEMANTICS_UNCHANGED",
+            "measurement_semantics": "FROZEN_FOR_CURRENT_MEASUREMENT_LINEAGE",
+            "material_metric_instrument_protocol_change": "NEW_SUCCESSOR_OR_RETURN_TO_EXPLORATORY_LINEAGE_REQUIRED"
+          },
+          "protected_resource_policy": {
+            "allowed_classes": [
+              "UNPROTECTED",
+              "DEVELOPMENT",
+              "CALIBRATION"
+            ],
+            "forbidden_classes": [
+              "PROTECTED_CONFIRMATORY"
+            ],
+            "calibration_access": "exact authorized calibration refs only; never treated as confirmatory evidence"
+          },
+          "lineage_policy": {
+            "measurement_results_append_only": true,
+            "measurement_failure_not_confirmatory_FAIL": true,
+            "post_hoc_analysis": "label exploratory and do not alter frozen measurement result",
+            "successor_policy": {
+              "when_measurement_semantics_change": "CREATE_NEW_GOVERNED_SUCCESSOR_SUBJECT_OR_REVISION",
+              "successor_initial_profile": "research.exploratory"
+            }
+          },
+          "approval_policy": {
+            "profile_activation": "AUTO_ALLOWED_WHEN_EXACT_TRANSITION_CONDITIONS_PASS",
+            "transition_to_confirmatory": "HUMAN_APPROVAL_REQUIRED"
+          },
+          "retry_recovery_policy": {
+            "same_semantics_repeat": "ALLOWED_WITHIN_BUDGET",
+            "semantic_change": "NOT_A_RETRY",
+            "operational_recovery": "checkpoint resume allowed if measurement identity unchanged"
+          },
+          "claim_permission_policy": {
+            "max_candidate_claim_class": "MEASUREMENT_RESULT",
+            "formal_scientific_verdict": "FORBIDDEN",
+            "confirmatory_language": "FORBIDDEN"
+          }
+        },
+        "transition_edges": [
+          {
+            "target_profile_ref": {
+              "domain_id": "research.full-cycle",
+              "profile_id": "confirmatory",
+              "profile_version": "1.0.0",
+              "profile_hash": "00487a768af2d3040bc7c847f0933764d84aed0a3e34988ad5876048aa73ca8b"
+            },
+            "condition_codes": [
+              "MEASUREMENT_PROTOCOL_FROZEN",
+              "METRIC_INSTRUMENT_LOCK_PASS",
+              "CONFIRMATORY_PREREGISTRATION_FROZEN",
+              "EXECUTION_READINESS_PASS",
+              "PROTECTED_RESOURCE_PLAN_BOUND",
+              "INDEPENDENCE_POLICY_BOUND"
+            ],
+            "disposition": "HUMAN_APPROVAL_REQUIRED",
+            "required_human_action_kind": "RESEARCH_CONFIRMATORY_ACTIVATION"
+          }
+        ]
+      }
+    },
+    "research.exploratory": {
+      "canonical_key": "research.exploratory",
+      "expected_profile_hash": "90114f02baee23f4c6c8ec5eb9b817cd5c3f332dbe014c38595254e20037373d",
+      "definition": {
+        "domain_id": "research.full-cycle",
+        "profile_id": "exploratory",
+        "version": "1.0.0",
+        "policy": {
+          "authority_overlay": {
+            "allow_domain_actions": [
+              "READ_GOVERNED_STATE",
+              "PROPOSE_WORK",
+              "CREATE_HYPOTHESIS",
+              "DROP_HYPOTHESIS",
+              "MUTATE_HYPOTHESIS",
+              "MUTATE_MECHANISM",
+              "MUTATE_EXPLORATORY_METRIC",
+              "CREATE_BRANCH",
+              "RUN_PILOT",
+              "RUN_ABLATION",
+              "SPAWN_BOUNDED_WORKERS",
+              "PAUSE_EXECUTION",
+              "CANCEL_EXECUTION",
+              "RECOVER_OPERATIONAL"
+            ],
+            "deny_domain_actions": [
+              "CONSUME_PROTECTED_CONFIRMATORY",
+              "EMIT_FORMAL_SCIENTIFIC_VERDICT",
+              "RETROACTIVE_PREREGISTRATION",
+              "DELETE_SCIENTIFIC_LINEAGE"
+            ]
+          },
+          "budget_overlay": {
+            "requirements": [
+              "protected confirmatory consumption ceiling is zero",
+              "search/retry/worker fanout remains bounded by parent BudgetEnvelope"
+            ]
+          },
+          "autonomy_policy": {
+            "auto_actions": [
+              "hypothesis search",
+              "mechanism search",
+              "pilot",
+              "ablation",
+              "bounded branch creation",
+              "bounded worker decomposition",
+              "retry",
+              "replan"
+            ],
+            "principle": "LARGE_SEARCH_FREEDOM_SMALL_CLAIM_AUTHORITY"
+          },
+          "mutation_policy": {
+            "scientific_normative_mutation": "ALLOWED_WITH_NEW_REVISION_AND_APPEND_ONLY_HISTORY",
+            "retroactive_preregistration": "FORBIDDEN",
+            "deletion_of_failed_branch": "FORBIDDEN"
+          },
+          "protected_resource_policy": {
+            "allowed_classes": [
+              "UNPROTECTED",
+              "DEVELOPMENT"
+            ],
+            "forbidden_classes": [
+              "CALIBRATION",
+              "PROTECTED_CONFIRMATORY"
+            ],
+            "fresh_confirmatory_namespace_must_remain_pristine": true
+          },
+          "lineage_policy": {
+            "exploratory_findings_append_only": true,
+            "failed_hypotheses_preserved": true,
+            "no_formal_confirmatory_PASS_FAIL": true,
+            "post_hoc_findings_must_be_labeled_exploratory": true
+          },
+          "approval_policy": {
+            "profile_activation": "AUTO_ALLOWED_WHEN_EXACT_TRANSITION_CONDITIONS_PASS",
+            "authority_or_budget_expansion": "HUMAN_ACTION_IF_PARENT_POLICY_REQUIRES"
+          },
+          "retry_recovery_policy": {
+            "retry": "ALLOWED_WITHIN_BUDGET",
+            "replan": "ALLOWED",
+            "protected_evidence": "NEVER_USED_FOR_RETRY_OR_SELECTION"
+          },
+          "claim_permission_policy": {
+            "max_candidate_claim_class": "EXPLORATORY_FINDING",
+            "formal_scientific_verdict": "FORBIDDEN",
+            "proof_language": "FORBIDDEN"
+          }
+        },
+        "transition_edges": [
+          {
+            "target_profile_ref": {
+              "domain_id": "research.full-cycle",
+              "profile_id": "measurement",
+              "profile_version": "1.0.0",
+              "profile_hash": "619a6a7ea903b4ad736222d89d92f23bfd58adff36dd31a6c3e69fd3150691a6"
+            },
+            "condition_codes": [
+              "MECHANISM_OR_QUESTION_SELECTED",
+              "MEASUREMENT_OBJECT_DEFINED",
+              "MEASUREMENT_PLAN_READY",
+              "PROTECTED_CONFIRMATORY_NAMESPACE_PRISTINE"
+            ],
+            "disposition": "AUTO_ALLOWED",
+            "required_human_action_kind": null
+          }
+        ]
+      }
+    },
+    "research.triage": {
+      "canonical_key": "research.triage",
+      "expected_profile_hash": "2aa6068a82ab9b274cd9d9f5700b2166d499d2d8a8554c8b6e23be6b95aa99ef",
+      "definition": {
+        "domain_id": "research.full-cycle",
+        "profile_id": "triage",
+        "version": "1.0.0",
+        "policy": {
+          "authority_overlay": {
+            "allow_domain_actions": [
+              "READ_GOVERNED_STATE",
+              "PROPOSE_WORK",
+              "DIAGNOSE_OPERATIONAL",
+              "REPAIR_OPERATIONAL",
+              "REROUTE_OPERATIONAL",
+              "RECOVER_CHECKPOINT",
+              "PAUSE_EXECUTION",
+              "CANCEL_EXECUTION",
+              "COLLECT_OPERATIONAL_EVIDENCE"
+            ],
+            "deny_domain_actions": [
+              "MUTATE_SCIENTIFIC_NORMATIVE",
+              "CONSUME_CALIBRATION",
+              "CONSUME_PROTECTED_CONFIRMATORY",
+              "EMIT_FORMAL_SCIENTIFIC_VERDICT",
+              "RETROACTIVE_PREREGISTRATION"
+            ]
+          },
+          "budget_overlay": {
+            "requirements": [
+              "calibration consumption ceiling is zero",
+              "protected confirmatory consumption ceiling is zero",
+              "operational work remains within parent BudgetEnvelope"
+            ]
+          },
+          "autonomy_policy": {
+            "auto_actions": [
+              "diagnose",
+              "inspect",
+              "bounded repair",
+              "reroute when preauthorized",
+              "checkpoint recovery"
+            ],
+            "forbidden_auto_actions": [
+              "scientific hypothesis change",
+              "scientific claim elevation",
+              "protected evidence access"
+            ]
+          },
+          "mutation_policy": {
+            "operational_mutation": "ALLOWED_WITHIN_AUTHORITY",
+            "scientific_normative_mutation": "FORBIDDEN"
+          },
+          "protected_resource_policy": {
+            "allowed_classes": [
+              "UNPROTECTED"
+            ],
+            "forbidden_classes": [
+              "DEVELOPMENT",
+              "CALIBRATION",
+              "PROTECTED_CONFIRMATORY"
+            ],
+            "note": "triage may inspect operational metadata but not scientific payloads unless separately classified unprotected"
+          },
+          "lineage_policy": {
+            "operational_events": "AUDIT_OR_OPERATIONAL_LINEAGE_ONLY",
+            "scientific_lineage": "must not receive infrastructure/code/runtime PASS or FAIL",
+            "operational_failure_not_scientific_failure": true
+          },
+          "approval_policy": {
+            "profile_activation": "INITIAL_OR_AUTO_ALLOWED_FROM_PROJECT_BOOTSTRAP",
+            "authority_or_budget_expansion": "HUMAN_ACTION_IF_PARENT_POLICY_REQUIRES"
+          },
+          "retry_recovery_policy": {
+            "operational_retry": "ALLOWED_WITHIN_BUDGET",
+            "scientific_retry": "NOT_APPLICABLE"
+          },
+          "claim_permission_policy": {
+            "max_candidate_claim_class": "OPERATIONAL_OBSERVATION_ONLY",
+            "formal_scientific_verdict": "FORBIDDEN"
+          }
+        },
+        "transition_edges": [
+          {
+            "target_profile_ref": {
+              "domain_id": "research.full-cycle",
+              "profile_id": "exploratory",
+              "profile_version": "1.0.0",
+              "profile_hash": "90114f02baee23f4c6c8ec5eb9b817cd5c3f332dbe014c38595254e20037373d"
+            },
+            "condition_codes": [
+              "OPERATIONAL_BLOCKER_CLEARED",
+              "SCIENTIFIC_WORK_AUTHORIZED",
+              "PROTECTED_CONFIRMATORY_NAMESPACE_PRISTINE"
+            ],
+            "disposition": "AUTO_ALLOWED",
+            "required_human_action_kind": null
+          }
+        ]
+      }
+    }
+  },
+  "frozen_source": {
+    "p2_definitions_blob": "fe83c0c638baee9912aa6b15f82bee1c19c2267a",
+    "p2_start_head": "148cbc1e8f7a929fae44895576f3d713d6b26efa"
+  }
+}
