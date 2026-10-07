@@ -1,0 +1,79 @@
+{
+  "gate": "GWF_VNEXT_P3_G2E_SEMANTIC_RUNTIME_RECONCILIATION_IMPLEMENTATION_STATIC_PREFLIGHT_AND_EXECUTION_LOCK",
+  "status": "PASS_EXECUTION_LOCKED",
+  "created_at": "2026-10-07",
+  "branch": "pivot/gwf-autonomous-research-stack-v1",
+  "p3_contract_head": "03999e8a76da532c9e8cb65344858b149ad59a8b",
+  "p3_manifest_blob": "57917853b838bc1b62da46e7336baa0bcd11bf11",
+  "p3_preregistration_blob": "20be52b0239b81966dc09935220515c5ae1ae1a7",
+  "p3_qa_blob": "07d90ee156137703c6f236a610c8d9272fe69160",
+  "canonical_g2e_provider_neutral_baseline": "6e9c518671c3f9ba140daa798458b37bee83647c",
+  "qualified_implementation_head": "8b8c93a8ffca8dee1db0041993922e79099723ba",
+  "implementation_blobs": {
+    "src/gwr/g2e_bridge_vnext.py": "a6943efa64002bbcac1332f9ef87cf47275842d4",
+    "tests/test_gwf_vnext_p3_g2e_reconciliation.py": "1831241912cfd943be577ab38c416f71b724111e",
+    "scripts/pivot/gwf_vnext_p3_static_preflight.py": "78dfaad8762904ec30063a375fe4d82fa1a9e08e",
+    ".github/workflows/gwf-vnext-p3-g2e-reconciliation.yml": "69618c1e25e8cd1d96bac228e53acda54ab58afb"
+  },
+  "qualification": {
+    "run_id": 37610267677,
+    "head_sha": "8b8c93a8ffca8dee1db0041993922e79099723ba",
+    "conclusion": "success",
+    "checks": {
+      "static_contract_hash_scope_preflight": "PASS",
+      "forty_preregistered_negative_tests_and_positive_bridge_fixtures": "PASS",
+      "p1_p2_locked_regressions": "PASS",
+      "core_governance_regressions": "PASS",
+      "python_compile_preflight": "PASS"
+    }
+  },
+  "preserved_locks": {
+    "p1": true,
+    "p2": true,
+    "p1_lock_artifact_blob": "ecfc8435f0f381d0a2edfac8575cbbc09a87abe3",
+    "p2_lock_artifact_blob": "25660c52526923d557224ac9fbc9abeae23adcc4"
+  },
+  "implemented_scope": [
+    "Provider-neutral G2E exact-ref validation and mapping records.",
+    "Per-scope active mirror uniqueness and explicit hash-domain separation.",
+    "ProofObligation/ExecutionAttempt to WorkAssignment reconciliation.",
+    "One G2E attempt to one active WorkAssignment dispatch guard.",
+    "AgentBinding to ExecutorBinding identity/capability/equivalence/authority reconciliation.",
+    "QualificationAuthorityGrant operational-use firewall.",
+    "Protected-resource freshness monotonicity and fail-closed uncertainty.",
+    "Candidate-evidence validation without admission authority.",
+    "Adjudication input and semantic-authority firewalls.",
+    "Independence-policy preservation.",
+    "Normative revision/successor and checkpoint exact-ref validation.",
+    "G2E source-classification import firewall."
+  ],
+  "locked_invariants": [
+    "G2E canonical IDs, revisions, and content hashes remain semantic authority.",
+    "GWF runtime IDs and hashes remain mappings only.",
+    "G2E AgentBinding is not replaced by GWF ExecutorBinding.",
+    "G2E AgentCapabilityManifest is distinct from GWF execution-environment capability identity.",
+    "Material executor substitution requires a new G2E ExecutionAttempt.",
+    "GWF runtime retry cannot implicitly create a replacement G2E attempt.",
+    "GWF operational completion cannot admit G2E evidence or emit scientific verdicts.",
+    "Protected-resource freshness never moves backward; uncertain access fails closed to EXPOSED.",
+    "Only G2E admission semantics may move candidate evidence to ADMITTED.",
+    "Only ADMITTED G2E evidence may enter adjudication.",
+    "Independent QA remains governed by frozen G2E IndependencePolicy, not provider/model difference.",
+    "P1 and P2 execution locks remain unchanged."
+  ],
+  "explicitly_not_authorized": [
+    "Codex adapter integration",
+    "RemoteMCP adapter integration",
+    "Mission Control UI refactor",
+    "real research project execution",
+    "real software project execution",
+    "protected confirmatory evidence consumption",
+    "provider-specific execution semantics",
+    "transport-experiment import as canonical semantic core"
+  ],
+  "lock_semantics": [
+    "Any change to a bound P3 implementation blob invalidates this execution lock.",
+    "Any change to the frozen P3 manifest/preregistration/QA contract requires new contract revision and requalification.",
+    "This lock qualifies the provider-neutral reconciliation bridge only and does not authorize execution-environment adapters or substantive research/software claims."
+  ]
+}
