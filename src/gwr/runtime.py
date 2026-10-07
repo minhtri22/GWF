@@ -24,6 +24,7 @@ from .document_state import DocumentLifecycleValidityService
 from .document_authority import DocumentAuthorityService
 from .document_relation import DocumentRelationService
 from .document_change import DocumentChangeClassificationService
+from .governance_vnext import VNextGovernanceService
 
 class GovernedWorkflowRuntime:
     def __init__(self, domain: str|DomainPackage, db_path=":memory:", *, auth_secret=None, object_store_root=None, observer=None, observability_path=None):
@@ -49,6 +50,7 @@ class GovernedWorkflowRuntime:
         self.domains=DomainRegistryService(self.db,self.tenancy)
         self.project_governance=ProjectGovernanceService(self.db,self.tenancy,self.governance)
         self.governance.bind_project_governance(self.project_governance)
+        self.vnext_governance=VNextGovernanceService(self.db,self.governance)
         self.knowledge.bind_project_governance(self.project_governance)
         self.execution.bind_project_governance(self.project_governance)
         self.distributed.bind_project_governance(self.project_governance)
