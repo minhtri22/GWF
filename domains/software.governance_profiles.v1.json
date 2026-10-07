@@ -1,0 +1,372 @@
+{
+  "schema_id": "GWF-DOMAIN-GOVERNANCE-PROFILES-v1",
+  "domain_id": "software.delivery",
+  "source_domain_file": "domains/software.workflow.yaml",
+  "source_domain_version": "0.1.0",
+  "profile_order": [
+    "software.triage",
+    "software.development",
+    "software.qualification",
+    "software.release"
+  ],
+  "transition_topology": "ACYCLIC_FORWARD_ONLY",
+  "later_operational_incidents": "RECOVER_WITHIN_ACTIVE_PROFILE_NOT_TRIAGE_DOWNGRADE",
+  "protected_resource_classes": [],
+  "profiles": {
+    "software.release": {
+      "canonical_key": "software.release",
+      "expected_profile_hash": "7c8ca2a092141297f0da8caf2b80a4fcd04eb830e900a5eface9e11e289d1388",
+      "definition": {
+        "domain_id": "software.delivery",
+        "profile_id": "release",
+        "version": "1.0.0",
+        "policy": {
+          "authority_overlay": {
+            "allow_domain_actions": [
+              "READ_GOVERNED_STATE",
+              "VERIFY_EXACT_RELEASE_CANDIDATE",
+              "PROPOSE_RELEASE",
+              "EXECUTE_PREAUTHORIZED_RELEASE_STEP",
+              "COLLECT_RELEASE_EVIDENCE",
+              "PAUSE_EXECUTION",
+              "CANCEL_EXECUTION"
+            ],
+            "deny_domain_actions": [
+              "MUTATE_PRODUCT_CODE",
+              "EXPAND_SCOPE",
+              "SILENT_CANDIDATE_SUBSTITUTION",
+              "SELF_APPROVE_RELEASE",
+              "REWRITE_PRIOR_QUALIFICATION"
+            ]
+          },
+          "budget_overlay": {
+            "requirements": [
+              "release actions remain within exact frozen budget and external-action limits"
+            ]
+          },
+          "autonomy_policy": {
+            "auto_actions": [
+              "read-only exact-SHA verification",
+              "preauthorized non-destructive packaging checks"
+            ],
+            "forbidden_auto_actions": [
+              "merge",
+              "deploy",
+              "publish",
+              "destructive external mutation",
+              "candidate code repair"
+            ]
+          },
+          "mutation_policy": {
+            "candidate_sha": "FROZEN",
+            "product_code": "FORBIDDEN",
+            "release_metadata": "only non-semantic changes allowed if policy explicitly permits",
+            "code_change_needed": "CREATE_SUCCESSOR_DEVELOPMENT_CYCLE"
+          },
+          "protected_resource_policy": {
+            "release_credentials": "opaque refs only; access requires exact authority",
+            "external_production_targets": "protected external resources; explicit human authorization required"
+          },
+          "lineage_policy": {
+            "release_and_merge_records_append_only": true,
+            "post_release_fix": "new successor development cycle; prior release record remains immutable"
+          },
+          "approval_policy": {
+            "profile_activation": "HUMAN_APPROVAL_REQUIRED",
+            "human_action_kind": "SOFTWARE_RELEASE_PROMOTION",
+            "merge_deploy_publish": "HUMAN_ACTION_REQUIRED_UNLESS_SEPARATELY_PREAUTHORIZED_BY_EXACT_POLICY"
+          },
+          "retry_recovery_policy": {
+            "same_exact_candidate_verification": "ALLOWED_WITHIN_BUDGET",
+            "candidate_change": "NEW_QUALIFICATION_REQUIRED",
+            "external_action_retry": "only when idempotency/effect ledger proves safe"
+          },
+          "claim_permission_policy": {
+            "max_candidate_claim_class": "RELEASE_CANDIDATE",
+            "release_acceptance": "requires exact gates plus authoritative approval; profile completion alone is insufficient"
+          }
+        },
+        "transition_edges": []
+      }
+    },
+    "software.qualification": {
+      "canonical_key": "software.qualification",
+      "expected_profile_hash": "cb6177440faccbacde9f588bbdf2c80ed61f8728a2b0b2fdb90c5aa2cd3cf2c4",
+      "definition": {
+        "domain_id": "software.delivery",
+        "profile_id": "qualification",
+        "version": "1.0.0",
+        "policy": {
+          "authority_overlay": {
+            "allow_domain_actions": [
+              "READ_GOVERNED_STATE",
+              "RUN_TESTS",
+              "RUN_REGRESSIONS",
+              "RUN_INDEPENDENT_QA",
+              "COLLECT_QUALIFICATION_EVIDENCE",
+              "BOUNDED_REPAIR_WITHIN_SCOPE",
+              "PAUSE_EXECUTION",
+              "CANCEL_EXECUTION"
+            ],
+            "deny_domain_actions": [
+              "EXPAND_SCOPE",
+              "SILENT_CANDIDATE_SUBSTITUTION",
+              "EMIT_RELEASE_ACCEPTED"
+            ]
+          },
+          "budget_overlay": {
+            "requirements": [
+              "qualification retries and bounded repairs remain within parent budget"
+            ]
+          },
+          "autonomy_policy": {
+            "auto_actions": [
+              "test",
+              "regression",
+              "independent QA dispatch",
+              "bounded repair within frozen scope with QA reset"
+            ],
+            "forbidden_auto_actions": [
+              "scope expansion",
+              "release promotion",
+              "merge/deploy/publish"
+            ]
+          },
+          "mutation_policy": {
+            "scope_lock": "FROZEN",
+            "candidate_change": "ALLOWED_ONLY_AS_BOUNDED_REPAIR_WITH_NEW_CANDIDATE_IDENTITY_AND_FULL_AFFECTED_QA_RESET",
+            "material_scope_change": "CREATE_SUCCESSOR_DEVELOPMENT_CYCLE"
+          },
+          "protected_resource_policy": {
+            "production_targets": "FORBIDDEN",
+            "release_credentials": "FORBIDDEN"
+          },
+          "lineage_policy": {
+            "qa_failures_append_only": true,
+            "candidate_sha_change_invalidates_prior_candidate_qa": true,
+            "qualification_failure_not_release_acceptance": true
+          },
+          "approval_policy": {
+            "profile_activation": "AUTO_ALLOWED_WHEN_EXACT_TRANSITION_CONDITIONS_PASS",
+            "transition_to_release": "HUMAN_APPROVAL_REQUIRED"
+          },
+          "retry_recovery_policy": {
+            "test_retry": "ALLOWED_FOR_IDENTICAL_CANDIDATE_OR_AFTER_EXPLICIT_BOUNDED_REPAIR",
+            "bounded_repair": "must increment candidate identity and rerun affected qualification"
+          },
+          "claim_permission_policy": {
+            "max_candidate_claim_class": "QUALIFIED_CANDIDATE",
+            "release_acceptance": "FORBIDDEN"
+          }
+        },
+        "transition_edges": [
+          {
+            "target_profile_ref": {
+              "domain_id": "software.delivery",
+              "profile_id": "release",
+              "profile_version": "1.0.0",
+              "profile_hash": "7c8ca2a092141297f0da8caf2b80a4fcd04eb830e900a5eface9e11e289d1388"
+            },
+            "condition_codes": [
+              "EXACT_CANDIDATE_SHA_FROZEN",
+              "REQUIRED_TEST_MATRIX_PASS",
+              "INDEPENDENT_QA_PASS",
+              "ROLLBACK_PLAN_BOUND",
+              "RELEASE_EFFECT_BOUNDARY_FROZEN"
+            ],
+            "disposition": "HUMAN_APPROVAL_REQUIRED",
+            "required_human_action_kind": "SOFTWARE_RELEASE_PROMOTION"
+          }
+        ]
+      }
+    },
+    "software.development": {
+      "canonical_key": "software.development",
+      "expected_profile_hash": "a84df83e51d4a598d2a6f53a7b29f93bd407699cc0cc40e3bac01cdaa7dfd949",
+      "definition": {
+        "domain_id": "software.delivery",
+        "profile_id": "development",
+        "version": "1.0.0",
+        "policy": {
+          "authority_overlay": {
+            "allow_domain_actions": [
+              "READ_GOVERNED_STATE",
+              "PROPOSE_WORK",
+              "MUTATE_PRODUCT_CODE_WITHIN_SCOPE",
+              "ADD_TESTS",
+              "RUN_LOCAL_TESTS",
+              "RUN_REGRESSIONS",
+              "CREATE_BRANCH",
+              "SPAWN_BOUNDED_WORKERS",
+              "PAUSE_EXECUTION",
+              "CANCEL_EXECUTION"
+            ],
+            "deny_domain_actions": [
+              "EXPAND_SCOPE_WITHOUT_APPROVAL",
+              "MERGE",
+              "DEPLOY",
+              "PUBLISH",
+              "EMIT_RELEASE_ACCEPTED"
+            ]
+          },
+          "budget_overlay": {
+            "requirements": [
+              "implementation fanout, retries and compute remain within parent budget"
+            ]
+          },
+          "autonomy_policy": {
+            "auto_actions": [
+              "implementation within frozen scope",
+              "tests",
+              "bounded refactor",
+              "bounded worker decomposition",
+              "repair/retry"
+            ],
+            "forbidden_auto_actions": [
+              "scope expansion",
+              "release promotion",
+              "production mutation"
+            ]
+          },
+          "mutation_policy": {
+            "product_code": "ALLOWED_WITHIN_APPROVED_SCOPE",
+            "scope_lock": "IMMUTABLE_WITHOUT_AUTHORIZED_REVISION",
+            "out_of_scope_change": "FORBIDDEN"
+          },
+          "protected_resource_policy": {
+            "production_targets": "FORBIDDEN",
+            "release_credentials": "FORBIDDEN"
+          },
+          "lineage_policy": {
+            "failed_builds_and_tests_preserved_as_operational_delivery_evidence": true,
+            "implementation_success_not_release_acceptance": true
+          },
+          "approval_policy": {
+            "profile_activation": "AUTO_ALLOWED_WHEN_EXACT_TRANSITION_CONDITIONS_PASS",
+            "scope_expansion": "HUMAN_ACTION_IF_NORMATIVE_SCOPE_CHANGE"
+          },
+          "retry_recovery_policy": {
+            "retry_and_replan": "ALLOWED_WITHIN_FROZEN_SCOPE_AND_BUDGET",
+            "scope_change": "NOT_A_RETRY"
+          },
+          "claim_permission_policy": {
+            "max_candidate_claim_class": "IMPLEMENTATION_RESULT",
+            "qualification_or_release_acceptance": "FORBIDDEN"
+          }
+        },
+        "transition_edges": [
+          {
+            "target_profile_ref": {
+              "domain_id": "software.delivery",
+              "profile_id": "qualification",
+              "profile_version": "1.0.0",
+              "profile_hash": "cb6177440faccbacde9f588bbdf2c80ed61f8728a2b0b2fdb90c5aa2cd3cf2c4"
+            },
+            "condition_codes": [
+              "SOFTWARE_SCOPE_LOCK_FROZEN",
+              "IMPLEMENTATION_CANDIDATE_FROZEN",
+              "LOCAL_TESTS_PASS",
+              "REGRESSION_BASELINE_PASS",
+              "INDEPENDENCE_PLAN_BOUND"
+            ],
+            "disposition": "AUTO_ALLOWED",
+            "required_human_action_kind": null
+          }
+        ]
+      }
+    },
+    "software.triage": {
+      "canonical_key": "software.triage",
+      "expected_profile_hash": "abbf4b6c440b362194e2b760e9c0c6d7a9eded589731ba0199aa72ea7084e724",
+      "definition": {
+        "domain_id": "software.delivery",
+        "profile_id": "triage",
+        "version": "1.0.0",
+        "policy": {
+          "authority_overlay": {
+            "allow_domain_actions": [
+              "READ_GOVERNED_STATE",
+              "DIAGNOSE_REPOSITORY",
+              "DIAGNOSE_BUILD_ENVIRONMENT",
+              "REPAIR_TOOLING_OR_ENVIRONMENT",
+              "RECOVER_CHECKPOINT",
+              "PAUSE_EXECUTION",
+              "CANCEL_EXECUTION"
+            ],
+            "deny_domain_actions": [
+              "MUTATE_PRODUCT_BEHAVIOR",
+              "EXPAND_SCOPE",
+              "MERGE",
+              "DEPLOY",
+              "PUBLISH",
+              "EMIT_RELEASE_ACCEPTED"
+            ]
+          },
+          "budget_overlay": {
+            "requirements": [
+              "operational diagnosis/repair remains within parent budget"
+            ]
+          },
+          "autonomy_policy": {
+            "auto_actions": [
+              "inspect",
+              "diagnose",
+              "repair non-product environment",
+              "recover"
+            ],
+            "forbidden_auto_actions": [
+              "product feature mutation",
+              "scope change",
+              "release action"
+            ]
+          },
+          "mutation_policy": {
+            "environment_and_tooling": "ALLOWED_IF_PRODUCT_SEMANTICS_UNCHANGED",
+            "product_code": "FORBIDDEN_EXCEPT_NON_SEMANTIC_INFRASTRUCTURE_FIX_EXPLICITLY_CLASSIFIED_AS_SUCH"
+          },
+          "protected_resource_policy": {
+            "production_targets": "FORBIDDEN",
+            "release_credentials": "FORBIDDEN"
+          },
+          "lineage_policy": {
+            "operational_failures_not_product_acceptance_failures": true,
+            "triage_records": "operational/audit lineage"
+          },
+          "approval_policy": {
+            "profile_activation": "INITIAL_OR_AUTO_ALLOWED_FROM_PROJECT_BOOTSTRAP",
+            "authority_or_budget_expansion": "HUMAN_ACTION_IF_PARENT_POLICY_REQUIRES"
+          },
+          "retry_recovery_policy": {
+            "operational_retry": "ALLOWED_WITHIN_BUDGET",
+            "delivery_semantic_retry": "NOT_APPLICABLE"
+          },
+          "claim_permission_policy": {
+            "max_candidate_claim_class": "OPERATIONAL_OBSERVATION_ONLY",
+            "qualification_or_release_acceptance": "FORBIDDEN"
+          }
+        },
+        "transition_edges": [
+          {
+            "target_profile_ref": {
+              "domain_id": "software.delivery",
+              "profile_id": "development",
+              "profile_version": "1.0.0",
+              "profile_hash": "a84df83e51d4a598d2a6f53a7b29f93bd407699cc0cc40e3bac01cdaa7dfd949"
+            },
+            "condition_codes": [
+              "REPOSITORY_BASELINE_VERIFIED",
+              "SOFTWARE_SCOPE_AUTHORIZED",
+              "OPERATIONAL_BLOCKER_CLEARED"
+            ],
+            "disposition": "AUTO_ALLOWED",
+            "required_human_action_kind": null
+          }
+        ]
+      }
+    }
+  },
+  "frozen_source": {
+    "p2_definitions_blob": "fe83c0c638baee9912aa6b15f82bee1c19c2267a",
+    "p2_start_head": "148cbc1e8f7a929fae44895576f3d713d6b26efa"
+  }
+}
