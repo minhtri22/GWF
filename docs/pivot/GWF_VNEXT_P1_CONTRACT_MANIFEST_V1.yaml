@@ -1,0 +1,432 @@
+schema_id: GWF-VNEXT-GOVERNANCE-CONTRACT-v1
+contract_version: 1.0.0
+status: FROZEN_CANDIDATE
+scope: provider_neutral_governance_kernel
+hash_semantics:
+  canonicalization: json_sort_keys_compact_utf8
+  digest: sha256
+  runtime_reference: src/gwr/utils.py::canonical_json+content_hash
+
+global_invariants:
+  - transport_is_not_authority
+  - role_is_not_identity
+  - executor_success_is_not_domain_pass
+  - authority_only_narrows_downward
+  - budget_only_narrows_without_explicit_authorized_change
+  - authorized_payload_is_hash_bound
+  - normative_change_after_authorization_requires_new_revision_and_reauthorization
+  - runtime_foreign_ids_never_replace_canonical_gwf_or_g2e_ids
+  - secrets_are_never_serialized_into_governance_contracts
+  - browser_ui_is_non_authoritative
+  - domain_semantics_do_not_leak_into_core
+  - operational_failure_does_not_imply_scientific_failure
+
+objects:
+  GovernanceProfileRef:
+    owner: GWF_CORE_REFERENCE_DOMAIN_DEFINITION
+    purpose: Select one immutable domain-owned governance profile definition.
+    immutable_fields:
+      - domain_id
+      - profile_id
+      - profile_version
+      - profile_hash
+    fields:
+      domain_id: {type: string, required: true}
+      profile_id: {type: string, required: true}
+      profile_version: {type: string, required: true}
+      profile_hash: {type: sha256, required: true}
+    rules:
+      - profile_definition_must_resolve_exact_hash
+      - no_floating_current_profile_reference
+      - core_evaluates_generic_policy_only
+      - profile_meaning_is_owned_by_domain_package
+
+  GovernanceProfileDefinition:
+    owner: DOMAIN_PACKAGE
+    purpose: Domain-owned policy overlay compiled by GWF core.
+    immutable_fields:
+      - domain_id
+      - profile_id
+      - version
+      - policy
+      - transition_edges
+    fields:
+      domain_id: {type: string, required: true}
+      profile_id: {type: string, required: true}
+      version: {type: string, required: true}
+      policy:
+        type: object
+        required: true
+        allowed_sections:
+          - authority_overlay
+          - budget_overlay
+          - autonomy_policy
+          - mutation_policy
+          - protected_resource_policy
+          - lineage_policy
+          - approval_policy
+          - retry_recovery_policy
+          - claim_permission_policy
+      transition_edges:
+        type: array
+        required: true
+        item_fields:
+          - target_profile_ref
+          - condition_codes
+          - disposition
+          - required_human_action_kind
+    rules:
+      - no_provider_specific_execution_code
+      - no_secret_material
+      - transition_order_is_explicit_not_inferred_from_profile_name
+
+  GovernanceTransitionProposal:
+    owner: GWF_CORE
+    purpose: Frozen proposal to change active GovernanceProfileRef or profile-scoped policy state.
+    states: [DRAFT, FROZEN, EVALUATED, RESOLVED, CANCELLED]
+    dispositions:
+      - AUTO_ALLOWED
+      - HUMAN_APPROVAL_REQUIRED
+      - FORBIDDEN
+      - SUCCESSOR_REQUIRED
+    immutable_after_frozen:
+      - transition_id
+      - project_id
+      - subject_ref
+      - from_profile_ref
+      - to_profile_ref
+      - proposer_actor_id
+      - reason_codes
+      - evidence_refs
+      - requested_authority_delta
+      - requested_budget_delta
+      - frozen_payload_hash
+    fields:
+      transition_id: {type: id, required: true}
+      project_id: {type: id, required: true}
+      subject_ref: {type: object_ref, required: true}
+      from_profile_ref: {type: GovernanceProfileRef, required: true}
+      to_profile_ref: {type: GovernanceProfileRef, required: true}
+      proposer_actor_id: {type: id, required: true}
+      reason_codes: {type: array_string, required: true}
+      evidence_refs: {type: array_object_ref, required: false}
+      requested_authority_delta: {type: AuthorityEnvelopeDelta, required: false}
+      requested_budget_delta: {type: BudgetEnvelopeDelta, required: false}
+      state: {type: enum, required: true}
+      disposition: {type: enum_nullable, required: false}
+      human_action_request_id: {type: id_nullable, required: false}
+      successor_ref: {type: object_ref_nullable, required: false}
+      frozen_payload_hash: {type: sha256_nullable, required: false}
+    rules:
+      - proposal_does_not_self_authorize
+      - disposition_must_be_derived_from_exact_domain_transition_edge_and_effective_policy
+      - human_required_transition_requires_durable_HumanActionRequest
+      - forbidden_transition_cannot_be_forced_by_transport_or_ui
+      - successor_required_never_rewrites_prior_terminal_lineage
+
+  AuthorityEnvelope:
+    owner: GWF_CORE
+    purpose: Frozen authority ceiling delegated to one governed scope.
+    fields:
+      authority_envelope_id: {type: id, required: true}
+      parent_authority_ref: {type: object_ref, required: true}
+      subject_actor_or_role_ref: {type: object_ref, required: true}
+      resource_selectors: {type: array, required: true}
+      allow_actions: {type: array_string, required: true}
+      deny_actions: {type: array_string, required: true}
+      conditions: {type: array, required: false}
+      expires_at: {type: timestamp_nullable, required: false}
+      payload_hash: {type: sha256, required: true}
+    composition:
+      resource_scope: intersection
+      allow_actions: intersection_with_parent_allow
+      deny_actions: union_with_parent_deny
+      conditions: conjunction
+      expiry: earliest_non_null
+    rules:
+      - deny_wins
+      - child_cannot_add_action_absent_from_parent
+      - child_cannot_expand_parent_resource_scope
+      - role_prompt_is_not_authority
+      - no_transport_can_create_authority
+
+  AuthorityEnvelopeDelta:
+    owner: GWF_CORE
+    purpose: Requested change to an existing authority envelope.
+    fields:
+      add_allow_actions: {type: array_string, required: false}
+      add_deny_actions: {type: array_string, required: false}
+      resource_scope_change: {type: object_nullable, required: false}
+      condition_change: {type: object_nullable, required: false}
+      expiry_change: {type: timestamp_nullable, required: false}
+    rules:
+      - narrowing_may_be_auto_allowed_if_policy_says_so
+      - expansion_requires_explicit_authorized_transition_or_HumanActionRequest
+      - expansion_never_implicit
+
+  BudgetEnvelope:
+    owner: GWF_CORE
+    purpose: Frozen multidimensional resource ceiling.
+    fields:
+      budget_envelope_id: {type: id, required: true}
+      parent_budget_ref: {type: object_ref_nullable, required: false}
+      limits:
+        type: array
+        required: true
+        item_fields:
+          - dimension
+          - unit
+          - ceiling
+          - enforcement
+      payload_hash: {type: sha256, required: true}
+    limit_enforcement_values: [HARD, ADVISORY]
+    composition:
+      same_dimension_ceiling: minimum
+      child_new_dimension: allowed_only_as_additional_constraint
+      omitted_child_dimension: inherit_parent
+    rules:
+      - consumed_usage_is_runtime_ledger_not_mutation_of_frozen_budget
+      - hard_limit_exceedance_blocks_further_authorized_consumption
+      - budget_expansion_requires_explicit_authorized_change
+
+  BudgetEnvelopeDelta:
+    owner: GWF_CORE
+    purpose: Requested budget change.
+    fields:
+      changes:
+        type: array
+        required: true
+        item_fields: [dimension, unit, old_ceiling, requested_ceiling, reason_code]
+    rules:
+      - lower_or_equal_ceiling_is_narrowing
+      - higher_ceiling_is_expansion
+      - expansion_requires_explicit_authorized_transition_or_HumanActionRequest
+
+  ExecutionEnvironmentRef:
+    owner: GWF_CORE_REFERENCE_ADAPTER
+    purpose: Stable provider-neutral reference to a qualified execution environment adapter.
+    immutable_fields:
+      - execution_environment_id
+      - environment_type
+      - adapter_id
+      - adapter_version
+      - adapter_hash
+      - capability_manifest_ref
+    fields:
+      execution_environment_id: {type: id, required: true}
+      environment_type: {type: string, required: true}
+      adapter_id: {type: string, required: true}
+      adapter_version: {type: string, required: true}
+      adapter_hash: {type: sha256, required: true}
+      capability_manifest_ref: {type: object_ref, required: true}
+      transport_class: {type: string, required: false}
+      locality_class: {type: string, required: false}
+      secret_connection_ref: {type: opaque_ref_nullable, required: false}
+    rules:
+      - environment_type_is_not_agent_role
+      - transport_class_is_not_authority
+      - secret_connection_ref_is_opaque_and_never_resolved_into_persisted_payload
+      - capability_manifest_must_be_qualified_and_versioned
+
+  ExecutorBinding:
+    owner: GWF_CORE
+    purpose: Governed runtime resolution of an authorized executor for a WorkAssignment.
+    binding_modes: [DYNAMIC, FROZEN]
+    statuses: [PROPOSED, RESOLVED, FROZEN, INVALIDATED, RELEASED]
+    immutable_after_resolved:
+      - executor_binding_id
+      - work_assignment_id
+      - binding_mode
+      - agent_identity
+      - execution_environment_ref
+      - capability_manifest_ref
+      - material_identity_dimensions
+      - equivalence_policy_ref
+      - authority_envelope_ref
+      - budget_envelope_ref
+      - resolved_payload_hash
+    fields:
+      executor_binding_id: {type: id, required: true}
+      work_assignment_id: {type: id, required: true}
+      binding_mode: {type: enum, required: true}
+      agent_role_ref: {type: object_ref, required: true}
+      agent_identity: {type: object, required: true}
+      execution_environment_ref: {type: ExecutionEnvironmentRef, required: true}
+      capability_manifest_ref: {type: object_ref, required: true}
+      material_identity_dimensions: {type: array_string, required: true}
+      equivalence_policy_ref: {type: object_ref_nullable, required: false}
+      authority_envelope_ref: {type: object_ref, required: true}
+      budget_envelope_ref: {type: object_ref, required: true}
+      resolved_at: {type: timestamp, required: true}
+      status: {type: enum, required: true}
+      resolved_payload_hash: {type: sha256, required: true}
+    rules:
+      - does_not_replace_G2E_AgentBinding
+      - material_substitution_never_silent
+      - frozen_binding_cannot_substitute_without_new_authorized_binding
+      - dynamic_binding_resolves_before_dispatch_and_is_immutable_within_attempt
+      - delegated_authority_cannot_exceed_assignment_authority
+      - secrets_forbidden
+
+  WorkAssignment:
+    owner: GWF_CORE
+    purpose: Governed authorization bridge from proposed work to one execution environment.
+    states:
+      - PROPOSED
+      - FROZEN
+      - AUTHORIZED
+      - DISPATCHED
+      - RUNNING
+      - VERIFYING
+      - COMPLETED
+      - BLOCKED
+      - CANCELLED
+    immutable_after_frozen:
+      - work_assignment_id
+      - revision
+      - project_id
+      - origin_refs
+      - objective
+      - agent_role_ref
+      - required_capabilities
+      - execution_environment_constraints
+      - authority_envelope_ref
+      - budget_envelope_ref
+      - protected_resource_constraints
+      - expected_outputs
+      - completion_contract
+      - independence_requirements
+      - frozen_payload_hash
+    fields:
+      work_assignment_id: {type: id, required: true}
+      revision: {type: integer, required: true}
+      project_id: {type: id, required: true}
+      origin_refs: {type: array_object_ref, required: true}
+      objective: {type: structured_object, required: true}
+      agent_role_ref: {type: object_ref, required: true}
+      required_capabilities: {type: array_string, required: true}
+      execution_environment_constraints: {type: object, required: true}
+      executor_binding_id: {type: id_nullable, required: false}
+      authority_envelope_ref: {type: object_ref, required: true}
+      budget_envelope_ref: {type: object_ref, required: true}
+      protected_resource_constraints: {type: array, required: false}
+      expected_outputs: {type: array, required: true}
+      completion_contract: {type: object, required: true}
+      independence_requirements: {type: object_nullable, required: false}
+      state: {type: enum, required: true}
+      frozen_payload_hash: {type: sha256_nullable, required: false}
+    rules:
+      - proposal_is_not_authorization
+      - PM_may_propose_but_not_self_authorize
+      - authorization_is_hash_bound
+      - normative_mutation_after_frozen_creates_new_revision_and_requires_reauthorization
+      - completion_is_operational_contract_completion_not_domain_PASS
+      - may_materialize_one_or_more_existing_GWF_WorkUnits
+      - existing_GWF_ExecutionRuns_remain_runtime_runs
+      - G2E_ProofObligation_and_G2E_ExecutionAttempt_remain_external_semantic_identities
+      - RemoteMCP_task_or_Codex_turn_is_foreign_runtime_mapping_not_assignment_identity
+
+  HumanActionRequest:
+    owner: GWF_CORE
+    purpose: Durable request for a human-authorized action; browser-independent.
+    states: [PENDING, RESOLVED, REJECTED, EXPIRED, CANCELLED]
+    fields:
+      human_action_request_id: {type: id, required: true}
+      project_id: {type: id, required: true}
+      action_kind: {type: string, required: true}
+      subject_ref: {type: object_ref, required: true}
+      proposal_ref: {type: object_ref_nullable, required: false}
+      frozen_payload_hash: {type: sha256, required: true}
+      required_authority_action: {type: string, required: true}
+      approver_constraints: {type: object, required: true}
+      reason_codes: {type: array_string, required: true}
+      expires_at: {type: timestamp_nullable, required: false}
+      state: {type: enum, required: true}
+      resolution_ref: {type: object_ref_nullable, required: false}
+    rules:
+      - does_not_replace_existing_PRIM_APPROVAL
+      - exact_payload_change_invalidates_prior_request
+      - resolution_must_reference_authoritative_approval_or_decision_record
+      - absence_of_UI_does_not_remove_or_auto_resolve_request
+      - agent_cannot_self_approve_when_policy_forbids_it
+
+derived_records:
+  EffectiveGovernancePolicy:
+    owner: GWF_CORE_DERIVED
+    purpose: Deterministic compiled view used for authorization; not independently mutable.
+    inputs:
+      - base_GWF_authority
+      - GovernanceProfileRef
+      - project_overlays
+      - active_AuthorityEnvelope
+      - active_BudgetEnvelope
+      - applicable_HumanActionRequest_resolutions
+    required_output_sections:
+      - effective_authority
+      - effective_budget
+      - autonomy_policy
+      - mutation_policy
+      - protected_resource_policy
+      - lineage_policy
+      - approval_policy
+      - retry_recovery_policy
+      - claim_permission_policy
+      - provenance
+      - compiled_hash
+    rules:
+      - deterministic_for_same_exact_inputs
+      - no_hidden_chat_context_input
+      - no_UI_state_input
+      - all_source_refs_exact_and_versioned
+
+mapping_rules:
+  existing_GWF:
+    PRIM_ACTOR: retained
+    PRIM_AUTHORITY: retained
+    PRIM_APPROVAL: retained
+    PRIM_AUDIT: retained
+    PRIM_WORKUNIT: retained
+    PRIM_RUN: retained
+    PRIM_EVIDENCE: retained
+    PRIM_CHECKPOINT: retained
+    PRIM_GATE: retained
+    PRIM_DECISION: retained
+    PRIM_FAILURE: retained
+    PRIM_RECOVERY: retained
+  vnext_additions:
+    - GovernanceProfileRef
+    - GovernanceProfileDefinition_contract
+    - GovernanceTransitionProposal
+    - AuthorityEnvelope
+    - BudgetEnvelope
+    - ExecutionEnvironmentRef
+    - ExecutorBinding
+    - WorkAssignment
+    - HumanActionRequest
+    - EffectiveGovernancePolicy_derived_view
+  forbidden_renames:
+    - GWF_AgentBinding
+  semantic_non_equivalences:
+    - WorkAssignment != WorkUnit
+    - WorkAssignment != G2E_ProofObligation
+    - WorkAssignment != RemoteMCP_task
+    - ExecutorBinding != G2E_AgentBinding
+    - ExecutionEnvironmentRef != transport
+    - ExecutionRun_success != domain_PASS
+    - HumanActionRequest != browser_modal
+    - HumanActionRequest != PRIM_APPROVAL
+
+implementation_lock:
+  allowed_in_P1:
+    - normative_contract_documents
+    - machine_readable_contract_manifest
+    - QA_of_contract_consistency
+  forbidden_in_P1:
+    - runtime_schema_migration
+    - src_gwr_implementation
+    - domain_package_mutation
+    - G2E_code_import
+    - RemoteMCP_adapter_implementation
+    - Codex_adapter_implementation
+    - browser_UI_refactor
+    - real_project_execution
