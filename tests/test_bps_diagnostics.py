@@ -248,6 +248,16 @@ def test_diagnostics_browser_ui_consumes_authoritative_projection():
     assert "word-break:break-word" in css
 
 
+def test_u16_visual_repair_is_bounded_in_final_uat_runner():
+    uat = (ROOT / "scripts" / "uiux" / "bps_current_surface_uat.ps1").read_text(
+        encoding="utf-8"
+    )
+    assert '$U16VisualRepairHead = "277dd6c32f10563ebaafca9618b3c479fcea8d41"' in uat
+    assert '$drift[0] -eq "web/styles.css"' in uat
+    assert "$postRepairDrift.Count -eq 0" in uat
+    assert 'bounded_u16_repair=$boundedU16Repair' in uat
+
+
 def test_diagnostics_route_is_registered_once():
     api_source = (ROOT / "src" / "gwr" / "api.py").read_text(encoding="utf-8")
     assert api_source.count("@app.get('/browser/diagnostics')") == 1
