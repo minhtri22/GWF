@@ -1,6 +1,6 @@
 # GWF vNext — Autonomous Research Stack Pivot Plan
 
-**Status:** PIVOT-P0 PASS / PIVOT-P1 PASS+LOCKED / PIVOT-P2 PASS+LOCKED / PIVOT-P3 contract freeze PASS / PIVOT-P3 implementation preflight authorized  
+**Status:** PIVOT-P0 PASS / PIVOT-P1 PASS+LOCKED / PIVOT-P2 PASS+LOCKED / PIVOT-P3 PASS+LOCKED / PIVOT-P4 PM protocol preregistration authorized  
 **Pivot branch:** `pivot/gwf-autonomous-research-stack-v1`  
 **Pivot base:** `feature/bps-i00-product-shell@de3247c18c1a8546db9611ecd0fdf24f827662ae`  
 **Date:** 2026-10-07
@@ -569,7 +569,7 @@ Before PIVOT-P3:
 5. preserve historical research evidence in its existing lineage;
 6. do not rewrite P5A scientific/transport history into the vNext product line.
 
-## 16. Current frontier after P3 contract freeze
+## 16. Current frontier after P3 implementation lock
 
 PIVOT-P0 is formally closed PASS.
 
@@ -577,45 +577,63 @@ PIVOT-P1 governance kernel contract + implementation are formally closed PASS an
 
 PIVOT-P2 domain-governance-profile contract + implementation are formally closed PASS and execution-locked.
 
-PIVOT-P3 G2E semantic/runtime reconciliation preregistration is formally closed PASS and contract-frozen.
+PIVOT-P3 G2E semantic/runtime reconciliation contract + provider-neutral bridge implementation are formally closed PASS and execution-locked.
 
 Authoritative P3 records:
 
 - `docs/pivot/GWF_VNEXT_P3_G2E_RECONCILIATION_MANIFEST_V1.json`;
 - `docs/pivot/GWF_VNEXT_P3_G2E_SEMANTIC_RUNTIME_RECONCILIATION_PREREGISTRATION_AND_CONTRACT_FREEZE.md`;
-- `docs/pivot/GWF_VNEXT_P3_QA_AND_FORMAL_DECISION.md`.
+- `docs/pivot/GWF_VNEXT_P3_QA_AND_FORMAL_DECISION.md`;
+- `docs/pivot/GWF_VNEXT_P3_EXECUTION_LOCK.json`;
+- `docs/pivot/P3_G2E_RECONCILIATION_IMPLEMENTATION_LOCK_CLOSURE.md`.
 
-P3 pins:
+Qualified P3 implementation:
 
-- provider-neutral qualified G2E baseline `6e9c518671c3f9ba140daa798458b37bee83647c`;
-- exact G2E semantic/core blobs;
-- exact classification of 585 G2E-related files;
-- 31 canonical-core files;
-- 2 reusable legacy-adapter files;
-- 16 qualification-test files;
-- 35 historical-evidence files;
-- 501 transport-experiment files;
-- 0 unclassified files;
-- G2E semantic ownership vs GWF governance/runtime ownership;
+- exact implementation HEAD: `8b8c93a8ffca8dee1db0041993922e79099723ba`;
+- first exact-head qualification run: `37610267677` — SUCCESS;
+- execution-lock commit: `fc504d9976dd80f4a28a82fa7923a8255c5ce33a`;
+- execution-lock blob: `60aa70e8f03a2c4f11e5693bf58cf82b5806b24e`;
+- post-lock exact-head revalidation run: `37610409230` — SUCCESS.
+
+P3 qualifies:
+
+- provider-neutral G2E exact-ref and hash-domain reconciliation;
+- ProofObligation/ExecutionAttempt ↔ WorkAssignment reconciliation;
 - G2E AgentBinding ↔ GWF ExecutorBinding reconciliation without semantic collision;
-- Goal/Claim/Proof/Attempt cardinality;
-- G2E/GWF revision and hash-domain separation;
-- protected-resource bridge;
-- evidence-admission bridge;
-- independent QA/reviewer mapping;
-- 40 preregistered implementation negative tests.
+- agent-capability vs execution-environment-capability separation;
+- authority non-escalation and qualification-authority firewall;
+- protected-resource monotonic/fail-closed bridge;
+- candidate-evidence/adjudication firewalls;
+- independence-policy preservation;
+- normative revision/successor and checkpoint exact-ref enforcement;
+- source-classification import firewall;
+- all 40 preregistered negative tests.
 
 The next authorized bounded phase is:
 
-`GWF_VNEXT_P3_G2E_SEMANTIC_RUNTIME_RECONCILIATION_IMPLEMENTATION_STATIC_PREFLIGHT_AND_EXECUTION_LOCK`
+`GWF_VNEXT_P4_PM_WORKASSIGNMENT_PROTOCOL_PREREGISTRATION_AND_CONTRACT_FREEZE`
 
-That phase may implement only the frozen provider-neutral G2E↔GWF semantic/runtime bridge and its qualification fixtures.
+P4 must qualify the ChatGPT App PM role as a **proposal/decomposition/escalation role**, not semantic or execution authority.
+
+P4 preregistration may freeze:
+
+- PM-visible governed state contract;
+- Goal/Claim/Proof/WorkAssignment proposal inputs;
+- bounded decomposition rules;
+- worker/QA role-request semantics;
+- candidate executor-class selection requests;
+- budget/authority/resource-aware proposal constraints;
+- HumanActionRequest escalation semantics;
+- PM handoff/recovery identity;
+- PM proposal ↔ GWF WorkAssignment cardinality and revision rules;
+- explicit PM prohibition on scientific verdict, evidence admission, protected-resource consumption, or direct runtime dispatch.
 
 Do **not** yet:
 
-- integrate Codex adapter behavior;
+- integrate ChatGPT App/model-specific runtime code;
 - integrate RemoteMCP adapter behavior;
-- import transport-experiment/P5A material as semantic core;
+- integrate Codex adapter behavior;
+- implement P5/P6 execution environments;
 - refactor Mission Control UI;
 - run a real research/software project;
 - consume protected evidence.
