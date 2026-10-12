@@ -1,0 +1,105 @@
+{
+  "gate": "GWF_VNEXT_P4_PM_WORKASSIGNMENT_PROTOCOL_IMPLEMENTATION_STATIC_PREFLIGHT_AND_EXECUTION_LOCK",
+  "status": "PASS_EXECUTION_LOCKED",
+  "created_at": "2026-10-12",
+  "branch": "pivot/gwf-autonomous-research-stack-v1",
+  "p4_contract_head": "4cd2e8b10bfbbad04ff820ce7818f7ef4bc83775",
+  "p4_contract": {
+    "manifest_blob": "2439db2b21d75075eb52ff366a36d88eb77fa5ea",
+    "preregistration_blob": "e9a8e67b02b40dabce1e5cfebd02b9f843cd86b5",
+    "qa_formal_decision_blob": "5c43b60fea73bad7f5c06c37071c5372a20c4fda"
+  },
+  "qualified_implementation_head": "bc33e85d3afc70c2bd9595e403c0eb1c982e4979",
+  "qualified_implementation_tree": "e532c78d533a59828a2dace5b5650dd5c4ae3eff",
+  "implementation_blobs": {
+    "src/gwr/pm_workassignment_vnext.py": "502e6c6b9d4b17a80b75dcff9bd6755349152021",
+    "tests/test_gwf_vnext_p4_pm_workassignment_protocol.py": "ce63a3858700ebc472bb71982177d04122344f70",
+    "scripts/pivot/gwf_vnext_p4_static_preflight.py": "a43c49ac42f72d6d86dc7cf8887b51222bc2c19e",
+    ".github/workflows/gwf-vnext-p4-pm-workassignment-protocol.yml": "47a5a9ae8ff4527441fd311047eb664fcb2dbfc3"
+  },
+  "preserved_execution_locks": {
+    "p1_lock_artifact_blob": "ecfc8435f0f381d0a2edfac8575cbbc09a87abe3",
+    "p2_lock_artifact_blob": "25660c52526923d557224ac9fbc9abeae23adcc4",
+    "p3_lock_artifact_blob": "60aa70e8f03a2c4f11e5693bf58cf82b5806b24e",
+    "p1_preserved": true,
+    "p2_preserved": true,
+    "p3_preserved": true
+  },
+  "qualification": {
+    "workflow_name": "GWF vNext P4 PM WorkAssignment Protocol",
+    "run_id": 38214150785,
+    "job_id": 114694836703,
+    "head_sha": "bc33e85d3afc70c2bd9595e403c0eb1c982e4979",
+    "conclusion": "success",
+    "checks": {
+      "static_contract_hash_scope_test_matrix_provider_neutrality_preflight": "PASS",
+      "p4_two_positive_plus_thirty_six_preregistered_negative_tests": "PASS",
+      "p1_p2_p3_locked_regressions": "PASS",
+      "core_governance_regressions": "PASS",
+      "python_compile_preflight": "PASS"
+    },
+    "p4_negative_test_count": 36,
+    "p4_total_test_count": 38
+  },
+  "diff_scope": {
+    "base": "4cd2e8b10bfbbad04ff820ce7818f7ef4bc83775",
+    "head": "bc33e85d3afc70c2bd9595e403c0eb1c982e4979",
+    "ahead_by": 1,
+    "changed_files": [
+      ".github/workflows/gwf-vnext-p4-pm-workassignment-protocol.yml",
+      "scripts/pivot/gwf_vnext_p4_static_preflight.py",
+      "src/gwr/pm_workassignment_vnext.py",
+      "tests/test_gwf_vnext_p4_pm_workassignment_protocol.py"
+    ],
+    "forbidden_scope_changes": []
+  },
+  "implemented_scope": [
+    "Provider-neutral PMVisibleGovernedState snapshots without protected-resource payload exposure.",
+    "Append-only PMPlanRevision records bound to governed-state snapshots.",
+    "Provider-neutral PMRoleRequest for WORKER and QA_REVIEWER roles.",
+    "WorkAssignmentProposal revision, freeze, submit, escalation, rejection, supersession, integrity and staleness checks.",
+    "AuthorityEnvelope, BudgetEnvelope, GovernanceProfile capability and HumanActionRequest constraint validation before materialization.",
+    "Proposal-to-existing-P1-WorkAssignment materialization payload with no PM authorization or dispatch authority.",
+    "Exact proposal-to-authorized-WorkAssignment linkage and one WorkAssignment to one proposal revision.",
+    "PMHandoffRecord with exact proposal identity and current governed-state revision.",
+    "Thirty-six preregistered negative tests."
+  ],
+  "locked_invariants": [
+    "PM remains a proposal/decomposition/escalation role and is not semantic, scientific, governance, or execution authority.",
+    "G2E remains semantic/scientific authority.",
+    "GWF remains governance authorization and durable runtime authority.",
+    "P4 does not redefine the P1 WorkAssignment object or lifecycle.",
+    "A submitted proposal revision is content-bound and cannot be silently mutated.",
+    "A materially stale governed-state revision cannot authorize materialization.",
+    "One exact P4 proposal revision materializes to at most one authorized WorkAssignment.",
+    "Every P4-derived authorized WorkAssignment is bound to exactly one source proposal revision.",
+    "P3 one-G2E-ExecutionAttempt-to-at-most-one-active-GWF-WorkAssignment-dispatch rule remains authoritative.",
+    "Provider/model difference alone cannot establish QA independence.",
+    "Protected-resource payload is not exposed to PM and protected access requires separate authorization.",
+    "HumanActionRequest cannot be bypassed or self-resolved by PM.",
+    "P1, P2 and P3 execution-lock artifacts and implementation blobs remain unchanged."
+  ],
+  "explicitly_not_authorized": [
+    "RemoteMCP execution-environment adapter integration",
+    "Codex/CGW execution-environment adapter integration",
+    "ChatGPT App or model-specific PM runtime binding",
+    "provider-specific execution semantics",
+    "Mission Control UI refactor",
+    "real research project execution",
+    "real software project execution",
+    "protected evidence consumption",
+    "scientific evidence admission or adjudication by PM",
+    "P5 or later execution-environment implementation"
+  ],
+  "operational_notes": [
+    "Canonical local checkout was recovered on machine-1 and HEAD was independently verified as the P4 contract base before implementation.",
+    "A RemoteMCP routed git-status readback remained pending in the control plane while signed node heartbeat reported no active node process. This operational observability residue is not a scientific or contract failure and does not enter LINEAGE.md.",
+    "Qualification authority for this lock is the exact-head GitHub Actions run over the source-of-truth implementation commit."
+  ],
+  "lock_semantics": [
+    "Any change to an implementation blob listed in implementation_blobs invalidates this P4 execution lock.",
+    "Any normative change to the frozen P4 contract requires a new contract revision and requalification.",
+    "This lock qualifies only the provider-neutral P4 PM proposal/read-model/handoff protocol.",
+    "This lock does not authorize P5/P6 adapters, real-project execution, protected evidence consumption, or provider/model-specific runtime behavior."
+  ]
+}
