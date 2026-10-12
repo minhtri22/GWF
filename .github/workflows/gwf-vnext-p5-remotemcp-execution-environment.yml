@@ -1,0 +1,57 @@
+name: GWF vNext P5 ChatGPT Web RemoteMCP Execution Environment
+
+on:
+  push:
+    branches:
+      - pivot/gwf-autonomous-research-stack-v1
+    paths:
+      - "src/gwr/remotemcp_execution_vnext.py"
+      - "tests/test_gwf_vnext_p5_remotemcp_execution_environment.py"
+      - "scripts/pivot/gwf_vnext_p5_static_preflight.py"
+      - "docs/pivot/GWF_VNEXT_P5_*"
+      - ".github/workflows/gwf-vnext-p5-remotemcp-execution-environment.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install package and test dependencies
+        run: python -m pip install -e ".[dev]"
+      - name: P5 contract hash scope 56-test zero-science preflight
+        run: python scripts/pivot/gwf_vnext_p5_static_preflight.py
+      - name: P5 synthetic qualification
+        run: python -m pytest -q tests/test_gwf_vnext_p5_remotemcp_execution_environment.py
+      - name: P1 through P4 locked regressions
+        run: >-
+          python -m pytest -q
+          tests/test_gwf_vnext_p1_governance_kernel.py
+          tests/test_gwf_vnext_p2_domain_governance_profiles.py
+          tests/test_gwf_vnext_p3_g2e_reconciliation.py
+          tests/test_gwf_vnext_p4_pm_workassignment_protocol.py
+      - name: Core governance regressions
+        run: >-
+          python -m pytest -q
+          tests/test_governance.py
+          tests/test_execution_decision.py
+          tests/test_persistence.py
+          tests/test_domain_api.py
+          tests/test_v085_domain_skills.py
+      - name: Python compile preflight
+        run: >-
+          python -m compileall -q
+          src/gwr
+          tests/test_gwf_vnext_p5_remotemcp_execution_environment.py
+          scripts/pivot/gwf_vnext_p5_static_preflight.py
