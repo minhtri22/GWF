@@ -1,0 +1,42 @@
+name: GWF vNext P4 PM WorkAssignment Protocol
+
+on:
+  push:
+    branches:
+      - pivot/gwf-autonomous-research-stack-v1
+    paths:
+      - "src/gwr/pm_workassignment_vnext.py"
+      - "tests/test_gwf_vnext_p4_pm_workassignment_protocol.py"
+      - "scripts/pivot/gwf_vnext_p4_static_preflight.py"
+      - "docs/pivot/GWF_VNEXT_P4_*"
+      - ".github/workflows/gwf-vnext-p4-pm-workassignment-protocol.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install package and test dependencies
+        run: python -m pip install -e ".[dev]"
+      - name: P4 static contract/hash/scope preflight
+        run: python scripts/pivot/gwf_vnext_p4_static_preflight.py
+      - name: P4 36 preregistered negative tests and positive protocol fixtures
+        run: python -m pytest -q tests/test_gwf_vnext_p4_pm_workassignment_protocol.py
+      - name: P1 P2 P3 locked regressions
+        run: python -m pytest -q tests/test_gwf_vnext_p1_governance_kernel.py tests/test_gwf_vnext_p2_domain_governance_profiles.py tests/test_gwf_vnext_p3_g2e_reconciliation.py
+      - name: Core governance regressions
+        run: python -m pytest -q tests/test_governance.py tests/test_execution_decision.py tests/test_persistence.py tests/test_domain_api.py tests/test_v085_domain_skills.py
+      - name: Python compile preflight
+        run: python -m compileall -q src/gwr tests/test_gwf_vnext_p4_pm_workassignment_protocol.py scripts/pivot/gwf_vnext_p4_static_preflight.py
