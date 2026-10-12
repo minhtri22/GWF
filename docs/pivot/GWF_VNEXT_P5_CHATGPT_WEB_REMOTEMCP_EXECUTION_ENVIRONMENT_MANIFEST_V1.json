@@ -1,0 +1,388 @@
+{
+  "schema_id": "GWF-VNEXT-P5-CHATGPT-WEB-REMOTEMCP-EXECUTION-ENVIRONMENT-v1",
+  "status": "FROZEN",
+  "date": "2026-10-12",
+  "gate": "GWF_VNEXT_P5_CHATGPT_WEB_REMOTEMCP_EXECUTION_ENVIRONMENT_PREREGISTRATION_AND_CONTRACT_FREEZE",
+  "contract_base_head": "739b8f62a6672f13eb48bca980a6aee234570335",
+  "preserved_locks": {
+    "p1": "ecfc8435f0f381d0a2edfac8575cbbc09a87abe3",
+    "p2": "25660c52526923d557224ac9fbc9abeae23adcc4",
+    "p3": "60aa70e8f03a2c4f11e5693bf58cf82b5806b24e",
+    "p4": "da96b599137835592d0ceb390ffe0162d6bcee33"
+  },
+  "architectural_ownership": {
+    "g2e": "SEMANTIC_SCIENTIFIC_AUTHORITY",
+    "gwf": "GOVERNANCE_AUTHORIZATION_DURABLE_RUNTIME_AUTHORITY",
+    "p5_adapter": "CHATGPT_WEB_REMOTEMCP_EXECUTION_PLACEMENT_AND_OPERATIONAL_PROVENANCE_ONLY",
+    "remotemcp": "INTERNAL_EXECUTION_BRIDGE_SUBSTRATE",
+    "chatgpt_web_worker": "AUTHORIZED_WORKER_AGENT_NOT_AUTHORITY",
+    "browser_ui": "NO_RUNTIME_OR_SEMANTIC_AUTHORITY"
+  },
+  "environment_identity": {
+    "environment_type": "CHATGPT_WEB_REMOTEMCP",
+    "canonical_worker_app_class": "CHATGPT_WEB",
+    "canonical_web_plugin_identity": "remote-mcp-v2-web-clean",
+    "canonical_web_transport": "APP_BACKED",
+    "legacy_web_plugin_identity": "remote-mcp-v2-web",
+    "legacy_web_route": "FORBIDDEN_FOR_P5_CANONICAL_ENVIRONMENT",
+    "backend_namespace_or_display_label": "NON_NORMATIVE_IMPLEMENTATION_DETAIL",
+    "model_provider_binding_source": "G2E_AGENT_BINDING_AND_GWF_EXECUTOR_BINDING",
+    "model_name_is_environment_authority": false
+  },
+  "identity_chain": [
+    "G2E ExecutionAttempt exact ref",
+    "GWF WorkAssignment exact revision/frozen hash",
+    "GWF ExecutorBinding resolved payload hash",
+    "GWF ExecutionEnvironmentRef CHATGPT_WEB_REMOTEMCP",
+    "ChatGPTWebWorkerContextRef",
+    "RemoteMCPExecutionPlacement",
+    "RemoteMCPDurableJobRecord(s)",
+    "RemoteMCPCheckpointRecord(s)",
+    "ExecutionResultEnvelope",
+    "G2E candidate EvidenceRecord only after bridge normalization"
+  ],
+  "objects": {
+    "ChatGPTWebWorkerContextRef": {
+      "owner": "P5_ENVIRONMENT_ADAPTER_FOREIGN_REF",
+      "identity_fields": [
+        "worker_context_ref",
+        "agent_identity_projection_hash",
+        "session_binding_class"
+      ],
+      "rules": [
+        "must project without widening the frozen G2E AgentBinding and GWF ExecutorBinding identity",
+        "session/plugin attachment is operational state, not authority",
+        "backend namespace/display label is not semantic identity",
+        "material worker identity substitution requires the upstream P3 replacement/new-attempt rule"
+      ],
+      "secret_fields_forbidden": true
+    },
+    "RemoteMCPExecutionPlacement": {
+      "owner": "P5_ENVIRONMENT_ADAPTER",
+      "identity_fields": [
+        "placement_id",
+        "revision",
+        "content_hash"
+      ],
+      "required_bindings": [
+        "work_assignment_id",
+        "work_assignment_revision",
+        "work_assignment_frozen_hash",
+        "executor_binding_id",
+        "executor_binding_resolved_payload_hash",
+        "execution_environment_id",
+        "worker_context_ref",
+        "device_id",
+        "device_key_fingerprint_sha256",
+        "route_generation",
+        "project_id",
+        "project_binding_generation",
+        "task_id"
+      ],
+      "source_placement_fields": [
+        "repository_or_source_ref",
+        "base_commit_or_source_digest",
+        "branch_ref",
+        "worktree_ref_or_explicit_non_git_qualification"
+      ],
+      "rules": [
+        "task inherits project-to-device placement",
+        "device/project/task identities are foreign runtime IDs and never replace G2E/GWF IDs",
+        "Git-backed mutable execution requires exact worktree/source binding",
+        "non-Git placement requires an explicitly qualified non-Git execution class",
+        "placement may be equal-or-narrower than WorkAssignment authority but never wider",
+        "same WorkAssignment dispatch has at most one active placement revision"
+      ]
+    },
+    "RemoteMCPLeaseObservation": {
+      "owner": "P5_EPHEMERAL_CAPABILITY_OBSERVATION",
+      "durable_fields": [
+        "task_id",
+        "lease_epoch",
+        "acquired_at",
+        "expires_at"
+      ],
+      "forbidden_durable_fields": [
+        "lease_token"
+      ],
+      "rules": [
+        "lease token is ephemeral capability material",
+        "new lease epoch on recovery does not by itself change scientific identity",
+        "lease reacquisition cannot authorize changed source, placement, worker identity, authority or protected-resource state"
+      ]
+    },
+    "RemoteMCPDurableJobRecord": {
+      "owner": "P5_OPERATIONAL_PROVENANCE",
+      "identity_fields": [
+        "proxy_job_id",
+        "node_job_id"
+      ],
+      "required_fields": [
+        "task_id",
+        "project_id",
+        "device_id",
+        "submitted_argv_sha256",
+        "cwd_or_worktree_ref",
+        "state",
+        "created_at",
+        "last_seen_at"
+      ],
+      "terminal_fields_when_terminal": [
+        "terminal_event_id",
+        "exit_code",
+        "finished_at",
+        "normalized_result_digest"
+      ],
+      "rules": [
+        "proxy/node/task/project/device provenance must reconcile before terminal result is accepted",
+        "a proxy job with no node_job_id is not proof that execution occurred",
+        "loss of observability never authorizes blind resubmission",
+        "v1 serializes mutating jobs within one task/worktree",
+        "multiple bounded operational jobs may serve one WorkAssignment, but they cannot create implicit scientific retry attempts"
+      ]
+    },
+    "RemoteMCPCheckpointRecord": {
+      "owner": "P5_DURABLE_RECOVERY_STATE",
+      "identity_fields": [
+        "checkpoint_id",
+        "revision",
+        "content_hash"
+      ],
+      "required_exact_refs": [
+        "g2e_execution_attempt_exact_ref",
+        "work_assignment_exact_ref",
+        "executor_binding_exact_ref",
+        "placement_exact_ref",
+        "source_state_ref",
+        "latest_job_refs",
+        "protected_resource_state",
+        "semantic_state_digest"
+      ],
+      "rules": [
+        "checkpoint contains no pairing, connector or lease secrets",
+        "resume requires exact semantic identity and source-state compatibility",
+        "protected-resource state is monotonic and cannot be rolled back",
+        "uncertain protected access is EXPOSED_FAIL_CLOSED under P3",
+        "checkpoint recovery cannot silently change device/project/task/worktree identity"
+      ]
+    },
+    "ExecutionResultEnvelope": {
+      "owner": "P5_OPERATIONAL_RESULT_NORMALIZATION",
+      "status_values": [
+        "OPERATIONAL_SUCCEEDED",
+        "OPERATIONAL_FAILED",
+        "BLOCKED",
+        "CANCELLED",
+        "UNRESOLVED_PROVENANCE"
+      ],
+      "required_provenance": [
+        "g2e_execution_attempt_exact_ref",
+        "work_assignment_exact_ref",
+        "executor_binding_exact_ref",
+        "execution_environment_ref",
+        "worker_context_ref",
+        "placement_exact_ref",
+        "device_id",
+        "device_key_fingerprint_sha256",
+        "route_generation",
+        "project_id",
+        "project_binding_generation",
+        "task_id",
+        "worktree_or_source_state_ref",
+        "proxy_job_id",
+        "node_job_id",
+        "submitted_argv_sha256",
+        "terminal_event_id",
+        "terminal_state",
+        "exit_code",
+        "stdout_ref_and_digest",
+        "stderr_ref_and_digest",
+        "artifact_refs_and_digests",
+        "checkpoint_ref_if_any",
+        "environment_attestation_ref",
+        "protected_resource_state"
+      ],
+      "semantics": {
+        "runtime_success_is_g2e_admitted": false,
+        "runtime_success_is_scientific_pass": false,
+        "logs_are_evidence_without_admission": false,
+        "result_is_candidate_operational_input_only": true
+      }
+    }
+  },
+  "cardinality": {
+    "work_assignment_to_executor_binding": "1 authorized Env-B WorkAssignment -> exactly 1 resolved ExecutorBinding for dispatch",
+    "executor_binding_to_environment": "1 ExecutorBinding -> exactly 1 qualified CHATGPT_WEB_REMOTEMCP ExecutionEnvironmentRef",
+    "work_assignment_dispatch_to_active_placement": "0..1 active P5 placement revision",
+    "placement_to_device_project_task": "exactly 1 device + 1 managed project + 1 task",
+    "placement_to_worktree": "exactly 1 for Git-backed mutable execution; explicit qualified alternative for non-Git",
+    "task_to_durable_jobs": "0..N bounded operational jobs",
+    "task_mutating_job_concurrency_v1": "at most 1 authoritative mutating job active",
+    "job_to_proxy_id": "exactly 1",
+    "materialized_job_to_node_job_id": "exactly 1 once execution materializes on node",
+    "checkpoint_to_placement": "exactly 1 placement revision",
+    "terminal_job_to_result_envelope": "0..1 normalized result envelope"
+  },
+  "bounded_authority": {
+    "effective_action_set": "INTERSECTION(WorkAssignment, ExecutorBinding, GovernanceProfile, qualified environment capability manifest, RemoteMCP placement policy, resolved HumanActionRequests)",
+    "technical_capability_is_authority": false,
+    "connector_account_permission_is_authority": false,
+    "worker_prompt_is_authority": false,
+    "device_online_is_authority": false,
+    "default_worker_infrastructure_actions_forbidden": [
+      "device_pair_begin",
+      "device_revoke",
+      "device_restart",
+      "project_register_on_device",
+      "project_bind_device",
+      "root_widening",
+      "replacement_device_identity",
+      "replacement_project_identity"
+    ],
+    "destructive_or_external_action": "requires explicit WorkAssignment authority and HumanActionRequest when policy requires",
+    "budget_expansion": "FORBIDDEN_WITHOUT_GWF_AUTHORIZED_CHANGE",
+    "profile_downgrade_to_escape": "FORBIDDEN",
+    "protected_resource_access": "requires P2/P3/GWF authorization before access"
+  },
+  "secret_handling": {
+    "pairing_secret_transports_forbidden": [
+      "run_command",
+      "task_job_submit",
+      "job_argv",
+      "shell_argument",
+      "task_payload",
+      "repository",
+      "log",
+      "checkpoint",
+      "lineage"
+    ],
+    "lease_token_persistence": "FORBIDDEN",
+    "connector_or_account_secret_persistence": "FORBIDDEN",
+    "opaque_secret_connection_ref_only": true
+  },
+  "managed_execution_preflight": {
+    "read_only_first": [
+      "device_list",
+      "device_status"
+    ],
+    "preserve_existing_approved_identity": true,
+    "root_mismatch_decision": "BLOCKED_ON_MANAGED_PROJECT_EXPOSURE_OR_EXPLICIT_DEDICATED_NODE_GATE",
+    "plugin_session_failure_decision": "PLUGIN_SESSION_BINDING_FAILURE",
+    "plugin_session_failure_node_repair": "FORBIDDEN",
+    "task_device_override": "FORBIDDEN",
+    "task_scoped_routed_tools_required_for_execution_evidence": true,
+    "gateway_local_compatibility_tools_prove_routing": false
+  },
+  "recovery": {
+    "observability_loss_allows_scientific_relaunch": false,
+    "duplicate_submit_before_reconciliation": "FORBIDDEN",
+    "same_task_job_identity_preservation": "REQUIRED_WHEN_EXISTING_JOB_MAY_EXIST",
+    "same_device_restart_resume": [
+      "restart must be separately authorized",
+      "active jobs require explicit confirmation",
+      "verify same device_id",
+      "verify same key fingerprint",
+      "record/verify route_generation",
+      "revalidate source/worktree/checkpoint/protected-resource state"
+    ],
+    "changed_material_identity": "requires new governed placement/binding and follows P3 new-attempt rule when material under frozen equivalence policy",
+    "uncertain_terminal_provenance": "UNRESOLVED_PROVENANCE_NO_EVIDENCE_NO_BLIND_RERUN",
+    "protected_resource_uncertainty": "EXPOSED_FAIL_CLOSED",
+    "infrastructure_failure_is_scientific_failure": false,
+    "infrastructure_records_in_scientific_lineage_by_default": false
+  },
+  "evidence_return": {
+    "raw_stdout_stderr": "OPERATIONAL_LOG_REF_NOT_ADMITTED_EVIDENCE",
+    "file_outputs": "CONTENT_DIGESTED_ARTIFACT_REFS",
+    "command_identity": "SUBMITTED_ARGV_SHA256_PLUS_CWD_WORKTREE",
+    "terminal_provenance": "PROXY_JOB_ID_NODE_JOB_ID_TASK_PROJECT_DEVICE_TERMINAL_EVENT",
+    "normalization_owner": "P5_ADAPTER",
+    "g2e_evidence_admission_owner": "G2E",
+    "candidate_evidence_only": true
+  },
+  "negative_tests": [
+    "N01_CANONICAL_PLUGIN_MISSING_NO_LEGACY_FALLBACK",
+    "N02_PLUGIN_SESSION_FAILURE_NO_NODE_REPAIR",
+    "N03_BACKEND_NAMESPACE_NOT_ENVIRONMENT_IDENTITY",
+    "N04_WORKER_CONTEXT_EXECUTOR_BINDING_MISMATCH",
+    "N05_MATERIAL_WORKER_IDENTITY_SUBSTITUTION_NO_IN_PLACE_REUSE",
+    "N06_DEVICE_ID_SUBSTITUTION",
+    "N07_DEVICE_FINGERPRINT_SUBSTITUTION",
+    "N08_UNAPPROVED_ROUTE_GENERATION_CHANGE",
+    "N09_PROJECT_ID_SUBSTITUTION",
+    "N10_PROJECT_BINDING_GENERATION_SUBSTITUTION",
+    "N11_PROJECT_ROOT_MISMATCH_NO_WIDEN",
+    "N12_ROOT_MISMATCH_NO_REPLACEMENT_DEVICE_OR_PROJECT",
+    "N13_TASK_CANNOT_OVERRIDE_DEVICE_PLACEMENT",
+    "N14_TASK_CANNOT_OVERRIDE_PROJECT_IDENTITY",
+    "N15_GIT_SOURCE_WORKTREE_BASE_MISMATCH",
+    "N16_GATEWAY_LOCAL_COMMAND_NOT_ROUTED_EVIDENCE",
+    "N17_LEASE_TOKEN_PERSISTENCE_FORBIDDEN",
+    "N18_PAIRING_SECRET_IN_TASK_JOB_OR_REPOSITORY_FORBIDDEN",
+    "N19_CONNECTOR_SECRET_IN_LOG_CHECKPOINT_EVIDENCE_FORBIDDEN",
+    "N20_STALE_LEASE_EPOCH_MUTATION",
+    "N21_JOB_SUBMIT_WITHOUT_CURRENT_TASK_LEASE",
+    "N22_JOB_WRONG_TASK_PROJECT_DEVICE",
+    "N23_PROXY_NODE_JOB_PROVENANCE_MISMATCH",
+    "N24_SUBMITTED_ARGV_HASH_MISMATCH",
+    "N25_SECOND_MUTATING_ACTIVE_JOB_SAME_TASK",
+    "N26_DUPLICATE_SCIENTIFIC_COMMAND_AFTER_OBSERVABILITY_LOSS",
+    "N27_TECHNICAL_CAPABILITY_NOT_AUTHORITY",
+    "N28_CONNECTOR_ACCOUNT_PERMISSION_NOT_AUTHORITY",
+    "N29_WORKER_PROMPT_NOT_AUTHORITY",
+    "N30_TASK_CAPABILITY_BEYOND_WORKASSIGNMENT",
+    "N31_DESTRUCTIVE_EXTERNAL_ACTION_WITHOUT_AUTHORITY",
+    "N32_PAIR_REPAIR_REVOKE_NOT_ORDINARY_WORKER_AUTHORITY",
+    "N33_DEVICE_RESTART_NOT_ORDINARY_WORKER_AUTHORITY",
+    "N34_RESTART_WITH_ACTIVE_JOBS_WITHOUT_EXPLICIT_CONFIRMATION",
+    "N35_PROJECT_REGISTER_BIND_ROOT_WIDENING_NOT_IMPLICIT",
+    "N36_ADAPTER_CANNOT_WIDEN_BUDGET_PROFILE_PROTECTED_POLICY",
+    "N37_OBSERVABILITY_LOSS_CANNOT_RELAUNCH_SCIENTIFIC_JOB",
+    "N38_PROXY_WITHOUT_NODE_JOB_ID_NO_BLIND_DUPLICATE_SUBMIT",
+    "N39_UNKNOWN_NONTERMINAL_JOB_NO_REPLACEMENT_BEFORE_RECONCILIATION",
+    "N40_RECOVERY_DIFFERENT_TASK_WORKTREE_SOURCE_STATE",
+    "N41_CHECKPOINT_G2E_WORKASSIGNMENT_EXECUTOR_REF_MISMATCH",
+    "N42_RECOVERY_CANNOT_ROLLBACK_PROTECTED_RESOURCE_EXPOSURE",
+    "N43_DEVICE_OR_FINGERPRINT_CHANGE_REQUIRES_GOVERNED_REBIND",
+    "N44_OPERATIONAL_FAILURE_NOT_SCIENTIFIC_FAIL",
+    "N45_RUNTIME_SUCCESS_NOT_EVIDENCE_ADMISSION",
+    "N46_RUNTIME_SUCCESS_NOT_SCIENTIFIC_PASS",
+    "N47_RESULT_ENVELOPE_MISSING_EXACT_PROVENANCE_REJECTED",
+    "N48_ARTIFACT_OR_LOG_DIGEST_MISMATCH",
+    "N49_RAW_LOG_NOT_EVIDENCE_WITHOUT_NORMALIZATION_ADMISSION",
+    "N50_RESULT_WRONG_WORKASSIGNMENT_OR_ATTEMPT",
+    "N51_TERMINAL_RESULT_NOT_INDEPENDENTLY_RETRIEVABLE",
+    "N52_SECRET_MATERIAL_IN_RESULT_ENVELOPE",
+    "N53_WORKER_CANNOT_REWRITE_TERMINAL_ADJUDICATION",
+    "N54_PM_CANNOT_DIRECT_DISPATCH_THROUGH_REMOTEMCP",
+    "N55_REMOTEMCP_CANNOT_CREATE_REPLACEMENT_G2E_ATTEMPT",
+    "N56_P5_QUALIFICATION_NO_REAL_PROJECT_PROTECTED_EVIDENCE_OR_P6_ROUTE"
+  ],
+  "implementation_lock": {
+    "allowed_in_P5_preregistration": [
+      "environment_manifest",
+      "normative_preregistration",
+      "contract_consistency_QA",
+      "plan_frontier_update"
+    ],
+    "forbidden_until_P5_implementation_gate": [
+      "src_runtime_mutation",
+      "RemoteMCP_adapter_code",
+      "ChatGPT_Web_worker_runtime_binding",
+      "real_device_job_execution_for_P5_science_or_product",
+      "real_project_execution",
+      "protected_evidence_consumption",
+      "Codex_CGW_adapter",
+      "Mission_Control_UI",
+      "P6_or_later_implementation"
+    ]
+  },
+  "next_gate": "GWF_VNEXT_P5_CHATGPT_WEB_REMOTEMCP_EXECUTION_ENVIRONMENT_IMPLEMENTATION_STATIC_PREFLIGHT_AND_EXECUTION_LOCK",
+  "still_forbidden_after_contract_freeze": [
+    "real_project_execution",
+    "protected_evidence_consumption",
+    "mission_control_refactor",
+    "codex_cgw_environment_implementation",
+    "provider_model_specific_scientific_authority"
+  ]
+}
