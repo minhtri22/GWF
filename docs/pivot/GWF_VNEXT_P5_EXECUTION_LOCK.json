@@ -1,0 +1,102 @@
+{
+  "gate": "GWF_VNEXT_P5_CHATGPT_WEB_REMOTEMCP_EXECUTION_ENVIRONMENT_IMPLEMENTATION_STATIC_PREFLIGHT_AND_EXECUTION_LOCK",
+  "status": "PASS_EXECUTION_LOCKED",
+  "created_at": "2026-10-12",
+  "branch": "pivot/gwf-autonomous-research-stack-v1",
+  "contract_freeze_head": "c5fe6efed005bad069f155c5f84cb56dcc0b2039",
+  "contract": {
+    "manifest_blob": "2e4587cb501d3f98e29bb79be35e48f8f8bd1a36",
+    "preregistration_blob": "10d8126d56d9ccd9cd68acc310e00619d62a27b2",
+    "qa_formal_decision_blob": "24d755a080b4b11b968d7a2e5d90c9762453081d"
+  },
+  "qualified_implementation_head": "c0c4970ca64170ecf5b8cc05a5aec65136a3664d",
+  "qualified_implementation_tree": "71aa0c20b3b0cddca74a7a7716e874c86b8c6203",
+  "implementation_blobs": {
+    "src/gwr/remotemcp_execution_vnext.py": "18569d864eb00c8fd90f6792e070430a4b7e0e43",
+    "tests/test_gwf_vnext_p5_remotemcp_execution_environment.py": "24881ac043fdd2501831e85da7879409caf831c5",
+    "scripts/pivot/gwf_vnext_p5_static_preflight.py": "7eb9c19704455707cbe5b623fe97ad554e73d6eb",
+    ".github/workflows/gwf-vnext-p5-remotemcp-execution-environment.yml": "367b32256fcfdc6753c9b2642264572142d9efd6"
+  },
+  "preserved_execution_locks": {
+    "p1": "ecfc8435f0f381d0a2edfac8575cbbc09a87abe3",
+    "p2": "25660c52526923d557224ac9fbc9abeae23adcc4",
+    "p3": "60aa70e8f03a2c4f11e5693bf58cf82b5806b24e",
+    "p4": "da96b599137835592d0ceb390ffe0162d6bcee33"
+  },
+  "qualification": {
+    "workflow_name": "GWF vNext P5 ChatGPT Web RemoteMCP Execution Environment",
+    "run_id": 38215767619,
+    "job_id": 114700013314,
+    "head_sha": "c0c4970ca64170ecf5b8cc05a5aec65136a3664d",
+    "conclusion": "success",
+    "p5_positive_test_count": 6,
+    "p5_negative_test_count": 56,
+    "p5_total_test_count": 62,
+    "checks": {
+      "static_contract_hash_scope_56_test_zero_science_preflight": "PASS",
+      "p5_synthetic_qualification": "PASS",
+      "p1_p2_p3_p4_locked_regressions": "PASS",
+      "core_governance_regressions": "PASS",
+      "python_compile_preflight": "PASS"
+    }
+  },
+  "diff_scope": {
+    "base": "c5fe6efed005bad069f155c5f84cb56dcc0b2039",
+    "head": "c0c4970ca64170ecf5b8cc05a5aec65136a3664d",
+    "ahead_by": 1,
+    "changed_files": [
+      ".github/workflows/gwf-vnext-p5-remotemcp-execution-environment.yml",
+      "scripts/pivot/gwf_vnext_p5_static_preflight.py",
+      "src/gwr/remotemcp_execution_vnext.py",
+      "tests/test_gwf_vnext_p5_remotemcp_execution_environment.py"
+    ],
+    "forbidden_scope_changes": []
+  },
+  "implemented_scope": [
+    "Pure validation/normalization core for CHATGPT_WEB_REMOTEMCP environment B with no live network/subprocess/tool-call execution path.",
+    "Canonical app-backed plugin/session identity validation with legacy fallback rejection and backend-namespace non-authority.",
+    "Worker-context non-widening identity projection.",
+    "Exact WorkAssignment/ExecutorBinding/environment to device/project/task/source/worktree placement validation.",
+    "Lease observation validation with lease-token non-persistence.",
+    "Authority intersection and infrastructure-action privilege firewall.",
+    "Task-scoped routed job submission and durable proxy/node provenance validation.",
+    "No-blind-resubmission and scientific-relaunch continuity firewall.",
+    "Checkpoint/recovery exact-ref, source-state and protected-resource monotonicity validation.",
+    "ExecutionResultEnvelope completeness, independent terminal readback and content-digest validation.",
+    "Candidate-evidence-only projection with no evidence admission or scientific verdict authority.",
+    "Synthetic/zero-science qualification-scope firewall.",
+    "Exactly 56 preregistered negative tests plus 6 positive fixtures."
+  ],
+  "locked_invariants": [
+    "P5 adapter owns physical/runtime materialization and operational provenance only.",
+    "G2E remains semantic/scientific authority and sole evidence-admission/adjudication owner.",
+    "GWF remains governance authorization and durable runtime authority.",
+    "RemoteMCP runtime identities never replace canonical G2E/GWF identities.",
+    "Backend namespace/display label is non-normative.",
+    "Technical capability, connector permission, prompt text, device state and pairing tickets cannot create authority.",
+    "Ordinary worker authority cannot pair/re-pair/revoke/restart/register/bind/widen roots or replace approved identities.",
+    "Lease tokens and pairing/connector secrets never persist in repository/task/job/checkpoint/result/lineage artifacts.",
+    "Observability loss never authorizes blind scientific resubmission or relaunch.",
+    "Proxy records without node_job_id do not prove execution.",
+    "Protected-resource state is monotonic and uncertain access remains fail-closed.",
+    "Runtime success is neither evidence admission nor scientific PASS.",
+    "Qualification is synthetic/zero-science only."
+  ],
+  "explicitly_not_authorized": [
+    "real research project execution",
+    "real software project execution",
+    "protected scientific evidence consumption",
+    "live P5 adapter calls as qualification evidence",
+    "P6 Codex/CGW execution-environment implementation",
+    "P8 headless real pilot",
+    "P9 Mission Control refactor",
+    "P10 real-project pilot",
+    "provider/model-specific scientific authority"
+  ],
+  "lock_semantics": [
+    "Any change to an implementation blob listed in implementation_blobs invalidates this P5 execution lock.",
+    "Any normative change to the frozen P5 contract requires a new contract revision and requalification.",
+    "This lock qualifies only the synthetic-tested P5 environment-B adapter core.",
+    "A later live smoke/adapter qualification gate must preserve this contract and cannot reinterpret operational success as scientific evidence."
+  ]
+}

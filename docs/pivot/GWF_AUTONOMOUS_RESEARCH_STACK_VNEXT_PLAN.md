@@ -1,6 +1,6 @@
 # GWF vNext — Autonomous Research Stack Pivot Plan
 
-**Status:** PIVOT-P0 PASS / PIVOT-P1 PASS+LOCKED / PIVOT-P2 PASS+LOCKED / PIVOT-P3 PASS+LOCKED / PIVOT-P4 PASS+LOCKED / PIVOT-P5 CONTRACT FROZEN  
+**Status:** PIVOT-P0 PASS / PIVOT-P1 PASS+LOCKED / PIVOT-P2 PASS+LOCKED / PIVOT-P3 PASS+LOCKED / PIVOT-P4 PASS+LOCKED / PIVOT-P5 PASS+LOCKED  
 **Pivot branch:** `pivot/gwf-autonomous-research-stack-v1`  
 **Pivot base:** `feature/bps-i00-product-shell@de3247c18c1a8546db9611ecd0fdf24f827662ae`  
 **Date:** 2026-10-07
@@ -569,7 +569,7 @@ Before PIVOT-P3:
 5. preserve historical research evidence in its existing lineage;
 6. do not rewrite P5A scientific/transport history into the vNext product line.
 
-## 16. Current frontier after P5 contract freeze
+## 16. Current frontier after P5 implementation lock
 
 PIVOT-P0 is formally closed PASS.
 
@@ -581,62 +581,53 @@ PIVOT-P3 G2E semantic/runtime reconciliation contract + provider-neutral bridge 
 
 PIVOT-P4 PM / WorkAssignment protocol contract + provider-neutral implementation are formally closed PASS and execution-locked.
 
-Authoritative P4 implementation lock:
+PIVOT-P5 ChatGPT Web / RemoteMCP execution-environment contract + synthetic adapter-core implementation are formally closed PASS and execution-locked.
 
-- qualified implementation HEAD: `bc33e85d3afc70c2bd9595e403c0eb1c982e4979`;
-- qualification run: `38214150785` — SUCCESS;
-- execution-lock commit: `739b8f62a6672f13eb48bca980a6aee234570335`;
-- execution-lock blob: `da96b599137835592d0ceb390ffe0162d6bcee33`.
-
-P4 preserves:
-
-- PM as proposal/decomposition/escalation only;
-- existing P1 WorkAssignment ownership/lifecycle;
-- G2E scientific authority;
-- GWF governance authorization;
-- proposal -> authorized WorkAssignment cardinality and handoff identity;
-- no provider-specific execution semantics.
-
-PIVOT-P5 ChatGPT Web / RemoteMCP execution-environment contract is formally closed PASS / CONTRACT FROZEN.
-
-Authoritative P5 contract records:
+Authoritative P5 records:
 
 - `docs/pivot/GWF_VNEXT_P5_CHATGPT_WEB_REMOTEMCP_EXECUTION_ENVIRONMENT_MANIFEST_V1.json`;
 - `docs/pivot/GWF_VNEXT_P5_CHATGPT_WEB_REMOTEMCP_EXECUTION_ENVIRONMENT_PREREGISTRATION_AND_CONTRACT_FREEZE.md`;
-- `docs/pivot/GWF_VNEXT_P5_QA_AND_FORMAL_DECISION.md`.
+- `docs/pivot/GWF_VNEXT_P5_QA_AND_FORMAL_DECISION.md`;
+- `docs/pivot/GWF_VNEXT_P5_EXECUTION_LOCK.json`;
+- `docs/pivot/P5_CHATGPT_WEB_REMOTEMCP_EXECUTION_ENVIRONMENT_IMPLEMENTATION_LOCK_CLOSURE.md`.
 
-P5 contract base:
+Qualified P5 implementation:
 
-- `739b8f62a6672f13eb48bca980a6aee234570335`.
+- contract-freeze HEAD: `c5fe6efed005bad069f155c5f84cb56dcc0b2039`;
+- exact implementation HEAD: `c0c4970ca64170ecf5b8cc05a5aec65136a3664d`;
+- exact implementation tree: `71aa0c20b3b0cddca74a7a7716e874c86b8c6203`;
+- qualification run: `38215767619` — SUCCESS;
+- qualification job: `114700013314`;
+- P5 tests: 62 total = 6 positive + 56 preregistered negative tests;
+- P1–P4 regressions: PASS;
+- core governance regressions: PASS;
+- compile/static preflight: PASS.
 
-P5 freezes:
+P5 qualifies only the synthetic-tested Env-B adapter core:
 
-- canonical environment type `CHATGPT_WEB_REMOTEMCP`;
-- canonical app-backed Web plugin identity `remote-mcp-v2-web-clean`;
-- backend namespace/display label as non-normative implementation detail;
-- worker context as a foreign runtime ref, not a new authority object;
-- exact WorkAssignment / ExecutorBinding / ExecutionEnvironment -> RemoteMCP placement mapping;
-- device/project/task/worktree/source/lease/job/checkpoint identity rules;
-- authority as intersection/narrowing only;
-- no pairing/restart/project/root privilege from ordinary worker power;
+- canonical `CHATGPT_WEB_REMOTEMCP` logical environment identity;
+- app-backed canonical Web plugin/session contract;
+- worker-context identity projection;
+- WorkAssignment/ExecutorBinding/environment -> placement validation;
+- device/project/task/source/worktree/lease/job/checkpoint continuity;
+- authority/privilege non-escalation;
 - secret non-persistence;
-- durable job provenance and no blind resubmission after observability loss;
+- durable proxy/node-job provenance;
+- no blind resubmission/relaunch after observability loss;
 - protected-resource monotonic recovery;
-- normalized operational result envelope;
-- runtime output as candidate evidence only;
-- exactly 56 preregistered implementation-negative tests.
+- normalized operational result envelopes;
+- candidate-evidence-only return semantics.
 
-The next authorized bounded phase is:
+P5 does **not** authorize real-project execution, protected scientific evidence consumption, or scientific inference from runtime success.
 
-`GWF_VNEXT_P5_CHATGPT_WEB_REMOTEMCP_EXECUTION_ENVIRONMENT_IMPLEMENTATION_STATIC_PREFLIGHT_AND_EXECUTION_LOCK`
+P6 Codex/CGW remains unopened by this P5 closure.
 
-P5 implementation may use synthetic/zero-science fixtures to qualify the frozen adapter contract.
+The next architecture sequence item is PIVOT-P6, but it requires its own explicit preregistration/contract-freeze gate before any P6 implementation.
 
 Do **not** yet:
 
-- execute a real research/software project as the P5 qualification target;
-- consume protected evidence;
-- open P6 Codex/CGW implementation;
-- open P8 headless real pilot;
+- implement P6 Codex/CGW;
+- run P8 headless real pilot;
 - refactor Mission Control;
-- open P10 real-project pilot.
+- run P10 real-project pilot;
+- consume protected scientific evidence.
